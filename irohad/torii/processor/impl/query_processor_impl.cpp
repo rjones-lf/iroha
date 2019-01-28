@@ -55,36 +55,14 @@ namespace iroha {
         const shared_model::interface::BlocksQuery &qry) {
       auto exec = qry_exec_->createQueryExecutor(pending_transactions_,
                                                  response_factory_);
-      if (not exec or not(exec | [this, &qry](const auto &executor) {
-            return executor->validate(
-                qry, storage_->getBlockQuery()->getTopBlockHeight(), true);
+      if (not exec or not(exec | [&qry](const auto &executor) {
+            return executor->validate(qry, true);
           })) {
         std::shared_ptr<shared_model::interface::BlockQueryResponse> response =
             response_factory_->createBlockQueryResponse("stateful invalid");
         return rxcpp::observable<>::just(std::move(response));
       }
-
-      if (not qry.height()) {
-        // default case - return blocks starting from the next one
-        return blocks_query_subject_.get_observable();
-      }
-
-      // height is specified - return that block
-      auto block = storage_->getBlockQuery()->getBlock(*qry.height());
-      std::shared_ptr<shared_model::interface::BlockQueryResponse>
-          block_response = block.match(
-              [this](iroha::expected::Value<std::unique_ptr<shared_model::interface::Block>> &block_ptr) {
-                return response_factory_->createBlockQueryResponse(
-                    std::move(block_ptr.value));
-              },
-              [this, &qry](const iroha::expected::Error<std::string> &err) {
-                log_->error("Could not retrieve block of height {}, error: {}",
-                            *qry.height(),
-                            err.error);
-                return response_factory_->createBlockQueryResponse(
-                    "could not retrieve block due to internal error");
-              });
-      return rxcpp::observable<>::just(std::move(block_response));
+      return blocks_query_subject_.get_observable();
     }
 
   }  // namespace torii

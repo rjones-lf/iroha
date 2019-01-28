@@ -40,14 +40,6 @@ namespace shared_model {
       return proto_->meta().query_counter();
     }
 
-    boost::optional<interface::types::HeightType> BlocksQuery::height() const {
-      if (proto_->opt_height_case()
-          == iroha::protocol::BlocksQuery::OptHeightCase::kHeight) {
-        return proto_->height();
-      }
-      return {};
-    }
-
     const interface::types::BlobType &BlocksQuery::blob() const {
       return blob_;
     }

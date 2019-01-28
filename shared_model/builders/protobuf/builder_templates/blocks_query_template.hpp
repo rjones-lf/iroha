@@ -89,12 +89,6 @@ namespace shared_model {
         });
       }
 
-      auto height(interface::types::HeightType height) const {
-        NextBuilder<0> copy = *this;
-        copy.query_.set_height(height);
-        return copy;
-      }
-
       auto build() const {
         static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
         auto result = BlocksQuery(iroha::protocol::BlocksQuery(query_));

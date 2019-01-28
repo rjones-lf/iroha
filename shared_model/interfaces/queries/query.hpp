@@ -14,6 +14,7 @@ namespace shared_model {
   namespace interface {
 
     class GetAccount;
+    class GetBlock;
     class GetSignatories;
     class GetAccountTransactions;
     class GetAccountAssetTransactions;
@@ -39,6 +40,7 @@ namespace shared_model {
      public:
       /// Type of variant, that handle concrete query
       using QueryVariantType = wrap<GetAccount,
+                                    GetBlock,
                                     GetSignatories,
                                     GetAccountTransactions,
                                     GetAccountAssetTransactions,

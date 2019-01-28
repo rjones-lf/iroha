@@ -26,6 +26,7 @@
 #include "interfaces/queries/get_account_detail.hpp"
 #include "interfaces/queries/get_account_transactions.hpp"
 #include "interfaces/queries/get_asset_info.hpp"
+#include "interfaces/queries/get_block.hpp"
 #include "interfaces/queries/get_pending_transactions.hpp"
 #include "interfaces/queries/get_role_permissions.hpp"
 #include "interfaces/queries/get_roles.hpp"
@@ -48,7 +49,7 @@ namespace {
     return res.at(1);
   }
 
-  std::string checkAccountRolePermission(
+  std::string getAccountRolePermissionCheckSql(
       shared_model::interface::permissions::Role permission,
       const std::string &account_alias = "role_account_id") {
     const auto perm_str =
@@ -307,19 +308,30 @@ namespace iroha {
 
     bool PostgresQueryExecutor::validate(
         const shared_model::interface::BlocksQuery &query,
-        shared_model::interface::types::HeightType ledger_height,
         const bool validate_signatories = true) {
       if (validate_signatories and not validateSignatures(query)) {
         log_->error("query signatories did not pass validation");
         return false;
       }
+      if (not visitor_.hasAccountRolePermission(Role::kGetBlocks,
+                                                query.creatorAccountId())) {
+        log_->error("query creator does not have enough permissions");
+        return false;
+      }
+
+      return true;
+    }
+
+    bool PostgresQueryExecutorVisitor::hasAccountRolePermission(
+        shared_model::interface::permissions::Role permission,
+        const std::string &account_id) const {
       using T = boost::tuple<int>;
       boost::format cmd(R"(%s)");
       try {
         soci::rowset<T> st =
-            (sql_->prepare
-                 << (cmd % checkAccountRolePermission(Role::kGetBlocks)).str(),
-             soci::use(query.creatorAccountId(), "role_account_id"));
+            (sql_.prepare
+                 << (cmd % getAccountRolePermissionCheckSql(permission)).str(),
+             soci::use(account_id, "role_account_id"));
 
         if (not st.begin()->get<0>()) {
           return false;
@@ -328,11 +340,6 @@ namespace iroha {
         log_->error("Failed to validate query: {}", e.what());
         return false;
       }
-
-      if (query.height() and *query.height() > ledger_height) {
-        return false;
-      }
-
       return true;
     }
 
@@ -387,6 +394,10 @@ namespace iroha {
         case QueryErrorType::kNoAsset:
           error =
               "no asset with such name in account with such id: " + error_body;
+          break;
+        case QueryErrorType::kNoBlock:
+          error =
+              "supplied height is greater than the ledger's one: " + error_body;
           break;
           // other errors are either handled by generic response or do not
           // appear yet
@@ -586,6 +597,52 @@ namespace iroha {
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
+        const shared_model::interface::GetBlock &q) {
+      if (not hasAccountRolePermission(Role::kGetBlocks, creator_id_)) {
+        // no permission
+        return query_response_factory_->createErrorQueryResponse(
+            shared_model::interface::QueryResponseFactory::ErrorQueryType::
+                kStatefulFailed,
+            notEnoughPermissionsResponse(perm_converter_, Role::kGetBlocks)(),
+            2,
+            query_hash_);
+      }
+
+      auto ledger_height = block_store_.last_id();
+      if (q.height() > ledger_height) {
+        // invalid height
+        return logAndReturnErrorResponse(
+            QueryErrorType::kInvalidHeight,
+            std::to_string(q.height()) + " vs " + std::to_string(ledger_height),
+            3);
+      }
+
+      auto block_deserialization_msg =
+          "could not retrieve block with given height: "
+          + std::to_string(q.height());
+      auto serialized_block = block_store_.get(q.height());
+      if (not serialized_block) {
+        // for some reason, block with such height was not retrieved
+        return logAndReturnErrorResponse(QueryErrorType::kStatefulFailed,
+                                         std::move(block_deserialization_msg),
+                                         1);
+      }
+
+      return converter_->deserialize(bytesToString(*serialized_block))
+          .match(
+              [this](iroha::expected::Value<
+                     std::unique_ptr<shared_model::interface::Block>> &block) {
+                return this->query_response_factory_->createBlockQueryResponse(
+                    std::move(block.value));
+              },
+              [this, err_msg = std::move(block_deserialization_msg)](
+                  const auto &err) {
+                return this->logAndReturnErrorResponse(
+                    QueryErrorType::kStatefulFailed, std::move(err_msg), 1);
+              });
+    }
+
+    QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetSignatories &q) {
       using QueryTuple = QueryType<std::string>;
       using PermissionTuple = boost::tuple<int>;
@@ -689,7 +746,8 @@ namespace iroha {
           QueryType<shared_model::interface::types::HeightType, std::string>;
       using PermissionTuple = boost::tuple<int, int>;
 
-      auto cmd = (boost::format(R"(WITH has_my_perm AS (%s),
+      auto cmd =
+          (boost::format(R"(WITH has_my_perm AS (%s),
       has_all_perm AS (%s),
       t AS (
           SELECT height, hash FROM position_by_hash WHERE hash IN (%s)
@@ -697,10 +755,10 @@ namespace iroha {
       SELECT height, hash, has_my_perm.perm, has_all_perm.perm FROM t
       RIGHT OUTER JOIN has_my_perm ON TRUE
       RIGHT OUTER JOIN has_all_perm ON TRUE
-      )") % checkAccountRolePermission(Role::kGetMyTxs, "account_id")
-                  % checkAccountRolePermission(Role::kGetAllTxs, "account_id")
-                  % hash_str)
-                     .str();
+      )") % getAccountRolePermissionCheckSql(Role::kGetMyTxs, "account_id")
+           % getAccountRolePermissionCheckSql(Role::kGetAllTxs, "account_id")
+           % hash_str)
+              .str();
 
       return executeQuery<QueryTuple, PermissionTuple>(
           [&] {
@@ -931,7 +989,7 @@ namespace iroha {
                       R"(WITH has_perms AS (%s)
       SELECT role_id, perm FROM role
       RIGHT OUTER JOIN has_perms ON TRUE
-      )") % checkAccountRolePermission(Role::kGetRoles))
+      )") % getAccountRolePermissionCheckSql(Role::kGetRoles))
                      .str();
 
       return executeQuery<QueryTuple, PermissionTuple>(
@@ -963,7 +1021,7 @@ namespace iroha {
                 WHERE role_id = :role_name)
       SELECT permission, perm FROM perms
       RIGHT OUTER JOIN has_perms ON TRUE
-      )") % checkAccountRolePermission(Role::kGetRoles))
+      )") % getAccountRolePermissionCheckSql(Role::kGetRoles))
                      .str();
 
       return executeQuery<QueryTuple, PermissionTuple>(
@@ -1001,7 +1059,7 @@ namespace iroha {
                 WHERE asset_id = :asset_id)
       SELECT domain_id, precision, perm FROM perms
       RIGHT OUTER JOIN has_perms ON TRUE
-      )") % checkAccountRolePermission(Role::kReadAssets))
+      )") % getAccountRolePermissionCheckSql(Role::kReadAssets))
                      .str();
 
       return executeQuery<QueryTuple, PermissionTuple>(

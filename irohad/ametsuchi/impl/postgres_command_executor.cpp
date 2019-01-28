@@ -230,9 +230,9 @@ namespace {
     }
   }
 
-  std::string checkAccountRolePermission(
+  std::string getAccountRolePermissionCheckSql(
       shared_model::interface::permissions::Role permission,
-      const shared_model::interface::types::AccountIdType &account_id) {
+      const shared_model::interface::types::AccountIdType &account_alias) {
     const auto perm_str =
         shared_model::interface::RolePermissionSet({permission}).toBitstring();
     const auto bits = shared_model::interface::RolePermissionSet::size();
@@ -241,7 +241,7 @@ namespace {
           & '%2%' = '%2%' FROM role_has_permissions AS rp
               JOIN account_has_roles AS ar on ar.role_id = rp.role_id
               WHERE ar.account_id = %3%)")
-                         % bits % perm_str % account_id)
+                         % bits % perm_str % account_alias)
                             .str();
     return query;
   }
@@ -282,9 +282,9 @@ namespace {
                                    ELSE false
                                 END
                            ELSE false END
-          )") % checkAccountRolePermission(global_permission, creator_id)
-                         % checkAccountRolePermission(domain_permission,
-                                                      creator_id)
+          )") % getAccountRolePermissionCheckSql(global_permission, creator_id)
+                         % getAccountRolePermissionCheckSql(domain_permission,
+                                                            creator_id)
                          % creator_id % id_with_target_domain)
                             .str();
     return query;
@@ -307,7 +307,7 @@ namespace {
                                 END
                            ELSE false END
           )")
-            % checkAccountRolePermission(role, creator_id)
+            % getAccountRolePermissionCheckSql(role, creator_id)
             % checkAccountGrantablePermission(grantable, creator_id, account_id)
             % creator_id % account_id)
         .str();
@@ -1223,8 +1223,8 @@ namespace iroha {
           {"addPeer",
            addPeerBase,
            {(boost::format(R"(has_perm AS (%s),)")
-             % checkAccountRolePermission(
-                   shared_model::interface::permissions::Role::kAddPeer, "$1"))
+             % getAccountRolePermissionCheckSql(
+                 shared_model::interface::permissions::Role::kAddPeer, "$1"))
                 .str(),
             "WHERE (SELECT * FROM has_perm)",
             "WHEN NOT (SELECT * from has_perm) THEN 2"}});
@@ -1269,9 +1269,9 @@ namespace iroha {
                 JOIN account_has_roles AS ar on ar.role_id = rp.role_id
                 WHERE ar.account_id = $1
             ),)")
-             % checkAccountRolePermission(
-                   shared_model::interface::permissions::Role::kAppendRole,
-                   "$1")
+             % getAccountRolePermissionCheckSql(
+                 shared_model::interface::permissions::Role::kAppendRole,
+                 "$1")
              % bits)
                 .str(),
             R"( WHERE
@@ -1303,9 +1303,9 @@ namespace iroha {
            ),
            has_perm AS (%2%),
           )") % bits
-             % checkAccountRolePermission(
-                   shared_model::interface::permissions::Role::kCreateAccount,
-                   "$1"))
+             % getAccountRolePermissionCheckSql(
+                 shared_model::interface::permissions::Role::kCreateAccount,
+                 "$1"))
                 .str(),
             R"(AND (SELECT * FROM has_perm)
                AND (SELECT * FROM creator_has_enough_permissions))",
@@ -1317,9 +1317,9 @@ namespace iroha {
            createAssetBase,
            {(boost::format(R"(
               has_perm AS (%s),)")
-             % checkAccountRolePermission(
-                   shared_model::interface::permissions::Role::kCreateAsset,
-                   "$1"))
+             % getAccountRolePermissionCheckSql(
+                 shared_model::interface::permissions::Role::kCreateAsset,
+                 "$1"))
                 .str(),
             R"(WHERE (SELECT * FROM has_perm))",
             R"(WHEN NOT (SELECT * FROM has_perm) THEN 2)"}});
@@ -1329,9 +1329,9 @@ namespace iroha {
            createDomainBase,
            {(boost::format(R"(
               has_perm AS (%s),)")
-             % checkAccountRolePermission(
-                   shared_model::interface::permissions::Role::kCreateDomain,
-                   "$1"))
+             % getAccountRolePermissionCheckSql(
+                 shared_model::interface::permissions::Role::kCreateDomain,
+                 "$1"))
                 .str(),
             R"(WHERE (SELECT * FROM has_perm))",
             R"(WHEN NOT (SELECT * FROM has_perm) THEN 2)"}});
@@ -1348,9 +1348,9 @@ namespace iroha {
                 WHERE ar.account_id = $1),
           has_perm AS (%s),)")
              % bits
-             % checkAccountRolePermission(
-                   shared_model::interface::permissions::Role::kCreateRole,
-                   "$1"))
+             % getAccountRolePermissionCheckSql(
+                 shared_model::interface::permissions::Role::kCreateRole,
+                 "$1"))
                 .str(),
             R"(WHERE (SELECT * FROM account_has_role_permissions)
                           AND (SELECT * FROM has_perm))",
@@ -1363,9 +1363,9 @@ namespace iroha {
            detachRoleBase,
            {(boost::format(R"(
             has_perm AS (%s),)")
-             % checkAccountRolePermission(
-                   shared_model::interface::permissions::Role::kDetachRole,
-                   "$1"))
+             % getAccountRolePermissionCheckSql(
+                 shared_model::interface::permissions::Role::kDetachRole,
+                 "$1"))
                 .str(),
             R"(AND (SELECT * FROM has_perm))",
             R"(WHEN NOT (SELECT * FROM has_perm) THEN 2)"}});
@@ -1448,8 +1448,8 @@ namespace iroha {
                                ELSE false END
               ),
               )")
-             % checkAccountRolePermission(
-                   shared_model::interface::permissions::Role::kSetDetail, "$1")
+             % getAccountRolePermissionCheckSql(
+                 shared_model::interface::permissions::Role::kSetDetail, "$1")
              % checkAccountGrantablePermission(
                    shared_model::interface::permissions::Grantable::
                        kSetMyAccountDetail,
@@ -1526,15 +1526,15 @@ namespace iroha {
                                ELSE false END
               ),
               )")
-             % checkAccountRolePermission(
-                   shared_model::interface::permissions::Role::kTransfer, "$1")
+             % getAccountRolePermissionCheckSql(
+                 shared_model::interface::permissions::Role::kTransfer, "$1")
              % checkAccountGrantablePermission(
                    shared_model::interface::permissions::Grantable::
                        kTransferMyAssets,
                    "$1",
                    "$2")
-             % checkAccountRolePermission(
-                   shared_model::interface::permissions::Role::kReceive, "$3"))
+             % getAccountRolePermissionCheckSql(
+                 shared_model::interface::permissions::Role::kReceive, "$3"))
                 .str(),
             R"( AND (SELECT * FROM has_perm))",
             R"( AND (SELECT * FROM has_perm))",

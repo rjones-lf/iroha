@@ -123,11 +123,6 @@ namespace iroha {
                    boost::optional<TxCacheStatusType>(
                        const shared_model::crypto::Hash &));
       MOCK_METHOD0(getTopBlockHeight, uint32_t(void));
-      MOCK_CONST_METHOD1(
-          getBlock,
-          expected::Result<std::unique_ptr<shared_model::interface::Block>,
-                           std::string>(
-              shared_model::interface::types::HeightType));
     };
 
     class MockTemporaryFactory : public TemporaryFactory {
@@ -294,10 +289,8 @@ namespace iroha {
           bool validate_signatories = true) override {
         return QueryExecutorResult(validateAndExecute_(q));
       }
-      MOCK_METHOD3(validate,
-                   bool(const shared_model::interface::BlocksQuery &,
-                        shared_model::interface::types::HeightType,
-                        bool));
+      MOCK_METHOD2(validate,
+                   bool(const shared_model::interface::BlocksQuery &, bool));
     };
 
     class MockTxPresenceCache : public iroha::ametsuchi::TxPresenceCache {

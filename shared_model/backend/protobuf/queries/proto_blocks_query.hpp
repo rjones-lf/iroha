@@ -28,8 +28,6 @@ namespace shared_model {
 
       interface::types::CounterType queryCounter() const override;
 
-      boost::optional<interface::types::HeightType> height() const override;
-
       const interface::types::BlobType &blob() const override;
 
       const interface::types::BlobType &payload() const override;

@@ -37,6 +37,7 @@ add_library(shared_model_proto_backend
     queries/impl/proto_get_account_detail.cpp
     queries/impl/proto_get_account_transactions.cpp
     queries/impl/proto_get_asset_info.cpp
+    queries/impl/proto_get_block.cpp
     queries/impl/proto_get_role_permissions.cpp
     queries/impl/proto_get_roles.cpp
     queries/impl/proto_get_signatories.cpp

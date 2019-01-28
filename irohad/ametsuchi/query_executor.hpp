@@ -8,8 +8,6 @@
 
 #include <memory>
 
-#include "interfaces/common_objects/types.hpp"
-
 namespace shared_model {
   namespace interface {
     class Query;
@@ -40,14 +38,11 @@ namespace iroha {
       /**
        * Perform BlocksQuery validation
        * @param query to validate
-       * @param ledger_height - current height of the ledger
        * @param validate_signatories - if signatories should be validated
        * @return true if valid, false otherwise
        */
-      virtual bool validate(
-          const shared_model::interface::BlocksQuery &query,
-          shared_model::interface::types::HeightType ledger_height,
-          const bool validate_signatories) = 0;
+      virtual bool validate(const shared_model::interface::BlocksQuery &query,
+                            const bool validate_signatories) = 0;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

@@ -54,11 +54,16 @@ namespace iroha {
 
       expected::Result<wBlock, std::string> getTopBlock() override;
 
-      expected::Result<std::unique_ptr<shared_model::interface::Block>,
-                       std::string>
-      getBlock(shared_model::interface::types::HeightType id) const override;
-
      private:
+      /**
+       * Retrieve block with given id from block storage
+       * @param id - height of a block to retrieve
+       * @return block with given height
+       */
+      virtual expected::Result<std::unique_ptr<shared_model::interface::Block>,
+                               std::string>
+      getBlock(shared_model::interface::types::HeightType id) const;
+
       std::unique_ptr<soci::session> psql_;
       soci::session &sql_;
 

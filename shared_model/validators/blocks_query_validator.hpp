@@ -36,9 +36,6 @@ namespace shared_model {
                                                   qry.creatorAccountId());
         field_validator_.validateCreatedTime(qry_reason, qry.createdTime());
         field_validator_.validateCounter(qry_reason, qry.queryCounter());
-        if (qry.height()) {
-          field_validator_.validateHeight(qry_reason, *qry.height());
-        }
 
         if (not qry_reason.second.empty()) {
           answer.addReason(std::move(qry_reason));

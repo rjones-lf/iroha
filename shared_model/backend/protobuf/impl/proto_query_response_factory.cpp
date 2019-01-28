@@ -156,6 +156,9 @@ shared_model::proto::ProtoQueryResponseFactory::createErrorQueryResponse(
           case ErrorQueryType::kNoRoles:
             reason = iroha::protocol::ErrorResponse_Reason_NO_ROLES;
             break;
+          case ErrorQueryType::kInvalidHeight:
+            reason = iroha::protocol::ErrorResponse_Reason_INVALID_HEIGHT;
+            break;
         }
         iroha::protocol::ErrorResponse *protocol_specific_response =
             protocol_query_response.mutable_error_response();

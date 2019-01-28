@@ -87,7 +87,8 @@ namespace shared_model {
         kNoSignatories,
         kNotSupported,
         kNoAsset,
-        kNoRoles
+        kNoRoles,
+        kInvalidHeight
       };
       /**
        * Create response for failed query

@@ -71,6 +71,7 @@ message ErrorResponse {
     NOT_SUPPORTED = 6;      // when unidentified request was received
     NO_ASSET = 7;           // when requested asset does not exist
     NO_ROLES = 8;           // when there are no roles defined in the system
+    INVALID_HEIGHT = 9;     // when supplied height is invalid
   }
   Reason reason = 1;
   string message = 2;
@@ -105,6 +106,7 @@ message QueryResponse {
     RolesResponse roles_response = 8;
     RolePermissionsResponse role_permissions_response = 9;
     TransactionsPageResponse transactions_page_response = 11;
+    BlockResponse block_response = 12;
   }
   string query_hash = 10;
 }
