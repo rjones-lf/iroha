@@ -7,7 +7,8 @@
 #define IROHA_APPLICATION_HPP
 
 #include "consensus/consensus_block_cache.hpp"
-#include "cryptography/crypto_provider/crypto_model_signer.hpp"
+#include "cryptography/crypto_provider/abstract_crypto_model_signer.hpp"
+#include "interfaces/queries/query.hpp"
 #include "logger/logger.hpp"
 #include "main/impl/block_loader_init.hpp"
 #include "main/impl/consensus_init.hpp"
@@ -78,9 +79,10 @@ class Irohad {
    * @param proposal_delay - maximum waiting time util emitting new proposal
    * @param vote_delay - waiting time before sending vote to next peer
    * @param keypair - public and private keys for crypto signer
+   * @param mst_expiration_time - maximum time until until MST transaction is
+   * not considered as expired (in minutes)
    * @param opt_mst_gossip_params - parameters for Gossip MST propagation
    * (optional). If not provided, disables mst processing support
-   *
    * TODO mboldyrev 03.11.2018 IR-1844 Refactor the constructor.
    */
   Irohad(const std::string &block_store_dir,
@@ -91,6 +93,7 @@ class Irohad {
          size_t max_proposal_size,
          std::chrono::milliseconds proposal_delay,
          std::chrono::milliseconds vote_delay,
+         std::chrono::minutes mst_expiration_time,
          const shared_model::crypto::Keypair &keypair,
          const boost::optional<iroha::GossipPropagationStrategyParams>
              &opt_mst_gossip_params = boost::none);
@@ -175,6 +178,7 @@ class Irohad {
   std::chrono::milliseconds proposal_delay_;
   std::chrono::milliseconds vote_delay_;
   bool is_mst_supported_;
+  std::chrono::minutes mst_expiration_time_;
   boost::optional<iroha::GossipPropagationStrategyParams>
       opt_mst_gossip_params_;
 
@@ -199,7 +203,9 @@ class Irohad {
   std::shared_ptr<iroha::ametsuchi::WsvRestorer> wsv_restorer_;
 
   // crypto provider
-  std::shared_ptr<shared_model::crypto::CryptoModelSigner<>> crypto_signer_;
+  std::shared_ptr<shared_model::crypto::AbstractCryptoModelSigner<
+      shared_model::interface::Block>>
+      crypto_signer_;
 
   // batch parser
   std::shared_ptr<shared_model::interface::TransactionBatchParser> batch_parser;
@@ -235,6 +241,12 @@ class Irohad {
   // persistent cache
   std::shared_ptr<iroha::ametsuchi::TxPresenceCache> persistent_cache;
 
+  // proposal factory
+  std::shared_ptr<shared_model::interface::AbstractTransportFactory<
+      shared_model::interface::Proposal,
+      iroha::protocol::Proposal>>
+      proposal_factory;
+
   // ordering gate
   std::shared_ptr<iroha::network::OrderingGate> ordering_gate;
 
@@ -250,6 +262,7 @@ class Irohad {
 
   // consensus gate
   std::shared_ptr<iroha::network::ConsensusGate> consensus_gate;
+  rxcpp::subjects::subject<iroha::consensus::GateObject> consensus_gate_objects;
 
   // synchronizer
   std::shared_ptr<iroha::synchronizer::Synchronizer> synchronizer;

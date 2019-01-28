@@ -54,13 +54,24 @@ namespace iroha {
   };
 
   /**
-   * Class provides the default behavior for the batch completer:
-   * complete, if all transactions have at least quorum number of signatures
+   * Class provides the default behavior for the batch completer.
+   * Complete, if all transactions have at least quorum number of signatures.
+   * Expired if at least one transaction is expired.
    */
   class DefaultCompleter : public Completer {
+    /**
+     * Creates new Completer with a given expiration time for transactions
+     * @param expiration_time - expiration time in minutes
+     */
+   public:
+    explicit DefaultCompleter(std::chrono::minutes expiration_time);
+
     bool operator()(const DataType &batch) const override;
 
     bool operator()(const DataType &tx, const TimeType &time) const override;
+
+   private:
+    std::chrono::minutes expiration_time_;
   };
 
   using CompleterType = std::shared_ptr<const Completer>;
@@ -74,8 +85,7 @@ namespace iroha {
      * @param completer - strategy for determine completed and expired batches
      * @return empty mst state
      */
-    static MstState empty(
-        const CompleterType &completer = std::make_shared<DefaultCompleter>());
+    static MstState empty(const CompleterType &completer);
 
     /**
      * Add batch to current state
