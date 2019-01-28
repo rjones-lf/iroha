@@ -6,6 +6,7 @@
 #ifndef INTEGRATION_FRAMEWORK_FAKE_PEER_BLOCK_STORAGE_HPP_
 #define INTEGRATION_FRAMEWORK_FAKE_PEER_BLOCK_STORAGE_HPP_
 
+#include <shared_mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -45,7 +46,7 @@ namespace integration_framework {
      private:
       std::unordered_map<HeightType, BlockPtr> blocks_by_height_;
       std::unordered_map<HashType, BlockPtr, HashType::Hasher> blocks_by_hash_;
-      mutable boost::shared_mutex block_maps_mutex_;
+      mutable std::shared_timed_mutex block_maps_mutex_;
 
       logger::Logger log_;
     };
