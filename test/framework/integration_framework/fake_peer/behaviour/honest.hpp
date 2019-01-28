@@ -18,7 +18,7 @@ namespace integration_framework {
       HonestBehaviour();
       virtual ~HonestBehaviour() = default;
 
-      void processYacMessage(YacMessagePtr message) override;
+      void processYacMessage(YacMessageSPtr message) override;
       LoaderBlockRequestResult processLoaderBlockRequest(
           LoaderBlockRequest request) override;
       LoaderBlocksRequestResult processLoaderBlocksRequest(

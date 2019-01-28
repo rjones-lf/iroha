@@ -9,11 +9,11 @@
 
 namespace integration_framework {
 
-  void OgNetworkNotifier::onProposal(OgNetworkNotifier::ProposalPtr proposal) {
+  void OgNetworkNotifier::onProposal(OgNetworkNotifier::ProposalSPtr proposal) {
     proposals_subject_.get_subscriber().on_next(std::move(proposal));
   }
 
-  rxcpp::observable<OgNetworkNotifier::ProposalPtr>
+  rxcpp::observable<OgNetworkNotifier::ProposalSPtr>
   OgNetworkNotifier::get_observable() {
     return proposals_subject_.get_observable();
   }

@@ -17,7 +17,7 @@ namespace shared_model {
   namespace crypto {
     class Keypair;
     class Hash;
-  }
+  }  // namespace crypto
   namespace interface {
     class CommonObjectsFactory;
     class Proposal;
@@ -29,7 +29,7 @@ namespace shared_model {
   namespace proto {
     class Block;
     class Proposal;
-  }
+  }  // namespace proto
 }  // namespace shared_model
 
 namespace iroha {
@@ -51,7 +51,7 @@ namespace iroha {
       struct VoteMessage;
     }  // namespace yac
     struct Round;
-  }    // namespace consensus
+  }  // namespace consensus
   namespace ordering {
     namespace transport {
       class OnDemandOsServerGrpc;
@@ -77,11 +77,11 @@ namespace integration_framework {
     struct BatchesForRound;
     struct MstMessage;
 
-    using MstMessagePtr = std::shared_ptr<MstMessage>;
-    using YacMessagePtr =
+    using MstMessageSPtr = std::shared_ptr<MstMessage>;
+    using YacMessageSPtr =
         std::shared_ptr<const std::vector<iroha::consensus::yac::VoteMessage>>;
-    using OgProposalPtr = std::shared_ptr<shared_model::interface::Proposal>;
-    using OsBatchPtr =
+    using OgProposalSPtr = std::shared_ptr<shared_model::interface::Proposal>;
+    using OsBatchSPtr =
         std::shared_ptr<shared_model::interface::TransactionBatch>;
     using LoaderBlockRequest = std::shared_ptr<shared_model::crypto::Hash>;
     using LoaderBlocksRequest = shared_model::interface::types::HeightType;

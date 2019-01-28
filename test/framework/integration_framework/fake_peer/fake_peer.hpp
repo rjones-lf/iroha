@@ -100,16 +100,16 @@ namespace integration_framework {
       const shared_model::crypto::Keypair &getKeypair() const;
 
       /// Get the observable of MST states received by this peer.
-      rxcpp::observable<MstMessagePtr> getMstStatesObservable();
+      rxcpp::observable<MstMessageSPtr> getMstStatesObservable();
 
       /// Get the observable of YAC states received by this peer.
-      rxcpp::observable<YacMessagePtr> getYacStatesObservable();
+      rxcpp::observable<YacMessageSPtr> getYacStatesObservable();
 
       /// Get the observable of OS batches received by this peer.
-      rxcpp::observable<OsBatchPtr> getOsBatchesObservable();
+      rxcpp::observable<OsBatchSPtr> getOsBatchesObservable();
 
       /// Get the observable of OG proposals received by this peer.
-      rxcpp::observable<OgProposalPtr> getOgProposalsObservable();
+      rxcpp::observable<OgProposalSPtr> getOgProposalsObservable();
 
       /// Get the observable of block requests received by this peer.
       rxcpp::observable<LoaderBlockRequest> getLoaderBlockRequestObservable();
@@ -130,7 +130,7 @@ namespace integration_framework {
        *
        * @param incoming_votes - the votes to take as the base.
        */
-      void voteForTheSame(const YacMessagePtr &incoming_votes);
+      void voteForTheSame(const YacMessageSPtr &incoming_votes);
 
       /**
        * Make a signature of the provided hash.
@@ -154,7 +154,7 @@ namespace integration_framework {
       void sendProposal(
           std::unique_ptr<shared_model::interface::Proposal> proposal);
 
-      void sendBatch(const OsBatchPtr &batch);
+      void sendBatch(const OsBatchSPtr &batch);
 
       bool sendBlockRequest(const LoaderBlockRequest &request);
 
@@ -162,7 +162,7 @@ namespace integration_framework {
 
       /// Send the real peer the provided batches for the provided round.
       void sendBatchesForRound(iroha::consensus::Round round,
-                               std::vector<OsBatchPtr> batches);
+                               std::vector<OsBatchSPtr> batches);
 
       /**
        * Request the real peer's on demand ordering service a proposal for the

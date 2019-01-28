@@ -17,7 +17,7 @@ namespace integration_framework {
       batches_subject_.get_subscriber().on_next(std::move(batch_ptr));
     }
 
-    rxcpp::observable<OsBatchPtr> OsNetworkNotifier::getObservable() {
+    rxcpp::observable<OsBatchSPtr> OsNetworkNotifier::getObservable() {
       return batches_subject_.get_observable();
     }
 

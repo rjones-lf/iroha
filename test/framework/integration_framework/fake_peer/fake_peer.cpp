@@ -216,19 +216,19 @@ namespace integration_framework {
       return *keypair_;
     }
 
-    rxcpp::observable<MstMessagePtr> FakePeer::getMstStatesObservable() {
+    rxcpp::observable<MstMessageSPtr> FakePeer::getMstStatesObservable() {
       return mst_network_notifier_->getObservable();
     }
 
-    rxcpp::observable<YacMessagePtr> FakePeer::getYacStatesObservable() {
+    rxcpp::observable<YacMessageSPtr> FakePeer::getYacStatesObservable() {
       return yac_network_notifier_->getObservable();
     }
 
-    rxcpp::observable<OsBatchPtr> FakePeer::getOsBatchesObservable() {
+    rxcpp::observable<OsBatchSPtr> FakePeer::getOsBatchesObservable() {
       return os_network_notifier_->getObservable();
     }
 
-    rxcpp::observable<OgProposalPtr> FakePeer::getOgProposalsObservable() {
+    rxcpp::observable<OgProposalSPtr> FakePeer::getOgProposalsObservable() {
       return og_network_notifier_->getObservable();
     }
 
@@ -292,7 +292,7 @@ namespace integration_framework {
       yac_transport_->sendState(*real_peer_, state);
     }
 
-    void FakePeer::voteForTheSame(const YacMessagePtr &incoming_votes) {
+    void FakePeer::voteForTheSame(const YacMessageSPtr &incoming_votes) {
       using iroha::consensus::yac::VoteMessage;
       log_->debug("Got a YAC state message with {} votes.",
                   incoming_votes->size());
@@ -343,7 +343,7 @@ namespace integration_framework {
     }
 
     void FakePeer::sendBatchesForRound(iroha::consensus::Round round,
-                                       std::vector<OsBatchPtr> batches) {
+                                       std::vector<OsBatchSPtr> batches) {
       auto client = iroha::network::createClient<
           iroha::ordering::proto::OnDemandOrdering>(real_peer_->address());
       grpc::ClientContext context;

@@ -24,14 +24,14 @@ namespace integration_framework {
       : public iroha::network::OrderingServiceNotification {
    public:
     using TransactionBatch = shared_model::interface::TransactionBatch;
-    using TransactionBatchPtr = std::shared_ptr<TransactionBatch>;
+    using TransactionBatchSPtr = std::shared_ptr<TransactionBatch>;
 
     void onBatch(std::unique_ptr<TransactionBatch> batch) override;
 
-    rxcpp::observable<TransactionBatchPtr> get_observable();
+    rxcpp::observable<TransactionBatchSPtr> get_observable();
 
    private:
-    rxcpp::subjects::subject<TransactionBatchPtr> batches_subject_;
+    rxcpp::subjects::subject<TransactionBatchSPtr> batches_subject_;
   };
 
 }  // namespace integration_framework

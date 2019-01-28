@@ -28,7 +28,7 @@ namespace integration_framework {
               std::make_unique<shared_model::proto::ProtoProposalFactory<
                   shared_model::validation::DefaultProposalValidator>>()) {}
 
-    void HonestBehaviour::processYacMessage(YacMessagePtr message) {
+    void HonestBehaviour::processYacMessage(YacMessageSPtr message) {
       getFakePeer().voteForTheSame(message);
     }
 
@@ -63,7 +63,7 @@ namespace integration_framework {
         return {};
       }
       BlockStorage::HeightType current_height = request;
-      BlockStorage::BlockPtr block;
+      BlockStorage::BlockSPtr block;
       LoaderBlocksRequestResult blocks;
       while ((block = block_storage->getBlockByHeight(current_height++))
              != nullptr) {

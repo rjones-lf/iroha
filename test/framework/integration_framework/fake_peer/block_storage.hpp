@@ -27,7 +27,7 @@ namespace integration_framework {
 
     class BlockStorage final {
      public:
-      using BlockPtr = std::shared_ptr<const shared_model::proto::Block>;
+      using BlockSPtr = std::shared_ptr<const shared_model::proto::Block>;
       using HeightType = shared_model::interface::types::HeightType;
       using HashType = shared_model::crypto::Hash;
 
@@ -37,15 +37,15 @@ namespace integration_framework {
       BlockStorage operator=(const BlockStorage &) = delete;
       BlockStorage operator=(BlockStorage &&) = delete;
 
-      void storeBlock(const BlockPtr &block);
+      void storeBlock(const BlockSPtr &block);
 
-      BlockPtr getBlockByHeight(HeightType height) const;
-      BlockPtr getBlockByHash(const HashType &hash) const;
-      BlockPtr getTopBlock() const;
+      BlockSPtr getBlockByHeight(HeightType height) const;
+      BlockSPtr getBlockByHash(const HashType &hash) const;
+      BlockSPtr getTopBlock() const;
 
      private:
-      std::unordered_map<HeightType, BlockPtr> blocks_by_height_;
-      std::unordered_map<HashType, BlockPtr, HashType::Hasher> blocks_by_hash_;
+      std::unordered_map<HeightType, BlockSPtr> blocks_by_height_;
+      std::unordered_map<HashType, BlockSPtr, HashType::Hasher> blocks_by_hash_;
       mutable std::shared_timed_mutex block_maps_mutex_;
 
       logger::Logger log_;

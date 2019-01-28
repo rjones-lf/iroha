@@ -330,7 +330,6 @@ TEST_F(FakePeerExampleFixture,
  */
 TEST_F(FakePeerExampleFixture,
        OnDemandOrderingProposalAfterValidCommandReceived) {
-
   /* A custom behaviour that requests a proposal for the round it got vote for,
    * and if gets one, checks that the proposal contains the given tx hash.
    */
@@ -340,7 +339,7 @@ TEST_F(FakePeerExampleFixture,
         : tx_hash_(tx_hash),
           got_proposal_from_main_peer_(got_proposal_from_main_peer) {}
 
-    void processYacMessage(fake_peer::YacMessagePtr message) override {
+    void processYacMessage(fake_peer::YacMessageSPtr message) override {
       const auto proposal_from_main_peer = getFakePeer().sendProposalRequest(
           message->front().hash.vote_round, kProposalWaitingTime);
       if (proposal_from_main_peer

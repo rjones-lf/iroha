@@ -22,14 +22,14 @@ namespace integration_framework {
       : public iroha::network::OrderingGateNotification {
    public:
     using Proposal = shared_model::interface::Proposal;
-    using ProposalPtr = std::shared_ptr<Proposal>;
+    using ProposalSPtr = std::shared_ptr<Proposal>;
 
-    void onProposal(ProposalPtr proposal) override;
+    void onProposal(ProposalSPtr proposal) override;
 
-    rxcpp::observable<ProposalPtr> get_observable();
+    rxcpp::observable<ProposalSPtr> get_observable();
 
    private:
-    rxcpp::subjects::subject<ProposalPtr> proposals_subject_;
+    rxcpp::subjects::subject<ProposalSPtr> proposals_subject_;
   };
 
 }  // namespace integration_framework

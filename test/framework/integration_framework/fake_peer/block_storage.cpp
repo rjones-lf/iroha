@@ -40,7 +40,7 @@ namespace integration_framework {
           blocks_by_hash_(std::move(other.blocks_by_hash_)),
           log_(logger::log("Fake peer block storage")) {}
 
-    void BlockStorage::storeBlock(const BlockPtr &block) {
+    void BlockStorage::storeBlock(const BlockSPtr &block) {
       std::lock_guard<std::shared_timed_mutex> lock(block_maps_mutex_);
       if (emplaceCheckingOverwrite(blocks_by_height_, block->height(), block)) {
         log_->warn("Overwriting block with height {}.", block->height());
@@ -50,7 +50,7 @@ namespace integration_framework {
       }
     }
 
-    BlockStorage::BlockPtr BlockStorage::getBlockByHeight(
+    BlockStorage::BlockSPtr BlockStorage::getBlockByHeight(
         BlockStorage::HeightType height) const {
       std::shared_lock<std::shared_timed_mutex> lock(block_maps_mutex_);
       const auto found = blocks_by_height_.find(height);
@@ -62,7 +62,7 @@ namespace integration_framework {
       return found->second;
     }
 
-    BlockStorage::BlockPtr BlockStorage::getBlockByHash(
+    BlockStorage::BlockSPtr BlockStorage::getBlockByHash(
         const BlockStorage::HashType &hash) const {
       std::shared_lock<std::shared_timed_mutex> lock(block_maps_mutex_);
       const auto found = blocks_by_hash_.find(hash);
@@ -74,7 +74,7 @@ namespace integration_framework {
       return found->second;
     }
 
-    BlockStorage::BlockPtr BlockStorage::getTopBlock() const {
+    BlockStorage::BlockSPtr BlockStorage::getTopBlock() const {
       std::shared_lock<std::shared_timed_mutex> lock(block_maps_mutex_);
       if (blocks_by_height_.empty()) {
         log_->info("Requested top block, but the block storage is empty.");
