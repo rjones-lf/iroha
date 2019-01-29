@@ -15,6 +15,7 @@
 #include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser.hpp"
 #include "logger/logger.hpp"
+#include "multi_sig_transactions/state/mst_state.hpp"
 #include "network/impl/async_grpc_client.hpp"
 
 namespace iroha {
@@ -41,6 +42,7 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::TransactionBatchFactory>
               transaction_batch_factory,
           std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache,
+          std::shared_ptr<Completer> mst_completer,
           shared_model::crypto::PublicKey my_key);
 
       /**
@@ -78,6 +80,7 @@ namespace iroha {
           batch_factory_;
       std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache_;
       /// source peer key for MST propogation messages
+      std::shared_ptr<Completer> mst_completer_;
       const std::string my_key_;
     };
 

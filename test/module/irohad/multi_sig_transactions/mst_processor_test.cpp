@@ -23,23 +23,6 @@ using namespace framework::test_subscriber;
 using testing::_;
 using testing::Return;
 
-class TestCompleter : public Completer {
-  bool operator()(const DataType &batch) const override {
-    return std::all_of(batch->transactions().begin(),
-                       batch->transactions().end(),
-                       [](const auto &tx) {
-                         return boost::size(tx->signatures()) >= tx->quorum();
-                       });
-  }
-
-  bool operator()(const DataType &batch, const TimeType &time) const override {
-    return std::any_of(
-        batch->transactions().begin(),
-        batch->transactions().end(),
-        [&time](const auto &tx) { return tx->createdTime() < time; });
-  }
-};
-
 class MstProcessorTest : public testing::Test {
  public:
   // --------------------------------| fields |---------------------------------
@@ -314,7 +297,8 @@ TEST_F(MstProcessorTest, emptyStatePropagation) {
   auto another_peer = makePeer(
       "another", shared_model::interface::types::PubkeyType("sign_one"));
 
-  auto another_peer_state = MstState::empty();
+  auto another_peer_state = MstState::empty(
+      std::make_shared<iroha::DefaultCompleter>(std::chrono::minutes(0)));
   another_peer_state += makeTestBatch(txBuilder(1));
 
   storage->apply(another_peer->pubkey(), another_peer_state);

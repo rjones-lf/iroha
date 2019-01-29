@@ -115,7 +115,7 @@ namespace iroha {
           // prepend initial status
           .start_with(initial_status)
           // select statuses with requested hash
-          .filter([&](auto response) {
+          .filter([hash](auto response) {
             return response->transactionHash() == hash;
           })
           // successfully complete the observable if final status is received.

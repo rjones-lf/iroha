@@ -60,7 +60,7 @@ def dockerPullOrUpdate(imageName, currentDockerfileURL, previousDockerfileURL, r
       }
     }
   }
-  if (GIT_LOCAL_BRANCH ==~ /develop|master|dev/ || CHANGE_BRANCH_LOCAL == 'develop' || CHANGE_BRANCH_LOCAL == 'dev') {
+  if (GIT_LOCAL_BRANCH ==~ /develop|master/ || CHANGE_BRANCH_LOCAL == 'develop') {
     docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
       iC.push(imageName)
     }
