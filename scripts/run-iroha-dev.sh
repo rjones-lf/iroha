@@ -20,7 +20,7 @@ then
     export IROHA_PORT="$(next_free_port 50051 50101)"
     export DEBUGGER_PORT="$(next_free_port 20000 20100)"
 
-    docker-compose --compatibility -f ${COMPOSE} up -d
+    docker-compose -f ${COMPOSE} up -d
 else
     IROHA_DBG_PORTS="$(docker port ${PROJECT}_node_1 | sed 's/\(.*\)://' | sort -r | sed -e :a -e N -e 's/\n/:/p' -e ta)"
     export IROHA_PORT="$(echo ${IROHA_DBG_PORTS} | sed 's/:.*//')"
