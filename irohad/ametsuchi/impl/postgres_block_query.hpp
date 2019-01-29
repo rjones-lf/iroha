@@ -60,8 +60,8 @@ namespace iroha {
        * @param id - height of a block to retrieve
        * @return block with given height
        */
-      virtual expected::Result<std::unique_ptr<shared_model::interface::Block>,
-                               std::string>
+      expected::Result<std::unique_ptr<shared_model::interface::Block>,
+                       std::string>
       getBlock(shared_model::interface::types::HeightType id) const;
 
       std::unique_ptr<soci::session> psql_;

@@ -395,10 +395,6 @@ namespace iroha {
           error =
               "no asset with such name in account with such id: " + error_body;
           break;
-        case QueryErrorType::kNoBlock:
-          error =
-              "supplied height is greater than the ledger's one: " + error_body;
-          break;
           // other errors are either handled by generic response or do not
           // appear yet
         default:
@@ -612,8 +608,10 @@ namespace iroha {
       if (q.height() > ledger_height) {
         // invalid height
         return logAndReturnErrorResponse(
-            QueryErrorType::kInvalidHeight,
-            std::to_string(q.height()) + " vs " + std::to_string(ledger_height),
+            QueryErrorType::kStatefulFailed,
+            "height greater than the ledger's one specified: "
+                + std::to_string(q.height()) + " vs "
+                + std::to_string(ledger_height),
             3);
       }
 
@@ -632,8 +630,8 @@ namespace iroha {
           .match(
               [this](iroha::expected::Value<
                      std::unique_ptr<shared_model::interface::Block>> &block) {
-                return this->query_response_factory_->createBlockQueryResponse(
-                    std::move(block.value));
+                return this->query_response_factory_->createBlockResponse(
+                    std::move(block.value), query_hash_);
               },
               [this, err_msg = std::move(block_deserialization_msg)](
                   const auto &err) {

@@ -11,7 +11,6 @@
 #include "cryptography/keypair.hpp"
 #include "framework/test_subscriber.hpp"
 #include "interfaces/query_responses/block_query_response.hpp"
-#include "interfaces/query_responses/block_response.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
@@ -29,7 +28,6 @@ using namespace framework::test_subscriber;
 
 using ::testing::_;
 using ::testing::A;
-using ::testing::ByMove;
 using ::testing::Invoke;
 using ::testing::Return;
 
@@ -42,7 +40,6 @@ class QueryProcessorTest : public ::testing::Test {
         std::make_shared<shared_model::proto::ProtoQueryResponseFactory>();
     qpi = std::make_shared<torii::QueryProcessorImpl>(
         storage, storage, nullptr, query_response_factory);
-    block_queries = std::make_shared<MockBlockQuery>();
     EXPECT_CALL(*storage, getBlockQuery())
         .WillRepeatedly(Return(block_queries));
     EXPECT_CALL(*storage, createQueryExecutor(_, _))
@@ -50,20 +47,14 @@ class QueryProcessorTest : public ::testing::Test {
             boost::make_optional(std::shared_ptr<QueryExecutor>(qry_exec))));
   }
 
-  template <bool SetHeight = false>
-  auto getBlocksQuery(const std::string &creator_account_id,
-                      shared_model::interface::types::HeightType height = 0) {
-    auto half_builder = TestUnsignedBlocksQueryBuilder()
-                            .createdTime(kCreatedTime)
-                            .creatorAccountId(creator_account_id)
-                            .queryCounter(kCounter);
-    if (SetHeight) {
-      return half_builder.height(height)
-          .build()
-          .signAndAddSignature(keypair)
-          .finish();
-    }
-    return half_builder.build().signAndAddSignature(keypair).finish();
+  auto getBlocksQuery(const std::string &creator_account_id) {
+    return TestUnsignedBlocksQueryBuilder()
+        .createdTime(kCreatedTime)
+        .creatorAccountId(creator_account_id)
+        .queryCounter(kCounter)
+        .build()
+        .signAndAddSignature(keypair)
+        .finish();
   }
 
   const decltype(iroha::time::now()) kCreatedTime = iroha::time::now();
@@ -142,17 +133,15 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
 
 /**
  * @given account, ametsuchi queries
- * @when valid block query without specified height is sent
+ * @when valid block query is sent
  * @then Query Processor should start emitting BlockQueryResponses to the
  * observable
  */
-TEST_F(QueryProcessorTest, GetBlocksQueryWithoutHeight) {
+TEST_F(QueryProcessorTest, GetBlocksQuery) {
   auto block_number = 5;
   auto block_query = getBlocksQuery(kAccountId);
 
-  EXPECT_CALL(*qry_exec, validate(_, _, _)).WillOnce(Return(true));
-  EXPECT_CALL(*block_queries, getTopBlockHeight()).WillOnce(Return(1));
-  EXPECT_CALL(*block_queries, getBlocksFrom(_)).Times(0);
+  EXPECT_CALL(*qry_exec, validate(_, _)).WillOnce(Return(true));
 
   auto wrapper = make_test_subscriber<CallExact>(
       qpi->blocksQueryHandle(block_query), block_number);
@@ -170,46 +159,6 @@ TEST_F(QueryProcessorTest, GetBlocksQueryWithoutHeight) {
 }
 
 /**
- * @given account, ametsuchi queries @and mocked ledger with some blocks
- * @when valid block query with specified height is sent @and this height is
- * less than the ledger's one
- * @then Query Processor should emit block of this height
- */
-TEST_F(QueryProcessorTest, GetBlocksQueryWithHeight) {
-  auto ledger_height = 4;
-  auto query_height = 2;
-  auto blocks_query = getBlocksQuery<true>(kAccountId, query_height);
-
-  EXPECT_CALL(*qry_exec, validate(_, _, _)).WillOnce(Return(true));
-  EXPECT_CALL(*block_queries, getTopBlockHeight())
-      .WillOnce(Return(ledger_height));
-
-  // these blocks are the ones lying in the ledger for current moment
-  std::vector<std::unique_ptr<shared_model::interface::Block>> all_blocks;
-  for (auto i = 0; i < ledger_height; ++i) {
-    all_blocks.push_back(clone(TestBlockBuilder().height(i + 1).build()));
-  }
-
-  EXPECT_CALL(*block_queries, getBlock(query_height))
-      .WillOnce(Return(ByMove(
-          iroha::expected::makeValue(clone(*all_blocks[query_height - 1])))));
-
-  auto wrapper =
-      make_test_subscriber<CallExact>(qpi->blocksQueryHandle(blocks_query), 1);
-  wrapper.subscribe([query_height](auto response) {
-    ASSERT_NO_THROW({
-      const auto &block =
-          boost::get<const shared_model::interface::BlockResponse &>(
-              response->get())
-              .block();
-      ASSERT_EQ(block.height(), query_height);
-    });
-  });
-
-  ASSERT_TRUE(wrapper.validate());
-}
-
-/**
  * @given account, ametsuchi queries
  * @when valid block query is invalid (no can_get_blocks permission)
  * @then Query Processor should return an observable with BlockError
@@ -218,7 +167,7 @@ TEST_F(QueryProcessorTest, GetBlocksQueryNoPerms) {
   auto block_number = 5;
   auto block_query = getBlocksQuery(kAccountId);
 
-  EXPECT_CALL(*qry_exec, validate(_, _, _)).WillOnce(Return(false));
+  EXPECT_CALL(*qry_exec, validate(_, _)).WillOnce(Return(false));
 
   auto wrapper =
       make_test_subscriber<CallExact>(qpi->blocksQueryHandle(block_query), 1);

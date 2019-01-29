@@ -21,7 +21,7 @@ namespace shared_model {
 
     GetBlock::GetBlock(GetBlock &&o) noexcept : GetBlock(std::move(o.proto_)) {}
 
-    interface::types::HeightType &GetBlock::height() const {
+    interface::types::HeightType GetBlock::height() const {
       return get_block_.height();
     }
 

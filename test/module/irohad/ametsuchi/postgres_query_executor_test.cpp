@@ -273,31 +273,8 @@ namespace iroha {
       ASSERT_TRUE(query_executor->createQueryExecutor(pending_txs_storage,
                                                       query_response_factory)
                   | [&blocks_query](const auto &executor) {
-                      return executor->validate(blocks_query, 1, false);
+                      return executor->validate(blocks_query, false);
                     });
-    }
-
-    /**
-     * @given permissions to get blocks @and get blocks query with height
-     * greated than the ledger's one
-     * @when get blocks query is validated
-     * @then result is error
-     */
-    TEST_F(BlocksQueryExecutorTest, BlocksQueryExecutorTestInvalidHeight) {
-      addAllPerms();
-
-      auto query_height = 3;
-      auto blocks_query = TestBlocksQueryBuilder()
-                              .creatorAccountId(account_id)
-                              .height(query_height)
-                              .build();
-      ASSERT_FALSE(query_executor->createQueryExecutor(pending_txs_storage,
-                                                       query_response_factory)
-                   | [&blocks_query](const auto &executor) {
-                       // second arg is (query_height-1); for some reason, it
-                       // cannot be captured, causes compile error
-                       return executor->validate(blocks_query, 2, false);
-                     });
     }
 
     /**
@@ -305,13 +282,13 @@ namespace iroha {
      * @when get blocks query is validated
      * @then result is error
      */
-    TEST_F(BlocksQueryExecutorTest, BlocksQueryExecutorTestNoPermissions) {
+    TEST_F(BlocksQueryExecutorTest, BlocksQueryExecutorTestInvalid) {
       auto blocks_query =
           TestBlocksQueryBuilder().creatorAccountId(account_id).build();
       ASSERT_FALSE(query_executor->createQueryExecutor(pending_txs_storage,
                                                        query_response_factory)
                    | [&blocks_query](const auto &executor) {
-                       return executor->validate(blocks_query, 1, false);
+                       return executor->validate(blocks_query, false);
                      });
     }
 

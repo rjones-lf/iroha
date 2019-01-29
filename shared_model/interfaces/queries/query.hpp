@@ -40,7 +40,6 @@ namespace shared_model {
      public:
       /// Type of variant, that handle concrete query
       using QueryVariantType = wrap<GetAccount,
-                                    GetBlock,
                                     GetSignatories,
                                     GetAccountTransactions,
                                     GetAccountAssetTransactions,
@@ -50,7 +49,8 @@ namespace shared_model {
                                     GetRoles,
                                     GetRolePermissions,
                                     GetAssetInfo,
-                                    GetPendingTransactions>;
+                                    GetPendingTransactions,
+                                    GetBlock>;
 
       /**
        * @return reference to const variant with concrete command

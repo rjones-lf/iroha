@@ -6,7 +6,6 @@
 #ifndef IROHA_SHARED_MODEL_BLOCKS_QUERY_HPP
 #define IROHA_SHARED_MODEL_BLOCKS_QUERY_HPP
 
-#include <boost/optional.hpp>
 #include "interfaces/base/signable.hpp"
 #include "interfaces/common_objects/types.hpp"
 
