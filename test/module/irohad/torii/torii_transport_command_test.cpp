@@ -34,7 +34,6 @@ using ::testing::Property;
 using ::testing::Return;
 using ::testing::StrEq;
 
-using namespace iroha::ametsuchi;
 using namespace iroha::torii;
 using namespace std::chrono_literals;
 

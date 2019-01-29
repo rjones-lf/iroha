@@ -15,6 +15,7 @@
 #include "interfaces/transaction.hpp"
 #include "validators/field_validator.hpp"
 
+using namespace iroha;
 using namespace iroha::network;
 
 using iroha::ConstRefState;
