@@ -20,6 +20,7 @@
 #include "ametsuchi/peer_query_factory.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 
 using namespace iroha;
 
@@ -39,7 +40,7 @@ PropagationData generate(std::vector<std::string> &ids, size_t num) {
   PropagationData peers;
   std::transform(
       ids.begin(), ids.end(), std::back_inserter(peers), [](auto &s) {
-        return makePeer(s, "");
+        return makePeer(s, shared_model::interface::types::PubkeyType(""));
       });
   return peers;
 }

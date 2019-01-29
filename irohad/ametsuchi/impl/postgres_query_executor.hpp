@@ -239,11 +239,16 @@ namespace iroha {
           logger::Logger log = logger::log("PostgresQueryExecutor"));
 
       QueryExecutorResult validateAndExecute(
-          const shared_model::interface::Query &query) override;
+          const shared_model::interface::Query &query,
+          const bool validate_signatories) override;
 
-      bool validate(const shared_model::interface::BlocksQuery &query) override;
+      bool validate(const shared_model::interface::BlocksQuery &query,
+                    const bool validate_signatories) override;
 
      private:
+      template <class Q>
+      bool validateSignatures(const Q &query);
+
       std::unique_ptr<soci::session> sql_;
       KeyValueStorage &block_store_;
       std::shared_ptr<PendingTransactionStorage> pending_txs_storage_;

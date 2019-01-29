@@ -19,8 +19,8 @@ namespace iroha {
     namespace yac {
       class YacNetworkTest : public ::testing::Test {
        public:
-        static constexpr auto default_ip = "0.0.0.0";
-        static constexpr auto default_address = "0.0.0.0:0";
+        static constexpr auto default_ip = "127.0.0.1";
+        static constexpr auto default_address = "127.0.0.1:0";
         void SetUp() override {
           notifications = std::make_shared<MockYacNetworkNotifications>();
           async_call = std::make_shared<
@@ -85,7 +85,8 @@ namespace iroha {
 
         // wait for response reader thread
         std::unique_lock<std::mutex> lk(mtx);
-        cv.wait(lk, [&] { return processed; });
+        ASSERT_TRUE(cv.wait_for(
+            lk, std::chrono::seconds(5), [&] { return processed; }));
 
         ASSERT_EQ(1, state.size());
         ASSERT_EQ(message, state.front());

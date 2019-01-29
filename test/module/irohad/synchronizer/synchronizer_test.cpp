@@ -9,7 +9,10 @@
 #include <boost/range/adaptor/transformed.hpp>
 #include "backend/protobuf/block.hpp"
 #include "framework/test_subscriber.hpp"
-#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/ametsuchi/mock_block_query.hpp"
+#include "module/irohad/ametsuchi/mock_block_query_factory.hpp"
+#include "module/irohad/ametsuchi/mock_mutable_factory.hpp"
+#include "module/irohad/ametsuchi/mock_mutable_storage.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 #include "module/shared_model/builders/protobuf/block.hpp"
@@ -27,6 +30,17 @@ using ::testing::_;
 using ::testing::ByMove;
 using ::testing::DefaultValue;
 using ::testing::Return;
+
+/**
+ * Factory for mock mutable storage generation.
+ * This method provides technique,
+ * when required to return object wrapped in Result.
+ */
+expected::Result<std::unique_ptr<MutableStorage>, std::string>
+createMockMutableStorage() {
+  return expected::makeValue<std::unique_ptr<MutableStorage>>(
+      std::make_unique<MockMutableStorage>());
+}
 
 class SynchronizerTest : public ::testing::Test {
  public:

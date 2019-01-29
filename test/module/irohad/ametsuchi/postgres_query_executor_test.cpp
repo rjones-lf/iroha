@@ -16,6 +16,7 @@
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
+#include "ametsuchi/mutable_storage.hpp"
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "datetime/time.hpp"
 #include "framework/result_fixture.hpp"
@@ -31,7 +32,6 @@
 #include "interfaces/query_responses/transactions_page_response.hpp"
 #include "interfaces/query_responses/transactions_response.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
-#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/pending_txs_storage/pending_txs_storage_mock.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
@@ -54,7 +54,7 @@ namespace {
   constexpr types::PrecisionType kAssetPrecision(1);
   // TODO mboldyrev 05.12.2018 IR-57 unify the common constants.
   constexpr size_t kHashLength = 32;
-  const std::string zero_string{kHashLength, '0'};
+  const std::string zero_string(kHashLength, '0');
   const std::string asset_id = "coin#domain";
   const std::string role = "role";
   const shared_model::interface::types::DomainIdType domain_id = "domain";
@@ -130,7 +130,8 @@ namespace iroha {
 
       void SetUp() override {
         AmetsuchiTest::SetUp();
-        sql = std::make_unique<soci::session>(soci::postgresql, pgopt_);
+        sql = std::make_unique<soci::session>(*soci::factory_postgresql(),
+                                              pgopt_);
 
         auto factory =
             std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
@@ -167,7 +168,7 @@ namespace iroha {
         return query_executor->createQueryExecutor(pending_txs_storage,
                                                    query_response_factory)
             | [&query](const auto &executor) {
-                return executor->validateAndExecute(query);
+                return executor->validateAndExecute(query, false);
               };
       }
 
@@ -273,7 +274,7 @@ namespace iroha {
       ASSERT_TRUE(query_executor->createQueryExecutor(pending_txs_storage,
                                                       query_response_factory)
                   | [&blocks_query](const auto &executor) {
-                      return executor->validate(blocks_query);
+                      return executor->validate(blocks_query, false);
                     });
     }
 
@@ -288,7 +289,7 @@ namespace iroha {
       ASSERT_FALSE(query_executor->createQueryExecutor(pending_txs_storage,
                                                        query_response_factory)
                    | [&blocks_query](const auto &executor) {
-                       return executor->validate(blocks_query);
+                       return executor->validate(blocks_query, false);
                      });
     }
 

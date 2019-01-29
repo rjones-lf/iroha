@@ -8,6 +8,7 @@
 
 #include "cryptography/keypair.hpp"
 #include "main/application.hpp"
+#include "main/server_runner.hpp"
 
 namespace integration_framework {
   /**
@@ -23,6 +24,7 @@ namespace integration_framework {
                size_t max_proposal_size,
                std::chrono::milliseconds proposal_delay,
                std::chrono::milliseconds vote_delay,
+               std::chrono::minutes mst_expiration_time,
                const shared_model::crypto::Keypair &keypair,
                const boost::optional<iroha::GossipPropagationStrategyParams>
                    &opt_mst_gossip_params = boost::none)
@@ -34,6 +36,7 @@ namespace integration_framework {
                  max_proposal_size,
                  proposal_delay,
                  vote_delay,
+                 mst_expiration_time,
                  keypair,
                  opt_mst_gossip_params) {}
 

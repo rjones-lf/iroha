@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <gmock/gmock.h>
+
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "framework/result_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
-#include "module/shared_model/builders/protobuf/test_peer_builder.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -18,7 +20,8 @@ namespace iroha {
      public:
       void SetUp() override {
         AmetsuchiTest::SetUp();
-        sql = std::make_unique<soci::session>(soci::postgresql, pgopt_);
+        sql = std::make_unique<soci::session>(*soci::factory_postgresql(),
+                                              pgopt_);
 
         command = std::make_unique<PostgresWsvCommand>(*sql);
         query = std::make_unique<PostgresWsvQuery>(*sql, factory);
@@ -49,9 +52,11 @@ namespace iroha {
       void SetUp() override {
         WsvQueryCommandTest::SetUp();
 
-        peer = clone(TestPeerBuilder().build());
+        peer = makePeer(address, pk);
       }
-      std::unique_ptr<shared_model::interface::Peer> peer;
+      std::shared_ptr<MockPeer> peer;
+      shared_model::interface::types::AddressType address{""};
+      shared_model::interface::types::PubkeyType pk{""};
     };
 
     /**

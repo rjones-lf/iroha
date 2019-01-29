@@ -6,9 +6,12 @@
 #include "ordering/impl/on_demand_ordering_gate.hpp"
 
 #include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/adaptor/indexed.hpp>
+#include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/empty.hpp>
 #include "ametsuchi/tx_presence_cache.hpp"
 #include "common/visitor.hpp"
+#include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "ordering/impl/on_demand_common.hpp"
 
 using namespace iroha;
@@ -108,6 +111,7 @@ OnDemandOrderingGate::processProposalRequest(
 boost::optional<std::shared_ptr<shared_model::interface::Proposal>>
 OnDemandOrderingGate::removeReplays(
     shared_model::interface::Proposal &&proposal) const {
+  std::vector<bool> proposal_txs_validation_results;
   auto tx_is_not_processed = [this](const auto &tx) {
     auto tx_result = tx_cache_->check(tx.hash());
     if (not tx_result) {
@@ -125,8 +129,28 @@ OnDemandOrderingGate::removeReplays(
           return false;
         });
   };
+
+  shared_model::interface::TransactionBatchParserImpl batch_parser;
+
+  auto batches = batch_parser.parseBatches(proposal.transactions());
+  for (auto &batch : batches) {
+    bool batch_validation_result =
+        std::all_of(batch.begin(), batch.end(), tx_is_not_processed);
+    proposal_txs_validation_results.insert(
+        proposal_txs_validation_results.end(),
+        batch.size(),
+        batch_validation_result);
+  }
+
   auto unprocessed_txs =
-      boost::adaptors::filter(proposal.transactions(), tx_is_not_processed);
+      proposal.transactions() | boost::adaptors::indexed()
+      | boost::adaptors::filtered(
+            [proposal_txs_validation_results =
+                 std::move(proposal_txs_validation_results)](const auto &el) {
+              return proposal_txs_validation_results.at(el.index());
+            })
+      | boost::adaptors::transformed(
+            [](const auto &el) -> decltype(auto) { return el.value(); });
 
   auto result = proposal_factory_->unsafeCreateProposal(
       proposal.height(), proposal.createdTime(), unprocessed_txs);

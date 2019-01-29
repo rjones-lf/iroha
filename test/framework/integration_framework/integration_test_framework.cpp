@@ -10,6 +10,7 @@
 
 #include <boost/assert.hpp>
 #include <boost/thread/barrier.hpp>
+#include "ametsuchi/storage.hpp"
 #include "backend/protobuf/block.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
@@ -37,10 +38,12 @@
 #include "module/shared_model/builders/protobuf/block.hpp"
 #include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/validators/always_valid_validators.hpp"
+#include "multi_sig_transactions/mst_processor.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
 #include "synchronizer/synchronizer_common.hpp"
+#include "torii/status_bus.hpp"
 
 using namespace shared_model::crypto;
 using namespace std::literals::string_literals;

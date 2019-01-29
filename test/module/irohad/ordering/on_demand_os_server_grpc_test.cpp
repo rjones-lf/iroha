@@ -11,7 +11,7 @@
 #include "backend/protobuf/transaction.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
-#include "module/irohad/ordering/ordering_mocks.hpp"
+#include "module/irohad/ordering/mock_on_demand_os_notification.hpp"
 #include "module/shared_model/interface/mock_transaction_batch_factory.hpp"
 #include "module/shared_model/validators/validators.hpp"
 

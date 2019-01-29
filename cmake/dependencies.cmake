@@ -15,7 +15,29 @@ find_package(Threads REQUIRED)
 ##########################
 # testing is an option. Look at the main CMakeLists.txt for details.
 if (TESTING)
-  find_package(gtest)
+  if (MSVC)
+    set(CMAKE_MODULE_PATH "")
+    find_package(GTest REQUIRED CONFIG)
+    add_library(gtest::gtest INTERFACE IMPORTED)
+    target_link_libraries(gtest::gtest INTERFACE
+        GTest::gtest
+        )
+    add_library(gtest::main INTERFACE IMPORTED)
+    target_link_libraries(gtest::main INTERFACE
+        GTest::gtest_main
+        )
+    add_library(gmock::gmock INTERFACE IMPORTED)
+    target_link_libraries(gmock::gmock INTERFACE
+        GTest::gmock
+        )
+    add_library(gmock::main INTERFACE IMPORTED)
+    target_link_libraries(gmock::main INTERFACE
+        GTest::gmock_main
+        )
+    set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
+  else ()
+    find_package(gtest)
+  endif()
 endif ()
 
 #############################

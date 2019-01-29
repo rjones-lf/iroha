@@ -9,6 +9,7 @@
 
 #include <gflags/gflags.h>
 #include <grpc++/grpc++.h>
+#include "ametsuchi/storage.hpp"
 #include "common/result.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "main/application.hpp"
@@ -127,6 +128,7 @@ int main(int argc, char *argv[]) {
                 config[mbr::MaxProposalSize].GetUint(),
                 std::chrono::milliseconds(config[mbr::ProposalDelay].GetUint()),
                 std::chrono::milliseconds(config[mbr::VoteDelay].GetUint()),
+                std::chrono::minutes(config[mbr::MstExpirationTime].GetUint()),
                 *keypair,
                 boost::make_optional(config[mbr::MstSupport].GetBool(),
                                      iroha::GossipPropagationStrategyParams{}));

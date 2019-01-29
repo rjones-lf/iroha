@@ -11,6 +11,7 @@
 #include "logger/logger.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
 
@@ -21,23 +22,6 @@ using namespace framework::test_subscriber;
 
 using testing::_;
 using testing::Return;
-
-class TestCompleter : public Completer {
-  bool operator()(const DataType &batch) const override {
-    return std::all_of(batch->transactions().begin(),
-                       batch->transactions().end(),
-                       [](const auto &tx) {
-                         return boost::size(tx->signatures()) >= tx->quorum();
-                       });
-  }
-
-  bool operator()(const DataType &batch, const TimeType &time) const override {
-    return std::any_of(
-        batch->transactions().begin(),
-        batch->transactions().end(),
-        [&time](const auto &tx) { return tx->createdTime() < time; });
-  }
-};
 
 class MstProcessorTest : public testing::Test {
  public:
@@ -291,7 +275,8 @@ TEST_F(MstProcessorTest, onNewPropagationUsecase) {
 
   // ---------------------------------| when |----------------------------------
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers{
-      makePeer("one", "sign_one"), makePeer("two", "sign_two")};
+      makePeer("one", shared_model::interface::types::PubkeyType("sign_one")),
+      makePeer("two", shared_model::interface::types::PubkeyType("sign_two"))};
   propagation_subject.get_subscriber().on_next(peers);
 }
 
@@ -309,9 +294,11 @@ TEST_F(MstProcessorTest, emptyStatePropagation) {
   EXPECT_CALL(*transport, sendState(_, _)).Times(0);
 
   // ---------------------------------| given |---------------------------------
-  auto another_peer = makePeer("another", "another_pubkey");
+  auto another_peer = makePeer(
+      "another", shared_model::interface::types::PubkeyType("sign_one"));
 
-  auto another_peer_state = MstState::empty();
+  auto another_peer_state = MstState::empty(
+      std::make_shared<iroha::DefaultCompleter>(std::chrono::minutes(0)));
   another_peer_state += makeTestBatch(txBuilder(1));
 
   storage->apply(another_peer->pubkey(), another_peer_state);
