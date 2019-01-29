@@ -8,6 +8,7 @@
 
 #include <gmock/gmock.h>
 
+#include "cryptography/hash.hpp"
 #include "endpoint.grpc.pb.h"
 #include "endpoint.pb.h"
 #include "interfaces/query_responses/block_query_response.hpp"
@@ -18,18 +19,6 @@
 
 namespace iroha {
   namespace torii {
-
-    class MockQueryProcessor : public QueryProcessor {
-     public:
-      MOCK_METHOD1(queryHandle,
-                   std::unique_ptr<shared_model::interface::QueryResponse>(
-                       const shared_model::interface::Query &));
-      MOCK_METHOD1(
-          blocksQueryHandle,
-          rxcpp::observable<
-              std::shared_ptr<shared_model::interface::BlockQueryResponse>>(
-              const shared_model::interface::BlocksQuery &));
-    };
 
     class MockStatusBus : public StatusBus {
      public:
@@ -50,7 +39,7 @@ namespace iroha {
           getStatusStream,
           rxcpp::observable<
               std::shared_ptr<shared_model::interface::TransactionResponse>>(
-              const shared_model::crypto::Hash &hash));
+              const shared_model::crypto::Hash &));
     };
 
   }  // namespace torii

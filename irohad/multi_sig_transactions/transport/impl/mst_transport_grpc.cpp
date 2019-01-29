@@ -15,6 +15,7 @@
 #include "interfaces/transaction.hpp"
 #include "validators/field_validator.hpp"
 
+using namespace iroha;
 using namespace iroha::network;
 
 using iroha::ConstRefState;
@@ -32,12 +33,14 @@ MstTransportGrpc::MstTransportGrpc(
     std::shared_ptr<shared_model::interface::TransactionBatchFactory>
         transaction_batch_factory,
     std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache,
+    std::shared_ptr<Completer> mst_completer,
     shared_model::crypto::PublicKey my_key)
     : async_call_(std::move(async_call)),
       transaction_factory_(std::move(transaction_factory)),
       batch_parser_(std::move(batch_parser)),
       batch_factory_(std::move(transaction_batch_factory)),
       tx_presence_cache_(std::move(tx_presence_cache)),
+      mst_completer_(std::move(mst_completer)),
       my_key_(shared_model::crypto::toBinaryString(my_key)) {}
 
 shared_model::interface::types::SharedTxsCollectionType
@@ -80,7 +83,7 @@ grpc::Status MstTransportGrpc::SendState(
 
   auto batches = batch_parser_->parseBatches(transactions);
 
-  MstState new_state = MstState::empty();
+  MstState new_state = MstState::empty(mst_completer_);
 
   for (auto &batch : batches) {
     batch_factory_->createTransactionBatch(batch).match(
@@ -134,10 +137,9 @@ grpc::Status MstTransportGrpc::SendState(
     return grpc::Status::OK;
   }
 
-  if (auto subscriber =subscriber_.lock()) {
-    subscriber->onNewState(
-      source_key,
-      std::move(new_state));} else {
+  if (auto subscriber = subscriber_.lock()) {
+    subscriber->onNewState(source_key, std::move(new_state));
+  } else {
     async_call_->log_->warn("No subscriber for MST SendState event is set");
   }
 
