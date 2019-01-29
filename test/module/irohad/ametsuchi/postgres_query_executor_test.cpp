@@ -25,6 +25,7 @@
 #include "interfaces/query_responses/account_detail_response.hpp"
 #include "interfaces/query_responses/account_response.hpp"
 #include "interfaces/query_responses/asset_response.hpp"
+#include "interfaces/query_responses/get_block_response.hpp"
 #include "interfaces/query_responses/role_permissions.hpp"
 #include "interfaces/query_responses/roles_response.hpp"
 #include "interfaces/query_responses/signatories_response.hpp"
@@ -217,6 +218,8 @@ namespace iroha {
           ErrorCodeType kInvalidAccountId = 5;
       static constexpr shared_model::interface::ErrorQueryResponse::
           ErrorCodeType kInvalidAssetId = 6;
+      static constexpr shared_model::interface::ErrorQueryResponse::
+          ErrorCodeType kInvalidHeight = 3;
 
       void createDefaultAccount() {
         execute(*mock_command_factory->constructCreateAccount(
@@ -772,6 +775,70 @@ namespace iroha {
             ASSERT_EQ(cast_resp.detail(),
                       R"({"id@domain" : {"key" : "value"}})");
           });
+    }
+
+    class GetBlockExecutorTest : public QueryExecutorTest {
+     public:
+      void SetUp() override {
+        QueryExecutorTest::SetUp();
+      }
+
+      const shared_model::interface::types::HeightType kLedgerHeight = 50;
+    };
+
+    /**
+     * @given initialized storage @and permission to get block
+     * @when get block of valid height
+     * @then return block
+     */
+    TEST_F(GetBlockExecutorTest, Valid) {
+      const shared_model::interface::types::HeightType valid_height = 42;
+
+      addPerms({shared_model::interface::permissions::Role::kGetBlocks});
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account_id)
+                       .getBlock(valid_height)
+                       .build();
+      auto result = executeQuery(query);
+      checkSuccessfulResult<shared_model::interface::GetBlockResponse>(
+          std::move(result), [valid_height](const auto &cast_resp) {
+            ASSERT_EQ(cast_resp.block().height(), valid_height);
+          });
+    }
+
+    /**
+     * @given initialized storage @and permission to get block
+     * @when get block of height, greater than supposed ledger's one
+     * @then return error
+     */
+    TEST_F(GetBlockExecutorTest, InvalidHeight) {
+      const shared_model::interface::types::HeightType invalid_height = 123;
+
+      addPerms({shared_model::interface::permissions::Role::kGetBlocks});
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account_id)
+                       .getBlock(invalid_height)
+                       .build();
+      auto result = executeQuery(query);
+      checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
+          std::move(result), kInvalidHeight);
+    }
+
+    /**
+     * @given initialized storage @and no permission to get block
+     * @when get block
+     * @then return error
+     */
+    TEST_F(GetBlockExecutorTest, NoPermission) {
+      const shared_model::interface::types::HeightType height = 123;
+
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account_id)
+                       .getBlock(height)
+                       .build();
+      auto result = executeQuery(query);
+      checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
+          std::move(result), kNoPermissions);
     }
 
     class GetRolesExecutorTest : public QueryExecutorTest {
