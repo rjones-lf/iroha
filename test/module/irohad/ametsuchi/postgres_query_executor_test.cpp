@@ -778,12 +778,55 @@ namespace iroha {
     }
 
     class GetBlockExecutorTest : public QueryExecutorTest {
+      class StorageImpl {
+        friend class GetBlockExecutorTest;
+      };
+
      public:
+      friend class StorageImpl;
       void SetUp() override {
         QueryExecutorTest::SetUp();
       }
 
-      const shared_model::interface::types::HeightType kLedgerHeight = 50;
+      // TODO [IR-257] Akvinikym 30.01.19: remove the method and use mocks
+      /**
+       * Commit some number of blocks to the storage
+       * @param blocks_amount - number of blocks to be committed
+       */
+      void commitBlocks(shared_model::interface::types::HeightType
+                            blocks_amount = kLedgerHeight) {
+        std::unique_ptr<MutableStorage> ms;
+        auto storageResult = storage->createMutableStorage();
+        storageResult.match(
+            [&ms](iroha::expected::Value<std::unique_ptr<MutableStorage>>
+                      &storage) { ms = std::move(storage.value); },
+            [](iroha::expected::Error<std::string> &error) {
+              FAIL() << "MutableStorage: " << error.error;
+            });
+
+        auto prev_hash = shared_model::crypto::Hash(zero_string);
+        for (decltype(blocks_amount) i = 1; i < blocks_amount; ++i) {
+          auto block =
+              TestBlockBuilder()
+                  .transactions(std::vector<shared_model::proto::Transaction>{
+                      TestTransactionBuilder()
+                          .creatorAccountId(account_id)
+                          .createAsset(std::to_string(i), domain_id, 1)
+                          .build()})
+                  .height(i)
+                  .prevHash(prev_hash)
+                  .build();
+          prev_hash = block.hash();
+
+          if (not ms->apply(block)) {
+            FAIL() << "could not apply block to the storage";
+          }
+        }
+        storage->commit(std::move(ms));
+      }
+
+      static constexpr shared_model::interface::types::HeightType
+          kLedgerHeight = 3;
     };
 
     /**
@@ -792,9 +835,10 @@ namespace iroha {
      * @then return block
      */
     TEST_F(GetBlockExecutorTest, Valid) {
-      const shared_model::interface::types::HeightType valid_height = 42;
+      const shared_model::interface::types::HeightType valid_height = 2;
 
       addPerms({shared_model::interface::permissions::Role::kGetBlocks});
+      commitBlocks();
       auto query = TestQueryBuilder()
                        .creatorAccountId(account_id)
                        .getBlock(valid_height)
@@ -814,6 +858,7 @@ namespace iroha {
     TEST_F(GetBlockExecutorTest, InvalidHeight) {
       const shared_model::interface::types::HeightType invalid_height = 123;
 
+      commitBlocks();
       addPerms({shared_model::interface::permissions::Role::kGetBlocks});
       auto query = TestQueryBuilder()
                        .creatorAccountId(account_id)
