@@ -29,9 +29,6 @@ namespace iroha {
                          boost::optional<std::shared_ptr<PeerQuery>>());
       MOCK_CONST_METHOD0(createBlockQuery,
                          boost::optional<std::shared_ptr<BlockQuery>>());
-      MOCK_CONST_METHOD0(
-          createOsPersistentState,
-          boost::optional<std::shared_ptr<OrderingServicePersistentState>>());
       MOCK_CONST_METHOD2(
           createQueryExecutor,
           boost::optional<std::shared_ptr<QueryExecutor>>(

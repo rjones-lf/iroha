@@ -20,7 +20,6 @@
 #include "common/bind.hpp"
 #include "common/byteutils.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
-#include "postgres_ordering_service_persistent_state.hpp"
 
 namespace {
   void prepareStatements(soci::connection_pool &connections, size_t pool_size) {
@@ -156,20 +155,6 @@ namespace iroha {
         return boost::none;
       }
       return boost::make_optional(block_query);
-    }
-
-    boost::optional<std::shared_ptr<OrderingServicePersistentState>>
-    StorageImpl::createOsPersistentState() const {
-      log_->info("create ordering service persistent state");
-      std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
-      if (not connection_) {
-        log_->info("connection to database is not initialised");
-        return boost::none;
-      }
-      return boost::make_optional<
-          std::shared_ptr<OrderingServicePersistentState>>(
-          std::make_shared<PostgresOrderingServicePersistentState>(
-              std::make_unique<soci::session>(*connection_)));
     }
 
     boost::optional<std::shared_ptr<QueryExecutor>>

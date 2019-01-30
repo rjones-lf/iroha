@@ -1,25 +1,6 @@
 # Copyright Soramitsu Co., Ltd. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-add_library(ordering_service
-    impl/ordering_gate_impl.cpp
-    impl/single_peer_ordering_service.cpp
-    impl/ordering_gate_transport_grpc.cpp
-    impl/ordering_service_transport_grpc.cpp
-    )
-
-
-target_link_libraries(ordering_service
-    rxcpp
-    common
-    tbb
-    shared_model_interfaces
-    shared_model_proto_backend
-    ordering_grpc
-    logger
-    shared_model_interfaces_factories
-    )
-
 add_library(on_demand_common
     impl/on_demand_common.cpp
     )

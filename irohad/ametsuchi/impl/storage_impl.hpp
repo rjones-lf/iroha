@@ -70,9 +70,6 @@ namespace iroha {
       boost::optional<std::shared_ptr<BlockQuery>> createBlockQuery()
           const override;
 
-      boost::optional<std::shared_ptr<OrderingServicePersistentState>>
-      createOsPersistentState() const override;
-
       boost::optional<std::shared_ptr<QueryExecutor>> createQueryExecutor(
           std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
           std::shared_ptr<shared_model::interface::QueryResponseFactory>
