@@ -62,12 +62,17 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
       cmakeOptions += " -DSANITIZE='address;leak' "
     }
 
-    sh "docker network create ${env.IROHA_NETWORK} || true"
+    // Create postgres
     // enable prepared transactions so that 2 phase commit works
     // we set it to 100 as a safe value
-    sh "docker run -td -e POSTGRES_USER=${env.IROHA_POSTGRES_USER} \
-    -e POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD} --name ${env.IROHA_POSTGRES_HOST} \
-    --network=${env.IROHA_NETWORK} postgres:9.5 -c 'max_prepared_transactions=100' || true"
+    sh """#!/bin/bash -xe
+      if [ ! "\$(docker ps -q -f name=${env.IROHA_POSTGRES_HOST})" ]; then
+        docker network create ${env.IROHA_NETWORK}
+        docker run -td -e POSTGRES_USER=${env.IROHA_POSTGRES_USER} \
+           -e POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD} --name ${env.IROHA_POSTGRES_HOST} \
+           --network=${env.IROHA_NETWORK} postgres:9.5 -c 'max_prepared_transactions=100'
+      fi
+    """
 
     iC = dockerUtils.dockerPullOrBuild("${platform}-develop-build",
         "${env.GIT_RAW_BASE_URL}/${scmVars.GIT_COMMIT}/docker/develop/Dockerfile",
