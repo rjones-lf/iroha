@@ -28,7 +28,7 @@ def dockerPullOrBuild(imageName, currentDockerfileURL, previousDockerfileURL, re
     referenceDockerfile = utils.getUrl(referenceDockerfileURL, "/tmp/${randDir}/referenceDockerfile")
     if (utils.filesDiffer(currentDockerfile, referenceDockerfile)) {
       // Dockerfile is differ from develop
-      if (utils.filesDiffer(currentDockerfile, previousDockerfile) {
+      if (utils.filesDiffer(currentDockerfile, previousDockerfile)) {
         // Dockerfile has been changed compared to both the previous commit and reference Dockerfile
         // Worst case scenario. We cannot count on the local cache
         // because Dockerfile may contain apt-get entries that would try to update
