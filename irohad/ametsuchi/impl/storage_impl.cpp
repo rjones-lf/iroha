@@ -411,7 +411,8 @@ namespace iroha {
       return storage;
     }
 
-    void StorageImpl::commit(std::unique_ptr<MutableStorage> mutableStorage) {
+    boost::optional<std::unique_ptr<LedgerState>> StorageImpl::commit(
+        std::unique_ptr<MutableStorage> mutableStorage) {
       auto storage_ptr = std::move(mutableStorage);  // get ownership of storage
       auto storage = static_cast<MutableStorageImpl *>(storage_ptr.get());
       for (const auto &block : storage->block_store_) {
@@ -420,22 +421,30 @@ namespace iroha {
       try {
         *(storage->sql_) << "COMMIT";
         storage->committed = true;
+        return createPeerQuery() |
+            [](const auto &peer_query) { return peer_query->getLedgerPeers(); }
+        | [](auto &&peers) {
+            return boost::optional<std::unique_ptr<LedgerState>>(
+                std::make_unique<LedgerState>(
+                    std::make_shared<PeerList>(std::move(peers))));
+          };
       } catch (std::exception &e) {
         storage->committed = false;
         log_->warn("Mutable storage is not committed. Reason: {}", e.what());
+        return boost::none;
       }
     }
 
-    bool StorageImpl::commitPrepared(
+    boost::optional<std::unique_ptr<LedgerState>> StorageImpl::commitPrepared(
         const shared_model::interface::Block &block) {
       if (not prepared_blocks_enabled_) {
         log_->warn("prepared blocks are not enabled");
-        return false;
+        return boost::none;
       }
 
       if (not block_is_prepared) {
         log_->info("there are no prepared blocks");
-        return false;
+        return boost::none;
       }
       log_->info("applying prepared block");
 
@@ -443,7 +452,7 @@ namespace iroha {
         std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
         if (not connection_) {
           log_->info("connection to database is not initialised");
-          return false;
+          return boost::none;
         }
         soci::session sql(*connection_);
         sql << "COMMIT PREPARED '" + prepared_block_name_ + "';";
@@ -454,10 +463,21 @@ namespace iroha {
         log_->warn("failed to apply prepared block {}: {}",
                    block.hash().hex(),
                    e.what());
-        return false;
+        return boost::none;
       }
-
-      return storeBlock(block);
+      return createPeerQuery() |
+                 [](const auto &peer_query) {
+                   return peer_query->getLedgerPeers();
+                 }
+                 | [this, &block](auto &&peers)
+                 -> boost::optional<std::unique_ptr<LedgerState>> {
+        if (this->storeBlock(block)) {
+          return boost::optional<std::unique_ptr<LedgerState>>(
+              std::make_unique<LedgerState>(
+                  std::make_shared<PeerList>(std::move(peers))));
+        }
+        return boost::none;
+      };
     }
 
     std::shared_ptr<WsvQuery> StorageImpl::getWsvQuery() const {

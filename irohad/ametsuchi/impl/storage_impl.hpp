@@ -100,9 +100,11 @@ namespace iroha {
 
       void freeConnections() override;
 
-      void commit(std::unique_ptr<MutableStorage> mutableStorage) override;
+      boost::optional<std::unique_ptr<LedgerState>> commit(
+          std::unique_ptr<MutableStorage> mutableStorage) override;
 
-      bool commitPrepared(const shared_model::interface::Block &block) override;
+      boost::optional<std::unique_ptr<LedgerState>> commitPrepared(
+          const shared_model::interface::Block &block) override;
 
       std::shared_ptr<WsvQuery> getWsvQuery() const override;
 
