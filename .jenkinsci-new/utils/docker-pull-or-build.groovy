@@ -41,7 +41,7 @@ def dockerPullOrBuild(imageName, currentDockerfileURL, previousDockerfileURL, re
     }
     else {
       // Dockerfile is same as develop
-      if (${scmVars.GIT_LOCAL_BRANCH} == "develop" && remoteFilesDiffer(currentDockerfileURL, previousDockerfileURL)) {
+      if ( scmVars.GIT_LOCAL_BRANCH == "develop" && remoteFilesDiffer(currentDockerfileURL, previousDockerfileURL)) {
         // we in dev branch and docker file was changed
         iC = docker.build("${env.DOCKER_REGISTRY_BASENAME}:${randDir}-${BUILD_NUMBER}", "${buildOptions} --no-cache -f ${currentDockerfile} .")
       } else {
