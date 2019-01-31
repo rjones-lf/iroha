@@ -401,6 +401,13 @@ namespace integration_framework {
     return iroha_instance_->getIrohaInstance()->getConsensusGate()->onOutcome();
   }
 
+  rxcpp::observable<iroha::synchronizer::SynchronizationEvent>
+  IntegrationTestFramework::getPcsOnCommitObservable() {
+    return iroha_instance_->getIrohaInstance()
+        ->getPeerCommunicationService()
+        ->on_commit();
+  }
+
   IntegrationTestFramework &IntegrationTestFramework::getTxStatus(
       const shared_model::crypto::Hash &hash,
       std::function<void(const shared_model::proto::TransactionResponse &)>

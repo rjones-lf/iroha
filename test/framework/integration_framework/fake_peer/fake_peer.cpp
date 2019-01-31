@@ -381,7 +381,7 @@ namespace integration_framework {
 
     boost::optional<std::shared_ptr<const shared_model::interface::Proposal>>
     FakePeer::sendProposalRequest(iroha::consensus::Round round,
-                                  std::chrono::milliseconds timeout) {
+                                  std::chrono::milliseconds timeout) const {
       auto on_demand_os_transport =
           iroha::ordering::transport::OnDemandOsClientGrpcFactory(
               async_call_,

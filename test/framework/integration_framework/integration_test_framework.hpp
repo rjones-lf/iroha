@@ -386,6 +386,9 @@ namespace integration_framework {
     rxcpp::observable<iroha::network::ConsensusGate::GateObject>
     getYacOnCommitObservable();
 
+    rxcpp::observable<iroha::synchronizer::SynchronizationEvent>
+    getPcsOnCommitObservable();
+
     /**
      * Request next status of the transaction
      * @param tx_hash is hash for filtering responses

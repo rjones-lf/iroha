@@ -77,9 +77,9 @@ namespace integration_framework {
       auto opt_proposal = proposal_storage->getProposal(request);
       getLogger()->debug(
           "Got an OnDemandOrderingService.GetProposal call for round {}, "
-          "{} returning a proposal.",
+          "{}returning a proposal.",
           request.toString(),
-          opt_proposal ? "" : "NOT");
+          opt_proposal ? "" : "NOT ");
       return opt_proposal;
     }
 

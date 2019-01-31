@@ -66,15 +66,20 @@ namespace integration_framework {
       /// with the transactions from internal storage will be returned
       void addBatches(const BatchesCollection &batches);
 
+      ProposalStorage &setDefaultProvider(DefaultProvider provider);
+
      private:
       /// Create a proposal from pending transactions, if any.
       boost::optional<std::unique_ptr<Proposal>> makeProposalFromPendingTxs(
           shared_model::interface::types::HeightType height);
 
-      DefaultProvider default_provider_;
+      OrderingProposalRequestResult getDefaultProposal(
+          const Round &round) const;
+
       std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
           proposal_factory_;
 
+      std::shared_ptr<DefaultProvider> default_provider_;
       std::map<Round, std::shared_ptr<const Proposal>> proposals_map_;
       mutable std::shared_timed_mutex proposals_map_mutex_;
 

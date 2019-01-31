@@ -4,16 +4,21 @@
  */
 
 #include <atomic>
+#include <future>
 
 #include "ametsuchi/impl/storage_impl.hpp"
+#include "backend/protobuf/proto_proposal_factory.hpp"
+#include "datetime/time.hpp"
 #include "framework/integration_framework/fake_peer/behaviour/honest.hpp"
 #include "framework/integration_framework/fake_peer/block_storage.hpp"
 #include "framework/integration_framework/fake_peer/fake_peer.hpp"
+#include "framework/integration_framework/fake_peer/proposal_storage.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/test_logger.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/shared_model/builders/protobuf/block.hpp"
+#include "module/shared_model/validators/validators.hpp"
 
 using namespace common_constants;
 using namespace shared_model;
@@ -25,30 +30,31 @@ using ::testing::Invoke;
 
 static constexpr std::chrono::seconds kMstStateWaitingTime(10);
 static constexpr std::chrono::seconds kSynchronizerWaitingTime(10);
-static constexpr std::chrono::seconds kProposalWaitingTime(1);
 
 class FakePeerExampleFixture : public AcceptanceFixture {
  public:
-  using FakePeerPtr = std::shared_ptr<fake_peer::FakePeer>;
+  using FakePeer = fake_peer::FakePeer;
 
   std::unique_ptr<IntegrationTestFramework> itf_;
 
   /**
+   * Create honest fake iroha peers
+   *
+   * @param num_fake_peers - the amount of fake peers to create
+   */
+  void createFakePeers(size_t num_fake_peers) {
+    fake_peers_ = itf_->addInitialPeers(num_fake_peers);
+  }
+
+
+  /**
    * Prepare state of ledger:
-   * - create honest fake iroha peers
    * - create account of target user
    * - add assets to admin
    *
-   * @param num_fake_peers - the amount of fake peers to create
    * @return reference to ITF
    */
-  IntegrationTestFramework &prepareState(size_t num_fake_peers) {
-    // request the fake peers construction
-    itf_->initPipeline(kAdminKeypair);
-
-    // make the fake peers with honest behaviour
-    fake_peers_ = itf_->addInitialPeers(num_fake_peers);
-
+  IntegrationTestFramework &prepareState() {
     itf_->setGenesisBlock(itf_->defaultBlock()).subscribeQueuesAndRun();
 
     // inside prepareState we can use lambda for such assert, since
@@ -71,9 +77,10 @@ class FakePeerExampleFixture : public AcceptanceFixture {
   void SetUp() override {
     itf_ =
         std::make_unique<IntegrationTestFramework>(1, boost::none, true, true);
+    itf_->initPipeline(kAdminKeypair);
   }
 
-  std::vector<FakePeerPtr> fake_peers_;
+  std::vector<std::shared_ptr<FakePeer>> fake_peers_;
 };
 
 /**
@@ -88,7 +95,8 @@ TEST_F(FakePeerExampleFixture,
   std::mutex mst_mutex;
   std::condition_variable mst_cv;
   std::atomic_bool got_state_notification(false);
-  auto &itf = prepareState(1);
+  createFakePeers(1);
+  auto &itf = prepareState();
   fake_peers_.front()->getMstStatesObservable().subscribe(
       [&mst_cv, &got_state_notification](const auto &state) {
         got_state_notification.store(true);
@@ -121,14 +129,15 @@ TEST_F(FakePeerExampleFixture, SynchronizeTheRightVersionOfForkedLedger) {
   constexpr size_t num_peers = (num_bad_peers + 1) * 3 + 1;  ///< BFT
   constexpr size_t num_fake_peers = num_peers - 1;  ///< one peer is real
 
-  auto &itf = prepareState(num_fake_peers);
+  createFakePeers(num_fake_peers);
+  auto &itf = prepareState();
 
   // let the first peers be bad
-  const std::vector<FakePeerPtr> bad_fake_peers(
+  const std::vector<std::shared_ptr<FakePeer>> bad_fake_peers(
       fake_peers_.begin(), fake_peers_.begin() + num_bad_peers);
-  const std::vector<FakePeerPtr> good_fake_peers(
+  const std::vector<std::shared_ptr<FakePeer>> good_fake_peers(
       fake_peers_.begin() + num_bad_peers, fake_peers_.end());
-  const FakePeerPtr &rantipole_peer =
+  const std::shared_ptr<FakePeer> &rantipole_peer =
       bad_fake_peers.front();  // the malicious actor
 
   // Add two blocks to the ledger.
@@ -286,77 +295,93 @@ TEST_F(FakePeerExampleFixture, SynchronizeTheRightVersionOfForkedLedger) {
  *
  * \attention this code is nothing more but an example of Fake Peer usage
  *
- * @given a network of two iroha peers
- * @when a valid command is sent to one
- * @then it must either (on demand) provide a proposal containing this command,
- * or request it from the other peer
+ * @given a network of one real and one fake peers
+ * @when fake peer provides a proposal with valid tx
+ * @then the real peer must commit the transaction from that proposal
  */
 TEST_F(FakePeerExampleFixture,
        OnDemandOrderingProposalAfterValidCommandReceived) {
-
-  /* A custom behaviour that requests a proposal for the round it got vote for,
-   * and if gets one, checks that the proposal contains the given tx hash.
-   */
-  struct CustomBehaviour : public fake_peer::HonestBehaviour {
-    CustomBehaviour(const interface::types::HashType &tx_hash,
-                    std::atomic_flag &got_proposal_from_main_peer)
-        : tx_hash_(tx_hash),
-          got_proposal_from_main_peer_(got_proposal_from_main_peer) {}
-
-    void processYacMessage(
-        std::shared_ptr<const fake_peer::YacMessage> message) override {
-      const auto proposal_from_main_peer = getFakePeer().sendProposalRequest(
-          message->front().hash.vote_round, kProposalWaitingTime);
-      if (proposal_from_main_peer
-          and std::any_of(
-                  proposal_from_main_peer.value()->transactions().begin(),
-                  proposal_from_main_peer.value()->transactions().end(),
-                  [this](const auto &tx) {
-                    return tx.reducedHash() == tx_hash_;
-                  })) {
-        got_proposal_from_main_peer_.test_and_set(std::memory_order_relaxed);
-      }
-      HonestBehaviour::processYacMessage(message);
-    }
-
-    const interface::types::HashType &tx_hash_;
-    std::atomic_flag &got_proposal_from_main_peer_;
-  };
 
   // Create the tx:
   const auto tx = complete(
       baseTx(kAdminId).transferAsset(kAdminId, kUserId, kAssetId, "tx1", "1.0"),
       kAdminKeypair);
-  const auto hash = tx.reducedHash();
 
-  std::atomic_flag got_proposal_from_main_peer = ATOMIC_FLAG_INIT;
+  auto state_ready = std::make_shared<std::atomic_bool>(false);
 
-  auto &itf = prepareState(1);
-  fake_peers_.front()->setBehaviour(
-      std::make_shared<CustomBehaviour>(hash, got_proposal_from_main_peer));
-
-  // watch the proposal requests to fake peer
-  bool got_proposal_from_fake_peer = false;
-  fake_peers_.front()->getProposalRequestsObservable().subscribe(
-      [&got_proposal_from_fake_peer](const auto &round) {
-        got_proposal_from_fake_peer = true;
+  auto proposal_storage = std::make_shared<fake_peer::ProposalStorage>();
+  proposal_storage->setDefaultProvider(
+      [tx, state_ready](
+          const auto &round) -> fake_peer::OrderingProposalRequestResult {
+        if (!state_ready->load(std::memory_order_relaxed)) {
+          return boost::none;
+        }
+        shared_model::proto::ProtoProposalFactory<
+            validation::AlwaysValidValidator>
+            valid_factory;
+        std::shared_ptr<const shared_model::proto::Proposal> proposal;
+        valid_factory
+            .createProposal(round.block_round,
+                            iroha::time::now(),
+                            std::vector<shared_model::proto::Transaction>({tx}))
+            .match(
+                [&proposal](iroha::expected::Value<std::unique_ptr<
+                                shared_model::interface::Proposal>> &v) {
+                  auto p1 =
+                      std::static_pointer_cast<shared_model::proto::Proposal>(
+                          std::shared_ptr<shared_model::interface::Proposal>(
+                              std::move(v).value));
+                  proposal = std::const_pointer_cast<
+                      const shared_model::proto::Proposal>(std::move(p1));
+                },
+                [](const iroha::expected::Error<std::string> &e) {
+                  FAIL() << "Could not create proposal: " << e.error;
+                });
+        return proposal;
       });
 
-  // Send a command to the ITF peer and store the block height:
-  shared_model::interface::types::HeightType block_height = 0;
-  itf.sendTx(tx).checkBlock([&block_height, &hash](const auto &block) {
-    block_height = block->height();
-    ASSERT_TRUE(std::any_of(
-        block->transactions().begin(),
-        block->transactions().end(),
-        [&hash](const auto &tx) { return tx.reducedHash() == hash; }))
-        << "The block does not contain the transaction!";
-  });
-  ASSERT_TRUE(block_height > 0) << "Did not get last block height value!";
+  auto commit_promise = std::make_shared<std::promise<void>>();
+  std::future<void> commit_future = commit_promise->get_future();
 
-  EXPECT_TRUE(
-      got_proposal_from_fake_peer
-      || got_proposal_from_main_peer.test_and_set(std::memory_order_relaxed))
-      << "The proposal was neither requested from the fake peer, nor served by "
-         "the real peer!";
+  createFakePeers(1);
+  fake_peers_.front()->setProposalStorage(std::move(proposal_storage));
+
+  auto &itf = prepareState();
+  state_ready->store(true, std::memory_order_relaxed);
+  // watch the proposal requests to fake peer
+  itf.getPcsOnCommitObservable()
+      /*
+      .start_with(iroha::synchronizer::SynchronizationEvent{
+          rxcpp::observable<>::just(
+              std::shared_ptr<shared_model::interface::Block>()),
+          iroha::synchronizer::SynchronizationOutcomeType::kCommit,
+          {123, 456}})
+      */
+      .filter([](const auto &sync_event) {
+        return sync_event.sync_outcome
+            == iroha::synchronizer::SynchronizationOutcomeType::kCommit;
+      })
+      .flat_map([](const auto &sync_event) { return sync_event.synced_blocks; })
+      .flat_map([](const auto &block) {
+        std::vector<shared_model::interface::types::HashType> hashes;
+        hashes.reserve(boost::size(block->transactions()));
+        for (const auto &tx : block->transactions()) {
+          hashes.emplace_back(tx.reducedHash());
+        }
+        return rxcpp::observable<>::iterate(hashes);
+      })
+      .any([my_hash = tx.reducedHash()](const auto &incoming_hash) {
+        return incoming_hash == my_hash;
+      })
+      .subscribe([commit_promise](bool tx_found) {
+        if (tx_found) {
+          EXPECT_NO_THROW(commit_promise->set_value())
+              << "Tx committed more than once!";
+        }
+      });
+
+  constexpr std::chrono::seconds kCommitWaitingTime(20);
+  EXPECT_EQ(commit_future.wait_for(kCommitWaitingTime),
+            std::future_status::ready)
+      << "Reached timeout waiting for the commit.";
 }
