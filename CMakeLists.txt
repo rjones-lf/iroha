@@ -71,7 +71,7 @@ SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 
 option(BENCHMARKING "Build benchmarks"               OFF)
 option(TESTING      "Build tests"                    ON )
-option(USE_BTF      "Build Binary Testing Framwork"  OFF)
+option(USE_BTF      "Build Binary Testing Framework" OFF)
 option(COVERAGE     "Enable coverage"                OFF)
 option(FUZZING      "Build fuzzing binaries"         OFF)
 option(PACKAGE_ZIP  "Create ZIP package"             OFF)

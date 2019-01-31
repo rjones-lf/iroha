@@ -26,7 +26,7 @@ Docker
   choices.
 
 First of all, you need to install ``docker`` and ``docker-compose``. You can
-read how to install it on a
+read how to install it on the
 `Docker's website <https://www.docker.com/community-edition/>`_
 
 .. note:: Please, use the latest available docker daemon and docker-compose.
