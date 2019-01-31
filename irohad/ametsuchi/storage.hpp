@@ -11,7 +11,6 @@
 #include <rxcpp/rx.hpp>
 #include "ametsuchi/block_query_factory.hpp"
 #include "ametsuchi/mutable_factory.hpp"
-#include "ametsuchi/os_persistent_state_factory.hpp"
 #include "ametsuchi/peer_query_factory.hpp"
 #include "ametsuchi/query_executor_factory.hpp"
 #include "ametsuchi/temporary_factory.hpp"
@@ -38,7 +37,6 @@ namespace iroha {
                     public MutableFactory,
                     public PeerQueryFactory,
                     public BlockQueryFactory,
-                    public OsPersistentStateFactory,
                     public QueryExecutorFactory {
      public:
       virtual std::shared_ptr<WsvQuery> getWsvQuery() const = 0;

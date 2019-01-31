@@ -17,6 +17,7 @@
 #include "module/irohad/validation/validation_mocks.hpp"
 #include "module/shared_model/builders/protobuf/block.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 #include "validation/chain_validator.hpp"
 
 using namespace iroha;
@@ -75,6 +76,9 @@ class SynchronizerTest : public ::testing::Test {
                                                       mutable_factory,
                                                       block_query_factory,
                                                       block_loader);
+
+    peer = makePeer("127.0.0.1", shared_model::crypto::PublicKey("111"));
+    ledger_peers = std::make_shared<PeerList>(PeerList{peer});
   }
 
   std::shared_ptr<shared_model::interface::Block> makeCommit(
@@ -102,6 +106,8 @@ class SynchronizerTest : public ::testing::Test {
   std::shared_ptr<shared_model::interface::Block> commit_message;
   shared_model::interface::types::PublicKeyCollectionType public_keys;
   shared_model::interface::types::HashType hash;
+  std::shared_ptr<shared_model::interface::Peer> peer;
+  std::shared_ptr<PeerList> ledger_peers;
 
   rxcpp::subjects::subject<ConsensusGate::GateObject> gate_outcome;
 
@@ -114,6 +120,8 @@ class SynchronizerTest : public ::testing::Test {
  * @then Successful commit
  */
 TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
+  EXPECT_CALL(*mutable_factory, commitPrepared(_))
+      .WillOnce(Return(ByMove(boost::none)));
   EXPECT_CALL(*mutable_factory, createMutableStorage())
       .WillOnce(::testing::Invoke(
           []() -> expected::Result<std::unique_ptr<MutableStorage>,
@@ -123,13 +131,15 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
             return expected::Value<std::unique_ptr<MutableStorage>>{
                 std::move(mutable_storage)};
           }));
-  EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
+  EXPECT_CALL(*mutable_factory, commit_(_))
+      .WillOnce(Return(ByMove(std::make_unique<LedgerState>(ledger_peers))));
   EXPECT_CALL(*chain_validator, validateAndApply(_, _)).Times(0);
   EXPECT_CALL(*block_loader, retrieveBlocks(_, _)).Times(0);
 
   auto wrapper =
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
   wrapper.subscribe([this](auto commit_event) {
+    EXPECT_EQ(*this->ledger_peers, *commit_event.ledger_state->ledger_peers);
     auto block_wrapper =
         make_test_subscriber<CallExact>(commit_event.synced_blocks, 1);
     block_wrapper.subscribe([this](auto block) {
@@ -181,7 +191,8 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
 
   EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
 
-  EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
+  EXPECT_CALL(*mutable_factory, commit_(_))
+      .WillOnce(Return(ByMove(std::make_unique<LedgerState>(ledger_peers))));
   EXPECT_CALL(*chain_validator, validateAndApply(_, _)).WillOnce(Return(true));
   EXPECT_CALL(*block_loader, retrieveBlocks(_, _))
       .WillOnce(Return(rxcpp::observable<>::just(commit_message)));
@@ -189,6 +200,7 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
   auto wrapper =
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
   wrapper.subscribe([this](auto commit_event) {
+    EXPECT_EQ(*this->ledger_peers, *commit_event.ledger_state->ledger_peers);
     auto block_wrapper =
         make_test_subscriber<CallExact>(commit_event.synced_blocks, 1);
     block_wrapper.subscribe([this](auto block) {
@@ -214,7 +226,9 @@ TEST_F(SynchronizerTest, ExactlyThreeRetrievals) {
   DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
       SetFactory(&createMockMutableStorage);
   EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
-  EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
+  EXPECT_CALL(*mutable_factory, commit_(_))
+      .WillOnce(Return(ByMove(boost::optional<std::unique_ptr<LedgerState>>(
+          std::make_unique<LedgerState>(ledger_peers)))));
   EXPECT_CALL(*chain_validator, validateAndApply(_, _))
       .WillOnce(Return(false))
       .WillOnce(testing::Invoke([](auto chain, auto &) {
@@ -247,7 +261,9 @@ TEST_F(SynchronizerTest, RetrieveBlockTwoFailures) {
   DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
       SetFactory(&createMockMutableStorage);
   EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
-  EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
+  EXPECT_CALL(*mutable_factory, commit_(_))
+      .WillOnce(Return(ByMove(boost::optional<std::unique_ptr<LedgerState>>(
+          std::make_unique<LedgerState>(ledger_peers)))));
   EXPECT_CALL(*block_loader, retrieveBlocks(_, _))
       .WillRepeatedly(Return(rxcpp::observable<>::just(commit_message)));
 
@@ -349,13 +365,16 @@ TEST_F(SynchronizerTest, NoneOutcome) {
  * @then commitPrepared is called @and commit is not called
  */
 TEST_F(SynchronizerTest, VotedForBlockCommitPrepared) {
-  EXPECT_CALL(*mutable_factory, commitPrepared(_)).WillOnce(Return(true));
+  EXPECT_CALL(*mutable_factory, commitPrepared(_))
+      .WillOnce(Return(ByMove(boost::optional<std::unique_ptr<LedgerState>>(
+          std::make_unique<LedgerState>(ledger_peers)))));
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(0);
 
   auto wrapper =
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
   wrapper.subscribe([this](auto commit_event) {
+    EXPECT_EQ(*this->ledger_peers, *commit_event.ledger_state->ledger_peers);
     auto block_wrapper =
         make_test_subscriber<CallExact>(commit_event.synced_blocks, 1);
     block_wrapper.subscribe([this](auto block) {
@@ -420,7 +439,8 @@ TEST_F(SynchronizerTest, VotedForThisCommitPreparedFailure) {
   auto storage_value =
       expected::makeValue<std::unique_ptr<MutableStorage>>(std::move(ustorage));
 
-  EXPECT_CALL(*mutable_factory, commitPrepared(_)).WillOnce(Return(false));
+  EXPECT_CALL(*mutable_factory, commitPrepared(_))
+      .WillOnce(Return(ByMove(boost::none)));
 
   EXPECT_CALL(*mutable_factory, createMutableStorage())
       .WillOnce(Return(ByMove(std::move(storage_value))));
@@ -444,4 +464,61 @@ TEST_F(SynchronizerTest, VotedForThisCommitPreparedFailure) {
 
   gate_outcome.get_subscriber().on_next(
       consensus::PairValid{commit_message, consensus::Round{kHeight, 1}});
+}
+
+/**
+ * @given A commit from consensus and initialized components
+ * @when a valid block that can be applied and commit fails
+ * @then no commit event is emitted
+ */
+TEST_F(SynchronizerTest, CommitFailureVoteSameBlock) {
+  EXPECT_CALL(*mutable_factory, commitPrepared(_))
+      .WillOnce(Return(ByMove(boost::none)));
+  EXPECT_CALL(*mutable_factory, createMutableStorage())
+      .WillOnce(::testing::Invoke(
+          []() -> expected::Result<std::unique_ptr<MutableStorage>,
+                                   std::string> {
+            auto mutable_storage = std::make_unique<MockMutableStorage>();
+            EXPECT_CALL(*mutable_storage, apply(_)).WillOnce(Return(true));
+            return expected::Value<std::unique_ptr<MutableStorage>>{
+                std::move(mutable_storage)};
+          }));
+  EXPECT_CALL(*mutable_factory, commit_(_))
+      .WillOnce(Return(ByMove(boost::none)));
+  EXPECT_CALL(*chain_validator, validateAndApply(_, _)).Times(0);
+  EXPECT_CALL(*block_loader, retrieveBlocks(_, _)).Times(0);
+
+  auto wrapper =
+      make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 0);
+
+  gate_outcome.get_subscriber().on_next(
+      consensus::PairValid{commit_message, consensus::Round{kHeight, 1}});
+
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given A commit from consensus and initialized components
+ * @when gate have voted for other block and commit fails
+ * @then no commit event is emitted
+ */
+TEST_F(SynchronizerTest, CommitFailureVoteOther) {
+  DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
+      SetFactory(&createMockMutableStorage);
+
+  EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
+
+  EXPECT_CALL(*mutable_factory, commit_(_))
+      .WillOnce(Return(ByMove(boost::none)));
+  EXPECT_CALL(*chain_validator, validateAndApply(_, _)).WillOnce(Return(true));
+  EXPECT_CALL(*block_loader, retrieveBlocks(_, _))
+      .WillOnce(Return(rxcpp::observable<>::just(commit_message)));
+
+  auto wrapper =
+      make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 0);
+
+  gate_outcome.get_subscriber().on_next(
+      consensus::VoteOther{public_keys, hash, consensus::Round{kHeight, 1}});
+
+  ASSERT_TRUE(wrapper.validate());
 }

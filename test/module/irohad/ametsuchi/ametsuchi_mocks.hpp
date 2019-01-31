@@ -8,7 +8,6 @@
 
 #include <gmock/gmock.h>
 #include <boost/optional.hpp>
-#include "ametsuchi/os_persistent_state_factory.hpp"
 #include "ametsuchi/temporary_wsv.hpp"
 #include "ametsuchi/wsv_command.hpp"
 #include "common/result.hpp"
@@ -111,13 +110,6 @@ namespace iroha {
     class MockTemporaryWsvSavepointWrapper
         : public TemporaryWsv::SavepointWrapper {
       MOCK_METHOD0(release, void(void));
-    };
-
-    class MockOsPersistentStateFactory : public OsPersistentStateFactory {
-     public:
-      MOCK_CONST_METHOD0(
-          createOsPersistentState,
-          boost::optional<std::shared_ptr<OrderingServicePersistentState>>());
     };
 
     namespace tx_cache_status_responses {
