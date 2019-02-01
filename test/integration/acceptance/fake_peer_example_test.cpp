@@ -327,12 +327,13 @@ TEST_F(FakePeerExampleFixture,
             .match(
                 [&proposal](iroha::expected::Value<std::unique_ptr<
                                 shared_model::interface::Proposal>> &v) {
-                  auto p1 =
+                  // casting std::shared_ptr<shared_model::interface::Proposal>
+                  // to std::shared_ptr<const shared_model::proto::Proposal>
+                  proposal = std::const_pointer_cast<
+                      const shared_model::proto::Proposal>(
                       std::static_pointer_cast<shared_model::proto::Proposal>(
                           std::shared_ptr<shared_model::interface::Proposal>(
-                              std::move(v).value));
-                  proposal = std::const_pointer_cast<
-                      const shared_model::proto::Proposal>(std::move(p1));
+                              std::move(v).value)));
                 },
                 [](const iroha::expected::Error<std::string> &e) {
                   FAIL() << "Could not create proposal: " << e.error;
@@ -350,13 +351,6 @@ TEST_F(FakePeerExampleFixture,
   state_ready->store(true, std::memory_order_relaxed);
   // watch the proposal requests to fake peer
   itf.getPcsOnCommitObservable()
-      /*
-      .start_with(iroha::synchronizer::SynchronizationEvent{
-          rxcpp::observable<>::just(
-              std::shared_ptr<shared_model::interface::Block>()),
-          iroha::synchronizer::SynchronizationOutcomeType::kCommit,
-          {123, 456}})
-      */
       .filter([](const auto &sync_event) {
         return sync_event.sync_outcome
             == iroha::synchronizer::SynchronizationOutcomeType::kCommit;
