@@ -5,8 +5,6 @@
 
 #include "consensus/yac/storage/yac_storage_cleanup_strategy_impl.hpp"
 
-#include "consensus/yac/messages.hpp"
-
 using namespace iroha::consensus::yac;
 
 BufferedCleanupStrategy::BufferedCleanupStrategy(QueueSizeType max_limit,

@@ -8,8 +8,6 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-#include "consensus/yac/messages.hpp"
-
 using namespace iroha::consensus::yac;
 
 class BufferedCleanupStrategyTest : public ::testing::Test {

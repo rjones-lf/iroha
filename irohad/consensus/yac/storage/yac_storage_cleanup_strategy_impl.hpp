@@ -10,6 +10,8 @@
 
 #include <queue>
 
+#include "consensus/yac/outcome_messages.hpp"
+
 namespace iroha {
   namespace consensus {
     namespace yac {
