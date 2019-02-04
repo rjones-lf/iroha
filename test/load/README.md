@@ -21,6 +21,8 @@ docker build -t iroha-locust .
 
 1. Specify Iroha node address and port in `TARGET_URL` in Compose [file](docker-compose.yml).
 
+**Note for Mac hosts** If you are running Iroha on the same host as locust, you most likely need to use `docker.for.mac.localhost:50051`, where `50051` is Torii port.
+
 2. Run locust
 ```sh
 docker-compose up
