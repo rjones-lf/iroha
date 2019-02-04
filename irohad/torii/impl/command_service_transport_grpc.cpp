@@ -186,7 +186,6 @@ namespace torii {
         (client_id_format % context->peer() % hash.toString()).str();
     bool last_tx_status_received = false;
     auto status_bus = command_service_->getStatusStream(hash)
-                          .subscribe_on(current_thread)
                           .finally([&last_tx_status_received] {
                             last_tx_status_received = true;
                           })
@@ -197,13 +196,11 @@ namespace torii {
             // a dummy start_with lets us don't wait for the consensus event
             // on further combine_latest
             .start_with(ConsensusGateEvent{})
-            .subscribe_on(current_thread)
             .publish()
             .ref_count();
 
     boost::optional<iroha::protocol::TxStatus> last_tx_status;
     auto rounds_counter{0};
-    std::mutex stream_write_mutex;
     status_bus
         // convert to transport objects
         .map([&](auto response) {
@@ -212,21 +209,16 @@ namespace torii {
                      shared_model::proto::TransactionResponse>(response)
               ->getTransport();
         })
-        .combine_latest(consensus_gate_observable)
+        .combine_latest(current_thread, consensus_gate_observable)
         .map([](const auto &tuple) { return std::get<0>(tuple); })
         // complete the observable if client is disconnected or too many
         // rounds have passed without tx status change
         .take_while([=,
                      &rounds_counter,
                      &last_tx_status,
-                     &stream_write_mutex,
                      // last_tx_status_received has to be passed by reference to
                      // prevent accessing its outdated state
                      &last_tx_status_received](const auto &response) {
-          // TODO [IR-249] akvinikym 23.01.19: remove the mutex after
-          // ensuring only one thread can be here
-          std::lock_guard<std::mutex> lg{stream_write_mutex};
-
           if (context->IsCancelled()) {
             log_->debug("client unsubscribed, {}", client_id);
             return false;
@@ -253,13 +245,12 @@ namespace torii {
             return false;
           }
 
+          log_->debug("status written, {}", client_id);
           if (last_tx_status_received) {
             // force stream to end because no more tx statuses will arrive.
             // it is thread safe because of synchronization on current_thread
             return false;
           }
-
-          log_->debug("status written, {}", client_id);
           return true;
         })
         .subscribe(subscription,
