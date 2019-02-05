@@ -332,15 +332,11 @@ namespace iroha {
             (sql_.prepare
                  << (cmd % getAccountRolePermissionCheckSql(permission)).str(),
              soci::use(account_id, "role_account_id"));
-
-        if (not st.begin()->get<0>()) {
-          return false;
-        }
+        return st.begin()->get<0>();
       } catch (const std::exception &e) {
         log_->error("Failed to validate query: {}", e.what());
         return false;
       }
-      return true;
     }
 
     PostgresQueryExecutorVisitor::PostgresQueryExecutorVisitor(

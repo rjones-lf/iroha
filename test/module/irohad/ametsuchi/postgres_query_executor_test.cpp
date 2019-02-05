@@ -778,23 +778,14 @@ namespace iroha {
     }
 
     class GetBlockExecutorTest : public QueryExecutorTest {
-      class StorageImpl {
-        friend class GetBlockExecutorTest;
-      };
-
      public:
-      friend class StorageImpl;
-      void SetUp() override {
-        QueryExecutorTest::SetUp();
-      }
-
       // TODO [IR-257] Akvinikym 30.01.19: remove the method and use mocks
       /**
        * Commit some number of blocks to the storage
        * @param blocks_amount - number of blocks to be committed
        */
       void commitBlocks(shared_model::interface::types::HeightType
-                            blocks_amount = kLedgerHeight) {
+                            number_of_blocks = kLedgerHeight) {
         std::unique_ptr<MutableStorage> ms;
         auto storageResult = storage->createMutableStorage();
         storageResult.match(
@@ -805,7 +796,7 @@ namespace iroha {
             });
 
         auto prev_hash = shared_model::crypto::Hash(zero_string);
-        for (decltype(blocks_amount) i = 1; i < blocks_amount; ++i) {
+        for (decltype(number_of_blocks) i = 1; i < number_of_blocks; ++i) {
           auto block =
               TestBlockBuilder()
                   .transactions(std::vector<shared_model::proto::Transaction>{
