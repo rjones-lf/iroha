@@ -27,6 +27,7 @@ See [locustfile.py](locustfile.py) for descriptions of task sets implemented usi
     ```sh
     docker-compose up
     ```
+
     4 slaves can be spawned by adding `--scale locust-slave=4` to the previous command.
 
 3. Access locust web interface as specified in [documentation](https://docs.locust.io/en/stable/quickstart.html#open-up-locust-s-web-interface).
