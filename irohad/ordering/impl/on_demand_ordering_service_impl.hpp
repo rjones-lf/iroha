@@ -71,12 +71,6 @@ namespace iroha {
       void tryErase();
 
       /**
-       * @return packed proposal from the given round queue
-       * Note: method is not thread-safe
-       */
-      ProposalType emitProposal(const consensus::Round &round);
-
-      /**
        * Check if batch was already processed by the peer
        */
       bool batchAlreadyProcessed(
