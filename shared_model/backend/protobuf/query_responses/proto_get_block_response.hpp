@@ -8,13 +8,13 @@
 
 #include "backend/protobuf/block.hpp"
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
-#include "interfaces/query_responses/get_block_response.hpp"
+#include "interfaces/query_responses/block_response.hpp"
 #include "qry_responses.pb.h"
 
 namespace shared_model {
   namespace proto {
     class GetBlockResponse final
-        : public CopyableProto<interface::GetBlockResponse,
+        : public CopyableProto<interface::BlockResponse,
                                iroha::protocol::QueryResponse,
                                GetBlockResponse> {
      public:

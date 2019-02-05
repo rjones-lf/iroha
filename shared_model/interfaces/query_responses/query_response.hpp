@@ -17,7 +17,7 @@ namespace shared_model {
     class AccountAssetResponse;
     class AccountDetailResponse;
     class AccountResponse;
-    class GetBlockResponse;
+    class BlockResponse;
     class ErrorQueryResponse;
     class SignatoriesResponse;
     class TransactionsResponse;
@@ -48,7 +48,7 @@ namespace shared_model {
                                          RolesResponse,
                                          RolePermissionsResponse,
                                          TransactionsPageResponse,
-                                         GetBlockResponse>;
+                                         BlockResponse>;
 
       /**
        * @return reference to const variant with concrete qr

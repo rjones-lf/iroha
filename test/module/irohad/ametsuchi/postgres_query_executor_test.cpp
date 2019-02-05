@@ -25,7 +25,7 @@
 #include "interfaces/query_responses/account_detail_response.hpp"
 #include "interfaces/query_responses/account_response.hpp"
 #include "interfaces/query_responses/asset_response.hpp"
-#include "interfaces/query_responses/get_block_response.hpp"
+#include "interfaces/query_responses/block_response.hpp"
 #include "interfaces/query_responses/role_permissions.hpp"
 #include "interfaces/query_responses/roles_response.hpp"
 #include "interfaces/query_responses/signatories_response.hpp"
@@ -844,7 +844,7 @@ namespace iroha {
                        .getBlock(valid_height)
                        .build();
       auto result = executeQuery(query);
-      checkSuccessfulResult<shared_model::interface::GetBlockResponse>(
+      checkSuccessfulResult<shared_model::interface::BlockResponse>(
           std::move(result), [valid_height](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.block().height(), valid_height);
           });

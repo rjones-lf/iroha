@@ -609,21 +609,21 @@ namespace iroha {
         // invalid height
         return logAndReturnErrorResponse(
             QueryErrorType::kStatefulFailed,
-            "height greater than the ledger's one specified: "
-                + std::to_string(q.height()) + " vs "
-                + std::to_string(ledger_height),
+            "requested height (" + std::to_string(q.height())
+                + ") is greater than the ledger's one ("
+                + std::to_string(ledger_height) + ")",
             3);
       }
 
-      auto block_deserialization_msg =
-          "could not retrieve block with given height: "
-          + std::to_string(q.height());
+      auto block_deserialization_msg = [height = q.height()] {
+        return "could not retrieve block with given height: "
+            + std::to_string(height);
+      };
       auto serialized_block = block_store_.get(q.height());
       if (not serialized_block) {
         // for some reason, block with such height was not retrieved
-        return logAndReturnErrorResponse(QueryErrorType::kStatefulFailed,
-                                         std::move(block_deserialization_msg),
-                                         1);
+        return logAndReturnErrorResponse(
+            QueryErrorType::kStatefulFailed, block_deserialization_msg(), 1);
       }
 
       return converter_->deserialize(bytesToString(*serialized_block))
@@ -633,10 +633,13 @@ namespace iroha {
                 return this->query_response_factory_->createBlockResponse(
                     std::move(block.value), query_hash_);
               },
-              [this, err_msg = std::move(block_deserialization_msg)](
-                  const auto &err) {
+              [this, err_msg = block_deserialization_msg()](const auto &err) {
+                auto extended_error =
+                    err_msg + ", because it was not deserialized: " + err.error;
                 return this->logAndReturnErrorResponse(
-                    QueryErrorType::kStatefulFailed, std::move(err_msg), 1);
+                    QueryErrorType::kStatefulFailed,
+                    std::move(extended_error),
+                    1);
               });
     }
 

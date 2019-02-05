@@ -50,7 +50,8 @@ namespace iroha {
       return executor.value()->validateAndExecute(qry, true);
     }
 
-    rxcpp::observable<iroha::torii::QueryProcessorImpl::wBlockQueryResponse>
+    rxcpp::observable<
+        std::shared_ptr<shared_model::interface::BlockQueryResponse>>
     QueryProcessorImpl::blocksQueryHandle(
         const shared_model::interface::BlocksQuery &qry) {
       auto exec = qry_exec_->createQueryExecutor(pending_transactions_,
