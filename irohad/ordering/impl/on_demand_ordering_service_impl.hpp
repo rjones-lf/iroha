@@ -53,7 +53,7 @@ namespace iroha {
 
       void onBatches(consensus::Round, CollectionType batches) override;
 
-      boost::optional<ProposalType> onRequestProposal(
+      boost::optional<std::shared_ptr<const ProposalType>> onRequestProposal(
           consensus::Round round) override;
 
      private:
@@ -95,7 +95,7 @@ namespace iroha {
        * Map of available proposals
        */
       std::unordered_map<consensus::Round,
-                         ProposalType,
+                         std::shared_ptr<const ProposalType>,
                          consensus::RoundTypeHasher>
           proposal_map_;
 

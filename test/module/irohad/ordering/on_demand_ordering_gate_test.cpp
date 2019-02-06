@@ -22,6 +22,7 @@ using namespace iroha::network;
 using namespace framework::test_subscriber;
 
 using ::testing::_;
+using ::testing::AtMost;
 using ::testing::ByMove;
 using ::testing::NiceMock;
 using ::testing::Return;
@@ -57,7 +58,7 @@ class OnDemandOrderingGateTest : public ::testing::Test {
   rxcpp::subjects::subject<OnDemandOrderingGate::BlockRoundEventType> rounds;
   std::shared_ptr<MockOnDemandOrderingService> ordering_service;
   std::shared_ptr<MockOdOsNotification> notification;
-  MockUnsafeProposalFactory *factory;
+  NiceMock<MockUnsafeProposalFactory> *factory;
   std::shared_ptr<ametsuchi::MockTxPresenceCache> tx_cache;
   std::shared_ptr<OnDemandOrderingGate> ordering_gate;
 
@@ -92,8 +93,8 @@ TEST_F(OnDemandOrderingGateTest, propagateBatch) {
 TEST_F(OnDemandOrderingGateTest, BlockEvent) {
   auto mproposal = std::make_unique<MockProposal>();
   auto proposal = mproposal.get();
-  boost::optional<OdOsNotification::ProposalType> oproposal(
-      std::move(mproposal));
+  boost::optional<std::shared_ptr<const OdOsNotification::ProposalType>>
+      oproposal(std::move(mproposal));
   std::vector<std::shared_ptr<MockTransaction>> txs{
       std::make_shared<MockTransaction>()};
   ON_CALL(*txs[0], hash())
@@ -105,18 +106,10 @@ TEST_F(OnDemandOrderingGateTest, BlockEvent) {
   EXPECT_CALL(*notification, onRequestProposal(round))
       .WillOnce(Return(ByMove(std::move(oproposal))));
 
-  auto ufactory_proposal = std::make_unique<MockProposal>();
-  auto factory_proposal = ufactory_proposal.get();
-  EXPECT_CALL(*factory, unsafeCreateProposal(_, _, _))
-      .WillOnce(Return(ByMove(std::move(ufactory_proposal))));
-  ON_CALL(*factory_proposal, transactions())
-      .WillByDefault(Return(txs | boost::adaptors::indirected));
-
   auto gate_wrapper =
       make_test_subscriber<CallExact>(ordering_gate->onProposal(), 1);
-  gate_wrapper.subscribe([&](auto val) {
-    ASSERT_EQ(factory_proposal, getProposalUnsafe(val).get());
-  });
+  gate_wrapper.subscribe(
+      [&](auto val) { ASSERT_EQ(proposal, getProposalUnsafe(val).get()); });
 
   rounds.get_subscriber().on_next(OnDemandOrderingGate::BlockEvent{round, {}});
 
@@ -132,8 +125,8 @@ TEST_F(OnDemandOrderingGateTest, BlockEvent) {
 TEST_F(OnDemandOrderingGateTest, EmptyEvent) {
   auto mproposal = std::make_unique<MockProposal>();
   auto proposal = mproposal.get();
-  boost::optional<OdOsNotification::ProposalType> oproposal(
-      std::move(mproposal));
+  boost::optional<std::shared_ptr<const OdOsNotification::ProposalType>>
+      oproposal(std::move(mproposal));
   std::vector<std::shared_ptr<MockTransaction>> txs{
       std::make_shared<MockTransaction>()};
   ON_CALL(*txs[0], hash())
@@ -145,18 +138,10 @@ TEST_F(OnDemandOrderingGateTest, EmptyEvent) {
   EXPECT_CALL(*notification, onRequestProposal(round))
       .WillOnce(Return(ByMove(std::move(oproposal))));
 
-  auto ufactory_proposal = std::make_unique<MockProposal>();
-  auto factory_proposal = ufactory_proposal.get();
-  EXPECT_CALL(*factory, unsafeCreateProposal(_, _, _))
-      .WillOnce(Return(ByMove(std::move(ufactory_proposal))));
-  ON_CALL(*factory_proposal, transactions())
-      .WillByDefault(Return(txs | boost::adaptors::indirected));
-
   auto gate_wrapper =
       make_test_subscriber<CallExact>(ordering_gate->onProposal(), 1);
-  gate_wrapper.subscribe([&](auto val) {
-    ASSERT_EQ(factory_proposal, getProposalUnsafe(val).get());
-  });
+  gate_wrapper.subscribe(
+      [&](auto val) { ASSERT_EQ(proposal, getProposalUnsafe(val).get()); });
 
   rounds.get_subscriber().on_next(OnDemandOrderingGate::EmptyEvent{round});
 
@@ -170,7 +155,8 @@ TEST_F(OnDemandOrderingGateTest, EmptyEvent) {
  * @then new empty proposal round based on the received height is initiated
  */
 TEST_F(OnDemandOrderingGateTest, BlockEventNoProposal) {
-  boost::optional<OdOsNotification::ProposalType> proposal;
+  boost::optional<std::shared_ptr<const OdOsNotification::ProposalType>>
+      proposal;
 
   EXPECT_CALL(*ordering_service, onCollaborationOutcome(round)).Times(1);
   EXPECT_CALL(*notification, onRequestProposal(round))
@@ -192,7 +178,8 @@ TEST_F(OnDemandOrderingGateTest, BlockEventNoProposal) {
  * @then new empty proposal round based on the received height is initiated
  */
 TEST_F(OnDemandOrderingGateTest, EmptyEventNoProposal) {
-  boost::optional<OdOsNotification::ProposalType> proposal;
+  boost::optional<std::shared_ptr<const OdOsNotification::ProposalType>>
+      proposal;
 
   EXPECT_CALL(*ordering_service, onCollaborationOutcome(round)).Times(1);
   EXPECT_CALL(*notification, onRequestProposal(round))
@@ -224,10 +211,11 @@ TEST_F(OnDemandOrderingGateTest, ReplayedTransactionInProposal) {
   auto tx_range = txs | boost::adaptors::indirected;
 
   // initialize mock proposal
-  auto proposal = std::make_unique<NiceMock<MockProposal>>();
+  auto proposal = std::make_shared<const NiceMock<MockProposal>>();
   ON_CALL(*proposal, transactions()).WillByDefault(Return(tx_range));
-  boost::optional<OdOsNotification::ProposalType> arriving_proposal =
-      std::unique_ptr<shared_model::interface::Proposal>(std::move(proposal));
+  auto arriving_proposal = boost::make_optional(
+      std::static_pointer_cast<const shared_model::interface::Proposal>(
+          std::move(proposal)));
 
   // set expectations for ordering service
   EXPECT_CALL(*ordering_service, onCollaborationOutcome(round)).Times(1);
@@ -250,6 +238,7 @@ TEST_F(OnDemandOrderingGateTest, ReplayedTransactionInProposal) {
       *factory,
       unsafeCreateProposal(
           _, _, MockUnsafeProposalFactory::TransactionsCollectionType()))
+      .Times(AtMost(1))
       .WillOnce(Return(ByMove(std::move(ufactory_proposal))));
 
   auto gate_wrapper =

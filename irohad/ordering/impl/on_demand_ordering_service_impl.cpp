@@ -88,7 +88,8 @@ void OnDemandOrderingServiceImpl::onBatches(consensus::Round round,
   log_->debug("onBatches => collection is inserted");
 }
 
-boost::optional<OnDemandOrderingServiceImpl::ProposalType>
+boost::optional<
+    std::shared_ptr<const OnDemandOrderingServiceImpl::ProposalType>>
 OnDemandOrderingServiceImpl::onRequestProposal(consensus::Round round) {
   // read lock
   std::shared_lock<std::shared_timed_mutex> guard(lock_);
@@ -99,7 +100,7 @@ OnDemandOrderingServiceImpl::onRequestProposal(consensus::Round round) {
               round,
               (proposal == proposal_map_.end()) ? "NOT " : "");
   if (proposal != proposal_map_.end()) {
-    return clone(*proposal->second);
+    return proposal->second;
   } else {
     return boost::none;
   }

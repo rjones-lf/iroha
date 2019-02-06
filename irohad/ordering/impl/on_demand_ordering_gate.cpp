@@ -95,22 +95,26 @@ void OnDemandOrderingGate::setPcs(
       "Method is deprecated. PCS observable should be set in ctor");
 }
 
-boost::optional<std::shared_ptr<shared_model::interface::Proposal>>
+boost::optional<std::shared_ptr<const shared_model::interface::Proposal>>
 OnDemandOrderingGate::processProposalRequest(
-    boost::optional<OnDemandOrderingService::ProposalType> &&proposal) const {
+    boost::optional<
+        std::shared_ptr<const OnDemandOrderingService::ProposalType>> proposal)
+    const {
   if (not proposal) {
     return boost::none;
   }
+  auto proposal_without_replays = removeReplays(*std::move(proposal));
   // no need to check empty proposal
-  if (boost::empty(proposal.value()->transactions())) {
+  if (boost::empty(proposal_without_replays->transactions())) {
     return boost::none;
   }
-  return removeReplays(std::move(**std::move(proposal)));
+  return proposal_without_replays;
 }
 
-boost::optional<std::shared_ptr<shared_model::interface::Proposal>>
+std::shared_ptr<const shared_model::interface::Proposal>
 OnDemandOrderingGate::removeReplays(
-    shared_model::interface::Proposal &&proposal) const {
+    std::shared_ptr<const shared_model::interface::Proposal> proposal)
+    const {
   std::vector<bool> proposal_txs_validation_results;
   auto tx_is_not_processed = [this](const auto &tx) {
     auto tx_result = tx_cache_->check(tx.hash());
@@ -132,18 +136,24 @@ OnDemandOrderingGate::removeReplays(
 
   shared_model::interface::TransactionBatchParserImpl batch_parser;
 
-  auto batches = batch_parser.parseBatches(proposal.transactions());
+  bool has_replays = false;
+  auto batches = batch_parser.parseBatches(proposal->transactions());
   for (auto &batch : batches) {
-    bool batch_validation_result =
+    bool all_txs_are_new =
         std::all_of(batch.begin(), batch.end(), tx_is_not_processed);
     proposal_txs_validation_results.insert(
         proposal_txs_validation_results.end(),
         batch.size(),
-        batch_validation_result);
+        all_txs_are_new);
+    has_replays |= not all_txs_are_new;
+  }
+
+  if (not has_replays) {
+    return std::move(proposal);
   }
 
   auto unprocessed_txs =
-      proposal.transactions() | boost::adaptors::indexed()
+      proposal->transactions() | boost::adaptors::indexed()
       | boost::adaptors::filtered(
             [proposal_txs_validation_results =
                  std::move(proposal_txs_validation_results)](const auto &el) {
@@ -152,13 +162,6 @@ OnDemandOrderingGate::removeReplays(
       | boost::adaptors::transformed(
             [](const auto &el) -> decltype(auto) { return el.value(); });
 
-  auto result = proposal_factory_->unsafeCreateProposal(
-      proposal.height(), proposal.createdTime(), unprocessed_txs);
-
-  if (boost::empty(result->transactions())) {
-    return boost::none;
-  }
-
-  return boost::make_optional<
-      std::shared_ptr<shared_model::interface::Proposal>>(std::move(result));
+  return proposal_factory_->unsafeCreateProposal(
+      proposal->height(), proposal->createdTime(), unprocessed_txs);
 }

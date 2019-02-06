@@ -33,7 +33,7 @@ namespace iroha {
         /**
          * Type of stored proposals
          */
-        using ProposalType = std::unique_ptr<shared_model::interface::Proposal>;
+        using ProposalType = shared_model::interface::Proposal;
 
         /**
          * Type of stored transaction batches
@@ -60,8 +60,8 @@ namespace iroha {
          * Calculated as block_height + 1
          * @return proposal for requested round
          */
-        virtual boost::optional<ProposalType> onRequestProposal(
-            consensus::Round round) = 0;
+        virtual boost::optional<std::shared_ptr<const ProposalType>>
+        onRequestProposal(consensus::Round round) = 0;
 
         virtual ~OdOsNotification() = default;
       };
