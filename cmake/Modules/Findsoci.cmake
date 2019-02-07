@@ -1,5 +1,5 @@
 set(_SOCI_REQUIRED_VARS SOCI_INCLUDE_DIR SOCI_LIBRARY SOCI_postgresql_PLUGIN)
-set(LIB_SUFFIX 64)
+
 add_library(SOCI::core UNKNOWN IMPORTED)
 add_library(SOCI::postgresql UNKNOWN IMPORTED)
 
