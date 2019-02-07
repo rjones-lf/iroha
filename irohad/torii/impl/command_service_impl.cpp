@@ -99,7 +99,7 @@ namespace iroha {
                       shared_model::interface::StatefulFailedTxResponse,
                       shared_model::interface::CommittedTxResponse,
                       shared_model::interface::MstExpiredResponse,
-                      shared_model::interface::RejectTxResponse>::value;
+                      shared_model::interface::RejectedTxResponse>::value;
 
     rxcpp::observable<
         std::shared_ptr<shared_model::interface::TransactionResponse>>

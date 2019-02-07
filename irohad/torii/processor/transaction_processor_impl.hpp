@@ -77,6 +77,7 @@ namespace iroha {
         kStatelessValid,
         kStatefulFailed,
         kStatefulValid,
+        kRejected,
         kCommitted,
         kMstExpired,
         kNotReceived,
