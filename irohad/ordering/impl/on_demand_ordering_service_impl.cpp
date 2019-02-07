@@ -208,7 +208,7 @@ OnDemandOrderingServiceImpl::emitProposal(const consensus::Round &round) {
 }
 
 void OnDemandOrderingServiceImpl::tryErase() {
-  if (round_queue_.size() >= number_of_proposals_) {
+  while (round_queue_.size() >= number_of_proposals_) {
     auto &round = round_queue_.front();
     proposal_map_.erase(round);
     log_->info("tryErase: erased {}", round);
