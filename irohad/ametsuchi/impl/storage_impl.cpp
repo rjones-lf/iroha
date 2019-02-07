@@ -406,10 +406,7 @@ namespace iroha {
       try {
         *(storage->sql_) << "COMMIT";
         storage->committed = true;
-        return PeerQueryWsv(std::make_shared<PostgresWsvQuery>(*(storage->sql_),
-                                                               factory_))
-                   .getLedgerPeers()
-            |
+        return PostgresWsvQuery(*(storage->sql_), factory_).getPeers() |
             [](auto &&peers) {
               return boost::optional<std::unique_ptr<LedgerState>>(
                   std::make_unique<LedgerState>(
@@ -446,9 +443,8 @@ namespace iroha {
         PostgresBlockIndex block_index(sql);
         block_index.index(block);
         block_is_prepared = false;
-        return PeerQueryWsv(std::make_shared<PostgresWsvQuery>(sql, factory_))
-                       .getLedgerPeers()
-                   | [this, &block](auto &&peers)
+        return PostgresWsvQuery(sql, factory_).getPeers() |
+                   [this, &block](auto &&peers)
                    -> boost::optional<std::unique_ptr<LedgerState>> {
           if (this->storeBlock(block)) {
             return boost::optional<std::unique_ptr<LedgerState>>(
