@@ -63,9 +63,7 @@ namespace iroha {
         // A new thread scheduler is created
         // by calling .create_coordinator().get_scheduler()
         rxcpp::observe_on_one_worker coordination_{
-            rxcpp::observe_on_new_thread()
-                .create_coordinator()
-                .get_scheduler()};
+            rxcpp::observe_on_new_thread()};
 
        public:
         std::shared_ptr<YacGate> initConsensusGate(
