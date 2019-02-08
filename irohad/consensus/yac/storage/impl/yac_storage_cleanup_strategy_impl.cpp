@@ -36,5 +36,5 @@ boost::optional<CleanupStrategy::RoundsType> BufferedCleanupStrategy::finalize(
 
 bool BufferedCleanupStrategy::shouldCreateRound(const Round &round) {
   // TODO: 13/12/2018 @muratovv possible DOS-attack on consensus IR-128
-  return min_round_ < round;
+  return min_round_ <= round;
 }
