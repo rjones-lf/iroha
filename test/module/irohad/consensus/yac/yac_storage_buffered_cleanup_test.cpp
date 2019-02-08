@@ -71,7 +71,7 @@ TEST_F(BufferedCleanupStrategyTest, ShouldCreateRoundCheck) {
   }
 
   for (iroha::consensus::RejectRoundType i = max_queue_size_;
-       i < 2 * max_queue_size_;
+       i < 2 * max_queue_size_ - 1;
        ++i) {
     ASSERT_TRUE(strategy_->shouldCreateRound({1, i}));
     ASSERT_FALSE(strategy_->shouldCreateRound(
