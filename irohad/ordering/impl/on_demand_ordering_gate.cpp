@@ -31,14 +31,12 @@ OnDemandOrderingGate::OnDemandOrderingGate(
       network_client_(std::move(network_client)),
       events_subscription_(events.subscribe([this](auto event) {
         // exclusive lock
-        std::lock_guard<std::shared_timed_mutex> lock(mutex_);
-
+        std::unique_lock<std::shared_timed_mutex> lock(mutex_);
         visit_in_place(event,
                        [this](const BlockEvent &block_event) {
                          // block committed, increment block round
                          log_->debug("BlockEvent. {}", block_event.round);
                          current_round_ = block_event.round;
-                         cache_->remove(block_event.hashes);
                        },
                        [this](const EmptyEvent &empty_event) {
                          // no blocks committed, increment reject round
@@ -46,6 +44,16 @@ OnDemandOrderingGate::OnDemandOrderingGate(
                          current_round_ = empty_event.round;
                        });
         log_->debug("Current: {}", current_round_);
+        lock.unlock();
+
+        visit_in_place(event,
+                       [this](const BlockEvent &block_event) {
+                         // block committed, remove transactions from cache
+                         cache_->remove(block_event.hashes);
+                       },
+                       [this](const EmptyEvent &) {
+                         // no blocks committed, no transactions to remove
+                       });
 
         auto batches = cache_->pop();
 
@@ -78,9 +86,9 @@ OnDemandOrderingGate::~OnDemandOrderingGate() {
 
 void OnDemandOrderingGate::propagateBatch(
     std::shared_ptr<shared_model::interface::TransactionBatch> batch) {
-  std::shared_lock<std::shared_timed_mutex> lock(mutex_);
-
   cache_->addToBack({batch});
+
+  std::shared_lock<std::shared_timed_mutex> lock(mutex_);
   network_client_->onBatches(
       current_round_, transport::OdOsNotification::CollectionType{batch});
 }
