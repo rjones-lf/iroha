@@ -23,7 +23,7 @@ See [locustfile.py](locustfile.py) for descriptions of task sets implemented usi
 
     **Note for Mac hosts** If you are running Iroha on the same host as locust, you most likely need to use `docker.for.mac.localhost:50051`, where `50051` is Torii port.
 
-2. Specify locustfile in `LOCUSTFILE_PATH` in Compose file
+2. Specify desired test script as locustfile in `LOCUSTFILE_PATH` in Compose file (e.g. locustfile.py or locustfile-performance.py)
 
 3. Run locust
     ```sh
