@@ -18,6 +18,8 @@
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "interfaces/transaction.hpp"
 
+
+// TODO: 2019-01-18 @muratovv Separate file by classes IR-229
 struct MockBlock : public shared_model::interface::Block {
   MOCK_CONST_METHOD0(txsNumber,
                      shared_model::interface::types::TransactionsNumberType());

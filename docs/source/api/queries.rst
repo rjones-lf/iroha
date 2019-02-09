@@ -81,6 +81,61 @@ Possible Stateful Validation Errors
     "2", "No such permissions", "Query's creator does not have any of the permissions to get account", "Grant the necessary permission: individual, global or domain one"
     "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
 
+Get Block
+^^^^^^^^^
+
+Purpose
+-------
+
+Purpose of get block query is to get a specific block, using its height as an identifier
+
+Request Schema
+--------------
+
+.. code-block:: proto
+
+    message GetBlock {
+      uint64 height = 1;
+    }
+
+
+Request Structure
+-----------------
+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+    "Height", "height of the block to be retrieved", "0 < height < 2^64", "42"
+
+Response Schema
+---------------
+
+.. code-block:: proto
+
+    message BlockResponse {
+      Block block = 1;
+    }
+
+Response Structure
+------------------
+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+    "Block", "the retrieved block", "block structure", "block"
+
+Possible Stateful Validation Errors
+-----------------------------------
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not get block", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Query's creator does not have a permission to get block", "Grant the necessary permission"
+    "3", "Invalid height", "Supplied height is not uint_64 or greater than the ledger's height", "Check the height and try again"
+
 Get Signatories
 ^^^^^^^^^^^^^^^
 
@@ -664,7 +719,7 @@ Possible Stateful Validation Errors
     "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
 
 Response Structure
-^^^^^^^^^^^^^^^^^^
+------------------
 
 .. csv-table::
     :header: "Field", "Description", "Constraint", "Example"

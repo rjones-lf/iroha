@@ -61,7 +61,19 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
     if (sanitize){
       cmakeOptions += " -DSANITIZE='address;leak' "
     }
-    sh "docker network create ${env.IROHA_NETWORK}"
+
+    // Create postgres
+    // enable prepared transactions so that 2 phase commit works
+    // we set it to 100 as a safe value
+    sh """#!/bin/bash -xe
+      if [ ! "\$(docker ps -q -f name=${env.IROHA_POSTGRES_HOST})" ]; then
+        docker network create ${env.IROHA_NETWORK}
+        docker run -td -e POSTGRES_USER=${env.IROHA_POSTGRES_USER} \
+           -e POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD} --name ${env.IROHA_POSTGRES_HOST} \
+           --network=${env.IROHA_NETWORK} postgres:9.5 -c 'max_prepared_transactions=100'
+      fi
+    """
+
     iC = dockerUtils.dockerPullOrBuild("${platform}-develop-build",
         "${env.GIT_RAW_BASE_URL}/${scmVars.GIT_COMMIT}/docker/develop/Dockerfile",
         "${env.GIT_RAW_BASE_URL}/${utils.previousCommitOrCurrent(scmVars)}/docker/develop/Dockerfile",
@@ -69,11 +81,7 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
         scmVars,
         environment,
         ['PARALLELISM': parallelism])
-    // enable prepared transactions so that 2 phase commit works
-    // we set it to 100 as a safe value
-    sh "docker run -td -e POSTGRES_USER=${env.IROHA_POSTGRES_USER} \
-    -e POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD} --name ${env.IROHA_POSTGRES_HOST} \
-    --network=${env.IROHA_NETWORK} postgres:9.5 -c 'max_prepared_transactions=100'"
+
     iC.inside(""
     + " -e IROHA_POSTGRES_HOST=${env.IROHA_POSTGRES_HOST}"
     + " -e IROHA_POSTGRES_PORT=${env.IROHA_POSTGRES_PORT}"
@@ -102,8 +110,8 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
             // We run coverage once, using the first compiler as it is enough
             coverage = false
           }
-        }
-      }
+        } //end if
+      } //end for
       stage("Analysis") {
             cppcheck ? build.cppCheck(buildDir, parallelism) : echo('Skipping Cppcheck...')
             sonar ? build.sonarScanner(scmVars, environment) : echo('Skipping Sonar Scanner...')
@@ -111,11 +119,11 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
       stage('Build docs'){
         docs ? doxygen.doDoxygen(specialBranch, scmVars.GIT_LOCAL_BRANCH) : echo("Skipping Doxygen...")
       }
-      stage ('Docker ManifestPush'){
-        if (specialBranch) {
-          utils.dockerPush(iC, "${platform}-develop-build")
-          dockerManifestPush(iC, "develop-build", environment)
-        }
+    } // end iC.inside
+    stage ('Docker ManifestPush'){
+      if (specialBranch) {
+        utils.dockerPush(iC, "${platform}-develop-build")
+        dockerManifestPush(iC, "develop-build", environment)
       }
     }
   }

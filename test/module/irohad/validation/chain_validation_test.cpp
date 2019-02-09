@@ -8,7 +8,7 @@
 #include <boost/range/adaptor/indirected.hpp>
 #include "module/irohad/ametsuchi/mock_mutable_storage.hpp"
 #include "module/irohad/ametsuchi/mock_peer_query.hpp"
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
+#include "module/irohad/consensus/yac/mock_yac_supermajority_checker.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 
 using namespace iroha;

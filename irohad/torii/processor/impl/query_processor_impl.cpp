@@ -6,11 +6,11 @@
 #include "torii/processor/query_processor_impl.hpp"
 
 #include <boost/range/size.hpp>
-
 #include "common/bind.hpp"
 #include "interfaces/queries/blocks_query.hpp"
 #include "interfaces/queries/query.hpp"
 #include "interfaces/query_responses/block_query_response.hpp"
+#include "interfaces/query_responses/block_response.hpp"
 #include "interfaces/query_responses/query_response.hpp"
 #include "validation/utils.hpp"
 
@@ -61,7 +61,7 @@ namespace iroha {
           })) {
         std::shared_ptr<shared_model::interface::BlockQueryResponse> response =
             response_factory_->createBlockQueryResponse("stateful invalid");
-        return rxcpp::observable<>::just(response);
+        return rxcpp::observable<>::just(std::move(response));
       }
       return blocks_query_subject_.get_observable();
     }

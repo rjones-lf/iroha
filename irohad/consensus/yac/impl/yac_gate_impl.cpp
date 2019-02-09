@@ -8,7 +8,7 @@
 #include <boost/range/adaptor/transformed.hpp>
 #include "common/visitor.hpp"
 #include "consensus/yac/cluster_order.hpp"
-#include "consensus/yac/messages.hpp"
+#include "consensus/yac/outcome_messages.hpp"
 #include "consensus/yac/storage/yac_common.hpp"
 #include "consensus/yac/yac_hash_provider.hpp"
 #include "consensus/yac/yac_peer_orderer.hpp"

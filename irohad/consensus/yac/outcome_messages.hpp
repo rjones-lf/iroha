@@ -8,38 +8,12 @@
 
 #include <vector>
 
-#include "consensus/yac/yac_hash_provider.hpp"  // for YacHash
-#include "interfaces/common_objects/signature.hpp"
+#include "consensus/yac/vote_message.hpp"
 #include "utils/string_builder.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
-
-      /**
-       * VoteMessage represents voting for some block;
-       */
-      struct VoteMessage {
-        YacHash hash;
-        std::shared_ptr<shared_model::interface::Signature> signature;
-
-        bool operator==(const VoteMessage &rhs) const {
-          return hash == rhs.hash and *signature == *rhs.signature;
-        }
-
-        bool operator!=(const VoteMessage &rhs) const {
-          return not(*this == rhs);
-        }
-
-        std::string toString() const {
-          return shared_model::detail::PrettyStringBuilder()
-              .init("VoteMessage")
-              .append("yac hash", hash.toString())
-              .append("signature",
-                      signature ? signature->toString() : "not set")
-              .finalize();
-        }
-      };
 
       /**
        * CommitMsg means consensus on cluster achieved.

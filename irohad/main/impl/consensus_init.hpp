@@ -24,7 +24,7 @@
 
 #include "ametsuchi/peer_query_factory.hpp"
 #include "consensus/consensus_block_cache.hpp"
-#include "consensus/yac/messages.hpp"
+#include "consensus/yac/outcome_messages.hpp"
 #include "consensus/yac/timer.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
 #include "consensus/yac/yac.hpp"

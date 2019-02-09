@@ -14,6 +14,7 @@ namespace shared_model {
   namespace interface {
 
     class GetAccount;
+    class GetBlock;
     class GetSignatories;
     class GetAccountTransactions;
     class GetAccountAssetTransactions;
@@ -48,7 +49,8 @@ namespace shared_model {
                                     GetRoles,
                                     GetRolePermissions,
                                     GetAssetInfo,
-                                    GetPendingTransactions>;
+                                    GetPendingTransactions,
+                                    GetBlock>;
 
       /**
        * @return reference to const variant with concrete command

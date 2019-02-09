@@ -136,8 +136,8 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
 
 /**
  * @given account, ametsuchi queries
- * @when valid block query is send
- * @then Query Processor should start emitting BlockQueryRespones to the
+ * @when valid block query is sent
+ * @then Query Processor should start emitting BlockQueryResponses to the
  * observable
  */
 TEST_F(QueryProcessorTest, GetBlocksQuery) {
@@ -164,7 +164,7 @@ TEST_F(QueryProcessorTest, GetBlocksQuery) {
 /**
  * @given account, ametsuchi queries
  * @when valid block query is invalid (no can_get_blocks permission)
- * @then Query Processor should return an observable with blockError
+ * @then Query Processor should return an observable with BlockError
  */
 TEST_F(QueryProcessorTest, GetBlocksQueryNoPerms) {
   auto block_number = 5;

@@ -8,6 +8,7 @@
 #include <string>
 
 #include <gtest/gtest.h>
+
 #include <boost/make_shared.hpp>
 #include <boost/range/adaptor/indirected.hpp>
 #include <boost/shared_container_iterator.hpp>

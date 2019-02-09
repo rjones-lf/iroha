@@ -7,7 +7,7 @@ The first one is easier to implement since it does not require preliminary confi
 
 This option is enabled by default.
 
-The second one can be used when there is an overlay network exists between the hosts. In short, overlay network allows for Docker containers to communicate using a single subnet. Such that each container would have a unique IP address in that subnet. Learn more in official Docker documentation (https://docs.docker.com/network/overlay). We recommend to use Calico for setting up Docker overlay network since it can be used as a network plugin (https://docs.projectcalico.org/v1.5/getting-started/docker/tutorials/basic).
+The second one can be used when there exists an overlay network between the hosts. In short, overlay network allows for Docker containers to communicate using a single subnet. Such that each container would have a unique IP address in that subnet. Learn more in official Docker documentation (https://docs.docker.com/network/overlay). We recommend to use Calico for setting up Docker overlay network since it can be used as a network plugin (https://docs.projectcalico.org/v1.5/getting-started/docker/tutorials/basic).
 
 The second way is also suitable for local-only deployments.
 
@@ -20,6 +20,7 @@ The second way is also suitable for local-only deployments.
     - Docker (>=17.12)
     - python3
     - PIP modules: docker, docker-compose
+
     There is a role for setting up a remote part of the dependencies named `docker`. It works for Ubuntu OS only. Check `iroha-docker` playbook.
 
 ### Note:
@@ -42,8 +43,8 @@ The second way is also suitable for local-only deployments.
 
 `cd ../../ && ansible-playbook -b -e 'ansible_ssh_user=ubuntu' -i inventory/iroha.list playbooks/iroha-docker/main.yml`
 
-This will deploy 6 Iroha Docker containers along with 6 Postgres containers on a remote host. Remote user is `ubuntu`. Torii port of each container is exposed on the host. Iroha peer can be communicated over port defined in `iroha_torii_port` variable (50051 by default). Overall, each host will listen the following port range: `iroha_torii_port` + *number-of-containers*.
-During installation it will also install Docker along with required python modules. If you want to skip this step, comment out `docker` role in the playbook (`playbooks/iroha-docker/main.yml`)
+This will deploy 6 Iroha Docker containers along with 6 Postgres containers on the remote host specified in `iroha.list` file. Remote user is `ubuntu`. Torii port of each container is exposed on the host. Iroha peer can be communicated over port defined in `iroha_torii_port` variable (50051 by default). Overall, each host will listen the following port range: `iroha_torii_port` ... `iroha_torii_port` + *number-of-containers* - 1.
+It will also install Docker along with required python modules. If you want to skip this step, comment out `docker` role in the playbook (`playbooks/iroha-docker/main.yml`)
 
 ### Note:
 > This command escalates privileges on a remote host during the run. It is required to be able to spin up Docker containers. We recommend to run the playbook using a passwordless remote sudo user.

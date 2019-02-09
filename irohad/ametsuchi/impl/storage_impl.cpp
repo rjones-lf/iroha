@@ -406,13 +406,12 @@ namespace iroha {
       try {
         *(storage->sql_) << "COMMIT";
         storage->committed = true;
-        return createPeerQuery() |
-            [](const auto &peer_query) { return peer_query->getLedgerPeers(); }
-        | [](auto &&peers) {
-            return boost::optional<std::unique_ptr<LedgerState>>(
-                std::make_unique<LedgerState>(
-                    std::make_shared<PeerList>(std::move(peers))));
-          };
+        return PostgresWsvQuery(*(storage->sql_), factory_).getPeers() |
+            [](auto &&peers) {
+              return boost::optional<std::unique_ptr<LedgerState>>(
+                  std::make_unique<LedgerState>(
+                      std::make_shared<PeerList>(std::move(peers))));
+            };
       } catch (std::exception &e) {
         storage->committed = false;
         log_->warn("Mutable storage is not committed. Reason: {}", e.what());
@@ -444,25 +443,22 @@ namespace iroha {
         PostgresBlockIndex block_index(sql);
         block_index.index(block);
         block_is_prepared = false;
+        return PostgresWsvQuery(sql, factory_).getPeers() |
+                   [this, &block](auto &&peers)
+                   -> boost::optional<std::unique_ptr<LedgerState>> {
+          if (this->storeBlock(block)) {
+            return boost::optional<std::unique_ptr<LedgerState>>(
+                std::make_unique<LedgerState>(
+                    std::make_shared<PeerList>(std::move(peers))));
+          }
+          return boost::none;
+        };
       } catch (const std::exception &e) {
         log_->warn("failed to apply prepared block {}: {}",
                    block.hash().hex(),
                    e.what());
         return boost::none;
       }
-      return createPeerQuery() |
-                 [](const auto &peer_query) {
-                   return peer_query->getLedgerPeers();
-                 }
-                 | [this, &block](auto &&peers)
-                 -> boost::optional<std::unique_ptr<LedgerState>> {
-        if (this->storeBlock(block)) {
-          return boost::optional<std::unique_ptr<LedgerState>>(
-              std::make_unique<LedgerState>(
-                  std::make_shared<PeerList>(std::move(peers))));
-        }
-        return boost::none;
-      };
     }
 
     std::shared_ptr<WsvQuery> StorageImpl::getWsvQuery() const {

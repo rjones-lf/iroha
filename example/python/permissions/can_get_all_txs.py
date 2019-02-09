@@ -3,70 +3,56 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-import iroha
+import irohalib
+import binascii
 import commons
+import primitive_pb2
 
 admin = commons.new_user('admin@first')
 alice = commons.new_user('alice@second')
+iroha = irohalib.Iroha(admin['id'])
 
 admin_tx1_hash = None
-admin_tx2_hash_blob = None
+admin_tx2_hash = None
 
 
 @commons.hex
 def genesis_tx():
-    test_permissions = iroha.RolePermissionSet([iroha.Role_kGetAllTxs])
-    tx = iroha.ModelTransactionBuilder() \
-        .createdTime(commons.now()) \
-        .creatorAccountId(admin['id']) \
-        .addPeer('0.0.0.0:50541', admin['key'].publicKey()) \
-        .createRole('admin_role', commons.all_permissions()) \
-        .createRole('test_role', test_permissions) \
-        .createDomain('first', 'admin_role') \
-        .createDomain('second', 'test_role') \
-        .createAccount('admin', 'first', admin['key'].publicKey()) \
-        .createAccount('alice', 'second', alice['key'].publicKey()) \
-        .build()
-    return iroha.ModelProtoTransaction(tx) \
-        .signAndAddSignature(admin['key']).finish()
+    test_permissions = [primitive_pb2.can_get_all_txs]
+    genesis_commands = commons.genesis_block(admin, alice, test_permissions, multidomain=True)
+    tx = iroha.transaction(genesis_commands)
+    irohalib.IrohaCrypto.sign_transaction(tx, admin['key'])
+    return tx
 
 
 @commons.hex
 def admin_action_1_tx():
     global admin_tx1_hash
-    tx = iroha.ModelTransactionBuilder() \
-        .createdTime(commons.now()) \
-        .creatorAccountId(admin['id']) \
-        .createAsset('coin', 'second', 2) \
-        .build()
-    admin_tx1_hash = tx.hash()
-    return iroha.ModelProtoTransaction(tx) \
-        .signAndAddSignature(admin['key']).finish()
+    tx = iroha.transaction([
+        iroha.command('CreateAsset', asset_name='coin', domain_id='second', precision=2)
+    ])
+    admin_tx1_hash = irohalib.IrohaCrypto.hash(tx)
+    irohalib.IrohaCrypto.sign_transaction(tx, admin['key'])
+    return tx
 
 
 @commons.hex
 def admin_action_2_tx():
-    global admin_tx2_hash_blob
-    tx = iroha.ModelTransactionBuilder() \
-        .createdTime(commons.now()) \
-        .creatorAccountId(admin['id']) \
-        .setAccountDetail(admin['id'], 'hyperledger', 'iroha') \
-        .build()
-    admin_tx2_hash_blob = tx.hash().blob()
-    return iroha.ModelProtoTransaction(tx) \
-        .signAndAddSignature(admin['key']).finish()
+    global admin_tx2_hash
+    tx = iroha.transaction([
+        iroha.command('SetAccountDetail', account_id=admin['id'], key='hyperledger', value='iroha')
+    ])
+    admin_tx2_hash = irohalib.IrohaCrypto.hash(tx)
+    irohalib.IrohaCrypto.sign_transaction(tx, admin['key'])
+    return tx
 
 
 @commons.hex
 def transactions_query():
-    hashes = iroha.HashVector()
-    hashes.append(admin_tx1_hash)
-    hashes.append(iroha.Hash(iroha.Blob(admin_tx2_hash_blob)))
-    tx = iroha.ModelQueryBuilder() \
-        .createdTime(commons.now()) \
-        .queryCounter(1) \
-        .creatorAccountId(alice['id']) \
-        .getTransactions(hashes) \
-        .build()
-    return iroha.ModelProtoQuery(tx) \
-        .signAndAddSignature(alice['key']).finish()
+    hashes = [
+        binascii.hexlify(admin_tx1_hash),
+        binascii.hexlify(admin_tx2_hash)
+    ]
+    query = iroha.query('GetTransactions', tx_hashes=hashes, creator_account=alice['id'])
+    irohalib.IrohaCrypto.sign_query(query, alice['key'])
+    return query

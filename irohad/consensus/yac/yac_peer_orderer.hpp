@@ -8,11 +8,12 @@
 
 #include <boost/optional.hpp>
 
+#include "consensus/yac/cluster_order.hpp"
+
 namespace iroha {
   namespace consensus {
     namespace yac {
 
-      class ClusterOrdering;
       class YacHash;
 
       /**

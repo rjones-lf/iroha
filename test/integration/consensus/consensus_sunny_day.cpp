@@ -5,12 +5,18 @@
 
 #include <gmock/gmock.h>
 #include <grpc++/grpc++.h>
+
+#include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/impl/timer_impl.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
+#include "consensus/yac/storage/yac_vote_storage.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
+#include "consensus/yac/yac.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
+
 #include "framework/test_subscriber.hpp"
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
+#include "module/irohad/consensus/yac/mock_yac_crypto_provider.hpp"
+#include "module/irohad/consensus/yac/yac_test_util.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 
 using ::testing::_;
@@ -25,7 +31,7 @@ static size_t num_peers = 1, my_num = 0;
 
 auto mk_local_peer(uint64_t num) {
   auto address = "0.0.0.0:" + std::to_string(num);
-  return iroha::consensus::yac::mk_peer(address);
+  return iroha::consensus::yac::makePeer(address);
 }
 
 class FixedCryptoProvider : public MockYacCryptoProvider {

@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "consensus/yac/impl/peer_orderer_impl.hpp"
+
 #include <iostream>
 #include <unordered_map>
 
@@ -11,11 +13,10 @@
 #include <boost/range/adaptors.hpp>
 #include <boost/range/counting_range.hpp>
 #include <boost/range/numeric.hpp>
-#include "consensus/yac/impl/peer_orderer_impl.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "module/irohad/ametsuchi/mock_peer_query.hpp"
 #include "module/irohad/ametsuchi/mock_peer_query_factory.hpp"
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
+#include "module/irohad/consensus/yac/yac_test_util.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 
 using namespace boost::adaptors;
@@ -57,7 +58,7 @@ class YacPeerOrdererTest : public ::testing::Test {
   std::vector<wPeer> s_peers = [] {
     std::vector<wPeer> result;
     for (size_t i = 1; i <= N_PEERS; ++i) {
-      auto tmp = iroha::consensus::yac::mk_peer(std::to_string(i));
+      auto tmp = iroha::consensus::yac::makePeer(std::to_string(i));
       auto peer = makePeer(tmp->address(), tmp->pubkey());
 
       result.emplace_back(peer);
