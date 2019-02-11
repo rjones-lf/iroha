@@ -27,9 +27,7 @@ using namespace std;
 using ::testing::Return;
 using ::testing::ReturnRefOfCopy;
 
-using wPeer = std::shared_ptr<shared_model::interface::Peer>;
-
-size_t N_PEERS = 4;
+const size_t kPeersQuantity = 4;
 
 class YacPeerOrdererTest : public ::testing::Test {
  public:
@@ -44,9 +42,9 @@ class YacPeerOrdererTest : public ::testing::Test {
     orderer = PeerOrdererImpl(pbfactory);
   }
 
-  std::vector<wPeer> peers = [] {
+  std::vector<std::shared_ptr<shared_model::interface::Peer>> peers = [] {
     std::vector<std::shared_ptr<shared_model::interface::Peer>> result;
-    for (size_t i = 1; i <= N_PEERS; ++i) {
+    for (size_t i = 1; i <= kPeersQuantity; ++i) {
       auto peer = makePeer(
           std::to_string(i),
           shared_model::interface::types::PubkeyType(std::string(32, '0')));
@@ -55,9 +53,9 @@ class YacPeerOrdererTest : public ::testing::Test {
     return result;
   }();
 
-  std::vector<wPeer> s_peers = [] {
-    std::vector<wPeer> result;
-    for (size_t i = 1; i <= N_PEERS; ++i) {
+  std::vector<std::shared_ptr<shared_model::interface::Peer>> s_peers = [] {
+    std::vector<std::shared_ptr<shared_model::interface::Peer>> result;
+    for (size_t i = 1; i <= kPeersQuantity; ++i) {
       auto tmp = iroha::consensus::yac::makePeer(std::to_string(i));
       auto peer = makePeer(tmp->address(), tmp->pubkey());
 
@@ -88,7 +86,7 @@ TEST_F(YacPeerOrdererTest, PeerOrdererOrderingWhenEmptyPeerList) {
  */
 TEST_F(YacPeerOrdererTest, FairnessTest) {
   // Calculate number of permutations of peers
-  double comb = std::tgamma(N_PEERS + 1);
+  double comb = std::tgamma(kPeersQuantity + 1);
   // Run experiments N times for each combination
   double exp_val = 30;
   int times = comb * exp_val;

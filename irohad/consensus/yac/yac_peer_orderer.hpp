@@ -24,6 +24,7 @@ namespace iroha {
         /**
          * Provide order of peers based on hash and initial order of peers
          * @param hash - hash-object that used as seed of ordering shuffle
+         * @param peers - an ordered list of peers
          * @return shuffled cluster order
          */
         virtual boost::optional<ClusterOrdering> getOrdering(

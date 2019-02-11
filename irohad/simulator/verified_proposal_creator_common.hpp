@@ -7,9 +7,9 @@
 #define IROHA_VERIFIED_PROPOSAL_CREATOR_COMMON_HPP
 
 #include <boost/optional.hpp>
+#include "ametsuchi/ledger_state.hpp"
 #include "consensus/round.hpp"
 #include "validation/stateful_validator_common.hpp"
-#include "ametsuchi/ledger_state.hpp"
 
 namespace iroha {
   namespace simulator {

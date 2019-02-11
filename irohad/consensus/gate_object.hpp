@@ -7,11 +7,11 @@
 #define CONSENSUS_GATE_OBJECT_HPP
 
 #include <boost/variant.hpp>
+#include "ametsuchi/ledger_state.hpp"
 #include "consensus/round.hpp"
 #include "cryptography/hash.hpp"
 #include "cryptography/public_key.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "ametsuchi/ledger_state.hpp"
 
 namespace shared_model {
   namespace interface {
