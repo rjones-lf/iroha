@@ -65,7 +65,6 @@ namespace iroha {
 
             // notify about failed txs
             const auto &errors = proposal_and_errors->rejected_transactions;
-            std::lock_guard<std::mutex> lock(notifier_mutex_);
             for (const auto &tx_error : errors) {
               log_->info(composeErrorMessage(tx_error));
               this->publishStatus(TxStatusType::kStatefulFailed,
@@ -75,7 +74,7 @@ namespace iroha {
             // notify about success txs
             for (const auto &successful_tx :
                  proposal_and_errors->verified_proposal->transactions()) {
-              log_->info("on stateful validation success: {}",
+              log_->info("VerifiedProposalCreatorEvent StatefulValid: {}",
                          successful_tx.hash().hex());
               this->publishStatus(TxStatusType::kStatefulValid,
                                   successful_tx.hash());
@@ -89,16 +88,16 @@ namespace iroha {
             sync_event.synced_blocks.subscribe(
                 // on next
                 [this, &has_at_least_one_committed](auto model_block) {
-                  std::lock_guard<std::mutex> lock(notifier_mutex_);
                   for (const auto &tx : model_block->transactions()) {
                     const auto &hash = tx.hash();
-                    log_->info("on commit committed: {}", hash.hex());
+                    log_->info("SynchronizationEvent Committed: {}",
+                               hash.hex());
                     this->publishStatus(TxStatusType::kCommitted, hash);
                     has_at_least_one_committed = true;
                   }
                   for (const auto &rejected_tx_hash :
                        model_block->rejected_transactions_hashes()) {
-                    log_->info("on commit rejected: {}",
+                    log_->info("SynchronizationEvent Rejected: {}",
                                rejected_tx_hash.hex());
                     this->publishStatus(TxStatusType::kRejected,
                                         rejected_tx_hash);

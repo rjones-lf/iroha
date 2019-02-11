@@ -64,10 +64,6 @@ namespace iroha {
 
       logger::Logger log_;
 
-      /// prevents from emitting new tx statuses from different threads
-      /// in parallel
-      std::mutex notifier_mutex_;
-
       // TODO: [IR-1665] Akvinikym 29.08.18: Refactor method publishStatus(..)
       /**
        * Complementary class for publishStatus method
