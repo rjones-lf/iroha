@@ -95,7 +95,9 @@ Irohad::Irohad(const std::string &block_store_dir,
   initStorage();
 }
 
-Irohad::~Irohad() = default;
+Irohad::~Irohad() {
+  consensus_gate_events_subscription.unsubscribe();
+}
 
 /**
  * Initializing iroha daemon
@@ -400,6 +402,7 @@ void Irohad::initConsensusGate() {
                                               async_call_,
                                               common_objects_factory_);
   consensus_gate->onOutcome().subscribe(
+      consensus_gate_events_subscription,
       consensus_gate_objects.get_subscriber());
   log_->info("[Init] => consensus gate");
 }
