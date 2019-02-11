@@ -58,6 +58,14 @@ namespace iroha {
             std::shared_ptr<shared_model::interface::CommonObjectsFactory>
                 common_objects_factory);
 
+        // coordinator has a worker, and a factory for coordinated
+        // observables, subscribers and schedulable functions.
+        //
+        // A new thread scheduler is created
+        // by calling .create_coordinator().get_scheduler()
+        rxcpp::observe_on_one_worker coordination_{
+            rxcpp::observe_on_new_thread()};
+
        public:
         std::shared_ptr<YacGate> initConsensusGate(
             std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,

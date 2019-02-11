@@ -68,7 +68,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
             network_client_->onRequestProposal(current_round_));
         // vote for the object received from the network
         proposal_notifier_.get_subscriber().on_next(network::OrderingEvent{
-            proposal, current_round_, std::move(ledger_state)});
+            std::move(proposal), current_round_, std::move(ledger_state)});
       })),
       cache_(std::move(cache)),
       proposal_factory_(std::move(factory)),
