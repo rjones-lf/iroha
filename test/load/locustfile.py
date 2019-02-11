@@ -2,8 +2,8 @@ import os
 import time
 import binascii
 import grpc
-from irohalib import Iroha, IrohaGrpc
-from irohalib import IrohaCrypto as ic
+from iroha import Iroha, IrohaGrpc
+from iroha import IrohaCrypto as ic
 
 from locust import Locust, TaskSet, events, task
 

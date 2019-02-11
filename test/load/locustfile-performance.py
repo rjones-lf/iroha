@@ -8,8 +8,8 @@ import grpc.experimental.gevent as grpc_gevent
 grpc_gevent.init_gevent()
 
 import grpc
-from irohalib import Iroha, IrohaGrpc
-from irohalib import IrohaCrypto as ic
+from iroha import Iroha, IrohaGrpc
+from iroha import IrohaCrypto as ic
 
 
 HOSTNAME = os.environ['HOSTNAME']

@@ -10,7 +10,7 @@ See [locustfile.py](locustfile.py) for descriptions of task sets implemented usi
 
 ## Build steps
 
-1. Create a Docker image with Python, locust, and gRPC.
+1. Create a Docker image with Python, Iroha, Locust, and gRPC.
     ```sh
     docker build -t iroha-locust .
     ```
@@ -19,11 +19,13 @@ See [locustfile.py](locustfile.py) for descriptions of task sets implemented usi
 
 ## Running the tests
 
-1. Specify Iroha node address and port in `TARGET_URL` in Compose [file](docker-compose.yml).
+1. Configure environment via running interactive [update-env.py](update-env.py) script.
+   
+   **Or manually** specify Iroha node address and port in `TARGET_URL` in environment configuration [file](config.env).
 
     **Note for Mac hosts** If you are running Iroha on the same host as locust, you most likely need to use `docker.for.mac.localhost:50051`, where `50051` is Torii port.
-
-2. Specify desired test script as locustfile in `LOCUSTFILE_PATH` in Compose file (e.g. locustfile.py or locustfile-performance.py)
+   
+   Specify desired test script as locustfile in `LOCUSTFILE_PATH` in Compose file (e.g. locustfile.py or locustfile-performance.py)
 
 3. Run locust
     ```sh

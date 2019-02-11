@@ -2,9 +2,8 @@ version: "3.4"
 
 x-common: &common
   image: iroha-locust
+  env_file: config.env
   environment: &common-env
-    TARGET_URL: 127.0.0.1:50051
-    LOCUSTFILE_PATH: /tests/locustfile.py
   volumes:
     - ./:/tests
   entrypoint:
