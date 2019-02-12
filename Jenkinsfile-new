@@ -231,7 +231,7 @@ node ('master') {
   }
 
   echo "specialBranch=${specialBranch}, packageBuild=${packageBuild}, pushDockerTag=${pushDockerTag}, packagePush=${packagePush} "
-  echo "testing=${testing}, testList=${testList}, parallelism=${parallelism}"
+  echo "testing=${testing}, testList=${testList}, parallelism=${parallelism}, useBTF=${useBTF}"
   echo "x64linux_compiler_list=${x64linux_compiler_list}"
   echo "mac_compiler_list=${mac_compiler_list}"
   echo "sanitize=${sanitize}, cppcheck=${cppcheck}, fuzzing=${fuzzing}, sonar=${sonar}, coverage=${coverage}, coverage_mac=${coverage_mac} doxygen=${doxygen}"
