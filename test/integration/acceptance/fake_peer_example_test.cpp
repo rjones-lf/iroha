@@ -307,15 +307,17 @@ TEST_F(FakePeerExampleFixture,
       baseTx(kAdminId).transferAsset(kAdminId, kUserId, kAssetId, "tx1", "1.0"),
       kAdminKeypair);
 
-  auto state_ready = std::make_shared<std::atomic_bool>(false);
-
   auto proposal_storage = std::make_shared<fake_peer::ProposalStorage>();
+
+  createFakePeers(1);
+  fake_peers_.front()->setProposalStorage(proposal_storage);
+
+  auto &itf = prepareState();
+
+  // provide the proposal
   proposal_storage->setDefaultProvider(
-      [tx, state_ready](
+      [tx](
           const auto &round) -> fake_peer::OrderingProposalRequestResult {
-        if (!state_ready->load(std::memory_order_relaxed)) {
-          return boost::none;
-        }
         shared_model::proto::ProtoProposalFactory<
             validation::AlwaysValidValidator>
             valid_factory;
@@ -341,15 +343,8 @@ TEST_F(FakePeerExampleFixture,
         return proposal;
       });
 
-  auto commit_promise = std::make_shared<std::promise<void>>();
-  std::future<void> commit_future = commit_promise->get_future();
-
-  createFakePeers(1);
-  fake_peers_.front()->setProposalStorage(std::move(proposal_storage));
-
-  auto &itf = prepareState();
-  state_ready->store(true, std::memory_order_relaxed);
   // watch the proposal requests to fake peer
+  constexpr std::chrono::seconds kCommitWaitingTime(20);
   itf.getPcsOnCommitObservable()
       .filter([](const auto &sync_event) {
         return sync_event.sync_outcome
@@ -364,18 +359,18 @@ TEST_F(FakePeerExampleFixture,
         }
         return rxcpp::observable<>::iterate(hashes);
       })
-      .any([my_hash = tx.reducedHash()](const auto &incoming_hash) {
+      .filter([my_hash = tx.reducedHash()](const auto &incoming_hash) {
         return incoming_hash == my_hash;
       })
-      .subscribe([commit_promise](bool tx_found) {
-        if (tx_found) {
-          EXPECT_NO_THROW(commit_promise->set_value())
-              << "Tx committed more than once!";
-        }
-      });
-
-  constexpr std::chrono::seconds kCommitWaitingTime(20);
-  EXPECT_EQ(commit_future.wait_for(kCommitWaitingTime),
-            std::future_status::ready)
-      << "Reached timeout waiting for the commit.";
+      .take(1)
+      .timeout(kCommitWaitingTime)
+      .as_blocking()
+      .subscribe([](const auto &) {},
+                 [](std::exception_ptr ep) {
+                   try {
+                     std::rethrow_exception(ep);
+                   } catch (const std::exception &e) {
+                     FAIL() << "Error waiting for the commit: " << e.what();
+                   }
+                 });
 }
