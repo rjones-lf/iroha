@@ -50,7 +50,7 @@ void OnDemandOsClientGrpc::onBatches(consensus::Round round,
   });
 }
 
-boost::optional<OdOsNotification::ProposalType>
+boost::optional<std::shared_ptr<const OdOsNotification::ProposalType>>
 OnDemandOsClientGrpc::onRequestProposal(consensus::Round round) {
   grpc::ClientContext context;
   context.set_deadline(time_provider_() + proposal_request_timeout_);
@@ -69,14 +69,15 @@ OnDemandOsClientGrpc::onRequestProposal(consensus::Round round) {
   return proposal_factory_->build(response.proposal())
       .match(
           [&](iroha::expected::Value<
-              std::unique_ptr<shared_model::interface::Proposal>> &v)
-              -> boost::optional<OdOsNotification::ProposalType> {
-            return ProposalType{std::move(v).value};
+              std::unique_ptr<shared_model::interface::Proposal>> &v) {
+            return boost::make_optional(
+                std::shared_ptr<const OdOsNotification::ProposalType>(
+                    std::move(v).value));
           },
-          [this](iroha::expected::Error<TransportFactoryType::Error> &error)
-              -> boost::optional<OdOsNotification::ProposalType> {
+          [this](iroha::expected::Error<TransportFactoryType::Error> &error) {
             log_->info(error.error.error);  // error
-            return {};
+            return boost::optional<
+                std::shared_ptr<const OdOsNotification::ProposalType>>();
           });
 }
 

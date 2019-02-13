@@ -39,7 +39,7 @@ auto signature() {
 TEST(YacHashProviderTest, MakeYacHashTest) {
   YacHashProviderImpl hash_provider;
   iroha::consensus::Round round{1, 0};
-  auto proposal = std::make_shared<MockProposal>();
+  auto proposal = std::make_shared<const MockProposal>();
   EXPECT_CALL(*proposal, hash())
       .WillRepeatedly(
           ReturnRefOfCopy(shared_model::crypto::Hash(std::string())));

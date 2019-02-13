@@ -98,7 +98,7 @@ grpc::Status OnDemandOsServerGrpc::RequestProposal(
       {request->round().block_round(), request->round().reject_round()})
       | [&](auto &&proposal) {
           *response->mutable_proposal() = std::move(
-              static_cast<shared_model::proto::Proposal *>(proposal.get())
+              static_cast<const shared_model::proto::Proposal *>(proposal.get())
                   ->getTransport());
         };
   return ::grpc::Status::OK;

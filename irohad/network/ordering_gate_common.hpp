@@ -24,12 +24,12 @@ namespace iroha {
      * Event, which is emitted by ordering gate, when it requests a proposal
      */
     struct OrderingEvent {
-      boost::optional<std::shared_ptr<shared_model::interface::Proposal>>
+      boost::optional<std::shared_ptr<const shared_model::interface::Proposal>>
           proposal;
       consensus::Round round;
     };
 
-    std::shared_ptr<shared_model::interface::Proposal> getProposalUnsafe(
+    std::shared_ptr<const shared_model::interface::Proposal> getProposalUnsafe(
         const OrderingEvent &event);
 
   }  // namespace network

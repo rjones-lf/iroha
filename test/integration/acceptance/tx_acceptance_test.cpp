@@ -18,7 +18,7 @@ class AcceptanceTest : public AcceptanceFixture {
                            EnoughSignaturesCollectedResponse &>(status.get()));
       };
   const std::function<void(
-      const std::shared_ptr<shared_model::interface::Proposal> &)>
+      const std::shared_ptr<const shared_model::interface::Proposal> &)>
       checkProposal =
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); };
   const std::function<void(

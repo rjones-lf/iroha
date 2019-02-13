@@ -125,8 +125,8 @@ TEST_F(OnDemandOsServerGrpcTest, RequestProposal) {
       ->mutable_reduced_payload()
       ->set_creator_account_id(creator);
 
-  std::unique_ptr<shared_model::interface::Proposal> iproposal(
-      std::make_unique<shared_model::proto::Proposal>(proposal));
+  std::shared_ptr<const shared_model::interface::Proposal> iproposal(
+      std::make_shared<const shared_model::proto::Proposal>(proposal));
   EXPECT_CALL(*notification, onRequestProposal(round))
       .WillOnce(Return(ByMove(std::move(iproposal))));
 

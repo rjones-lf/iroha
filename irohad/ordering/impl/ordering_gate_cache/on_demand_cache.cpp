@@ -40,7 +40,8 @@ void OnDemandCache::remove(const OrderingGateCache::HashesSetType &hashes) {
 
 OrderingGateCache::BatchesSetType OnDemandCache::pop() {
   std::unique_lock<std::shared_timed_mutex> lock(mutex_);
-  auto res = circ_buffer.front();
+  BatchesSetType res;
+  std::swap(res, circ_buffer.front());
   // push empty set to remove front element
   circ_buffer.push_back(BatchesSetType{});
   return res;
