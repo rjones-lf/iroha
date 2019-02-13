@@ -3,12 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-add_library(supermajority_check
+add_library(supermajority_checker
     impl/supermajority_checker_cft.cpp
     impl/supermajority_checker_bft.cpp
     impl/supermajority_checker_getter.cpp
     )
-target_link_libraries(supermajority_check
+target_link_libraries(supermajority_checker
     shared_model_interfaces
     )
 
@@ -26,7 +26,7 @@ add_library(yac
     storage/impl/yac_vote_storage.cpp
     )
 target_link_libraries(yac
-    supermajority_check
+    supermajority_checker
     common
     rxcpp
     logger
