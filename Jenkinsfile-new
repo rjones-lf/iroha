@@ -154,7 +154,7 @@ node ('master') {
   parallelism = 0
   useBTF = false
 
-  if (scmVars.GIT_LOCAL_BRANCH in ["master","develop","dev"] || scmVars.CHANGE_BRANCH_LOCAL in ["develop","dev"])
+  if (scmVars.GIT_LOCAL_BRANCH in ["master","develop"] || scmVars.CHANGE_BRANCH_LOCAL in ["develop"])
     specialBranch =  true
   else
     specialBranch = false
@@ -165,7 +165,7 @@ node ('master') {
     doxygen = true
   }
 
-  if (scmVars.GIT_LOCAL_BRANCH ==~ /(develop|dev)/)
+  if (scmVars.GIT_LOCAL_BRANCH == "develop")
     pushDockerTag =  'develop'
   else if (scmVars.GIT_LOCAL_BRANCH == 'master')
     pushDockerTag = 'latest'
