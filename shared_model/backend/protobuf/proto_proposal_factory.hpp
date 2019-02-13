@@ -32,6 +32,8 @@ namespace shared_model {
             createProtoProposal(height, created_time, transactions));
       }
 
+      // TODO mboldyrev 13.02.2019 IR-323
+      // make it return std::shared_ptr<const interface::Proposal>
       std::unique_ptr<interface::Proposal> unsafeCreateProposal(
           interface::types::HeightType height,
           interface::types::TimestampType created_time,
