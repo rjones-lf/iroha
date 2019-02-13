@@ -16,9 +16,11 @@ namespace shared_model {
   namespace proto {
 
     struct Transaction::Impl {
+      explicit Impl(const TransportType &ref) : proto_{ref} {}
+
       explicit Impl(TransportType &&ref) : proto_{std::move(ref)} {}
 
-      explicit Impl(const TransportType &ref) : proto_{ref} {}
+      explicit Impl(TransportType &ref) : proto_{ref} {}
 
       detail::ReferenceHolder<TransportType> proto_;
 
@@ -54,10 +56,9 @@ namespace shared_model {
           }()};
 
       SignatureSetType<proto::Signature> signatures_{[this] {
-        auto signatures = proto_->signatures()
-            | boost::adaptors::transformed([](const auto &x) {
-                            return proto::Signature(x);
-                          });
+        auto signatures = *proto_->mutable_signatures()
+            | boost::adaptors::transformed(
+                  [](auto &x) { return proto::Signature(x); });
         return SignatureSetType<proto::Signature>(signatures.begin(),
                                                   signatures.end());
       }()};
@@ -69,6 +70,10 @@ namespace shared_model {
 
     Transaction::Transaction(TransportType &&transaction) {
       impl_ = std::make_unique<Transaction::Impl>(std::move(transaction));
+    }
+
+    Transaction::Transaction(TransportType &transaction) {
+      impl_ = std::make_unique<Transaction::Impl>(transaction);
     }
 
     // TODO [IR-1866] Akvinikym 13.11.18: remove the copy ctor and fix fallen
@@ -126,10 +131,9 @@ namespace shared_model {
       sig->set_public_key(public_key.hex());
 
       impl_->signatures_ = [this] {
-        auto signatures = impl_->proto_->signatures()
-            | boost::adaptors::transformed([](const auto &x) {
-                            return proto::Signature(x);
-                          });
+        auto signatures = *impl_->proto_->mutable_signatures()
+            | boost::adaptors::transformed(
+                  [](auto &x) { return proto::Signature(x); });
         return SignatureSetType<proto::Signature>(signatures.begin(),
                                                   signatures.end());
       }();

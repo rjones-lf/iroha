@@ -67,7 +67,7 @@ namespace iroha {
         async_call_->log_->info(
             "Receive votes[size={}] from {}", state.size(), context->peer());
 
-        handler_.lock()->onState(state);
+        handler_.lock()->onState(std::move(state));
         return grpc::Status::OK;
       }
 
