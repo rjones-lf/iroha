@@ -27,6 +27,8 @@ namespace config_members {
   const char *VoteDelay = "vote_delay";
   const char *MstSupport = "mst_enable";
   const char *MstExpirationTime = "mst_expiration_time";
+  const char *MaxRoundsDelay = "max_rounds_delay";
+  const char *StaleStreamMaxRounds = "stale_stream_max_rounds";
 }  // namespace config_members
 
 static constexpr size_t kBadJsonPrintLength = 15;
@@ -106,6 +108,16 @@ inline rapidjson::Document parse_iroha_config(const std::string &conf_path) {
                    ac::type_error(mbr::MstSupport, kBoolType));
   ac::assert_fatal(doc[mbr::MstExpirationTime].IsUint(),
                    ac::type_error(mbr::MstExpirationTime, kUintType));
+
+  ac::assert_fatal(doc.HasMember(mbr::MaxRoundsDelay),
+                   ac::no_member_error(mbr::MaxRoundsDelay));
+  ac::assert_fatal(doc[mbr::MaxRoundsDelay].IsUint(),
+                   ac::type_error(mbr::MaxRoundsDelay, kUintType));
+
+  ac::assert_fatal(doc.HasMember(mbr::StaleStreamMaxRounds),
+                   ac::no_member_error(mbr::StaleStreamMaxRounds));
+  ac::assert_fatal(doc[mbr::StaleStreamMaxRounds].IsUint(),
+                   ac::type_error(mbr::StaleStreamMaxRounds, kUintType));
   return doc;
 }
 

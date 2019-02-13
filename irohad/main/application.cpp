@@ -74,6 +74,8 @@ Irohad::Irohad(const std::string &block_store_dir,
                std::chrono::milliseconds vote_delay,
                std::chrono::minutes mst_expiration_time,
                const shared_model::crypto::Keypair &keypair,
+               std::chrono::milliseconds max_rounds_delay,
+               size_t stale_stream_max_rounds,
                const boost::optional<GossipPropagationStrategyParams>
                    &opt_mst_gossip_params)
     : block_store_dir_(block_store_dir),
@@ -86,6 +88,8 @@ Irohad::Irohad(const std::string &block_store_dir,
       vote_delay_(vote_delay),
       is_mst_supported_(opt_mst_gossip_params),
       mst_expiration_time_(mst_expiration_time),
+      max_rounds_delay_(max_rounds_delay),
+      stale_stream_max_rounds_(stale_stream_max_rounds),
       opt_mst_gossip_params_(opt_mst_gossip_params),
       keypair(keypair) {
   log_ = logger::log("IROHAD");
@@ -306,7 +310,9 @@ void Irohad::initOrderingGate() {
 
   const uint64_t kCounter = 0, kMaxLocalCounter = 2;
   // reject_counter and local_counter are local mutable variables of lambda
-  const uint64_t kMaxDelaySeconds = 5;
+  const uint64_t kMaxDelaySeconds =
+      std::chrono::duration_cast<std::chrono::seconds>(max_rounds_delay_)
+          .count();
   auto delay = [reject_counter = kCounter,
                 local_counter = kCounter,
                 // MSVC requires const variables to be captured
@@ -510,7 +516,7 @@ void Irohad::initTransactionCommandService() {
           consensus_gate_objects.get_observable().map([](const auto &) {
             return ::torii::CommandServiceTransportGrpc::ConsensusGateEvent{};
           }),
-          2);  // TODO 18.01.2019 igor-egorov, make it configurable IR-230
+          stale_stream_max_rounds_);
 
   log_->info("[Init] => command service");
 }

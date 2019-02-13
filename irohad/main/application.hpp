@@ -95,6 +95,8 @@ class Irohad {
          std::chrono::milliseconds vote_delay,
          std::chrono::minutes mst_expiration_time,
          const shared_model::crypto::Keypair &keypair,
+         std::chrono::milliseconds max_rounds_delay,
+         size_t stale_stream_max_rounds,
          const boost::optional<iroha::GossipPropagationStrategyParams>
              &opt_mst_gossip_params = boost::none);
 
@@ -179,6 +181,8 @@ class Irohad {
   std::chrono::milliseconds vote_delay_;
   bool is_mst_supported_;
   std::chrono::minutes mst_expiration_time_;
+  std::chrono::milliseconds max_rounds_delay_;
+  size_t stale_stream_max_rounds_;
   boost::optional<iroha::GossipPropagationStrategyParams>
       opt_mst_gossip_params_;
 
