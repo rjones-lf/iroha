@@ -68,7 +68,7 @@ grpc::Status OnDemandOsServerGrpc::SendBatches(
                          request->round().reject_round()};
   auto transactions = deserializeTransactions(request);
 
-  auto batch_candidates = batch_parser_->parseBatches(transactions);
+  auto batch_candidates = batch_parser_->parseBatches(std::move(transactions));
 
   auto batches = std::accumulate(
       std::begin(batch_candidates),

@@ -65,7 +65,6 @@ namespace iroha {
 
             // notify about failed txs
             const auto &errors = proposal_and_errors->rejected_transactions;
-            std::lock_guard<std::mutex> lock(notifier_mutex_);
             for (const auto &tx_error : errors) {
               log_->info(composeErrorMessage(tx_error));
               this->publishStatus(TxStatusType::kStatefulFailed,
@@ -75,7 +74,7 @@ namespace iroha {
             // notify about success txs
             for (const auto &successful_tx :
                  proposal_and_errors->verified_proposal->transactions()) {
-              log_->info("on stateful validation success: {}",
+              log_->info("VerifiedProposalCreatorEvent StatefulValid: {}",
                          successful_tx.hash().hex());
               this->publishStatus(TxStatusType::kStatefulValid,
                                   successful_tx.hash());
@@ -85,27 +84,29 @@ namespace iroha {
       // commit transactions
       pcs_->on_commit().subscribe(
           [this](synchronizer::SynchronizationEvent sync_event) {
+            bool has_at_least_one_committed = false;
             sync_event.synced_blocks.subscribe(
                 // on next
-                [this](auto model_block) {
-                  current_txs_hashes_.reserve(
-                      model_block->transactions().size());
-                  std::transform(model_block->transactions().begin(),
-                                 model_block->transactions().end(),
-                                 std::back_inserter(current_txs_hashes_),
-                                 [](const auto &tx) { return tx.hash(); });
+                [this, &has_at_least_one_committed](auto model_block) {
+                  for (const auto &tx : model_block->transactions()) {
+                    const auto &hash = tx.hash();
+                    log_->info("SynchronizationEvent Committed: {}",
+                               hash.hex());
+                    this->publishStatus(TxStatusType::kCommitted, hash);
+                    has_at_least_one_committed = true;
+                  }
+                  for (const auto &rejected_tx_hash :
+                       model_block->rejected_transactions_hashes()) {
+                    log_->info("SynchronizationEvent Rejected: {}",
+                               rejected_tx_hash.hex());
+                    this->publishStatus(TxStatusType::kRejected,
+                                        rejected_tx_hash);
+                  }
                 },
                 // on complete
-                [this] {
-                  if (current_txs_hashes_.empty()) {
+                [this, &has_at_least_one_committed] {
+                  if (not has_at_least_one_committed) {
                     log_->info("there are no transactions to be committed");
-                  } else {
-                    std::lock_guard<std::mutex> lock(notifier_mutex_);
-                    for (const auto &tx_hash : current_txs_hashes_) {
-                      log_->info("on commit committed: {}", tx_hash.hex());
-                      this->publishStatus(TxStatusType::kCommitted, tx_hash);
-                    }
-                    current_txs_hashes_.clear();
                   }
                 });
           });
@@ -173,6 +174,10 @@ namespace iroha {
         case TxStatusType::kStatefulValid: {
           status_bus_->publish(
               status_factory_->makeStatefulValid(hash, tx_error));
+          return;
+        };
+        case TxStatusType::kRejected: {
+          status_bus_->publish(status_factory_->makeRejected(hash, tx_error));
           return;
         };
         case TxStatusType::kCommitted: {

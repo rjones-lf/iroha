@@ -48,8 +48,7 @@ TEST_F(QuorumFixture, CannotRaiseQuorumMoreThanSignatures) {
   const auto new_quorum = 3;
   auto raise_quorum_tx = complete(
       baseTx(kAdminId).setAccountQuorum(kAdminId, new_quorum), kAdminKeypair);
-  itf.sendTxAwait(raise_quorum_tx, CHECK_TXS_QUANTITY(0))
-      .getTxStatus(raise_quorum_tx.hash(), CHECK_STATEFUL_INVALID);
+  itf.sendTxAwait(raise_quorum_tx, CHECK_TXS_QUANTITY(0));
 }
 
 /**
