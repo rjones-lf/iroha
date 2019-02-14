@@ -9,6 +9,7 @@
 #include "torii/command_service.hpp"
 
 #include "ametsuchi/storage.hpp"
+#include "ametsuchi/tx_presence_cache.hpp"
 #include "cache/cache.hpp"
 #include "cryptography/hash.hpp"
 #include "interfaces/iroha_internal/tx_status_factory.hpp"
@@ -36,6 +37,7 @@ namespace iroha {
           std::shared_ptr<iroha::torii::StatusBus> status_bus,
           std::shared_ptr<shared_model::interface::TxStatusFactory>
               status_factory,
+          std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache,
           logger::Logger log = logger::log("CommandServiceImpl"));
 
       /**
@@ -94,7 +96,7 @@ namespace iroha {
       std::shared_ptr<iroha::torii::StatusBus> status_bus_;
       std::shared_ptr<CacheType> cache_;
       std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory_;
-
+      std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache_;
       logger::Logger log_;
     };
 
