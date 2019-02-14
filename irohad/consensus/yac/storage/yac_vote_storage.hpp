@@ -11,10 +11,12 @@
 #include <vector>
 
 #include <boost/optional.hpp>
+#include "consensus/yac/consistency_model.hpp"
 #include "consensus/yac/outcome_messages.hpp"  // because messages passed by value
 #include "consensus/yac/storage/storage_result.hpp"  // for Answer
 #include "consensus/yac/storage/yac_common.hpp"      // for ProposalHash
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
+#include "consensus/yac/supermajority_checker.hpp"
 #include "consensus/yac/yac_types.hpp"
 
 namespace iroha {
@@ -81,6 +83,9 @@ namespace iroha {
        public:
         // --------| public api |--------
 
+        /// @param consistency_model - consensus consistency model (CFT, BFT).
+        YacVoteStorage(ConsistencyModel consistency_model);
+
         /**
          * Insert votes in storage
          * @param state - current message with votes
@@ -131,6 +136,8 @@ namespace iroha {
          */
         std::unordered_map<Round, ProposalState, RoundTypeHasher>
             processing_state_;
+
+        std::shared_ptr<SupermajorityChecker> supermajority_checker_;
       };
 
     }  // namespace yac

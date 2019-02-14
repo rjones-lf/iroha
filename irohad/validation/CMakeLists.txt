@@ -21,5 +21,5 @@ target_link_libraries(chain_validator
     rxcpp
     shared_model_interfaces
     logger
-    supermajority_check
+    supermajority_checker
     )
