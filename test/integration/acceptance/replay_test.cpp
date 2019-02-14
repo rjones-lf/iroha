@@ -40,7 +40,13 @@ class ReplayFixture : public AcceptanceFixture {
  * @when the transaction is sent to ITF twice
  * @then the second submission should be rejected
  */
-TEST_F(ReplayFixture, OrderingGateReplay) {
+TEST_F(ReplayFixture, DISABLE_OrderingGateReplay) {
+  /*
+   * Disabled because now it is not clear how to test replays.
+   * In case of replay Iroha will just produce a warning in std output.
+   * Iroha would not throw anymore missed proposal exception.
+   */
+
   auto transfer_tx = complete(
       baseTx(kAdminId).transferAsset(kAdminId, kUserId, kAssetId, "", "1.0"),
       kAdminKeypair);
