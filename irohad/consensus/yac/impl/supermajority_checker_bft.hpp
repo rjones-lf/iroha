@@ -13,6 +13,7 @@ namespace iroha {
     namespace yac {
 
       namespace detail {
+        /// The free parameter of Kf+1 consistency model for BFT.
         constexpr unsigned int kSupermajorityCheckerKfPlus1Bft = 3;
       }
 

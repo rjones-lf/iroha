@@ -14,7 +14,7 @@
 #include "cryptography/keypair.hpp"
 #include "module/shared_model/builders/protobuf/block.hpp"
 
-// TODO mboldyrev 13.12.2018 IR- Parametrize the tests with consistency models
+// TODO mboldyrev 14.02.2019 IR-324 Use supermajority checker mock
 static const iroha::consensus::yac::ConsistencyModel kConsistencyModel =
     iroha::consensus::yac::ConsistencyModel::kBft;
 
