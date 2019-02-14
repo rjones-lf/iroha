@@ -1,26 +1,29 @@
-# What is Hyperledger Iroha?
+# Welcome!
+
+## What is Hyperledger Iroha?
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/960/badge)](https://bestpractices.coreinfrastructure.org/projects/960)
-[![Snap Status](https://build.snapcraft.io/badge/hyperledger/iroha.svg)](https://build.snapcraft.io/user/hyperledger/iroha)
 [![Build Status](https://jenkins.soramitsu.co.jp/buildStatus/icon?job=iroha/iroha-hyperledger/master)](https://jenkins.soramitsu.co.jp/job/iroha/job/iroha-hyperledger/job/master/)
 [![Throughput Graph](https://graphs.waffle.io/hyperledger/iroha/throughput.svg)](https://waffle.io/hyperledger/iroha/metrics/throughput)
 
-Blockchain platform Hyperledger Iroha is designed for simple creation and management of assets. This is a distributed ledger of transactions.
+Iroha is a straightforward DLT, inspired by Japanese Kaizen principle — eliminate excessiveness (muri). Iroha has essential functionality for your asset, information and identity management needs, at the same time being an efficient and trustworthy byzantine fault-tolerant tool for your enterprise needs. 
 
-Check [overview](http://iroha.readthedocs.io/en/latest/overview.html) page of our documentation.
+Check the [overview](http://iroha.readthedocs.io/en/latest/overview.html) page of our documentation.
+[Here](https://www.youtube.com/channel/UCYlK9OrZo9hvNYFuf0vrwww) is a YouTube channel where we upload meetings and explanatory videos - check them out! 
 
 <img height="300px" src="docs/image_assets/Iroha_3_sm.png"
  alt="Iroha logo" title="Iroha" align="right" />
 
 Iroha has the following features:
-1. Creation and management of custom complex assets, such as currencies or indivisible rights, serial numbers, patents, etc.
+1. Creation and management of custom assets, such as currencies or indivisible rights, serial numbers, patents, etc.
 2. Management of user accounts
-3. Taxonomy of accounts based on _domains_ — or _sub-ledgers_ in the system
+3. Taxonomy of accounts based on _domains_ in the system
 4. The system of rights and verification of user permissions for the execution of transactions and queries in the system
 5. Validation of business rules for transactions and queries in the system
+6. Multisignature transactions
 
-Among the non-functional requirements can be noted a high degree of network fault tolerance _(Byzantine Fault Tolerant)_.
+Iroha is _Byzantine Fault Tolerant_ and has its own consensus algorithm - [YAC](https://arxiv.org/pdf/1809.00554.pdf) 
 
 ## Documentation
 
@@ -37,19 +40,20 @@ Use [build guide](http://iroha.readthedocs.io/en/latest/guides/build.html), whic
 
 ### Is there SDK available?
 
-Yes, in [Java](http://iroha.readthedocs.io/en/latest/guides/libraries/java.html), [Python](http://iroha.readthedocs.io/en/latest/guides/libraries/python.html), [Javascript](http://iroha.readthedocs.io/en/latest/guides/libraries/nodejs.html), builds for [Android](http://iroha.readthedocs.io/en/latest/guides/libraries/android.html), and [iOS](http://iroha.readthedocs.io/en/latest/guides/libraries/swift_ios.html).
+Yes, in [Java](https://github.com/hyperledger/iroha-java), [Python](https://github.com/hyperledger/iroha-python), [Javascript](https://github.com/hyperledger/iroha-javascript) and [iOS](https://github.com/hyperledger/iroha-ios).
 
 ### Are there any example applications?
 
 [Android point app](https://github.com/hyperledger/iroha-android/tree/master/iroha-android-sample) and [JavaScript wallet](https://github.com/soramitsu/iroha-wallet-js).
 
+### Want to help us develop Iroha?
+That's great! Check out [this document](https://github.com/hyperledger/iroha/blob/master/CONTRIBUTING.md)
+
 ## Need help?
 
-* Join [telegram chat](https://t.me/hyperledgeriroha) where the maintainers team is able to help you
-* Communicate in Gitter chat with our development community [![Join the chat at https://gitter.im/hyperledger-iroha/Lobby](https://badges.gitter.im/hyperledger-iroha/Lobby.svg)](https://gitter.im/hyperledger-iroha/Lobby)
-* Submit issues via GitHub Iroha repository
-* Join [Hyperledger RocketChat](https://chat.hyperledger.org) #iroha channel to discuss your concerns and proposals
-* Use mailing list to spread your word within Iroha development community [hyperledger-iroha@lists.hyperledger.org](mailto:hyperledger-iroha@lists.hyperledger.org)
+* Join [Telegram chat](https://t.me/hyperledgeriroha) or [Hyperledger RocketChat](https://chat.hyperledger.org/channel/iroha) where the maintainers, contributors and fellow users are ready to help you. You can also discuss your concerns and proposals and simply chat about Iroha there or in Gitter [![Join the chat at https://gitter.im/hyperledger-iroha/Lobby](https://badges.gitter.im/hyperledger-iroha/Lobby.svg)](https://gitter.im/hyperledger-iroha/Lobby)
+* Submit issues and improvement suggestions via [Hyperledger Jira](https://jira.hyperledger.org/secure/CreateIssue!default.jspa) 
+* Subscribe to our [mailing list](https://lists.hyperledger.org/g/iroha) to receive the latest and most important news and spread your word within Iroha community
 
 ## License
 
