@@ -159,7 +159,7 @@ namespace shared_model {
     }
 
     Transaction::ModelType *Transaction::clone() const {
-      return new Transaction(*impl_->proto_);
+      return new Transaction(TransportType(*impl_->proto_));
     }
 
   }  // namespace proto

@@ -28,15 +28,16 @@ IntegrationTestFramework &QueryPermissionTxs::prepareState(
   target_permissions.set(Role::kSetDetail);
 
   // Make some transactions of different kinds:
-  std::vector<shared_model::proto::Transaction> user_transactions{
-      // Add asset to user
-      fixture.complete(fixture.baseTx().addAssetQuantity(kAssetId, "20000.0")),
-      // Transfer assets to admin
-      fixture.complete(fixture.baseTx().transferAsset(
-          kUserId, kAdminId, kAssetId, "outgoing", "500.0")),
-      // Set account details
-      fixture.complete(
-          fixture.baseTx(kUserId).setAccountDetail(kUserId, "key1", "val1"))};
+  std::vector<shared_model::proto::Transaction> user_transactions;
+  // Add asset to user
+  user_transactions.push_back(
+      fixture.complete(fixture.baseTx().addAssetQuantity(kAssetId, "20000.0")));
+  // Transfer assets to admin
+  user_transactions.push_back(fixture.complete(fixture.baseTx().transferAsset(
+      kUserId, kAdminId, kAssetId, "outgoing", "500.0")));
+  // Set account details
+  user_transactions.push_back(fixture.complete(
+      fixture.baseTx(kUserId).setAccountDetail(kUserId, "key1", "val1")));
 
   std::transform(user_transactions.cbegin(),
                  user_transactions.cend(),

@@ -131,7 +131,9 @@ auto makeTx() {
 
 TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   // proposal with height 2 => height 1 block present => new block generated
-  std::vector<shared_model::proto::Transaction> txs = {makeTx(), makeTx()};
+  std::vector<shared_model::proto::Transaction> txs;
+  txs.push_back(makeTx());
+  txs.push_back(makeTx());
 
   auto validation_result =
       std::make_unique<iroha::validation::VerifiedProposalAndErrors>();

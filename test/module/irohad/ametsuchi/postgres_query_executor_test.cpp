@@ -1286,13 +1286,15 @@ namespace iroha {
 
       static std::vector<shared_model::proto::Transaction>
       makeInitialTransactions(size_t transactions_amount) {
-        return {
+        std::vector<shared_model::proto::Transaction> transactions;
+        transactions.push_back(
             TestTransactionBuilder()
                 .creatorAccountId(account_id)
                 .createdTime(iroha::time::now())
                 .addAssetQuantity(
                     asset_id, assetAmount(transactions_amount, kAssetPrecision))
-                .build()};
+                .build());
+        return transactions;
       }
 
       static auto makeTargetTransactions(size_t transactions_amount) {

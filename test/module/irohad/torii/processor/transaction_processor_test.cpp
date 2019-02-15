@@ -84,18 +84,18 @@ class TransactionProcessorTest : public ::testing::Test {
   }
 
   template <typename Transaction, typename... KeyPairs>
-  auto addSignaturesFromKeyPairs(Transaction &&tx, KeyPairs... keypairs) {
-    auto create_signature = [&](auto &&key_pair) {
-      auto &payload = tx.payload();
-      auto signedBlob = shared_model::crypto::CryptoSigner<>::sign(
-          shared_model::crypto::Blob(payload), key_pair);
+  auto addSignaturesFromKeyPairs(Transaction tx, KeyPairs... keypairs) {
+    auto create_signature = [&](const auto &key_pair) {
+      const auto &payload = tx.payload();
+      auto signedBlob =
+          shared_model::crypto::CryptoSigner<>::sign(payload, key_pair);
       tx.addSignature(signedBlob, key_pair.publicKey());
     };
 
-    int temp[] = {(create_signature(std::forward<KeyPairs>(keypairs)), 0)...};
+    int temp[] = {(create_signature(keypairs), 0)...};
     (void)temp;
 
-    return std::forward<Transaction>(tx);
+    return tx;
   }
 
  protected:
@@ -152,8 +152,7 @@ class TransactionProcessorTest : public ::testing::Test {
 TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
   std::vector<shared_model::proto::Transaction> txs;
   for (size_t i = 0; i < proposal_size; i++) {
-    auto &&tx = addSignaturesFromKeyPairs(baseTestTx(), makeKey());
-    txs.push_back(tx);
+    txs.push_back(addSignaturesFromKeyPairs(baseTestTx(), makeKey()));
   }
 
   EXPECT_CALL(*status_bus, publish(_))
@@ -240,8 +239,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalBatchTest) {
 TEST_F(TransactionProcessorTest, TransactionProcessorVerifiedProposalTest) {
   std::vector<shared_model::proto::Transaction> txs;
   for (size_t i = 0; i < proposal_size; i++) {
-    auto &&tx = addSignaturesFromKeyPairs(baseTestTx(), makeKey());
-    txs.push_back(tx);
+    txs.push_back(addSignaturesFromKeyPairs(baseTestTx(), makeKey()));
   }
 
   EXPECT_CALL(*status_bus, publish(_))
@@ -283,8 +281,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorVerifiedProposalTest) {
 TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
   std::vector<shared_model::proto::Transaction> txs;
   for (size_t i = 0; i < proposal_size; i++) {
-    auto &&tx = addSignaturesFromKeyPairs(baseTestTx(), makeKey());
-    txs.push_back(tx);
+    txs.push_back(addSignaturesFromKeyPairs(baseTestTx(), makeKey()));
   }
 
   EXPECT_CALL(*status_bus, publish(_))
@@ -339,19 +336,19 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
 TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
   std::vector<shared_model::proto::Transaction> block_txs;
   for (size_t i = 0; i < block_size; i++) {
-    auto &&tx = TestTransactionBuilder().createdTime(i).build();
-    block_txs.push_back(tx);
+    auto tx = TestTransactionBuilder().createdTime(i).build();
     status_map[tx.hash()] =
         status_builder.notReceived().txHash(tx.hash()).build();
+    block_txs.push_back(std::move(tx));
   }
 
   std::vector<shared_model::proto::Transaction> invalid_txs;
 
   for (size_t i = block_size; i < proposal_size; i++) {
-    auto &&tx = TestTransactionBuilder().createdTime(i).build();
-    invalid_txs.push_back(tx);
+    auto tx = TestTransactionBuilder().createdTime(i).build();
     status_map[tx.hash()] =
         status_builder.notReceived().txHash(tx.hash()).build();
+    invalid_txs.push_back(std::move(tx));
   }
 
   // For all transactions from proposal
