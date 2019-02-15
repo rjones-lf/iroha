@@ -49,7 +49,7 @@ namespace shared_model {
           [this]() -> boost::optional<std::shared_ptr<interface::BatchMeta>> {
             if (payload_.has_batch()) {
               std::shared_ptr<interface::BatchMeta> b =
-                  std::make_shared<proto::BatchMeta>(payload_.batch());
+                  std::make_shared<proto::BatchMeta>(*payload_.mutable_batch());
               return b;
             }
             return boost::none;

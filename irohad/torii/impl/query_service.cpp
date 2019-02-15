@@ -43,7 +43,7 @@ namespace iroha {
             response = static_cast<shared_model::proto::QueryResponse &>(
                            *query_processor_->queryHandle(*query.value))
                            .getTransport();
-            cache_.addItem(hash, response);
+            cache_.addItem(hash, 0);
           },
           [&hash, &response](
               const iroha::expected::Error<QueryFactoryType::Error> &error) {

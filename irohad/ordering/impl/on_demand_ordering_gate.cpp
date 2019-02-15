@@ -121,8 +121,7 @@ OnDemandOrderingGate::processProposalRequest(
 
 std::shared_ptr<const shared_model::interface::Proposal>
 OnDemandOrderingGate::removeReplays(
-    std::shared_ptr<const shared_model::interface::Proposal> proposal)
-    const {
+    std::shared_ptr<const shared_model::interface::Proposal> proposal) const {
   std::vector<bool> proposal_txs_validation_results;
   auto tx_is_not_processed = [this](const auto &tx) {
     auto tx_result = tx_cache_->check(tx.hash());
@@ -150,9 +149,7 @@ OnDemandOrderingGate::removeReplays(
     bool all_txs_are_new =
         std::all_of(batch.begin(), batch.end(), tx_is_not_processed);
     proposal_txs_validation_results.insert(
-        proposal_txs_validation_results.end(),
-        batch.size(),
-        all_txs_are_new);
+        proposal_txs_validation_results.end(), batch.size(), all_txs_are_new);
     has_replays |= not all_txs_are_new;
   }
 

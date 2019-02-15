@@ -71,7 +71,7 @@ namespace iroha {
       std::shared_ptr<QueryFactoryType> query_factory_;
 
       iroha::cache::Cache<shared_model::crypto::Hash,
-                          iroha::protocol::QueryResponse,
+                          int,
                           shared_model::crypto::Hash::Hasher>
           cache_;
 
