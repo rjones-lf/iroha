@@ -590,12 +590,13 @@ Irohad::RunResult Irohad::run() {
                 std::shared_ptr<shared_model::interface::Block>>>(&block_var)
                              ->value;
 
-            pcs->on_commit()
-                .start_with(synchronizer::SynchronizationEvent{
+            pcs->on_commit().subscribe(ordering_init.notifier.get_subscriber());
+
+            ordering_init.notifier.get_subscriber().on_next(
+                synchronizer::SynchronizationEvent{
                     rxcpp::observable<>::just(block),
                     SynchronizationOutcomeType::kCommit,
-                    {block->height(), ordering::kFirstRejectRound}})
-                .subscribe(ordering_init.notifier.get_subscriber());
+                    {block->height(), ordering::kFirstRejectRound}});
             return {};
           },
           [&](const expected::Error<std::string> &e) -> RunResult {
