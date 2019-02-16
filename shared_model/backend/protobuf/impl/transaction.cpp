@@ -79,7 +79,8 @@ namespace shared_model {
     // TODO [IR-1866] Akvinikym 13.11.18: remove the copy ctor and fix fallen
     // tests
     Transaction::Transaction(const Transaction &transaction)
-        : Transaction(*transaction.impl_->proto_) {}
+        : Transaction(
+              static_cast<const TransportType &>(*transaction.impl_->proto_)) {}
 
     Transaction::Transaction(Transaction &&transaction) noexcept = default;
 
