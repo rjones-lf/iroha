@@ -309,14 +309,12 @@ void Irohad::initOrderingGate() {
       shared_model::validation::DefaultProposalValidator>>();
 
   const uint64_t kCounter = 0, kMaxLocalCounter = 2;
-  // reject_counter and local_counter are local mutable variables of lambda
-  const uint64_t kMaxDelaySeconds =
-      std::chrono::duration_cast<std::chrono::seconds>(max_rounds_delay_)
-          .count();
-  auto delay = [reject_counter = kCounter,
+  // reject_delay and local_counter are local mutable variables of lambda
+  const auto kMaxDelay = max_rounds_delay_;
+  auto delay = [reject_delay = std::chrono::milliseconds(0),
                 local_counter = kCounter,
                 // MSVC requires const variables to be captured
-                kMaxDelaySeconds,
+                kMaxDelay,
                 kMaxLocalCounter](const auto &commit) mutable {
     using iroha::synchronizer::SynchronizationOutcomeType;
     if (commit.sync_outcome == SynchronizationOutcomeType::kReject
@@ -325,14 +323,14 @@ void Irohad::initOrderingGate() {
       ++local_counter;
       if (local_counter == kMaxLocalCounter) {
         local_counter = 0;
-        if (reject_counter < kMaxDelaySeconds) {
-          reject_counter++;
+        if (reject_delay < kMaxDelay) {
+          reject_delay += std::min(kMaxDelay, std::chrono::milliseconds(1000));
         }
       }
     } else {
-      reject_counter = 0;
+      reject_delay = std::chrono::milliseconds(0);
     }
-    return std::chrono::seconds(reject_counter);
+    return reject_delay;
   };
 
   ordering_gate = ordering_init.initOrderingGate(max_proposal_size_,
