@@ -13,6 +13,7 @@ from iroha import IrohaCrypto as ic
 
 
 HOSTNAME = os.environ['HOSTNAME']
+ADMIN_PRIVATE_KEY = 'f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70'
 
 class IrohaClient(IrohaGrpc):
     """
@@ -63,11 +64,10 @@ class ApiUser(IrohaLocust):
         @task
         def send_tx(self):
             iroha = Iroha('admin@test')
-            admin_private_key = 'b60e30b7af0f0d233473ca8afe10084c321abc254a911b68c7bb49e924c579bb'
 
             tx = iroha.transaction([iroha.command(
                 'TransferAsset', src_account_id='admin@test', dest_account_id='test@test', asset_id='coin#test',
                 amount='0.01', description=HOSTNAME
             )])
-            ic.sign_transaction(tx, admin_private_key)
+            ic.sign_transaction(tx, ADMIN_PRIVATE_KEY)
             self.client.send_tx_await(tx)

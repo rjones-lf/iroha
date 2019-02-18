@@ -8,6 +8,7 @@ from iroha import IrohaCrypto as ic
 from locust import Locust, TaskSet, events, task
 
 HOSTNAME = os.environ['HOSTNAME']
+ADMIN_PRIVATE_KEY = 'f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70'
 
 class IrohaClient(IrohaGrpc):
     """
@@ -57,12 +58,11 @@ class ApiUser(IrohaLocust):
         @task
         def send_tx(self):
             iroha = Iroha('admin@test')
-            admin_private_key = 'f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70'
 
             tx = iroha.transaction([iroha.command(
                 'TransferAsset', src_account_id='admin@test', dest_account_id='test@test', asset_id='coin#test',
                 amount='0.01', description=HOSTNAME
             )])
-            ic.sign_transaction(tx, admin_private_key)
+            ic.sign_transaction(tx, ADMIN_PRIVATE_KEY)
 
             self.client.send_tx(tx)

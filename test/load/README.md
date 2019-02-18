@@ -6,16 +6,13 @@ See [locustfile.py](locustfile.py) for descriptions of task sets implemented usi
 
  * Docker
  * Docker Compose
- * Python 3
 
 ## Build steps
 
-1. Create a Docker image with Python, Iroha, Locust, and gRPC.
-    ```sh
-    docker build -t iroha-locust .
-    ```
-
-2. Copy [irohalib.py](https://github.com/hyperledger/iroha/blob/master/example/python/irohalib.py) and [ed25519.py](https://github.com/hyperledger/iroha/blob/master/example/python/ed25519.py) to the current directory and follow the preparation steps in [libiroha.md](https://github.com/hyperledger/iroha/blob/master/example/python/irohalib.md).
+Create a Docker image with Python, Iroha, Locust, and gRPC.
+```sh
+docker build -t iroha-locust .
+```
 
 ## Running the tests
 
