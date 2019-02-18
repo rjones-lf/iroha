@@ -23,14 +23,17 @@ namespace iroha {
       }
 
       Transaction TransactionGenerator::generateGenesisTransaction(
-          ts64_t timestamp, std::vector<std::string> peers_address) {
+          ts64_t timestamp,
+          std::vector<std::string> peers_address,
+          logger::LoggerPtr keys_manager_logger) {
         Transaction tx;
         tx.created_ts = timestamp;
         tx.creator_account_id = "";
         CommandGenerator command_generator;
         // Add peers
         for (size_t i = 0; i < peers_address.size(); ++i) {
-          KeysManagerImpl manager("node" + std::to_string(i));
+          KeysManagerImpl manager("node" + std::to_string(i),
+                                  keys_manager_logger);
           manager.createKeys();
           auto keypair = *std::unique_ptr<iroha::keypair_t>(
               makeOldModel(*manager.loadKeys()));
@@ -52,13 +55,13 @@ namespace iroha {
         tx.commands.push_back(
             command_generator.generateCreateAsset("coin", "test", precision));
         // Create accounts
-        KeysManagerImpl manager("admin@test");
+        KeysManagerImpl manager("admin@test", keys_manager_logger);
         manager.createKeys();
         auto keypair = *std::unique_ptr<iroha::keypair_t>(
             makeOldModel(*manager.loadKeys()));
         tx.commands.push_back(command_generator.generateCreateAccount(
             "admin", "test", keypair.pubkey));
-        manager = KeysManagerImpl("test@test");
+        manager = KeysManagerImpl("test@test", keys_manager_logger);
         manager.createKeys();
         keypair = *std::unique_ptr<iroha::keypair_t>(
             makeOldModel(*manager.loadKeys()));

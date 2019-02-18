@@ -20,7 +20,7 @@ namespace iroha {
   namespace model {
     namespace converters {
 
-      PbQueryFactory::PbQueryFactory(logger::Logger log)
+      PbQueryFactory::PbQueryFactory(logger::LoggerPtr log)
           : log_{std::move(log)} {
         serializers_[typeid(GetAccount)] = &PbQueryFactory::serializeGetAccount;
         serializers_[typeid(GetAccountAssets)] =
