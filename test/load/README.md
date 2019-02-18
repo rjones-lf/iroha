@@ -20,7 +20,8 @@ docker build -t iroha-locust .
    
    **Or manually** specify Iroha node address and port in `TARGET_URL` in environment configuration [file](config.env).
 
-    **Note for Mac hosts** If you are running Iroha on the same host as locust, you most likely need to use `docker.for.mac.localhost:50051`, where `50051` is Torii port.
+    **Mac hosts** If you are running Iroha on the same host as locust, you most likely need to use `docker.for.mac.localhost:50051`, where `50051` is Torii port.
+    **Linux hosts** Accessing host from container is not trivial, please refer to [this](https://github.com/docker/for-linux/issues/264) issue.
    
    Specify desired test script as locustfile in `LOCUSTFILE_PATH` in Compose file (e.g. locustfile.py or locustfile-performance.py)
 
