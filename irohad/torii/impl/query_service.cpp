@@ -43,6 +43,8 @@ namespace iroha {
             response = static_cast<shared_model::proto::QueryResponse &>(
                            *query_processor_->queryHandle(*query.value))
                            .getTransport();
+            // TODO 18.02.2019 lebdron: IR-336 Replace cache
+            // 0 is used as a dummy value
             cache_.addItem(hash, 0);
           },
           [&hash, &response](

@@ -70,6 +70,7 @@ namespace iroha {
       std::shared_ptr<iroha::torii::QueryProcessor> query_processor_;
       std::shared_ptr<QueryFactoryType> query_factory_;
 
+      // TODO 18.02.2019 lebdron: IR-336 Replace cache
       iroha::cache::Cache<shared_model::crypto::Hash,
                           int,
                           shared_model::crypto::Hash::Hasher>
