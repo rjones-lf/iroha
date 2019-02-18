@@ -15,11 +15,13 @@ set_target_description(rxcpp "Library for reactive programming" ${URL} ${VERSION
 
 
 if (NOT rxcpp_FOUND)
+  find_package(Git REQUIRED)
   externalproject_add(reactive_extensions_rxcpp
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
       CONFIGURE_COMMAND ""
       BUILD_COMMAND ""
+      PATCH_COMMAND ${GIT_EXECUTABLE} am ${PROJECT_SOURCE_DIR}/patch/0001-Fix-data-race-in-run-loop-usage.patch
       INSTALL_COMMAND "" # remove install step
       UPDATE_COMMAND "" # remove update step
       TEST_COMMAND "" # remove test step

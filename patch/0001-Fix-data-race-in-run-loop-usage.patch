@@ -1,0 +1,30 @@
+From 86124ba3af22e968c4e8d169b0312117d8bb4b18 Mon Sep 17 00:00:00 2001
+From: Andrei Lebedev <lebdron@gmail.com>
+Date: Mon, 18 Feb 2019 12:28:04 +0300
+Subject: [PATCH] Fix data race in run loop usage
+
+Signed-off-by: Andrei Lebedev <lebdron@gmail.com>
+---
+ Rx/v2/src/rxcpp/schedulers/rx-runloop.hpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/Rx/v2/src/rxcpp/schedulers/rx-runloop.hpp b/Rx/v2/src/rxcpp/schedulers/rx-runloop.hpp
+index 7e522f6..2e99a5c 100644
+--- a/Rx/v2/src/rxcpp/schedulers/rx-runloop.hpp
++++ b/Rx/v2/src/rxcpp/schedulers/rx-runloop.hpp
+@@ -164,10 +164,12 @@ public:
+     }
+     
+     bool empty() const {
++        std::unique_lock<std::mutex> guard(state->lock);
+         return state->q.empty();
+     }
+ 
+     const_reference_item_type peek() const {
++        std::unique_lock<std::mutex> guard(state->lock);
+         return state->q.top();
+     }
+ 
+-- 
+2.20.1.windows.1
+
