@@ -16,10 +16,6 @@
 #include "module/irohad/consensus/yac/mock_yac_timer.hpp"
 #include "module/irohad/consensus/yac/yac_test_util.hpp"
 
-// TODO mboldyrev 14.02.2019 IR-324 Use supermajority checker mock
-static const iroha::consensus::yac::ConsistencyModel kConsistencyModel =
-    iroha::consensus::yac::ConsistencyModel::kBft;
-
 namespace iroha {
   namespace consensus {
     namespace yac {
@@ -57,11 +53,7 @@ namespace iroha {
         }
 
         void initYac(ClusterOrdering ordering) {
-          yac = Yac::create(YacVoteStorage(kConsistencyModel),
-                            network,
-                            crypto,
-                            timer,
-                            ordering);
+          yac = Yac::create(YacVoteStorage(), network, crypto, timer, ordering);
           network->subscribe(yac);
         }
       };

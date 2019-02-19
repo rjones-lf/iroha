@@ -5,8 +5,6 @@
 
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 
-#include <boost/range/adaptor/transformed.hpp>
-
 using namespace logger;
 
 namespace iroha {
@@ -118,15 +116,28 @@ namespace iroha {
       }
 
       boost::optional<Answer> YacProposalStorage::findRejectProof() {
-        auto is_reject = not supermajority_checker_->canHaveSupermajority(
-            block_storages_
-                | boost::adaptors::transformed([](const auto &storage) {
-                    return storage.getNumberOfVotes();
-                  }),
-            peers_in_round_);
+        auto max_vote = std::max_element(block_storages_.begin(),
+                                         block_storages_.end(),
+                                         [](auto &left, auto &right) {
+                                           return left.getNumberOfVotes()
+                                               < right.getNumberOfVotes();
+                                         })
+                            ->getNumberOfVotes();
+
+        auto all_votes =
+            std::accumulate(block_storages_.begin(),
+                            block_storages_.end(),
+                            0ull,
+                            [](auto &acc, auto &storage) {
+                              return acc + storage.getNumberOfVotes();
+                            });
+
+        auto is_reject = supermajority_checker_->hasReject(
+            max_vote, all_votes, peers_in_round_);
 
         if (is_reject) {
           std::vector<VoteMessage> result;
+          result.reserve(all_votes);
           std::for_each(block_storages_.begin(),
                         block_storages_.end(),
                         [&result](auto &storage) {
