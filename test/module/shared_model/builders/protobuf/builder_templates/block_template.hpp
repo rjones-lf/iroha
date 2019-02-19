@@ -30,7 +30,7 @@ namespace shared_model {
     template <int S = 0,
               typename SV = validation::DefaultUnsignedBlockValidator,
               typename BT = UnsignedWrapper<Block>>
-    class DEPRECATED TemplateBlockBuilder {
+    class TemplateBlockBuilder {
      private:
       template <int, typename, typename>
       friend class TemplateBlockBuilder;

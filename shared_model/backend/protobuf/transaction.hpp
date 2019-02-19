@@ -11,8 +11,7 @@
 
 namespace shared_model {
   namespace proto {
-
-    class Transaction FINAL : public interface::Transaction {
+      class Transaction : public interface::Transaction {
      public:
       using TransportType = iroha::protocol::Transaction;
 

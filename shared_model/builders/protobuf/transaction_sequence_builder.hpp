@@ -18,7 +18,7 @@ namespace shared_model {
      * @tparam SV Stateless validator type
      */
     template <typename SV>
-    class DEPRECATED TransportBuilder<interface::TransactionSequence, SV> {
+    class TransportBuilder<interface::TransactionSequence, SV> {
      public:
       TransportBuilder<interface::TransactionSequence, SV>(
           SV stateless_validator = SV())

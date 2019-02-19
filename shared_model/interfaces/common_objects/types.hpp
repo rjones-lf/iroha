@@ -11,8 +11,6 @@
 #include <string>
 #include <vector>
 
-#include "utils/swig_keyword_hider.hpp"
-
 namespace shared_model {
 
   namespace crypto {

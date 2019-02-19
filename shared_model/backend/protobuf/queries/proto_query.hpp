@@ -13,7 +13,7 @@
 namespace shared_model {
   namespace proto {
 
-    class Query FINAL : public interface::Query {
+    class Query : public interface::Query {
      public:
       using TransportType = iroha::protocol::Query;
 
