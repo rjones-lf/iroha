@@ -26,13 +26,13 @@ namespace iroha {
                                          QueueType existed_state);
 
         boost::optional<CleanupStrategy::RoundsType> finalize(
-            RoundType round, Answer answer) override;
+            RoundType round, Answer) override;
 
         bool shouldCreateRound(const Round &round) override;
 
        private:
         /// maximal size of queue
-        const QueueSizeType kMaxSize_;
+        const QueueSizeType rounds_amount_limit_;
 
         /// minimal round in queue
         RoundType min_round_;
