@@ -7,4 +7,4 @@ EXPOSE 8089 5557 5558
 
 ENTRYPOINT ["/usr/local/bin/locust"]
 
-RUN pip install grpcio-tools
+RUN pip install grpcio-tools iroha

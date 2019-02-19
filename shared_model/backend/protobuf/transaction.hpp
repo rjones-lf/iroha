@@ -20,6 +20,8 @@ namespace shared_model {
 
       explicit Transaction(TransportType &&transaction);
 
+      explicit Transaction(TransportType &transaction);
+
       Transaction(const Transaction &transaction);
 
       Transaction(Transaction &&o) noexcept;
