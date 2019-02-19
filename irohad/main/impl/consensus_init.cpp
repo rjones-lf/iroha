@@ -53,13 +53,12 @@ namespace iroha {
           common_objects_factory,
       ConsistencyModel consistency_model) {
     // TODO: 2018-12-25 @muratovv make dynamic change of the number IR-154
-        const BufferedCleanupStrategy::QueueSizeType kNumberOfSavedRounds = 10;
-        std::shared_ptr<iroha::consensus::yac::CleanupStrategy>
-            cleanup_strategy = std::make_shared<
-                iroha::consensus::yac::BufferedCleanupStrategy>(
-                kNumberOfSavedRounds,
-                iroha::consensus::Round(1, 0),
-                std::queue<iroha::consensus::Round>());
+    const BufferedCleanupStrategy::QueueSizeType kNumberOfSavedRounds = 10;
+    std::shared_ptr<iroha::consensus::yac::CleanupStrategy> cleanup_strategy =
+        std::make_shared<iroha::consensus::yac::BufferedCleanupStrategy>(
+            kNumberOfSavedRounds,
+            iroha::consensus::Round(1, 0),
+            std::queue<iroha::consensus::Round>());
     return Yac::create(
         YacVoteStorage(cleanup_strategy),
         std::move(network),

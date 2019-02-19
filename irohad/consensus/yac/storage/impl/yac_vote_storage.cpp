@@ -35,11 +35,10 @@ namespace iroha {
           return val;
         }
         if (strategy_->shouldCreateRound(round)) {
-          return proposal_storages_.emplace(
-              proposal_storages_.end(),
-              msg.hash.vote_round,
-              peers_in_round,
-              std::make_shared<SupermajorityCheckerImpl>());
+          return proposal_storages_.emplace(proposal_storages_.end(),
+                                            msg.hash.vote_round,
+                                            peers_in_round,
+                                            std::make_shared<SupermajorityCheckerImpl>());
         } else {
           return boost::none;
         }
@@ -55,10 +54,10 @@ namespace iroha {
       // --------| public api |--------
 
       YacVoteStorage::YacVoteStorage(
-              ConsistencyModel consistency_model
+          ConsistencyModel consistency_model,
           std::shared_ptr<CleanupStrategy> cleanup_strategy)
           : supermajority_checker_(getSupermajorityChecker(consistency_model)),
-          strategy_(std::move(cleanup_strategy)) {}
+            strategy_(std::move(cleanup_strategy)) {}
 
       boost::optional<Answer> YacVoteStorage::store(
           std::vector<VoteMessage> state, PeersNumberType peers_in_round) {

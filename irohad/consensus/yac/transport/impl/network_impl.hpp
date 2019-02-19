@@ -13,8 +13,8 @@
 #include <unordered_map>
 
 #include "consensus/yac/outcome_messages.hpp"
-#include "interfaces/common_objects/peer.hpp"
 #include "consensus/yac/vote_message.hpp"
+#include "interfaces/common_objects/peer.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "logger/logger.hpp"
 #include "network/impl/async_grpc_client.hpp"

@@ -55,7 +55,8 @@ namespace iroha {
 
         void initYac(ClusterOrdering ordering) {
           yac = Yac::create(
-              YacVoteStorage(std::make_shared<
+              YacVoteStorage(
+                  std::make_shared<
                       iroha::consensus::yac::BufferedCleanupStrategy>(
                       10,
                       iroha::consensus::Round(1, 0),

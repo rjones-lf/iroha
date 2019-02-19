@@ -25,8 +25,8 @@ namespace iroha {
                                          RoundType minimal_round,
                                          QueueType existed_state);
 
-        boost::optional<CleanupStrategy::RoundsType> finalize(
-            RoundType round, Answer) override;
+        boost::optional<CleanupStrategy::RoundsType> finalize(RoundType round,
+                                                              Answer) override;
 
         bool shouldCreateRound(const Round &round) override;
 
