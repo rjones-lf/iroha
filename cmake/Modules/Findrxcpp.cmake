@@ -1,6 +1,6 @@
 add_library(rxcpp INTERFACE IMPORTED)
 
-find_path(rxcpp_INCLUDE_DIR rxcpp/rx.hpp)
+#find_path(rxcpp_INCLUDE_DIR rxcpp/rx.hpp)
 mark_as_advanced(rxcpp_INCLUDE_DIR)
 
 find_package_handle_standard_args(rxcpp DEFAULT_MSG
@@ -13,15 +13,15 @@ set(URL https://github.com/Reactive-Extensions/rxcpp.git)
 set(VERSION a7d5856385f126e874db6010d9dbfd37290c61de)
 set_target_description(rxcpp "Library for reactive programming" ${URL} ${VERSION})
 
-
-if (NOT rxcpp_FOUND)
+# TODO 19.02.2019 lebdron: IR-346 Update Rx commit
+#if (NOT rxcpp_FOUND)
   find_package(Git REQUIRED)
   externalproject_add(reactive_extensions_rxcpp
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
       CONFIGURE_COMMAND ""
       BUILD_COMMAND ""
-      PATCH_COMMAND ${GIT_EXECUTABLE} am ${PROJECT_SOURCE_DIR}/patch/0001-Fix-data-race-in-run-loop-usage.patch
+      PATCH_COMMAND ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR}/patch/0001-Fix-data-race-in-run-loop-usage.patch
       INSTALL_COMMAND "" # remove install step
       UPDATE_COMMAND "" # remove update step
       TEST_COMMAND "" # remove test step
@@ -31,7 +31,7 @@ if (NOT rxcpp_FOUND)
   file(MAKE_DIRECTORY ${rxcpp_INCLUDE_DIR})
 
   add_dependencies(rxcpp reactive_extensions_rxcpp)
-endif ()
+#endif ()
 
 set_target_properties(rxcpp PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES ${rxcpp_INCLUDE_DIR}
