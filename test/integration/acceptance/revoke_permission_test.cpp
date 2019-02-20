@@ -15,6 +15,10 @@ using namespace shared_model::interface::permissions;
 using namespace common_constants;
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-228 "Basic" tests should be replaced with a
+ * common acceptance test
+ * also covered by postgres_executor_test RevokePermission.Valid
+ *
  * C269 Revoke permission from a non-existing account
  * @given ITF instance and only one account with can_grant permission
  * @when the account tries to revoke grantable permission from non-existing
@@ -44,6 +48,9 @@ TEST_F(GrantablePermissionsFixture, RevokeFromNonExistingAccount) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-222 convert to a SFV integration test
+ * (no such test in postgres_executor_test)
+ *
  * C271 Revoke permission more than once
  * @given ITF instance, two accounts, the first account has granted a permission
  * to the second
@@ -82,6 +89,9 @@ TEST_F(GrantablePermissionsFixture, RevokeTwice) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-222 remove, covered by
+ * postgres_executor_test RevokePermission.NoPerms
+ *
  * Revoke without permission
  * @given ITF instance, three accounts:
  *  - first account does not have any permissions
@@ -94,8 +104,8 @@ TEST_F(GrantablePermissionsFixture, RevokeWithoutPermission) {
   IntegrationTestFramework itf(1);
   itf.setInitialState(kAdminKeypair);
   createTwoAccounts(itf, {}, {Role::kReceive})
-      .sendTxAwait(makeUserWithPerms(
-          {interface::permissions::Role::kSetMyQuorum}),
+      .sendTxAwait(
+          makeUserWithPerms({interface::permissions::Role::kSetMyQuorum}),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendTxAwait(
           grantPermission(kUser,
@@ -312,6 +322,8 @@ namespace grantables {
   TYPED_TEST_CASE(GrantRevokeFixture, GrantablePermissionsTypes);
 
   /**
+   * TODO mboldyrev 18.01.2019 IR-222 convert to a SFV integration test
+   *
    * The test iterates over helper types (GrantablePermissionsTypes).
    * That helper types contain information about required Grantable and Role
    * permissions for the test.
@@ -373,15 +385,8 @@ namespace grantables {
           ASSERT_EQ(proposal->transactions().size(), 1);
         })
         .skipVerifiedProposal()
-        .skipBlock()
-        .getTxStatus(last_check_tx.hash(),
-                     [&last_check_tx](auto &status) {
-                       auto err_cmd_name = status.statelessErrorOrCommandName();
-                       auto cmd_in_tx = last_check_tx.commands()[0].toString();
-                       auto cmd_in_tx_name =
-                           cmd_in_tx.substr(0, cmd_in_tx.find(":"));
-                       ASSERT_EQ(err_cmd_name, cmd_in_tx_name);
-                     })
+        .checkBlock(
+            [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
         .done();
   }
 

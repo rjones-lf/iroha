@@ -12,6 +12,11 @@
 #include "cryptography/hash_providers/sha3_256.hpp"
 #include "validators/abstract_validator.hpp"
 
+#ifdef _MSC_VER
+#pragma push_macro("GetMessage")
+#undef GetMessage
+#endif
+
 namespace shared_model {
   namespace proto {
 
@@ -67,5 +72,9 @@ namespace shared_model {
 
   }  // namespace proto
 }  // namespace shared_model
+
+#ifdef _MSC_VER
+#pragma pop_macro("GetMessage")
+#endif
 
 #endif  // IROHA_PROTO_TRANSPORT_FACTORY_HPP

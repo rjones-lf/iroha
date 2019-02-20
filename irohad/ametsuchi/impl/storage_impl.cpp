@@ -20,7 +20,6 @@
 #include "common/bind.hpp"
 #include "common/byteutils.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
-#include "postgres_ordering_service_persistent_state.hpp"
 
 namespace {
   void prepareStatements(soci::connection_pool &connections, size_t pool_size) {
@@ -156,20 +155,6 @@ namespace iroha {
         return boost::none;
       }
       return boost::make_optional(block_query);
-    }
-
-    boost::optional<std::shared_ptr<OrderingServicePersistentState>>
-    StorageImpl::createOsPersistentState() const {
-      log_->info("create ordering service persistent state");
-      std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
-      if (not connection_) {
-        log_->info("connection to database is not initialised");
-        return boost::none;
-      }
-      return boost::make_optional<
-          std::shared_ptr<OrderingServicePersistentState>>(
-          std::make_shared<PostgresOrderingServicePersistentState>(
-              std::make_unique<soci::session>(*connection_)));
     }
 
     boost::optional<std::shared_ptr<QueryExecutor>>
@@ -411,7 +396,8 @@ namespace iroha {
       return storage;
     }
 
-    void StorageImpl::commit(std::unique_ptr<MutableStorage> mutableStorage) {
+    boost::optional<std::unique_ptr<LedgerState>> StorageImpl::commit(
+        std::unique_ptr<MutableStorage> mutableStorage) {
       auto storage_ptr = std::move(mutableStorage);  // get ownership of storage
       auto storage = static_cast<MutableStorageImpl *>(storage_ptr.get());
       for (const auto &block : storage->block_store_) {
@@ -420,22 +406,29 @@ namespace iroha {
       try {
         *(storage->sql_) << "COMMIT";
         storage->committed = true;
+        return PostgresWsvQuery(*(storage->sql_), factory_).getPeers() |
+            [](auto &&peers) {
+              return boost::optional<std::unique_ptr<LedgerState>>(
+                  std::make_unique<LedgerState>(
+                      std::make_shared<PeerList>(std::move(peers))));
+            };
       } catch (std::exception &e) {
         storage->committed = false;
         log_->warn("Mutable storage is not committed. Reason: {}", e.what());
+        return boost::none;
       }
     }
 
-    bool StorageImpl::commitPrepared(
+    boost::optional<std::unique_ptr<LedgerState>> StorageImpl::commitPrepared(
         const shared_model::interface::Block &block) {
       if (not prepared_blocks_enabled_) {
         log_->warn("prepared blocks are not enabled");
-        return false;
+        return boost::none;
       }
 
       if (not block_is_prepared) {
         log_->info("there are no prepared blocks");
-        return false;
+        return boost::none;
       }
       log_->info("applying prepared block");
 
@@ -443,21 +436,29 @@ namespace iroha {
         std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
         if (not connection_) {
           log_->info("connection to database is not initialised");
-          return false;
+          return boost::none;
         }
         soci::session sql(*connection_);
         sql << "COMMIT PREPARED '" + prepared_block_name_ + "';";
         PostgresBlockIndex block_index(sql);
         block_index.index(block);
         block_is_prepared = false;
+        return PostgresWsvQuery(sql, factory_).getPeers() |
+                   [this, &block](auto &&peers)
+                   -> boost::optional<std::unique_ptr<LedgerState>> {
+          if (this->storeBlock(block)) {
+            return boost::optional<std::unique_ptr<LedgerState>>(
+                std::make_unique<LedgerState>(
+                    std::make_shared<PeerList>(std::move(peers))));
+          }
+          return boost::none;
+        };
       } catch (const std::exception &e) {
         log_->warn("failed to apply prepared block {}: {}",
                    block.hash().hex(),
                    e.what());
-        return false;
+        return boost::none;
       }
-
-      return storeBlock(block);
     }
 
     std::shared_ptr<WsvQuery> StorageImpl::getWsvQuery() const {

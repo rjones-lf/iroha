@@ -37,6 +37,9 @@ class AddSignatory : public AcceptanceFixture {
 };
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-228 "Basic" tests should be replaced with a
+ * common acceptance test
+ *
  * C224 Add existing public key of other user
  * @given some user with CanAddSignatory permission and a second user
  * @when execute tx with AddSignatory where the first is a creator and the
@@ -70,6 +73,9 @@ TEST_F(AddSignatory, Basic) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-204 remove, covered by
+ * postgres_executor_test AddSignatory.NoPerms
+ *
  * C228 AddSignatory without such permissions
  * @given some user without CanAddSignatory permission and a second user
  * @when execute tx with AddSignatory where the first is a creator and the
@@ -88,6 +94,9 @@ TEST_F(AddSignatory, NoPermission) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-204 remove, covered by
+ * postgres_executor_test AddSignatory.ValidGrantablePerms
+ *
  * C225 Add signatory to other user
  * C227 Add signatory to an account, which granted permission to add it, and add
  *      the same public key
@@ -115,6 +124,8 @@ TEST_F(AddSignatory, GrantedPermission) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-204 convert to a SFV integration test
+ *
  * C226 Add signatory to account, which isn't granted such permission
  * @given some user with CanAddMySignatory permission and a second user without
           granted CanAddMySignatory
@@ -136,6 +147,8 @@ TEST_F(AddSignatory, NonGrantedPermission) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-204 convert to a SFV integration test
+ *
  * C222 Add signatory to non-existing account ID
  * @given some user with CanAddMySignatory permission
  * @when execute tx with AddSignatory with inexistent user
@@ -152,9 +165,11 @@ TEST_F(AddSignatory, NonExistentUser) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-204 remove, covered by field validator test
+ *
  * C223 Add invalid public key
  * @given some user with CanAddMySignatory permission
- * @when execute tx with AddSignatory with inexistent public key
+ * @when execute tx with AddSignatory with incorrectly formed public key
  * @then the tx is stateless invalid
  */
 TEST_F(AddSignatory, InvalidKey) {
@@ -169,9 +184,11 @@ TEST_F(AddSignatory, InvalidKey) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-204 convert to a SFV integration test
+ *
  * @given some user with CanAddMySignatory permission
- * @when execute tx with AddSignatory with a valid key which isn't associated
- *       with any user
+ * @when execute tx with AddSignatory with a correctly formed key which isn't
+ * associated with any user
  * @then there is no tx in proposal
  */
 TEST_F(AddSignatory, NonExistedKey) {

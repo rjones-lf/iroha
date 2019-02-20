@@ -29,15 +29,15 @@ class CreateAssetFixture : public AcceptanceFixture {
 /*
  * With the current implementation of crateAsset method of TransactionBuilder
  * that is not possible to create tests for the following cases:
- * C237 Create asset with a negative precision
- *   because the current implementation of TransactionBuilder does not
- *   allow to pass negative value on a type level.
  * C238 Create asset with overflow of precision data type
  *   because the current implementation of TransactionBuilder does not
  *   allow to pass oversized value on a type level.
  */
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-228 "Basic" tests should be replaced with a
+ * common acceptance test
+ *
  * @given some user with can_create_asset permission
  * @when the user tries to create an asset
  * @then asset is successfully created
@@ -66,6 +66,9 @@ TEST_F(CreateAssetFixture, Basic) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-206 convert to a SLV unit test (this one has more
+ * test cases than its duplicate field validator test)
+ *
  * C235 Create asset with an empty name
  * C236 Create asset with boundary values per name validation
  * @given some user with can_create_asset permission
@@ -86,6 +89,9 @@ TEST_F(CreateAssetFixture, IllegalCharactersInName) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-206 remove, covered by
+ * postgres_executor_test CreateAccount.NameNotUnique
+ *
  * C234 Create asset with an existing id (name)
  * @given a user with can_create_asset permission
  * @when the user tries to create asset that already exists
@@ -111,6 +117,8 @@ TEST_F(CreateAssetFixture, ExistingName) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-206 convert to a SFV integration test
+ *
  * C234a Create asset with an existing id (name) but different precision
  * @given a user with can_create_asset permission
  * @when the user tries to create asset that already exists but with different
@@ -138,6 +146,9 @@ TEST_F(CreateAssetFixture, ExistingNameDifferentPrecision) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-206 remove, covered by
+ * postgres_executor_test CreateAccount.NoPerms
+ *
  * C239 CreateAsset without such permissions
  * @given a user without can_create_asset permission
  * @when the user tries to create asset
@@ -163,6 +174,9 @@ TEST_F(CreateAssetFixture, WithoutPermission) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-206 remove, covered by
+ * postgres_executor_test CreateAccount.NoDomain
+ *
  * @given a user with can_create_asset permission
  * @when the user tries to create asset in valid but non existing domain
  * @then stateful validation will be failed
@@ -188,6 +202,9 @@ TEST_F(CreateAssetFixture, ValidNonExistingDomain) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-206 convert to a SLV unit test (this one has more
+ * test cases than its duplicate field validator test)
+ *
  * @given a user with can_create_asset permission
  * @when the user tries to create an asset in a domain with illegal characters
  * @then stateless validation failed

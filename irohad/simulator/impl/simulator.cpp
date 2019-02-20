@@ -18,8 +18,7 @@ namespace iroha {
         std::shared_ptr<validation::StatefulValidator> statefulValidator,
         std::shared_ptr<ametsuchi::TemporaryFactory> factory,
         std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
-        std::shared_ptr<shared_model::crypto::CryptoModelSigner<>>
-            crypto_signer,
+        std::shared_ptr<CryptoSignerType> crypto_signer,
         std::unique_ptr<shared_model::interface::UnsafeBlockFactory>
             block_factory,
         logger::Logger log)

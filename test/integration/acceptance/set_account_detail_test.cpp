@@ -49,6 +49,9 @@ class SetAccountDetail : public AcceptanceFixture {
 };
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-223 remove, covered by
+ * postgres_executor_test SetAccountDetail.Valid
+ *
  * C274
  * @given a user without can_set_detail permission
  * @when execute tx with SetAccountDetail command aimed to the user
@@ -66,6 +69,9 @@ TEST_F(SetAccountDetail, Self) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-223 remove, covered by
+ * postgres_executor_test SetAccountDetail.NoAccount
+ *
  * C273
  * @given a user with required permission
  * @when execute tx with SetAccountDetail command with inexistent user
@@ -84,6 +90,9 @@ TEST_F(SetAccountDetail, NonExistentUser) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-223 remove, covered by
+ * postgres_executor_test SetAccountDetail.NoPerms
+ *
  * C280
  * @given a pair of users and first one without permissions
  * @when the first one tries to use SetAccountDetail on the second
@@ -111,6 +120,9 @@ TEST_F(SetAccountDetail, WithoutNoPerm) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-223 remove, covered by
+ * postgres_executor_test SetAccountDetail.ValidRolePerm
+ *
  * @given a pair of users and first one with can_set_detail perm
  * @when the first one tries to use SetAccountDetail on the second
  * @then there is the tx in block
@@ -133,6 +145,9 @@ TEST_F(SetAccountDetail, WithPerm) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-223 remove, covered by
+ * postgres_executor_test SetAccountDetail.ValidGrantablePerm
+ *
  * C275
  * @given a pair of users
  *        @and second has been granted can_set_my_detail from the first
@@ -170,6 +185,8 @@ TEST_F(SetAccountDetail, WithGrantablePerm) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-223 convert to a field validator unit test
+ *
  * C276
  * @given a user with required permission
  * @when execute tx with SetAccountDetail command with max key
@@ -188,6 +205,8 @@ TEST_F(SetAccountDetail, BigPossibleKey) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-223 remove, covered by field validator test
+ *
  * C277
  * @given a user with required permission
  * @when execute tx with SetAccountDetail command with empty key
@@ -205,6 +224,8 @@ TEST_F(SetAccountDetail, EmptyKey) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-223 remove, covered by field validator test
+ *
  * C278
  * @given a user with required permission
  * @when execute tx with SetAccountDetail command with empty value
@@ -223,6 +244,9 @@ TEST_F(SetAccountDetail, EmptyValue) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-223 convert the part with key to a field
+ * validator unit test; the part with value is covered by field validator test
+ *
  * C279
  * @given a user with required permission
  * @when execute tx with SetAccountDetail command with huge both key and value

@@ -11,7 +11,10 @@
 #include "cryptography/keypair.hpp"
 #include "framework/test_subscriber.hpp"
 #include "interfaces/query_responses/block_query_response.hpp"
-#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/ametsuchi/mock_block_query.hpp"
+#include "module/irohad/ametsuchi/mock_query_executor.hpp"
+#include "module/irohad/ametsuchi/mock_storage.hpp"
+#include "module/irohad/ametsuchi/mock_wsv_query.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
@@ -133,8 +136,8 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
 
 /**
  * @given account, ametsuchi queries
- * @when valid block query is send
- * @then Query Processor should start emitting BlockQueryRespones to the
+ * @when valid block query is sent
+ * @then Query Processor should start emitting BlockQueryResponses to the
  * observable
  */
 TEST_F(QueryProcessorTest, GetBlocksQuery) {
@@ -161,7 +164,7 @@ TEST_F(QueryProcessorTest, GetBlocksQuery) {
 /**
  * @given account, ametsuchi queries
  * @when valid block query is invalid (no can_get_blocks permission)
- * @then Query Processor should return an observable with blockError
+ * @then Query Processor should return an observable with BlockError
  */
 TEST_F(QueryProcessorTest, GetBlocksQueryNoPerms) {
   auto block_number = 5;

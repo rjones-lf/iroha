@@ -206,7 +206,7 @@ DROP TABLE IF EXISTS index_by_creator_height;
 DROP TABLE IF EXISTS position_by_account_asset;
 )";
 
-    soci::session sql(soci::postgresql, pgopts_);
+    soci::session sql(*soci::factory_postgresql(), pgopts_);
     sql << drop;
   }
 

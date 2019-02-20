@@ -23,7 +23,7 @@
 
 #include <boost/optional.hpp>
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
-#include "consensus/yac/messages.hpp"
+#include "consensus/yac/outcome_messages.hpp"
 #include "consensus/yac/storage/storage_result.hpp"
 #include "consensus/yac/yac_types.hpp"
 #include "logger/logger.hpp"

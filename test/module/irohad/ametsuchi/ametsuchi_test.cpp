@@ -6,7 +6,6 @@
 #include <gtest/gtest.h>
 
 #include "ametsuchi/impl/postgres_block_query.hpp"
-#include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "ametsuchi/mutable_storage.hpp"
@@ -450,85 +449,6 @@ TEST_F(AmetsuchiTest, TestingStorageWhenCommitBlock) {
 }
 
 /**
- * @given initialized storage for ordering service
- * @when save proposal height
- * @then load proposal height and ensure it is correct
- */
-TEST_F(AmetsuchiTest, OrderingServicePersistentStorageTest) {
-  auto os_opt = storage->createOsPersistentState();
-  ASSERT_TRUE(os_opt);
-  auto ordering_state = os_opt.get();
-  ASSERT_TRUE(ordering_state);
-
-  ordering_state->resetState();
-  ASSERT_EQ(2, ordering_state->loadProposalHeight().value());
-  ASSERT_TRUE(ordering_state->saveProposalHeight(11));
-  ASSERT_EQ(11, ordering_state->loadProposalHeight().value());
-  ASSERT_TRUE(ordering_state->saveProposalHeight(33));
-  ASSERT_EQ(33, ordering_state->loadProposalHeight().value());
-  ordering_state->resetState();
-  ASSERT_EQ(2, ordering_state->loadProposalHeight().value());
-}
-
-/**
- * @given initialized storage for ordering service
- * @when save proposal height
- * @then load proposal height and ensure it is correct
- */
-TEST_F(AmetsuchiTest, OrderingServicePersistentStorageRestartTest) {
-  auto os_opt = storage->createOsPersistentState();
-  ASSERT_TRUE(os_opt);
-  auto ordering_state = os_opt.get();
-  ASSERT_TRUE(ordering_state);
-
-  ordering_state->resetState();
-  ASSERT_EQ(2, ordering_state->loadProposalHeight().value());
-  ASSERT_TRUE(ordering_state->saveProposalHeight(11));
-  ASSERT_EQ(11, ordering_state->loadProposalHeight().value());
-
-  // restart Ordering Service Storage
-  ordering_state.reset();
-  os_opt = storage->createOsPersistentState();
-  ASSERT_TRUE(os_opt);
-  ordering_state = os_opt.get();
-  ASSERT_TRUE(ordering_state);
-  ASSERT_TRUE(ordering_state);
-  ASSERT_EQ(11, ordering_state->loadProposalHeight().value());
-}
-
-/**
- * @given 2 different initialized storages for ordering service
- * @when save proposal height to the first one
- * @then the state is consistent
- */
-TEST_F(AmetsuchiTest,
-       OrderingServicePersistentStorageDifferentConnectionsTest) {
-  auto os_opt1 = storage->createOsPersistentState();
-  ASSERT_TRUE(os_opt1);
-  auto ordering_state_1 = os_opt1.get();
-  ASSERT_TRUE(ordering_state_1);
-
-  auto os_opt2 = storage->createOsPersistentState();
-  ASSERT_TRUE(os_opt2);
-  auto ordering_state_2 = os_opt2.get();
-  ASSERT_TRUE(ordering_state_2);
-
-  ordering_state_2->resetState();
-  ASSERT_EQ(2, ordering_state_1->loadProposalHeight().value());
-  ASSERT_EQ(2, ordering_state_2->loadProposalHeight().value());
-  ASSERT_TRUE(ordering_state_1->saveProposalHeight(11));
-  ASSERT_EQ(11, ordering_state_1->loadProposalHeight().value());
-  ASSERT_EQ(11, ordering_state_2->loadProposalHeight().value());
-
-  ordering_state_2->resetState();
-  ASSERT_EQ(2, ordering_state_1->loadProposalHeight().value());
-  ASSERT_EQ(2, ordering_state_2->loadProposalHeight().value());
-  ASSERT_TRUE(ordering_state_2->saveProposalHeight(42));
-  ASSERT_EQ(42, ordering_state_1->loadProposalHeight().value());
-  ASSERT_EQ(42, ordering_state_2->loadProposalHeight().value());
-}
-
-/**
  * @given spoiled WSV
  * @when WSV is restored
  * @then WSV is valid
@@ -672,8 +592,7 @@ TEST_F(PreparedBlockTest, PrepareBlockNoStateChanged) {
   storage->prepareBlock(std::move(temp_wsv));
 
   // balance remains unchanged
-  validateAccountAsset(
-      sql_query, "admin@test", "coin#test", base_balance);
+  validateAccountAsset(sql_query, "admin@test", "coin#test", base_balance);
 }
 
 /**
@@ -696,8 +615,7 @@ TEST_F(PreparedBlockTest, CommitPreparedStateChanged) {
 
   shared_model::interface::Amount resultingAmount("10.00");
 
-  validateAccountAsset(
-      sql_query, "admin@test", "coin#test", resultingAmount);
+  validateAccountAsset(sql_query, "admin@test", "coin#test", resultingAmount);
 }
 
 /**
@@ -719,8 +637,7 @@ TEST_F(PreparedBlockTest, PrepareBlockCommitDifferentBlock) {
   apply(storage, block);
 
   shared_model::interface::Amount resultingBalance{"15.00"};
-  validateAccountAsset(
-      sql_query, "admin@test", "coin#test", resultingBalance);
+  validateAccountAsset(sql_query, "admin@test", "coin#test", resultingBalance);
 }
 
 /**
@@ -748,6 +665,5 @@ TEST_F(PreparedBlockTest, CommitPreparedFailsAfterCommit) {
   ASSERT_FALSE(commited);
 
   shared_model::interface::Amount resultingBalance{"15.00"};
-  validateAccountAsset(
-      sql_query, "admin@test", "coin#test", resultingBalance);
+  validateAccountAsset(sql_query, "admin@test", "coin#test", resultingBalance);
 }

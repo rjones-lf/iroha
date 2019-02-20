@@ -65,8 +65,21 @@ namespace iroha {
 
       void setQueryHash(const shared_model::crypto::Hash &query_hash);
 
+      /**
+       * Check that account has a specific role permission
+       * @param permission to be in that account
+       * @param account_id of account to be checked
+       * @return true, if account has that permission, false otherwise
+       */
+      bool hasAccountRolePermission(
+          shared_model::interface::permissions::Role permission,
+          const std::string &account_id) const;
+
       QueryExecutorResult operator()(
           const shared_model::interface::GetAccount &q);
+
+      QueryExecutorResult operator()(
+          const shared_model::interface::GetBlock &q);
 
       QueryExecutorResult operator()(
           const shared_model::interface::GetSignatories &q);

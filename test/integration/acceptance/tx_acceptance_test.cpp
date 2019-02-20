@@ -18,7 +18,7 @@ class AcceptanceTest : public AcceptanceFixture {
                            EnoughSignaturesCollectedResponse &>(status.get()));
       };
   const std::function<void(
-      const std::shared_ptr<shared_model::interface::Proposal> &)>
+      const std::shared_ptr<const shared_model::interface::Proposal> &)>
       checkProposal =
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); };
   const std::function<void(
@@ -37,6 +37,10 @@ class AcceptanceTest : public AcceptanceFixture {
 };
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 convert to a separate status test
+ * and a SFV integration test of non existing tx creator account
+ * (seems not covered in postgres_executor_test or transaction_processor_test)
+ *
  * @given non existent user
  * @when sending  transaction to the ledger
  * @then receive ENOUGH_SIGNATURES_COLLECTED status
@@ -56,6 +60,8 @@ TEST_F(AcceptanceTest, NonExistentCreatorAccountId) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 remove, covered by field validator test
+ *
  * @given some user
  * @when sending transactions with an 1 hour old UNIX time
  * @then receive ENOUGH_SIGNATURES_COLLECTED status
@@ -74,6 +80,8 @@ TEST_F(AcceptanceTest, Transaction1HourOld) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 remove, covered by field validator test
+ *
  * @given some user
  * @when sending transactions with an less than 24 hour old UNIX time
  * @then receive ENOUGH_SIGNATURES_COLLECTED status
@@ -92,6 +100,8 @@ TEST_F(AcceptanceTest, DISABLED_TransactionLess24HourOld) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 remove, covered by field validator test
+ *
  * @given some user
  * @when sending transactions with an more than 24 hour old UNIX time
  * @then receive STATELESS_VALIDATION_FAILED status
@@ -106,6 +116,8 @@ TEST_F(AcceptanceTest, TransactionMore24HourOld) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 remove, covered by field validator test
+ *
  * @given some user
  * @when sending transactions with an less that 5 minutes from future UNIX time
  * @then receive ENOUGH_SIGNATURES_COLLECTED status
@@ -124,6 +136,8 @@ TEST_F(AcceptanceTest, Transaction5MinutesFromFuture) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 remove, covered by field validator test
+ *
  * @given some user
  * @when sending transactions with an 10 minutes from future UNIX time
  * @then receive STATELESS_VALIDATION_FAILED status
@@ -138,6 +152,8 @@ TEST_F(AcceptanceTest, Transaction10MinutesFromFuture) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 remove, covered by field validator test
+ *
  * @given some user
  * @when sending transactions with an empty public Key
  * @then receive STATELESS_VALIDATION_FAILED status
@@ -155,6 +171,10 @@ TEST_F(AcceptanceTest, TransactionEmptyPubKey) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 convert to a crypto provider unit test.
+ * Also make a single SVL integration test including SignableModelValidator or
+ * even whole torii::CommandServiceTransportGrpc and the crypto provider
+ *
  * @given some user
  * @when sending transactions with an empty signedBlob
  * @then receive STATELESS_VALIDATION_FAILED status
@@ -169,8 +189,10 @@ TEST_F(AcceptanceTest, TransactionEmptySignedblob) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 convert to a crypto provider unit test
+ *
  * @given some user
- * @when sending transactions with Invalid PublicKey
+ * @when sending transactions with correctly formed invalid PublicKey
  * @then receive STATELESS_VALIDATION_FAILED status
  */
 TEST_F(AcceptanceTest, TransactionInvalidPublicKey) {
@@ -189,6 +211,8 @@ TEST_F(AcceptanceTest, TransactionInvalidPublicKey) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 convert to a crypto provider unit test
+ *
  * @given some user
  * @when sending transactions with Invalid SignedBlock
  * @then receive STATELESS_VALIDATION_FAILED status
@@ -211,6 +235,9 @@ TEST_F(AcceptanceTest, TransactionInvalidSignedBlob) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 remove, successful case covered by
+ * higher-level tests
+ *
  * @given some user
  * @when sending transactions with valid signature
  * @then receive ENOUGH_SIGNATURES_COLLECTED status
@@ -227,6 +254,8 @@ TEST_F(AcceptanceTest, TransactionValidSignedBlob) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 convert to a SignableModelValidator test
+ *
  * @given some user
  * @when sending transaction without any signature
  * @then the response is STATELESS_VALIDATION_FAILED

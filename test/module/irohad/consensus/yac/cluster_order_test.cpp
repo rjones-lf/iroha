@@ -3,16 +3,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <gtest/gtest.h>
+
 #include "consensus/yac/cluster_order.hpp"
 
-#include <gtest/gtest.h>
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
+#include "module/irohad/consensus/yac/yac_test_util.hpp"
 
 class ClusterOrderTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    p1 = iroha::consensus::yac::mk_peer("1");
-    p2 = iroha::consensus::yac::mk_peer("2");
+    p1 = iroha::consensus::yac::makePeer("1");
+    p2 = iroha::consensus::yac::makePeer("2");
     peers_list = {p1, p2};
   }
 

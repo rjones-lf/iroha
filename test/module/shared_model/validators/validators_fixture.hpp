@@ -32,6 +32,7 @@ class ValidatorsTest : public ::testing::Test {
     auto setString = setField(&google::protobuf::Reflection::SetString);
     auto addString = setField(&google::protobuf::Reflection::AddString);
     auto setUInt32 = setField(&google::protobuf::Reflection::SetUInt32);
+    auto setUInt64 = setField(&google::protobuf::Reflection::SetUInt64);
     auto addEnum = setField(&google::protobuf::Reflection::AddEnumValue);
     auto setEnum = setField(&google::protobuf::Reflection::SetEnumValue);
 
@@ -66,6 +67,7 @@ class ValidatorsTest : public ::testing::Test {
     field_setters["pagination_meta"] = [&](auto refl, auto msg, auto field) {
       refl->MutableMessage(msg, field)->CopyFrom(tx_pagination_meta);
     };
+    field_setters["height"] = setUInt64(height);
   }
 
   /**
@@ -193,6 +195,7 @@ class ValidatorsTest : public ::testing::Test {
   size_t public_key_size{0};
   size_t hash_size{0};
   uint64_t counter{0};
+  uint64_t height{42};
   std::string account_id;
   std::string dest_id;
   std::string asset_name;

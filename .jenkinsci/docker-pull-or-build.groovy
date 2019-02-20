@@ -20,41 +20,30 @@ def buildOptionsString(options) {
 def dockerPullOrUpdate(imageName, currentDockerfileURL, previousDockerfileURL, referenceDockerfileURL, buildOptions=null) {
   buildOptions = buildOptionsString(buildOptions)
   def commit = sh(script: "echo ${GIT_LOCAL_BRANCH} | md5sum | cut -c 1-8", returnStdout: true).trim()
-  if (remoteFilesDiffer(currentDockerfileURL, previousDockerfileURL)) {
-    // Dockerfile has been changed compared to the previous commit
-    // Worst case scenario. We cannot count on the local cache
-    // because Dockerfile may contain apt-get entries that would try to update
-    // from invalid (stale) addresses
-    if(remoteFilesDiffer(currentDockerfileURL, referenceDockerfileURL)){
-    // Dockerfile has been changed compared to the develop
+  if(remoteFilesDiffer(currentDockerfileURL, referenceDockerfileURL)) {
+    // Dockerfile is differ from develop
+    if (remoteFilesDiffer(currentDockerfileURL, previousDockerfileURL)) {
+      // Dockerfile has been changed compared to the previous commit
+      // Worst case scenario. We cannot count on the local cache
+      // because Dockerfile may contain apt-get entries that would try to update
+      // from invalid (stale) addresses
       iC = docker.build("${DOCKER_REGISTRY_BASENAME}:${commit}-${BUILD_NUMBER}", "${buildOptions} --no-cache -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
     } else {
-    // Dockerfile is same as develop, we can just pull it
-      def testExitCode = sh(script: "docker pull ${DOCKER_REGISTRY_BASENAME}:${imageName}", returnStatus: true)
-      if (testExitCode != 0) {
-        // image does not (yet) exist on Dockerhub. Build it
-        iC = docker.build("${DOCKER_REGISTRY_BASENAME}:${commit}-${BUILD_NUMBER}", "$buildOptions --no-cache -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
-      }
-      else {
-        // no difference found compared to both previous and reference Dockerfile
-        iC = docker.image("${DOCKER_REGISTRY_BASENAME}:${imageName}")
-      }
-    }
-  }
-  else {
-    // first commit in this branch or Dockerfile modified
-    if (remoteFilesDiffer(currentDockerfileURL, referenceDockerfileURL)) {
       // if we're lucky to build on the same agent, image will be built using cache
       iC = docker.build("${DOCKER_REGISTRY_BASENAME}:${commit}-${BUILD_NUMBER}", "$buildOptions -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
     }
-    else {
-      // try pulling image from Dockerhub, probably image is already there
+  } else {
+    // Dockerfile is same as develop
+    if (GIT_LOCAL_BRANCH == "develop" && remoteFilesDiffer(currentDockerfileURL, previousDockerfileURL)) {
+     // we in dev branch and docker file was changed
+     iC = docker.build("${DOCKER_REGISTRY_BASENAME}:${commit}-${BUILD_NUMBER}", "${buildOptions} --no-cache -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
+    } else {
+      // Dockerfile is same as develop, we can just pull it
       def testExitCode = sh(script: "docker pull ${DOCKER_REGISTRY_BASENAME}:${imageName}", returnStatus: true)
       if (testExitCode != 0) {
         // image does not (yet) exist on Dockerhub. Build it
         iC = docker.build("${DOCKER_REGISTRY_BASENAME}:${commit}-${BUILD_NUMBER}", "$buildOptions --no-cache -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
-      }
-      else {
+      } else {
         // no difference found compared to both previous and reference Dockerfile
         iC = docker.image("${DOCKER_REGISTRY_BASENAME}:${imageName}")
       }

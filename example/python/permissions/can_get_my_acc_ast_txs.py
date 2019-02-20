@@ -3,40 +3,37 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-import iroha
+import irohalib
 import commons
+import primitive_pb2
 
 admin = commons.new_user('admin@test')
 alice = commons.new_user('alice@test')
+iroha = irohalib.Iroha(admin['id'])
 
 
 @commons.hex
 def genesis_tx():
-    test_permissions = iroha.RolePermissionSet([iroha.Role_kGetMyAccAstTxs])
-    tx = iroha.ModelTransactionBuilder() \
-        .createdTime(commons.now()) \
-        .creatorAccountId(admin['id']) \
-        .addPeer('0.0.0.0:50541', admin['key'].publicKey()) \
-        .createRole('admin_role', commons.all_permissions()) \
-        .createRole('test_role', test_permissions) \
-        .createDomain('test', 'test_role') \
-        .createAccount('admin', 'test', admin['key'].publicKey()) \
-        .createAccount('alice', 'test', alice['key'].publicKey()) \
-        .createAsset('coin', 'test', 2) \
-        .addAssetQuantity('coin#test', '500.69') \
-        .transferAsset(admin['id'], alice['id'], 'coin#test', 'top up', '10.00') \
-        .build()
-    return iroha.ModelProtoTransaction(tx) \
-        .signAndAddSignature(admin['key']).finish()
+    test_permissions = [primitive_pb2.can_get_my_acc_ast_txs]
+    genesis_commands = commons.genesis_block(admin, alice, test_permissions)
+    genesis_commands.extend([
+        iroha.command('CreateAsset', asset_name='coin', domain_id='test', precision=2),
+        iroha.command('AddAssetQuantity', asset_id='coin#test', amount='500.69'),
+        iroha.command('TransferAsset',
+                      src_account_id=admin['id'],
+                      dest_account_id=alice['id'],
+                      asset_id='coin#test',
+                      description='top up',
+                      amount='10.00')
+    ])
+    tx = iroha.transaction(genesis_commands)
+    irohalib.IrohaCrypto.sign_transaction(tx, admin['key'])
+    return tx
 
 
 @commons.hex
 def account_asset_transactions_query():
-    tx = iroha.ModelQueryBuilder() \
-        .createdTime(commons.now()) \
-        .queryCounter(1) \
-        .creatorAccountId(alice['id']) \
-        .getAccountAssetTransactions(alice['id'], 'coin#test') \
-        .build()
-    return iroha.ModelProtoQuery(tx) \
-        .signAndAddSignature(alice['key']).finish()
+    query = iroha.query('GetAccountAssetTransactions', creator_account=alice['id'], account_id=alice['id'],
+                        asset_id='coin#test', page_size=10)
+    irohalib.IrohaCrypto.sign_query(query, alice['key'])
+    return query

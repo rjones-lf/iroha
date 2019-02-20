@@ -19,7 +19,6 @@
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
-#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
 #include "module/shared_model/interface/mock_transaction_batch_factory.hpp"
@@ -35,7 +34,6 @@ using ::testing::Property;
 using ::testing::Return;
 using ::testing::StrEq;
 
-using namespace iroha::ametsuchi;
 using namespace iroha::torii;
 using namespace std::chrono_literals;
 

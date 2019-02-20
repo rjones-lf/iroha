@@ -8,36 +8,25 @@
 
 #include <gmock/gmock.h>
 #include <boost/optional.hpp>
-#include "ametsuchi/block_query.hpp"
-#include "ametsuchi/block_query_factory.hpp"
-#include "ametsuchi/key_value_storage.hpp"
-#include "ametsuchi/mutable_factory.hpp"
-#include "ametsuchi/mutable_storage.hpp"
-#include "ametsuchi/os_persistent_state_factory.hpp"
-#include "ametsuchi/peer_query.hpp"
-#include "ametsuchi/peer_query_factory.hpp"
-#include "ametsuchi/storage.hpp"
-#include "ametsuchi/temporary_factory.hpp"
 #include "ametsuchi/temporary_wsv.hpp"
-#include "ametsuchi/tx_presence_cache.hpp"
 #include "ametsuchi/wsv_command.hpp"
-#include "ametsuchi/wsv_query.hpp"
 #include "common/result.hpp"
 #include "interfaces/common_objects/peer.hpp"
+#include "module/irohad/ametsuchi/mock_block_query.hpp"
+#include "module/irohad/ametsuchi/mock_block_query_factory.hpp"
+#include "module/irohad/ametsuchi/mock_key_value_storage.hpp"
+#include "module/irohad/ametsuchi/mock_mutable_factory.hpp"
+#include "module/irohad/ametsuchi/mock_mutable_storage.hpp"
+#include "module/irohad/ametsuchi/mock_peer_query.hpp"
+#include "module/irohad/ametsuchi/mock_peer_query_factory.hpp"
+#include "module/irohad/ametsuchi/mock_query_executor.hpp"
+#include "module/irohad/ametsuchi/mock_storage.hpp"
+#include "module/irohad/ametsuchi/mock_temporary_factory.hpp"
+#include "module/irohad/ametsuchi/mock_tx_presence_cache.hpp"
+#include "module/irohad/ametsuchi/mock_wsv_query.hpp"
 
 namespace iroha {
   namespace ametsuchi {
-    class MockWsvQuery : public WsvQuery {
-     public:
-      MOCK_METHOD1(getSignatories,
-                   boost::optional<
-                       std::vector<shared_model::interface::types::PubkeyType>>(
-                       const std::string &account_id));
-      MOCK_METHOD0(
-          getPeers,
-          boost::optional<
-              std::vector<std::shared_ptr<shared_model::interface::Peer>>>());
-    };
 
     class MockWsvCommand : public WsvCommand {
      public:
@@ -108,35 +97,6 @@ namespace iroha {
                                     const std::string &));
     };
 
-    class MockBlockQuery : public BlockQuery {
-     public:
-      MOCK_METHOD2(getBlocks,
-                   std::vector<BlockQuery::wBlock>(
-                       shared_model::interface::types::HeightType, uint32_t));
-      MOCK_METHOD1(getBlocksFrom,
-                   std::vector<BlockQuery::wBlock>(
-                       shared_model::interface::types::HeightType));
-      MOCK_METHOD1(getTopBlocks, std::vector<BlockQuery::wBlock>(uint32_t));
-      MOCK_METHOD0(getTopBlock, expected::Result<wBlock, std::string>(void));
-      MOCK_METHOD1(checkTxPresence,
-                   boost::optional<TxCacheStatusType>(
-                       const shared_model::crypto::Hash &));
-      MOCK_METHOD0(getTopBlockHeight, uint32_t(void));
-    };
-
-    class MockTemporaryFactory : public TemporaryFactory {
-     public:
-      MOCK_METHOD0(
-          createTemporaryWsv,
-          expected::Result<std::unique_ptr<TemporaryWsv>, std::string>(void));
-      MOCK_METHOD1(prepareBlock_, void(std::unique_ptr<TemporaryWsv> &));
-
-      void prepareBlock(std::unique_ptr<TemporaryWsv> wsv) override {
-        // gmock workaround for non-copyable parameters
-        prepareBlock_(wsv);
-      }
-    };
-
     class MockTemporaryWsv : public TemporaryWsv {
      public:
       MOCK_METHOD1(apply,
@@ -150,159 +110,6 @@ namespace iroha {
     class MockTemporaryWsvSavepointWrapper
         : public TemporaryWsv::SavepointWrapper {
       MOCK_METHOD0(release, void(void));
-    };
-
-    class MockMutableStorage : public MutableStorage {
-     public:
-      MOCK_METHOD2(
-          apply,
-          bool(rxcpp::observable<
-                   std::shared_ptr<shared_model::interface::Block>>,
-               std::function<
-                   bool(const shared_model::interface::Block &,
-                        PeerQuery &,
-                        const shared_model::interface::types::HashType &)>));
-      MOCK_METHOD1(apply, bool(const shared_model::interface::Block &));
-      MOCK_METHOD1(applyPrepared, bool(const shared_model::interface::Block &));
-    };
-
-    /**
-     * Factory for generation mock mutable storages.
-     * This method provide technique,
-     * when required to return object wrapped in Result.
-     */
-    expected::Result<std::unique_ptr<MutableStorage>, std::string>
-    createMockMutableStorage() {
-      return expected::makeValue<std::unique_ptr<MutableStorage>>(
-          std::make_unique<MockMutableStorage>());
-    }
-
-    class MockMutableFactory : public MutableFactory {
-     public:
-      MOCK_METHOD0(
-          createMutableStorage,
-          expected::Result<std::unique_ptr<MutableStorage>, std::string>(void));
-
-      void commit(std::unique_ptr<MutableStorage> mutableStorage) override {
-        // gmock workaround for non-copyable parameters
-        commit_(mutableStorage);
-      }
-
-      MOCK_METHOD1(commitPrepared,
-                   bool(const shared_model::interface::Block &));
-      MOCK_METHOD1(commit_, void(std::unique_ptr<MutableStorage> &));
-    };
-
-    class MockPeerQuery : public PeerQuery {
-     public:
-      MockPeerQuery() = default;
-
-      MOCK_METHOD0(getLedgerPeers, boost::optional<std::vector<wPeer>>());
-    };
-
-    class MockStorage : public Storage {
-     public:
-      MOCK_CONST_METHOD0(getWsvQuery, std::shared_ptr<WsvQuery>(void));
-      MOCK_CONST_METHOD0(getBlockQuery, std::shared_ptr<BlockQuery>(void));
-      MOCK_METHOD0(
-          createTemporaryWsv,
-          expected::Result<std::unique_ptr<TemporaryWsv>, std::string>(void));
-      MOCK_METHOD0(
-          createMutableStorage,
-          expected::Result<std::unique_ptr<MutableStorage>, std::string>(void));
-      MOCK_CONST_METHOD0(createPeerQuery,
-                         boost::optional<std::shared_ptr<PeerQuery>>());
-      MOCK_CONST_METHOD0(createBlockQuery,
-                         boost::optional<std::shared_ptr<BlockQuery>>());
-      MOCK_CONST_METHOD0(
-          createOsPersistentState,
-          boost::optional<std::shared_ptr<OrderingServicePersistentState>>());
-      MOCK_CONST_METHOD2(
-          createQueryExecutor,
-          boost::optional<std::shared_ptr<QueryExecutor>>(
-              std::shared_ptr<PendingTransactionStorage>,
-              std::shared_ptr<shared_model::interface::QueryResponseFactory>));
-      MOCK_METHOD1(doCommit, void(MutableStorage *storage));
-      MOCK_METHOD1(commitPrepared,
-                   bool(const shared_model::interface::Block &));
-      MOCK_METHOD1(insertBlock, bool(const shared_model::interface::Block &));
-      MOCK_METHOD1(insertBlocks,
-                   bool(const std::vector<
-                        std::shared_ptr<shared_model::interface::Block>> &));
-      MOCK_METHOD0(reset, void(void));
-      MOCK_METHOD0(dropStorage, void(void));
-      MOCK_METHOD0(freeConnections, void(void));
-      MOCK_METHOD1(prepareBlock_, void(std::unique_ptr<TemporaryWsv> &));
-
-      void prepareBlock(std::unique_ptr<TemporaryWsv> wsv) override {
-        // gmock workaround for non-copyable parameters
-        prepareBlock_(wsv);
-      }
-
-      rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
-      on_commit() override {
-        return notifier.get_observable();
-      }
-      void commit(std::unique_ptr<MutableStorage> storage) override {
-        doCommit(storage.get());
-      }
-      rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
-          notifier;
-    };
-
-    class MockKeyValueStorage : public KeyValueStorage {
-     public:
-      MOCK_METHOD2(add, bool(Identifier, const Bytes &));
-      MOCK_CONST_METHOD1(get, boost::optional<Bytes>(Identifier));
-      MOCK_CONST_METHOD0(directory, std::string(void));
-      MOCK_CONST_METHOD0(last_id, Identifier(void));
-      MOCK_METHOD0(dropAll, void(void));
-    };
-
-    class MockPeerQueryFactory : public PeerQueryFactory {
-     public:
-      MOCK_CONST_METHOD0(createPeerQuery,
-                         boost::optional<std::shared_ptr<PeerQuery>>());
-    };
-
-    class MockBlockQueryFactory : public BlockQueryFactory {
-     public:
-      MOCK_CONST_METHOD0(createBlockQuery,
-                         boost::optional<std::shared_ptr<BlockQuery>>());
-    };
-
-    class MockOsPersistentStateFactory : public OsPersistentStateFactory {
-     public:
-      MOCK_CONST_METHOD0(
-          createOsPersistentState,
-          boost::optional<std::shared_ptr<OrderingServicePersistentState>>());
-    };
-
-    class MockQueryExecutor : public QueryExecutor {
-     public:
-      MOCK_METHOD1(validateAndExecute_,
-                   shared_model::interface::QueryResponse *(
-                       const shared_model::interface::Query &));
-      QueryExecutorResult validateAndExecute(
-          const shared_model::interface::Query &q,
-          bool validate_signatories = true) override {
-        return QueryExecutorResult(validateAndExecute_(q));
-      }
-      MOCK_METHOD2(validate,
-                   bool(const shared_model::interface::BlocksQuery &,
-                        const bool validate_signatories));
-    };
-
-    class MockTxPresenceCache : public iroha::ametsuchi::TxPresenceCache {
-     public:
-      MOCK_CONST_METHOD1(check,
-                         boost::optional<TxCacheStatusType>(
-                             const shared_model::crypto::Hash &hash));
-
-      MOCK_CONST_METHOD1(
-          check,
-          boost::optional<TxPresenceCache::BatchStatusCollectionType>(
-              const shared_model::interface::TransactionBatch &));
     };
 
     namespace tx_cache_status_responses {

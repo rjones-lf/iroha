@@ -22,6 +22,9 @@ class CreateDomain : public AcceptanceFixture {
 };
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-228 "Basic" tests should be replaced with a
+ * common acceptance test
+ *
  * @given some user with can_create_domain permission
  * @when execute tx with CreateDomain command
  * @then there is the tx in proposal
@@ -38,6 +41,9 @@ TEST_F(CreateDomain, Basic) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-207 remove, covered by
+ * postgres_executor_test CreateDomain.NoPerms
+ *
  * @given some user without can_create_domain permission
  * @when execute tx with CreateDomain command
  * @then verified proposal is empty
@@ -58,6 +64,9 @@ TEST_F(CreateDomain, NoPermissions) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-207 remove, covered by
+ * postgres_executor_test CreateDomain.NoDefaultRole
+ *
  * @given some user with can_create_domain permission
  * @when execute tx with CreateDomain command with nonexistent role
  * @then verified proposal is empty
@@ -79,6 +88,9 @@ TEST_F(CreateDomain, NoRole) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-207 remove, covered by
+ * postgres_executor_test CreateDomain.NameNotUnique
+ *
  * @given some user with can_create_domain permission
  * @when execute tx with CreateDomain command with already existing domain
  * @then verified proposal is empty
@@ -99,6 +111,8 @@ TEST_F(CreateDomain, ExistingName) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-207 remove, covered by field validator test
+ *
  * @given some user with can_create_domain permission
  * @when execute tx with CreateDomain command with maximum available length
  * @then there is the tx in proposal
@@ -121,6 +135,8 @@ TEST_F(CreateDomain, MaxLenName) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-207 remove, covered by field validator test
+ *
  * @given some user with can_create_domain permission
  * @when execute tx with CreateDomain command with too long length
  * @then the tx hasn't passed stateless validation
@@ -137,6 +153,8 @@ TEST_F(CreateDomain, TooLongName) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-207 remove, covered by field validator test
+ *
  * @given some user with can_create_domain permission
  * @when execute tx with CreateDomain command with empty domain name
  * @then the tx hasn't passed stateless validation
@@ -154,6 +172,8 @@ TEST_F(CreateDomain, EmptyName) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-207 remove, covered by field validator test
+ *
  * @given some user with can_create_domain permission
  * @when execute tx with CreateDomain command with empty role name
  * @then the tx hasn't passed stateless validation

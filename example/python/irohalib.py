@@ -44,7 +44,15 @@ class IrohaCrypto(object):
         :proto_with_payload: proto transaction or query
         :return: bytes representation of hash
         """
-        bytes = proto_with_payload.payload.SerializeToString()
+        obj = None
+        if hasattr(proto_with_payload, 'payload'):
+            obj = getattr(proto_with_payload, 'payload')
+        # hash of meta is implemented for block streaming queries,
+        # because they do not have a payload in their schema
+        elif hasattr(proto_with_payload, 'meta'):
+            obj = getattr(proto_with_payload, 'meta')
+
+        bytes = obj.SerializeToString()
         hash = hashlib.sha3_256(bytes).digest()
         return hash
 
@@ -62,8 +70,8 @@ class IrohaCrypto(object):
         message_hash = IrohaCrypto.hash(message)
         signature_bytes = ed25519.signature_unsafe(message_hash, sk, pk)
         signature = primitive_pb2.Signature()
-        signature.public_key = pk
-        signature.signature = signature_bytes
+        signature.public_key = public_key
+        signature.signature = binascii.hexlify(signature_bytes)
         return signature
 
     @staticmethod
@@ -99,11 +107,12 @@ class IrohaCrypto(object):
         """
         Calculates hash of reduced payload of a transaction
         :param transaction: transaction to be processed
-        :return: bytes representation of hash
+        :return: hex representation of hash
         """
         bytes = transaction.payload.reduced_payload.SerializeToString()
         hash = hashlib.sha3_256(bytes).digest()
-        return hash
+        hex_hash = binascii.hexlify(hash)
+        return hex_hash
 
     @staticmethod
     def private_key():
@@ -112,11 +121,6 @@ class IrohaCrypto(object):
         :return: hex representation of private key
         """
         return binascii.b2a_hex(os.urandom(32))
-
-    @staticmethod
-    def hex_key_to_bytes(key):
-        """Convert hex string to bytes string. The string is just a container"""
-        return binascii.unhexlify(key)
 
 
 class Iroha(object):
@@ -176,24 +180,41 @@ class Iroha(object):
         field_name = Iroha._camel_case_to_snake_case(name)
         internal_command = getattr(command_wrapper, field_name)
         for key, value in kwargs.items():
+            if 'permissions' == key:
+                permissions_attr = getattr(internal_command, key)
+                permissions_attr.extend(value)
+                continue
+            if 'peer' == key:
+                peer_attr = getattr(internal_command, key)
+                peer_attr.CopyFrom(value)
+                continue
             setattr(internal_command, key, value)
         return command_wrapper
 
-    def query(self, name, counter=1, creator_account=None, created_time=None, **kwargs):
+    def query(self, name, counter=1, creator_account=None, created_time=None, page_size=None, first_tx_hash=None,
+              **kwargs):
         """
         Creates a protobuf query with specified set of entities
         :param name: CamelCased name of query to be executed
         :param counter: query counter, should be incremented for each new query
         :param creator_account: account id of query creator
         :param created_time: query creation timestamp in milliseconds
+        :param page_size: a non-zero positive number, size of result rowset for queries with pagination
+        :param first_tx_hash: optional hash of a transaction that will be the beginning of the next page
         :param kwargs: query arguments as they defined in schema
         :return: a proto query
         """
         assert creator_account or self.creator_account, "No account name specified as query creator id"
+        pagination_meta = None
         if not created_time:
             created_time = self.now()
         if not creator_account:
             creator_account = self.creator_account
+        if page_size or first_tx_hash:
+            pagination_meta = queries_pb2.TxPaginationMeta()
+            pagination_meta.page_size = page_size
+            if first_tx_hash:
+                pagination_meta.first_tx_hash = first_tx_hash
 
         meta = queries_pb2.QueryPayloadMeta()
         meta.created_time = created_time
@@ -205,10 +226,39 @@ class Iroha(object):
         field_name = Iroha._camel_case_to_snake_case(name)
         internal_query = getattr(query_wrapper.payload, field_name)
         for key, value in kwargs.items():
+            if 'tx_hashes' == key:
+                hashes_attr = getattr(internal_query, key)
+                hashes_attr.extend(value)
+                continue
             setattr(internal_query, key, value)
+        if pagination_meta:
+            pagination_meta_attr = getattr(internal_query, 'pagination_meta')
+            pagination_meta_attr.CopyFrom(pagination_meta)
         if not len(kwargs):
             message = getattr(queries_pb2, name)()
             internal_query.CopyFrom(message)
+        return query_wrapper
+
+    def blocks_query(self, counter=1, creator_account=None, created_time=None):
+        """
+        Creates a protobuf query for a blocks stream
+        :param counter: query counter, should be incremented for each new query
+        :param creator_account: account id of query creator
+        :param created_time: query creation timestamp in milliseconds
+        :return: a proto blocks query
+        """
+        if not created_time:
+            created_time = self.now()
+        if not creator_account:
+            creator_account = self.creator_account
+
+        meta = queries_pb2.QueryPayloadMeta()
+        meta.created_time = created_time
+        meta.creator_account_id = creator_account
+        meta.query_counter = counter
+
+        query_wrapper = queries_pb2.BlocksQuery()
+        query_wrapper.meta.CopyFrom(meta)
         return query_wrapper
 
     @staticmethod
@@ -240,8 +290,10 @@ class IrohaGrpc(object):
     def __init__(self, address=None):
         self._address = address if address else '127.0.0.1:50051'
         self._channel = grpc.insecure_channel(self._address)
-        self._command_service_stub = endpoint_pb2_grpc.CommandServiceStub(self._channel)
-        self._query_service_stub = endpoint_pb2_grpc.QueryServiceStub(self._channel)
+        self._command_service_stub = endpoint_pb2_grpc.CommandService_v1Stub(
+            self._channel)
+        self._query_service_stub = endpoint_pb2_grpc.QueryService_v1Stub(
+            self._channel)
 
     def send_tx(self, transaction):
         """
@@ -284,6 +336,17 @@ class IrohaGrpc(object):
         response = self._query_service_stub.Find(query)
         return response
 
+    def send_blocks_stream_query(self, query):
+        """
+        Send a query for blocks stream to Iroha
+        :param query: protobuf BlocksQuery
+        :return: an iterable over a stream of blocks
+        :raise: grpc.RpcError with .code() available in case of any error
+        """
+        response = self._query_service_stub.FetchCommits(query)
+        for block in response:
+            yield block
+
     def tx_status(self, transaction):
         """
         Request a status of a transaction
@@ -292,7 +355,7 @@ class IrohaGrpc(object):
         integral status code, and error message string (will be empty if no error occurred)
         """
         request = endpoint_pb2.TxStatusRequest()
-        request.tx_hash = IrohaCrypto.hash(transaction)
+        request.tx_hash = binascii.hexlify(IrohaCrypto.hash(transaction))
         response = self._command_service_stub.Status(request)
         status_code = response.tx_status
         status_name = endpoint_pb2.TxStatus.Name(response.tx_status)
@@ -307,10 +370,10 @@ class IrohaGrpc(object):
         integral status code, and error message string (will be empty if no error occurred)
         """
         request = endpoint_pb2.TxStatusRequest()
-        request.tx_hash = IrohaCrypto.hash(transaction)
+        request.tx_hash = binascii.hexlify(IrohaCrypto.hash(transaction))
         response = self._command_service_stub.StatusStream(request)
         for status in response:
             status_name = endpoint_pb2.TxStatus.Name(status.tx_status)
             status_code = status.tx_status
-            error_message = status.error_message
-            yield status_name, status_code, error_message
+            error_code = status.error_code
+            yield status_name, status_code, error_code

@@ -17,6 +17,9 @@ using namespace shared_model;
 using namespace common_constants;
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-228 "Basic" tests should be replaced with a
+ * common acceptance test
+ *
  * @given a user with CanGetRoles permission
  * @when execute query with getRoles command
  * @then the query returns list of roles
@@ -47,6 +50,9 @@ TEST_F(AcceptanceFixture, CanGetRoles) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-214 remove, covered by
+ * postgres_query_executor_test GetRolesExecutorTest.Invalid
+ *
  * @given a user without CanGetRoles permission
  * @when execute query with getRoles command
  * @then there is no way to to get roles due to user hasn't permissions enough

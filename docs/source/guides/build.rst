@@ -1,19 +1,19 @@
 Building Iroha
 ==============
 
-In this guide we will learn how to install all dependencies, required to build 
+In this guide we will learn how to install all dependencies, required to build
 Iroha and how to build it.
 
 Preparing the Environment
 -------------------------
 
-In order to successfully build Iroha, we need to configure the environment. 
+In order to successfully build Iroha, we need to configure the environment.
 There are several ways to do it and we will describe all of them.
 
-Currently, we support Unix-like systems (we are basically targeting popular 
-Linux distros and macOS). If you happen to have Windows or you don't want to 
+Currently, we support Unix-like systems (we are basically targeting popular
+Linux distros and macOS). If you happen to have Windows or you don't want to
 spend time installing all dependencies you might want to consider using Docker
-environment. Also, Windows users might consider using 
+environment. Also, Windows users might consider using
 `WSL <https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux>`_
 
 .. hint:: Having troubles? Check FAQ section or communicate to us directly, in
@@ -25,13 +25,13 @@ Docker
 .. note:: You don't need Docker to run Iroha, it is just one of the possible
   choices.
 
-First of all, you need to install ``docker`` and ``docker-compose``. You can 
-read how to install it on a 
+First of all, you need to install ``docker`` and ``docker-compose``. You can
+read how to install it on the
 `Docker's website <https://www.docker.com/community-edition/>`_
 
 .. note:: Please, use the latest available docker daemon and docker-compose.
- 
-Then you should clone the `Iroha repository <https://github.com/hyperledger/iroha>`_ 
+
+Then you should clone the `Iroha repository <https://github.com/hyperledger/iroha>`_
 to the directory of your choice.
 
 .. code-block:: shell
@@ -42,7 +42,7 @@ to the directory of your choice.
   save some time and bandwidth. If you want to get a full commit history, you
   can omit this option.
 
-After it, you need to run the development environment. Run the 
+After it, you need to run the development environment. Run the
 ``scripts/run-iroha-dev.sh`` script:
 
 .. code-block:: shell
@@ -56,14 +56,14 @@ After it, you need to run the development environment. Run the
 After you execute this script, following things happen:
 
 1. The script checks if you don't have containers with Iroha already running.
-Successful completion finishes with the new container shell.  
+Successful completion finishes with the new container shell.
 2. The script will download ``hyperledger/iroha:develop-build`` and ``postgres`` images.
 ``hyperledger/iroha:develop-build`` image contains all development dependencies and is
-based on top of ``ubuntu:16.04``. ``postgres`` image is required for starting 
+based on top of ``ubuntu:16.04``. ``postgres`` image is required for starting
 and running Iroha.
 3. Two containers are created and launched.
-4. The user is attached to the interactive environment for development and 
-testing with ``iroha`` folder mounted from the host machine. Iroha folder 
+4. The user is attached to the interactive environment for development and
+testing with ``iroha`` folder mounted from the host machine. Iroha folder
 is mounted to ``/opt/iroha`` in Docker container.
 
 Now your are ready to build Iroha! Please go to `Building Iroha` section.
@@ -75,8 +75,8 @@ Boost
 """""
 
 Iroha requires Boost of at least 1.65 version.
-To install Boost libraries (``libboost-all-dev``), use `current release 
-<http://www.boost.org/users/download/>`_ from Boost webpage. The only 
+To install Boost libraries (``libboost-all-dev``), use `current release
+<http://www.boost.org/users/download/>`_ from Boost webpage. The only
 dependencies are thread, system and filesystem, so use
 ``./bootstrap.sh --with-libraries=thread,system,filesystem`` when you are building
 the project.
@@ -86,7 +86,7 @@ Other Dependencies
 
 To build Iroha, you need following packages:
 
-``build-essential`` ``automake`` ``libtool`` ``libssl-dev`` ``zlib1g-dev`` 
+``build-essential`` ``automake`` ``libtool`` ``libssl-dev`` ``zlib1g-dev``
 ``libc6-dbg`` ``golang`` ``git`` ``tar`` ``gzip`` ``ca-certificates``
 ``wget`` ``curl`` ``file`` ``unzip`` ``python`` ``cmake``
 
@@ -104,13 +104,13 @@ Use this code to install dependencies on Debian-based Linux distro.
   python cmake
 
 .. note::  If you are willing to actively develop Iroha and to build shared
-  libraries, please consider installing the 
-  `latest release <https://cmake.org/download/>`_ of CMake. 
+  libraries, please consider installing the
+  `latest release <https://cmake.org/download/>`_ of CMake.
 
 macOS
 ^^^^^
 
-If you want to build it from scratch and actively develop it, please use this code 
+If you want to build it from scratch and actively develop it, please use this code
 to install all dependencies with Homebrew.
 
 .. code-block:: shell
@@ -118,7 +118,7 @@ to install all dependencies with Homebrew.
   xcode-select --install
   brew install cmake boost postgres grpc autoconf automake libtool golang soci
 
-.. hint:: To install the Homebrew itself please run 
+.. hint:: To install the Homebrew itself please run
 
   ``ruby -e "$(curl -fsSL https://raw.githubusercontent.com/homebrew/install/master/install)"``
 
@@ -157,17 +157,17 @@ though)
   cmake -H. -Bbuild;
   cmake --build build -- -j$(nproc)
 
-.. note::  On macOS ``$(nproc)`` variable does not work. Check the number of 
-  logical cores with ``sysctl -n hw.ncpu`` and put it explicitly in the command 
+.. note::  On macOS ``$(nproc)`` variable does not work. Check the number of
+  logical cores with ``sysctl -n hw.ncpu`` and put it explicitly in the command
   above, e.g. ``cmake --build build -- -j4``
 
 CMake Parameters
 ^^^^^^^^^^^^^^^^
 
-We use CMake to build platform-dependent build files. It has numerous flags 
+We use CMake to build platform-dependent build files. It has numerous flags
 for configuring the final build. Note that besides the listed parameters
 cmake's variables can be useful as well. Also as long as this page can be
-deprecated (or just not complete) you can browse custom flags via 
+deprecated (or just not complete) you can browse custom flags via
 ``cmake -L``, ``cmake-gui``, or ``ccmake``.
 
 .. hint::  You can specify parameters at the cmake configuring stage
@@ -184,8 +184,6 @@ Main Parameters
 | BENCHMARKING |                 | OFF     | Enables or disables build of the Google Benchmarks library             |
 +--------------+                 +---------+------------------------------------------------------------------------+
 | COVERAGE     |                 | OFF     | Enables or disables lcov setting for code coverage generation          |
-+--------------+                 +---------+------------------------------------------------------------------------+
-| SWIG_PYTHON  |                 | OFF     | Enables of disables the library building and Python bindings           |
 +--------------+                 +---------+------------------------------------------------------------------------+
 | SWIG_JAVA    |                 | OFF     | Enables of disables the library building and Java bindings             |
 +--------------+-----------------+---------+------------------------------------------------------------------------+
@@ -225,7 +223,7 @@ Alternatively, you can run following command in the ``build`` folder
   ctest . --output-on-failure
 
 .. note:: Some of the tests will fail without PostgreSQL storage running,
-  so if you are not using ``scripts/run-iroha-dev.sh`` script please run Docker 
+  so if you are not using ``scripts/run-iroha-dev.sh`` script please run Docker
   container or create a local connection with following parameters:
 
   .. code-block:: shell

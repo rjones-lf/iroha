@@ -47,7 +47,8 @@ namespace iroha {
                    [](iroha::expected::Error<std::string> &error) {
                      FAIL() << "StorageImpl: " << error.error;
                    });
-        sql = std::make_shared<soci::session>(soci::postgresql, pgopt_);
+        sql = std::make_shared<soci::session>(*soci::factory_postgresql(),
+                                              pgopt_);
         sql_query =
             std::make_unique<framework::ametsuchi::SqlQuery>(*sql, factory);
       }
