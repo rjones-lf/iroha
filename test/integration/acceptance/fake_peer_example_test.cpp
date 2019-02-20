@@ -92,27 +92,29 @@ class FakePeerExampleFixture : public AcceptanceFixture {
  */
 TEST_F(FakePeerExampleFixture,
        MstStateOfTransactionWithoutAllSignaturesPropagtesToOtherPeer) {
-  std::mutex mst_mutex;
-  std::condition_variable mst_cv;
-  std::atomic_bool got_state_notification(false);
   createFakePeers(1);
   auto &itf = prepareState();
-  fake_peers_.front()->getMstStatesObservable().subscribe(
-      [&mst_cv, &got_state_notification](const auto &state) {
-        got_state_notification.store(true);
-        mst_cv.notify_one();
-      });
+  auto mst_states_observable =
+      fake_peers_.front()->getMstStatesObservable().replay();
+  mst_states_observable.connect();
+
   itf.sendTxWithoutValidation(complete(
       baseTx(kAdminId)
           .transferAsset(kAdminId, kUserId, kAssetId, "income", "500.0")
           .quorum(2),
       kAdminKeypair));
-  std::unique_lock<std::mutex> mst_lock(mst_mutex);
-  mst_cv.wait_for(mst_lock, kMstStateWaitingTime, [&got_state_notification] {
-    return got_state_notification.load();
-  });
-  EXPECT_TRUE(got_state_notification.load())
-      << "Reached timeout waiting for MST State.";
+
+  mst_states_observable.timeout(kMstStateWaitingTime)
+      .take(1)
+      .as_blocking()
+      .subscribe([](const auto &) {},
+                 [](std::exception_ptr ep) {
+                   try {
+                     std::rethrow_exception(ep);
+                   } catch (const std::exception &e) {
+                     FAIL() << "Error waiting for MST state: " << e.what();
+                   }
+                 });
 }
 
 /**
