@@ -3,12 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
-
 #include <grpc++/grpc++.h>
 
 #include "consensus/yac/transport/impl/network_impl.hpp"
 #include "consensus/yac/transport/yac_pb_converters.hpp"
+#include "module/irohad/consensus/yac/mock_yac_crypto_provider.hpp"
+#include "module/irohad/consensus/yac/mock_yac_network.hpp"
+#include "module/irohad/consensus/yac/yac_test_util.hpp"
 #include "framework/mock_stream.h"
 #include "yac_mock.grpc.pb.h"
 
@@ -49,7 +50,7 @@ namespace iroha {
           network->subscribe(notifications);
 
           int port = 0;
-          peer = mk_peer(std::string(default_ip) + ":" + std::to_string(port));
+          peer = makePeer(std::string(default_ip) + ":" + std::to_string(port));
         }
 
         std::shared_ptr<MockYacNetworkNotifications> notifications;
