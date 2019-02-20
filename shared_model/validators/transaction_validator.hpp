@@ -36,14 +36,17 @@ namespace shared_model {
     /**
      * Visitor used by transaction validator to validate each command
      * @tparam FieldValidator - field validator type
-     * @note this class is not a thread safe and never going to
-     * so copy constructor is disabled explicitly
+     * @note this class is not thread safe and never going to be
+     * so copy constructor and assignment operator are disabled explicitly
      */
     template <typename FieldValidator>
     class CommandValidatorVisitor
         : public boost::static_visitor<ReasonsGroupType> {
      public:
       CommandValidatorVisitor(const CommandValidatorVisitor &) = delete;
+      CommandValidatorVisitor &operator=(const CommandValidatorVisitor &) =
+          delete;
+
       CommandValidatorVisitor(
           const FieldValidator &validator = FieldValidator())
           : validator_(validator) {}
