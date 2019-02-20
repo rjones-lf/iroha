@@ -86,7 +86,7 @@ namespace iroha {
         if (crypto_->verify(state)) {
           applyState(state);
         } else {
-          log_->warn(cryptoError(state));
+          log_->warn("{}", cryptoError(state));
         }
       }
 
