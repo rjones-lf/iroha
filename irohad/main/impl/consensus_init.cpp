@@ -40,45 +40,6 @@ namespace iroha {
         return crypto;
       }
 
-  auto createHashProvider() {
-    return std::make_shared<YacHashProviderImpl>();
-  }
-
-  std::shared_ptr<Yac> createYac(
-      ClusterOrdering initial_order,
-      const shared_model::crypto::Keypair &keypair,
-      std::shared_ptr<Timer> timer,
-      std::shared_ptr<YacNetwork> network,
-      std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-          common_objects_factory,
-      ConsistencyModel consistency_model) {
-    // TODO: 2018-12-25 @muratovv make dynamic change of the number IR-154
-    const BufferedCleanupStrategy::QueueSizeType kNumberOfSavedRounds = 10;
-    std::shared_ptr<iroha::consensus::yac::CleanupStrategy> cleanup_strategy =
-        std::make_shared<iroha::consensus::yac::BufferedCleanupStrategy>(
-            kNumberOfSavedRounds,
-            iroha::consensus::Round(1, 0),
-            std::queue<iroha::consensus::Round>());
-    return Yac::create(
-        YacVoteStorage(cleanup_strategy),
-        std::move(network),
-        createCryptoProvider(keypair, std::move(common_objects_factory)),
-        std::move(timer),
-        initial_order);
-  }
-}  // namespace
-
-namespace iroha {
-  namespace consensus {
-    namespace yac {
-
-      std::shared_ptr<NetworkImpl> YacInit::getConsensusNetwork() const {
-        BOOST_ASSERT_MSG(initialized_,
-                         "YacInit::initConsensusGate(...) must be called prior "
-                         "to YacInit::getConsensusNetwork()!");
-        return consensus_network_;
-      }
-
       auto YacInit::createTimer(std::chrono::milliseconds delay_milliseconds) {
         return std::make_shared<TimerImpl>([delay_milliseconds, this] {
           // static factory with a single thread
@@ -109,8 +70,16 @@ namespace iroha {
               async_call,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               common_objects_factory) {
+        // TODO: 2018-12-25 @muratovv make dynamic change of the number IR-154
+        const BufferedCleanupStrategy::QueueSizeType kNumberOfSavedRounds = 10;
+        std::shared_ptr<iroha::consensus::yac::CleanupStrategy>
+            cleanup_strategy = std::make_shared<
+                iroha::consensus::yac::BufferedCleanupStrategy>(
+                kNumberOfSavedRounds,
+                iroha::consensus::Round(1, 0),
+                std::queue<iroha::consensus::Round>());
         return Yac::create(
-            YacVoteStorage(),
+            YacVoteStorage(cleanup_strategy),
             createNetwork(std::move(async_call)),
             createCryptoProvider(keypair, std::move(common_objects_factory)),
             createTimer(delay_milliseconds),
