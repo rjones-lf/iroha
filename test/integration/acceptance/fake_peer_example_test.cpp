@@ -256,37 +256,40 @@ TEST_F(FakePeerExampleFixture, SynchronizeTheRightVersionOfForkedLedger) {
   valid_block_storage->storeBlock(new_valid_block);
 
   // wait for the real peer to commit the blocks and check they are from the
-  // vlid branch
-  std::mutex wait_mutex;
-  std::condition_variable wait_cv;
+  // valid branch
   std::atomic_bool commited_all_blocks(false);
   itf.getIrohaInstance()
       .getIrohaInstance()
       ->getStorage()
       ->on_commit()
-      .subscribe([&wait_cv, &commited_all_blocks, &valid_block_storage](
-                     const auto &committed_block) {
+      .tap([&valid_block_storage](
+               const std::shared_ptr<shared_model::interface::Block>
+                   &committed_block) {
         const auto valid_hash =
             valid_block_storage->getBlockByHeight(committed_block->height())
                 ->hash()
                 .hex();
         const auto commited_hash = committed_block->hash().hex();
-        if (commited_hash != valid_hash) {
+        if (commited_hash == valid_hash) {
           ASSERT_EQ(commited_hash, valid_hash) << "Wrong block got committed!";
-          wait_cv.notify_one();
         }
-        if (committed_block->height()
-            == valid_block_storage->getTopBlock()->height()) {
-          commited_all_blocks.store(true);
-          wait_cv.notify_one();
-        }
-      });
-  std::unique_lock<std::mutex> wait_lock(wait_mutex);
-  ASSERT_TRUE(wait_cv.wait_for(
-      wait_lock,
-      kSynchronizerWaitingTime,
-      [&commited_all_blocks] { return commited_all_blocks.load(); }))
-      << "Reached timeout waiting for all blocks to be committed.";
+      })
+      .filter([expected_height = valid_block_storage->getTopBlock()->height()](
+                  const auto &committed_block) {
+        return committed_block->height() == expected_height;
+      })
+      .take(1)
+      .timeout(kSynchronizerWaitingTime)
+      .as_blocking()
+      .subscribe([](const auto &) {},
+                 [](std::exception_ptr ep) {
+                   try {
+                     std::rethrow_exception(ep);
+                   } catch (const std::exception &e) {
+                     FAIL()
+                         << "Error waiting for synchronization: " << e.what();
+                   }
+                 });
 }
 
 /**
