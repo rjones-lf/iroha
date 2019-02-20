@@ -9,27 +9,17 @@
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
 
-auto log_ = logger::log("MstStorageTest");
-
 using namespace iroha;
 
-class StorageTestCompleter : public DefaultCompleter {
- public:
-  bool operator()(const DataType &batch, const TimeType &time) const override {
-    return std::all_of(
-        batch->transactions().begin(),
-        batch->transactions().end(),
-        [&time](const auto &tx) { return tx->createdTime() < time; });
-  }
-};
+auto log_ = logger::log("MstStorageTest");
 
 class StorageTest : public testing::Test {
  public:
   StorageTest() : absent_peer_key("absent") {}
 
   void SetUp() override {
-    storage = std::make_shared<MstStorageStateImpl>(
-        std::make_shared<StorageTestCompleter>());
+    completer_ = std::make_shared<TestCompleter>();
+    storage = std::make_shared<MstStorageStateImpl>(completer_);
     fillOwnState();
   }
 
@@ -45,6 +35,7 @@ class StorageTest : public testing::Test {
   const unsigned quorum = 3u;
   const shared_model::interface::types::TimestampType creation_time =
       iroha::time::now();
+  std::shared_ptr<TestCompleter> completer_;
 };
 
 TEST_F(StorageTest, StorageWhenApplyOtherState) {
@@ -52,7 +43,7 @@ TEST_F(StorageTest, StorageWhenApplyOtherState) {
       "create state with default peers and other state => "
       "apply state");
 
-  auto new_state = MstState::empty(std::make_shared<StorageTestCompleter>());
+  auto new_state = MstState::empty(completer_);
   new_state += makeTestBatch(txBuilder(5, creation_time));
   new_state += makeTestBatch(txBuilder(6, creation_time));
   new_state += makeTestBatch(txBuilder(7, creation_time));

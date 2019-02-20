@@ -8,6 +8,7 @@
 
 #include <gmock/gmock.h>
 
+#include "module/irohad/ordering/mock_on_demand_os_notification.hpp"
 #include "ordering/impl/ordering_gate_cache/ordering_gate_cache.hpp"
 #include "ordering/on_demand_ordering_service.hpp"
 #include "ordering/on_demand_os_transport.hpp"
@@ -15,13 +16,6 @@
 namespace iroha {
   namespace ordering {
     namespace transport {
-
-      struct MockOdOsNotification : public OdOsNotification {
-        MOCK_METHOD2(onBatches, void(consensus::Round, CollectionType));
-
-        MOCK_METHOD1(onRequestProposal,
-                     boost::optional<ProposalType>(consensus::Round));
-      };
 
       struct MockOdOsNotificationFactory : public OdOsNotificationFactory {
         MOCK_METHOD1(create,
@@ -45,7 +39,8 @@ namespace iroha {
       MOCK_METHOD2(onBatches, void(consensus::Round, CollectionType));
 
       MOCK_METHOD1(onRequestProposal,
-                   boost::optional<ProposalType>(consensus::Round));
+                   boost::optional<std::shared_ptr<const ProposalType>>(
+                       consensus::Round));
 
       MOCK_METHOD1(onCollaborationOutcome, void(consensus::Round));
     };

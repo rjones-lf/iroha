@@ -7,7 +7,7 @@ Client Libraries
 
     libraries/android.rst
     libraries/java.rst
-    libraries/nodejs.rst
+    libraries/javascript.rst
     libraries/python.rst
     libraries/swift_ios.rst
     

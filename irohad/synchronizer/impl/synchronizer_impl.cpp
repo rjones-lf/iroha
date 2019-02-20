@@ -43,6 +43,8 @@ namespace iroha {
             this->processDifferent(msg);
           },
           [this](const consensus::ProposalReject &msg) {
+            // TODO: nickaleks IR-147 18.01.19 add peers
+            // list from GateObject when it has one
             notifier_.get_subscriber().on_next(SynchronizationEvent{
                 rxcpp::observable<>::empty<
                     std::shared_ptr<shared_model::interface::Block>>(),
@@ -50,6 +52,8 @@ namespace iroha {
                 msg.round});
           },
           [this](const consensus::BlockReject &msg) {
+            // TODO: nickaleks IR-147 18.01.19 add peers
+            // list from GateObject when it has one
             notifier_.get_subscriber().on_next(SynchronizationEvent{
                 rxcpp::observable<>::empty<
                     std::shared_ptr<shared_model::interface::Block>>(),
@@ -57,6 +61,8 @@ namespace iroha {
                 msg.round});
           },
           [this](const consensus::AgreementOnNone &msg) {
+            // TODO: nickaleks IR-147 18.01.19 add peers
+            // list from GateObject when it has one
             notifier_.get_subscriber().on_next(SynchronizationEvent{
                 rxcpp::observable<>::empty<
                     std::shared_ptr<shared_model::interface::Block>>(),
@@ -65,7 +71,8 @@ namespace iroha {
           });
     }
 
-    SynchronizationEvent SynchronizerImpl::downloadMissingBlocks(
+    boost::optional<SynchronizationEvent>
+    SynchronizerImpl::downloadMissingBlocks(
         const consensus::VoteOther &msg,
         std::unique_ptr<ametsuchi::MutableStorage> storage,
         const shared_model::interface::types::HeightType height) {
@@ -93,9 +100,16 @@ namespace iroha {
 
           if (blocks.back()->height() >= expected_height
               and validator_->validateAndApply(chain, *storage)) {
-            mutable_factory_->commit(std::move(storage));
+            auto ledger_state = mutable_factory_->commit(std::move(storage));
 
-            return {chain, SynchronizationOutcomeType::kCommit, msg.round};
+            if (ledger_state) {
+              return SynchronizationEvent{chain,
+                                          SynchronizationOutcomeType::kCommit,
+                                          msg.round,
+                                          std::move(*ledger_state)};
+            } else {
+              return boost::none;
+            }
           }
         }
       }
@@ -118,7 +132,14 @@ namespace iroha {
 
     void SynchronizerImpl::processNext(const consensus::PairValid &msg) {
       log_->info("at handleNext");
-      if (not mutable_factory_->commitPrepared(*msg.block)) {
+      auto ledger_state = mutable_factory_->commitPrepared(*msg.block);
+      if (ledger_state) {
+        notifier_.get_subscriber().on_next(
+            SynchronizationEvent{rxcpp::observable<>::just(msg.block),
+                                 SynchronizationOutcomeType::kCommit,
+                                 msg.round,
+                                 std::move(*ledger_state)});
+      } else {
         auto opt_storage = getStorage();
         if (opt_storage == boost::none) {
           return;
@@ -126,15 +147,20 @@ namespace iroha {
         std::unique_ptr<ametsuchi::MutableStorage> storage =
             std::move(opt_storage.value());
         if (storage->apply(*msg.block)) {
-          mutable_factory_->commit(std::move(storage));
+          ledger_state = mutable_factory_->commit(std::move(storage));
+          if (ledger_state) {
+            notifier_.get_subscriber().on_next(
+                SynchronizationEvent{rxcpp::observable<>::just(msg.block),
+                                     SynchronizationOutcomeType::kCommit,
+                                     msg.round,
+                                     std::move(*ledger_state)});
+          } else {
+            log_->error("failed to commit mutable storage");
+          }
         } else {
           log_->warn("Block was not committed due to fail in mutable storage");
         }
       }
-      notifier_.get_subscriber().on_next(
-          SynchronizationEvent{rxcpp::observable<>::just(msg.block),
-                               SynchronizationOutcomeType::kCommit,
-                               msg.round});
     }
 
     void SynchronizerImpl::processDifferent(const consensus::VoteOther &msg) {
@@ -162,9 +188,11 @@ namespace iroha {
       }
       std::unique_ptr<ametsuchi::MutableStorage> storage =
           std::move(opt_storage.value());
-      SynchronizationEvent result =
+      auto result =
           downloadMissingBlocks(msg, std::move(storage), top_block_height);
-      notifier_.get_subscriber().on_next(result);
+      if (result) {
+        notifier_.get_subscriber().on_next(*result);
+      }
     }
 
     rxcpp::observable<SynchronizationEvent>

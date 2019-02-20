@@ -56,7 +56,7 @@ namespace iroha {
 
      private:
       /**
-       * Retrieve block with given id block storage
+       * Retrieve block with given id from block storage
        * @param id - height of a block to retrieve
        * @return block with given height
        */

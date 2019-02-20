@@ -13,6 +13,7 @@
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 #include "module/shared_model/validators/validators.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
 #include "validators/field_validator.hpp"
@@ -36,6 +37,8 @@ class TransportTest : public ::testing::Test {
         tx_presence_cache_(
             std::make_shared<iroha::ametsuchi::MockTxPresenceCache>()),
         my_key_(makeKey()),
+        completer_(
+            std::make_shared<iroha::DefaultCompleter>(std::chrono::minutes(0))),
         mst_notification_transport_(
             std::make_shared<iroha::MockMstTransportNotification>()) {}
 
@@ -44,6 +47,7 @@ class TransportTest : public ::testing::Test {
   std::shared_ptr<TransactionBatchFactoryImpl> batch_factory_;
   std::shared_ptr<iroha::ametsuchi::MockTxPresenceCache> tx_presence_cache_;
   shared_model::crypto::Keypair my_key_;
+  std::shared_ptr<iroha::DefaultCompleter> completer_;
   std::shared_ptr<iroha::MockMstTransportNotification>
       mst_notification_transport_;
 };
@@ -90,6 +94,7 @@ TEST_F(TransportTest, SendAndReceive) {
                                          std::move(parser_),
                                          std::move(batch_factory_),
                                          std::move(tx_presence_cache_),
+                                         completer_,
                                          my_key_.publicKey());
   transport->subscribe(mst_notification_transport_);
 
@@ -97,7 +102,7 @@ TEST_F(TransportTest, SendAndReceive) {
   std::condition_variable cv;
 
   auto time = iroha::time::now();
-  auto state = iroha::MstState::empty();
+  auto state = iroha::MstState::empty(completer_);
   state += addSignaturesFromKeyPairs(
       makeTestBatch(txBuilder(1, time)), 0, makeKey());
   state += addSignaturesFromKeyPairs(
@@ -121,8 +126,11 @@ TEST_F(TransportTest, SendAndReceive) {
   ASSERT_TRUE(server);
   ASSERT_NE(port, 0);
 
-  std::shared_ptr<shared_model::interface::Peer> peer =
-      makePeer(addr + std::to_string(port), "abcdabcdabcdabcdabcdabcdabcdabcd");
+  std::string address = addr + std::to_string(port);
+  shared_model::interface::types::PubkeyType pk(
+      shared_model::crypto::Hash::fromHexString(
+          "abcdabcdabcdabcdabcdabcdabcdabcd"));
+  std::shared_ptr<shared_model::interface::Peer> peer = makePeer(address, pk);
   // we want to ensure that server side will call onNewState()
   // with same parameters as on the client side
   EXPECT_CALL(*mst_notification_transport_, onNewState(_, _))
@@ -171,12 +179,13 @@ TEST_F(TransportTest, ReplayAttack) {
                                                       std::move(parser_),
                                                       std::move(batch_factory_),
                                                       tx_presence_cache_,
+                                                      completer_,
                                                       my_key_.publicKey());
 
   transport->subscribe(mst_notification_transport_);
 
   auto batch = makeTestBatch(txBuilder(1), txBuilder(2));
-  auto state = iroha::MstState::empty();
+  auto state = iroha::MstState::empty(completer_);
   state += addSignaturesFromKeyPairs(
       addSignaturesFromKeyPairs(batch, 0, makeKey()), 1, makeKey());
 

@@ -11,6 +11,7 @@
 #include "datetime/time.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
+#include "validators/abstract_validator.hpp"
 #include "validators/answer.hpp"
 #include "validators/container_validator.hpp"
 
@@ -26,7 +27,8 @@ namespace shared_model {
     class ProposalValidator
         : public ContainerValidator<interface::Proposal,
                                     FieldValidator,
-                                    TransactionsCollectionValidator> {
+                                    TransactionsCollectionValidator>,
+          public AbstractValidator<interface::Proposal> {
      public:
       using ContainerValidator<
           interface::Proposal,

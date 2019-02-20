@@ -21,6 +21,7 @@ namespace config_members {
   extern const char *ProposalDelay;
   extern const char *VoteDelay;
   extern const char *MstSupport;
+  extern const char *MstExpirationTime;
   extern const char *LogSection;
   extern const char *LogLevel;
   extern const char *LogPatternsSection;

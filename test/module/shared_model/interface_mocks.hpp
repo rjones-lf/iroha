@@ -18,6 +18,8 @@
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "interfaces/transaction.hpp"
 
+
+// TODO: 2019-01-18 @muratovv Separate file by classes IR-229
 struct MockBlock : public shared_model::interface::Block {
   MOCK_CONST_METHOD0(txsNumber,
                      shared_model::interface::types::TransactionsNumberType());
@@ -175,6 +177,14 @@ struct MockPeer : public shared_model::interface::Peer {
   MOCK_CONST_METHOD0(clone, MockPeer *());
 };
 
+inline auto makePeer(const std::string &address,
+                     const shared_model::crypto::PublicKey &pub_key) {
+  auto peer = std::make_shared<MockPeer>();
+  EXPECT_CALL(*peer, address()).WillRepeatedly(testing::ReturnRefOfCopy(address));
+  EXPECT_CALL(*peer, pubkey()).WillRepeatedly(testing::ReturnRefOfCopy(pub_key));
+  return peer;
+}
+
 struct MockUnsafeProposalFactory
     : public shared_model::interface::UnsafeProposalFactory {
   MOCK_METHOD3(unsafeCreateProposal,
@@ -221,6 +231,24 @@ struct MockCommonObjectsFactory
       FactoryResult<std::unique_ptr<shared_model::interface::Signature>>(
           const shared_model::interface::types::PubkeyType &,
           const shared_model::interface::Signature::SignedType &));
+};
+
+struct MockDomain : public shared_model::interface::Domain {
+    MOCK_CONST_METHOD0(domainId,
+                       shared_model::interface::types::DomainIdType &());
+    MOCK_CONST_METHOD0(defaultRole,
+                       shared_model::interface::types::RoleIdType &());
+    MOCK_CONST_METHOD0(clone, MockDomain *());
+};
+
+struct MockAccount : public shared_model::interface::Account {
+    MOCK_CONST_METHOD0(accountId,
+                       shared_model::interface::types::AccountIdType &());
+    MOCK_CONST_METHOD0(domainId,
+                       shared_model::interface::types::DomainIdType &());
+    MOCK_CONST_METHOD0(quorum, shared_model::interface::types::QuorumType());
+    MOCK_CONST_METHOD0(jsonData, shared_model::interface::types::JsonType &());
+    MOCK_CONST_METHOD0(clone, MockAccount *());
 };
 
 #endif  // IROHA_SHARED_MODEL_INTERFACE_MOCKS_HPP

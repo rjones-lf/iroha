@@ -21,6 +21,9 @@ namespace iroha {
     return left_tx->reducedHash() == right_tx->reducedHash();
   }
 
+  DefaultCompleter::DefaultCompleter(std::chrono::minutes expiration_time)
+      : expiration_time_(expiration_time) {}
+
   bool DefaultCompleter::operator()(const DataType &batch) const {
     return std::all_of(batch->transactions().begin(),
                        batch->transactions().end(),
@@ -29,9 +32,15 @@ namespace iroha {
                        });
   }
 
-  bool DefaultCompleter::operator()(const DataType &tx,
+  bool DefaultCompleter::operator()(const DataType &batch,
                                     const TimeType &time) const {
-    return false;
+    return std::any_of(batch->transactions().begin(),
+                       batch->transactions().end(),
+                       [&](const auto &tx) {
+                         return tx->createdTime()
+                             + expiration_time_ / std::chrono::milliseconds(1)
+                             < time;
+                       });
   }
 
   // ------------------------------| public api |-------------------------------

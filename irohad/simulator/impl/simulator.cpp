@@ -19,8 +19,7 @@ namespace iroha {
         std::shared_ptr<validation::StatefulValidator> statefulValidator,
         std::shared_ptr<ametsuchi::TemporaryFactory> factory,
         std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
-        std::shared_ptr<shared_model::crypto::CryptoModelSigner<>>
-            crypto_signer,
+        std::shared_ptr<CryptoSignerType> crypto_signer,
         std::unique_ptr<shared_model::interface::UnsafeBlockFactory>
             block_factory,
         logger::LoggerPtr log)
@@ -33,7 +32,13 @@ namespace iroha {
       ordering_gate->onProposal().subscribe(
           proposal_subscription_, [this](const network::OrderingEvent &event) {
             if (event.proposal) {
-              this->processProposal(*getProposalUnsafe(event), event.round);
+              auto validated_proposal_and_errors =
+                  this->processProposal(*getProposalUnsafe(event));
+
+              if (validated_proposal_and_errors) {
+                notifier_.get_subscriber().on_next(VerifiedProposalCreatorEvent{
+                    *validated_proposal_and_errors, event.round});
+              }
             } else {
               notifier_.get_subscriber().on_next(
                   VerifiedProposalCreatorEvent{boost::none, event.round});
@@ -44,8 +49,13 @@ namespace iroha {
           verified_proposal_subscription_,
           [this](const VerifiedProposalCreatorEvent &event) {
             if (event.verified_proposal_result) {
-              this->processVerifiedProposal(getVerifiedProposalUnsafe(event),
-                                            event.round);
+              auto proposal_and_errors = getVerifiedProposalUnsafe(event);
+              auto block = this->processVerifiedProposal(proposal_and_errors);
+              if (block) {
+                block_notifier_.get_subscriber().on_next(BlockCreatorEvent{
+                    RoundData{proposal_and_errors->verified_proposal, *block},
+                    event.round});
+              }
             } else {
               block_notifier_.get_subscriber().on_next(
                   BlockCreatorEvent{boost::none, event.round});
@@ -63,9 +73,9 @@ namespace iroha {
       return notifier_.get_observable();
     }
 
-    void Simulator::processProposal(
-        const shared_model::interface::Proposal &proposal,
-        const consensus::Round &round) {
+    boost::optional<std::shared_ptr<validation::VerifiedProposalAndErrors>>
+    Simulator::processProposal(
+        const shared_model::interface::Proposal &proposal) {
       log_->info("process proposal");
 
       // Get last block from local ledger
@@ -73,7 +83,7 @@ namespace iroha {
         auto block_var = block_query_opt.value()->getTopBlock();
         if (auto e = boost::get<expected::Error<std::string>>(&block_var)) {
           log_->warn("Could not fetch last block: " + e->error);
-          return;
+          return boost::none;
         }
 
         last_block = boost::get<expected::Value<
@@ -81,21 +91,21 @@ namespace iroha {
                          ->value;
       } else {
         log_->error("could not create block query");
-        return;
+        return boost::none;
       }
 
       if (last_block->height() + 1 != proposal.height()) {
         log_->warn("Last block height: {}, proposal height: {}",
                    last_block->height(),
                    proposal.height());
-        return;
+        return boost::none;
       }
 
       auto temporary_wsv_var = ametsuchi_factory_->createTemporaryWsv();
       if (auto e =
               boost::get<expected::Error<std::string>>(&temporary_wsv_var)) {
         log_->error("could not create temporary storage: {}", e->error);
-        return;
+        return boost::none;
       }
 
       auto storage = std::move(
@@ -108,14 +118,13 @@ namespace iroha {
               validator_->validate(proposal, *storage);
       ametsuchi_factory_->prepareBlock(std::move(storage));
 
-      notifier_.get_subscriber().on_next(
-          VerifiedProposalCreatorEvent{validated_proposal_and_errors, round});
+      return validated_proposal_and_errors;
     }
 
-    void Simulator::processVerifiedProposal(
+    boost::optional<std::shared_ptr<shared_model::interface::Block>>
+    Simulator::processVerifiedProposal(
         const std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>
-            &verified_proposal_and_errors,
-        const consensus::Round &round) {
+            &verified_proposal_and_errors) {
       log_->info("process verified proposal");
 
       auto height = block_query_factory_->createBlockQuery() |
@@ -124,7 +133,7 @@ namespace iroha {
           };
       if (not height) {
         log_->error("Unable to query top block height");
-        return;
+        return boost::none;
       }
       const auto &proposal = verified_proposal_and_errors->verified_proposal;
       std::vector<shared_model::crypto::Hash> rejected_hashes;
@@ -139,8 +148,8 @@ namespace iroha {
                                             proposal->transactions(),
                                             rejected_hashes);
       crypto_signer_->sign(*block);
-      block_notifier_.get_subscriber().on_next(
-          BlockCreatorEvent{RoundData{proposal, block}, round});
+
+      return block;
     }
 
     rxcpp::observable<BlockCreatorEvent> Simulator::onBlock() {

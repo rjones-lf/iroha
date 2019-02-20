@@ -14,7 +14,6 @@ add_library(ametsuchi
     impl/postgres_block_query.cpp
     impl/postgres_command_executor.cpp
     impl/postgres_block_index.cpp
-    impl/postgres_ordering_service_persistent_state.cpp
     impl/wsv_restorer_impl.cpp
     impl/postgres_options.cpp
     impl/postgres_query_executor.cpp

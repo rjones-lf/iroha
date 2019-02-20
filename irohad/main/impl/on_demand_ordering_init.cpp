@@ -49,10 +49,12 @@ namespace iroha {
     auto OnDemandOrderingInit::createNotificationFactory(
         std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
             async_call,
+        std::shared_ptr<TransportFactoryType> proposal_transport_factory,
         std::chrono::milliseconds delay,
         const logger::LoggerManagerTreePtr &ordering_log_manager) {
       return std::make_shared<ordering::transport::OnDemandOsClientGrpcFactory>(
           std::move(async_call),
+          std::move(proposal_transport_factory),
           [] { return std::chrono::system_clock::now(); },
           delay,
           ordering_log_manager->getChild("NetworkClient")->getLogger());
@@ -62,6 +64,7 @@ namespace iroha {
         std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
         std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
             async_call,
+        std::shared_ptr<TransportFactoryType> proposal_transport_factory,
         std::chrono::milliseconds delay,
         std::vector<shared_model::interface::types::HashType> initial_hashes,
         const logger::LoggerManagerTreePtr &ordering_log_manager) {
@@ -182,8 +185,10 @@ namespace iroha {
                        .map(map_peers);
 
       return std::make_shared<ordering::OnDemandConnectionManager>(
-          createNotificationFactory(
-              std::move(async_call), delay, ordering_log_manager),
+          createNotificationFactory(std::move(async_call),
+                                    std::move(proposal_transport_factory),
+                                    delay,
+                                    ordering_log_manager),
           peers,
           ordering_log_manager->getChild("ConnectionManager")->getLogger());
     }
@@ -279,6 +284,7 @@ namespace iroha {
             async_call,
         std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
             proposal_factory,
+        std::shared_ptr<TransportFactoryType> proposal_transport_factory,
         std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
         consensus::Round initial_round,
         std::function<std::chrono::seconds(
@@ -292,19 +298,20 @@ namespace iroha {
           std::move(batch_parser),
           std::move(transaction_batch_factory),
           ordering_log_manager->getChild("Server")->getLogger());
-      auto conn_mgr = createConnectionManager(std::move(peer_query_factory),
-                                              std::move(async_call),
-                                              delay,
-                                              std::move(initial_hashes),
-                                              ordering_log_manager);
-      return createGate(ordering_service,
-                        std::move(conn_mgr),
-                        std::make_shared<ordering::cache::OnDemandCache>(),
-                        std::move(proposal_factory),
-                        std::move(tx_cache),
-                        initial_round,
-                        std::move(delay_func),
-                        ordering_log_manager);
+      return createGate(
+          ordering_service,
+          createConnectionManager(std::move(peer_query_factory),
+                                  std::move(async_call),
+                                  std::move(proposal_transport_factory),
+                                  delay,
+                                  std::move(initial_hashes),
+                                  ordering_log_manager),
+          std::make_shared<ordering::cache::OnDemandCache>(),
+          std::move(proposal_factory),
+          std::move(tx_cache),
+          initial_round,
+          std::move(delay_func),
+          ordering_log_manager);
     }
 
   }  // namespace network

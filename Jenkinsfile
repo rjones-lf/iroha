@@ -20,6 +20,7 @@ properties([parameters([
   booleanParam(defaultValue: true, description: 'Build docs', name: 'Doxygen'),
   booleanParam(defaultValue: true, description: 'Sanitize address;leak', name: 'sanitize'),
   booleanParam(defaultValue: false, description: 'Build fuzzing, but do not run tests', name: 'fuzzing'),
+  booleanParam(defaultValue: true, description: 'Collect coredumps', name: 'coredump'),
   string(defaultValue: '8', description: 'Expect ~3GB memory consumtion per CPU core', name: 'PARALLELISM')])])
 
 
@@ -57,7 +58,7 @@ pipeline {
             CHANGE_BRANCH_LOCAL = env.CHANGE_BRANCH
           }
           catch(MissingPropertyException e) { }
-          if (GIT_LOCAL_BRANCH != "develop" && CHANGE_BRANCH_LOCAL != "develop" && GIT_LOCAL_BRANCH != "dev" && CHANGE_BRANCH_LOCAL != "dev") {
+          if (GIT_LOCAL_BRANCH != "develop" && CHANGE_BRANCH_LOCAL != "develop") {
             def builds = load ".jenkinsci/cancel-builds-same-job.groovy"
             builds.cancelSameJobBuilds()
           }
@@ -88,7 +89,7 @@ pipeline {
               else {
                 debugBuild.doDebugBuild()
               }
-              if (GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
+              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                 releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -119,7 +120,7 @@ pipeline {
               else {
                 debugBuild.doDebugBuild()
               }
-              if (GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
+              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                 releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -150,7 +151,7 @@ pipeline {
               else {
                 debugBuild.doDebugBuild()
               }
-              if (GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
+              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                 releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -237,7 +238,7 @@ pipeline {
                 sh "python /usr/local/bin/lcov_cobertura.py build/reports/coverage.info -o build/reports/coverage.xml"
                 cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/build/reports/coverage.xml', conditionalCoverageTargets: '75, 50, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50, methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
               }
-              if (GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
+              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                 releaseBuild = load ".jenkinsci/mac-release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -248,7 +249,7 @@ pipeline {
               script {
                 timeout(time: 600, unit: "SECONDS") {
                   try {
-                    if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
+                    if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                       def artifacts = load ".jenkinsci/artifacts.groovy"
                       def commit = env.GIT_COMMIT
                       filePaths = [ '\$(pwd)/build/*.tar.gz' ]
@@ -355,7 +356,7 @@ pipeline {
               script {
                 timeout(time: 600, unit: "SECONDS") {
                   try {
-                    if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
+                    if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                       def artifacts = load ".jenkinsci/artifacts.groovy"
                       def commit = env.GIT_COMMIT
                       filePaths = [ '\$(pwd)/build/*.tar.gz' ]
@@ -387,7 +388,7 @@ pipeline {
             "$platform-develop-build",
             "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/Dockerfile",
             "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/Dockerfile",
-            "${env.GIT_RAW_BASE_URL}/dev/docker/develop/Dockerfile",
+            "${env.GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
             ['PARALLELISM': params.PARALLELISM])
           iC.inside() {
             doxygen.doDoxygen()
@@ -425,7 +426,7 @@ pipeline {
                   "$platform-develop-build",
                   "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/Dockerfile",
                   "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/Dockerfile",
-                  "${env.GIT_RAW_BASE_URL}/dev/docker/develop/Dockerfile",
+                  "${env.GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
                   ['PARALLELISM': params.PARALLELISM])
                 if (params.JavaBindings) {
                   iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
@@ -443,7 +444,7 @@ pipeline {
                   "android-${params.ABPlatform}-${params.ABBuildType}",
                   "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/android/Dockerfile",
                   "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/android/Dockerfile",
-                  "${env.GIT_RAW_BASE_URL}/dev/docker/android/Dockerfile",
+                  "${env.GIT_RAW_BASE_URL}/develop/docker/android/Dockerfile",
                   ['PARALLELISM': params.PARALLELISM, 'PLATFORM': params.ABPlatform, 'BUILD_TYPE': params.ABBuildType])
                 sh "curl -L -o /tmp/${env.GIT_COMMIT}/entrypoint.sh ${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/android/entrypoint.sh"
                 sh "chmod +x /tmp/${env.GIT_COMMIT}/entrypoint.sh"

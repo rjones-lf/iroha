@@ -77,7 +77,7 @@ class BasicMstPropagationFixture : public AcceptanceFixture {
 
 /**
  * Check that after sending a not fully signed transaction, an MST state
- * propagtes to another peer
+ * propagates to another peer
  * @given a not fully signed transaction
  * @when such transaction is sent to one of two iroha peers in the network
  * @then that peer propagates MST state to another peer

@@ -29,6 +29,12 @@ namespace iroha {
      * Encapsulates initialization logic for on-demand ordering gate and service
      */
     class OnDemandOrderingInit {
+     public:
+      using TransportFactoryType =
+          shared_model::interface::AbstractTransportFactory<
+              shared_model::interface::Proposal,
+              iroha::protocol::Proposal>;
+
      private:
       /**
        * Creates notification factory for individual connections to peers with
@@ -37,6 +43,7 @@ namespace iroha {
       auto createNotificationFactory(
           std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
               async_call,
+          std::shared_ptr<TransportFactoryType> proposal_transport_factory,
           std::chrono::milliseconds delay,
           const logger::LoggerManagerTreePtr &ordering_log_manager);
 
@@ -49,6 +56,7 @@ namespace iroha {
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
               async_call,
+          std::shared_ptr<TransportFactoryType> proposal_transport_factory,
           std::chrono::milliseconds delay,
           std::vector<shared_model::interface::types::HashType> initial_hashes,
           const logger::LoggerManagerTreePtr &ordering_log_manager);
@@ -127,6 +135,7 @@ namespace iroha {
               async_call,
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               proposal_factory,
+          std::shared_ptr<TransportFactoryType> proposal_transport_factory,
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
           consensus::Round initial_round,
           std::function<std::chrono::seconds(

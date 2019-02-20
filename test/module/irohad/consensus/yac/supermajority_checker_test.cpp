@@ -6,8 +6,10 @@
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 
 #include <gtest/gtest.h>
+
 #include <boost/range/adaptor/indirected.hpp>
 #include "logger/logger.hpp"
+
 #include "module/shared_model/interface_mocks.hpp"
 
 using namespace iroha::consensus::yac;

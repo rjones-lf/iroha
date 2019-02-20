@@ -8,7 +8,11 @@
 namespace iroha {
   namespace torii {
     StatusBusImpl::StatusBusImpl(rxcpp::observe_on_one_worker worker)
-        : worker_(worker), subject_(worker_) {}
+        : worker_(worker), subject_(worker_, cs_) {}
+
+    StatusBusImpl::~StatusBusImpl() {
+      cs_.unsubscribe();
+    }
 
     void StatusBusImpl::publish(StatusBus::Objects resp) {
       subject_.get_subscriber().on_next(resp);
