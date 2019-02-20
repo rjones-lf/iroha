@@ -3,14 +3,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <gmock/gmock.h>
 #include <grpc++/grpc++.h>
+
+#include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/impl/timer_impl.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
+#include "consensus/yac/storage/yac_vote_storage.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
+#include "consensus/yac/yac.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
+
 #include "framework/test_subscriber.hpp"
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
-#include "module/shared_model/builders/protobuf/test_signature_builder.hpp"
+#include "module/irohad/consensus/yac/mock_yac_crypto_provider.hpp"
+#include "module/irohad/consensus/yac/yac_test_util.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 
 using ::testing::_;
 using ::testing::An;
@@ -24,7 +31,7 @@ static size_t num_peers = 1, my_num = 0;
 
 auto mk_local_peer(uint64_t num) {
   auto address = "0.0.0.0:" + std::to_string(num);
-  return iroha::consensus::yac::mk_peer(address);
+  return iroha::consensus::yac::makePeer(address);
 }
 
 class FixedCryptoProvider : public MockYacCryptoProvider {
@@ -34,15 +41,22 @@ class FixedCryptoProvider : public MockYacCryptoProvider {
         shared_model::crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, 0);
     std::copy(public_key.begin(), public_key.end(), key.begin());
     pubkey = clone(shared_model::crypto::PublicKey(key));
+    data = std::make_unique<shared_model::crypto::Signed>("");
   }
 
   VoteMessage getVote(YacHash hash) override {
     auto vote = MockYacCryptoProvider::getVote(hash);
-    vote.signature = clone(TestSignatureBuilder().publicKey(*pubkey).build());
+    auto signature = std::make_shared<MockSignature>();
+    EXPECT_CALL(*signature, publicKey())
+        .WillRepeatedly(testing::ReturnRef(*pubkey));
+    EXPECT_CALL(*signature, signedData())
+        .WillRepeatedly(testing::ReturnRef(*data));
+    vote.signature = signature;
     return vote;
   }
 
   std::unique_ptr<shared_model::crypto::PublicKey> pubkey;
+  std::unique_ptr<shared_model::crypto::Signed> data;
 };
 
 class ConsensusSunnyDayTest : public ::testing::Test {

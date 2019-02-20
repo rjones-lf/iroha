@@ -1,7 +1,7 @@
-docker
+Docker
 =========
 
-A role that installs docker engine and docker-compose including python modules.
+A role that installs Docker CE and Docker Compose including Python modules.
 
 Requirements
 ------------
@@ -13,10 +13,9 @@ Role Variables
 
 - variables defined by this role:
 
-    `defaults/main.yml` list of variables: 
-    - `dockerVersion` - version of docker that is going to be installed
-    - `dockerComposeVersion` -  version of docker compose that is going to be installed
-    - `execPath` - path for `docker-compose` binary to be placed
+    `defaults/main.yml` list of variables:
+    - `dockerVersion` - version of Docker that is going to be installed
+    - `dockerComposeVersion` -  version of Docker Compose that is going to be installed
 
 
 Example Playbook

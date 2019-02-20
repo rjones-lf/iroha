@@ -12,8 +12,11 @@
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/test_subscriber.hpp"
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
-#include "module/irohad/network/network_mocks.hpp"
+
+#include "module/irohad/consensus/yac/mock_yac_hash_gate.hpp"
+#include "module/irohad/consensus/yac/mock_yac_hash_provider.hpp"
+#include "module/irohad/consensus/yac/mock_yac_peer_orderer.hpp"
+#include "module/irohad/consensus/yac/yac_test_util.hpp"
 #include "module/irohad/simulator/simulator_mocks.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 
@@ -95,7 +98,7 @@ class YacGateTest : public ::testing::Test {
   Signed expected_signed{"expected_signed"};
   Hash prev_hash{"prev hash"};
   YacHash expected_hash;
-  std::shared_ptr<shared_model::interface::Proposal> expected_proposal;
+  std::shared_ptr<const shared_model::interface::Proposal> expected_proposal;
   std::shared_ptr<shared_model::interface::Block> expected_block;
   VoteMessage message;
   CommitMessage commit_message;
@@ -126,7 +129,7 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
 
   // generate order of peers
   EXPECT_CALL(*peer_orderer, getOrdering(_))
-      .WillOnce(Return(ClusterOrdering::create({mk_peer("fake_node")})));
+      .WillOnce(Return(ClusterOrdering::create({makePeer("fake_node")})));
 
   // make hash from block
   EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
@@ -182,7 +185,7 @@ TEST_F(YacGateTest, AgreementOnNone) {
   EXPECT_CALL(*hash_gate, vote(_, _)).Times(1);
 
   EXPECT_CALL(*peer_orderer, getOrdering(_))
-      .WillOnce(Return(ClusterOrdering::create({mk_peer("fake_node")})));
+      .WillOnce(Return(ClusterOrdering::create({makePeer("fake_node")})));
 
   ASSERT_EQ(block_cache->get(), nullptr);
 
@@ -202,7 +205,7 @@ TEST_F(YacGateTest, DifferentCommit) {
 
   // generate order of peers
   EXPECT_CALL(*peer_orderer, getOrdering(_))
-      .WillOnce(Return(ClusterOrdering::create({mk_peer("fake_node")})));
+      .WillOnce(Return(ClusterOrdering::create({makePeer("fake_node")})));
 
   EXPECT_CALL(*hash_gate, vote(expected_hash, _)).Times(1);
 
@@ -254,7 +257,7 @@ class YacGateOlderTest : public YacGateTest {
 
     // generate order of peers
     ON_CALL(*peer_orderer, getOrdering(_))
-        .WillByDefault(Return(ClusterOrdering::create({mk_peer("fake_node")})));
+        .WillByDefault(Return(ClusterOrdering::create({makePeer("fake_node")})));
 
     // make hash from block
     ON_CALL(*hash_provider, makeHash(_)).WillByDefault(Return(expected_hash));

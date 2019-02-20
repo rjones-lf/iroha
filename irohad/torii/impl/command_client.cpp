@@ -9,7 +9,6 @@
 
 #include "common/byteutils.hpp"
 #include "logger/logger.hpp"
-#include "network/impl/grpc_channel_builder.hpp"
 #include "torii/command_client.hpp"
 #include "transaction.pb.h"
 
@@ -18,12 +17,10 @@ namespace torii {
   using iroha::protocol::ToriiResponse;
   using iroha::protocol::Transaction;
 
-  CommandSyncClient::CommandSyncClient(const std::string &ip,
-                                       size_t port,
-                                       logger::LoggerPtr log)
-      : stub_(iroha::network::createClient<iroha::protocol::CommandService_v1>(
-            ip + ":" + std::to_string(port))),
-        log_(std::move(log)) {}
+  CommandSyncClient::CommandSyncClient(
+      std::unique_ptr<iroha::protocol::CommandService_v1::StubInterface> stub,
+      logger::LoggerPtr log)
+      : stub_(std::move(stub)), log_(std::move(log)) {}
 
   grpc::Status CommandSyncClient::Torii(const Transaction &tx) const {
     google::protobuf::Empty a;
@@ -50,8 +47,7 @@ namespace torii {
       std::vector<iroha::protocol::ToriiResponse> &response) const {
     grpc::ClientContext context;
     ToriiResponse resp;
-    std::unique_ptr<grpc::ClientReader<ToriiResponse> > reader(
-        stub_->StatusStream(&context, tx));
+    auto reader = stub_->StatusStream(&context, tx);
     while (reader->Read(&resp)) {
       log_->debug("received new status: {}, hash {}",
                   resp.tx_status(),

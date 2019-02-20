@@ -6,6 +6,7 @@
 #ifndef IROHA_ASYNC_GRPC_CLIENT_HPP
 #define IROHA_ASYNC_GRPC_CLIENT_HPP
 
+#include <ciso646>
 #include <thread>
 
 #include <google/protobuf/empty.pb.h>

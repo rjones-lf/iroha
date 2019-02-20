@@ -20,6 +20,7 @@ struct IrohadConfig {
   uint32_t proposal_delay;
   uint32_t vote_delay;
   bool mst_support;
+  uint32_t mst_expiration_time;
   logger::LoggerManagerTreePtr logger_manager;
 };
 

@@ -5,9 +5,9 @@
 
 #include "consensus/yac/impl/timer_impl.hpp"
 
-#include <thread>
-
 #include <gtest/gtest.h>
+
+#include <thread>
 
 using namespace iroha::consensus::yac;
 

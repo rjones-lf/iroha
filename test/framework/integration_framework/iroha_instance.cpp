@@ -4,8 +4,11 @@
  */
 
 #include "framework/integration_framework/iroha_instance.hpp"
+
 #include <cstdlib>
 #include <sstream>
+
+#include "ametsuchi/storage.hpp"
 #include "cryptography/keypair.hpp"
 #include "framework/config_helper.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
@@ -30,6 +33,8 @@ namespace integration_framework {
         proposal_delay_(1h),
         // not required due to solo consensus
         vote_delay_(0ms),
+        // amount of minutes in a day
+        mst_expiration_time_(std::chrono::minutes(24*60)),
         opt_mst_gossip_params_(boost::make_optional(
             mst_support, iroha::GossipPropagationStrategyParams{})) {}
 
@@ -66,6 +71,7 @@ namespace integration_framework {
                                              max_proposal_size,
                                              proposal_delay_,
                                              vote_delay_,
+                                             mst_expiration_time_,
                                              key_pair,
                                              opt_mst_gossip_params_);
   }

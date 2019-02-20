@@ -659,6 +659,10 @@ class FieldValidatorTest : public ValidatorsTest {
                     &FieldValidator::validateAssetName,
                     &FieldValidatorTest::asset_name,
                     asset_name_test_cases),
+      makeValidator("height",
+                    &FieldValidator::validateHeight,
+                    &FieldValidatorTest::counter,
+                    counter_test_cases),
       makeValidator(
           "created_time",
           static_cast<void (FieldValidator::*)(validation::ReasonsGroupType &,

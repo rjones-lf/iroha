@@ -9,6 +9,7 @@
 #include "interfaces/query_responses/account_detail_response.hpp"
 #include "interfaces/query_responses/account_response.hpp"
 #include "interfaces/query_responses/asset_response.hpp"
+#include "interfaces/query_responses/block_response.hpp"
 #include "interfaces/query_responses/error_query_response.hpp"
 #include "interfaces/query_responses/role_permissions.hpp"
 #include "interfaces/query_responses/roles_response.hpp"

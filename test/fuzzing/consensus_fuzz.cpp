@@ -5,11 +5,11 @@
 
 #include <memory>
 
-#include <gtest/gtest.h>
 #include <libfuzzer/libfuzzer_macro.h>
 
 #include "consensus/yac/transport/impl/network_impl.hpp"
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
+
+#include "module/irohad/consensus/yac/mock_yac_network.hpp"
 
 using namespace testing;
 

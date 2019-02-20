@@ -26,6 +26,7 @@
 #include "interfaces/queries/get_account_detail.hpp"
 #include "interfaces/queries/get_account_transactions.hpp"
 #include "interfaces/queries/get_asset_info.hpp"
+#include "interfaces/queries/get_block.hpp"
 #include "interfaces/queries/get_pending_transactions.hpp"
 #include "interfaces/queries/get_role_permissions.hpp"
 #include "interfaces/queries/get_roles.hpp"
@@ -50,7 +51,7 @@ namespace {
     return res.at(1);
   }
 
-  std::string checkAccountRolePermission(
+  std::string getAccountRolePermissionCheckSql(
       shared_model::interface::permissions::Role permission,
       const std::string &account_alias = "role_account_id") {
     const auto perm_str =
@@ -235,6 +236,38 @@ namespace iroha {
       }
     }
 
+    template <class Q>
+    bool PostgresQueryExecutor::validateSignatures(const Q &query) {
+      auto keys_range =
+          query.signatures() | boost::adaptors::transformed([](const auto &s) {
+            return s.publicKey().hex();
+          });
+
+      if (boost::size(keys_range) != 1) {
+        return false;
+      }
+      std::string keys = *std::begin(keys_range);
+      // not using bool since it is not supported by SOCI
+      boost::optional<uint8_t> signatories_valid;
+
+      auto qry = R"(
+        SELECT count(public_key) = 1
+        FROM account_has_signatory
+        WHERE account_id = :account_id AND public_key = :pk
+        )";
+
+      try {
+        *sql_ << qry, soci::into(signatories_valid),
+            soci::use(query.creatorAccountId(), "account_id"),
+            soci::use(keys, "pk");
+      } catch (const std::exception &e) {
+        log_->error(e.what());
+        return false;
+      }
+
+      return signatories_valid and *signatories_valid;
+    }
+
     PostgresQueryExecutor::PostgresQueryExecutor(
         std::unique_ptr<soci::session> sql,
         KeyValueStorage &block_store,
@@ -259,22 +292,49 @@ namespace iroha {
           log_(log_manager->getLogger()) {}
 
     QueryExecutorResult PostgresQueryExecutor::validateAndExecute(
-        const shared_model::interface::Query &query) {
+        const shared_model::interface::Query &query,
+        const bool validate_signatories = true) {
       visitor_.setCreatorId(query.creatorAccountId());
       visitor_.setQueryHash(query.hash());
+      if (validate_signatories and not validateSignatures(query)) {
+        // TODO [IR-1816] Akvinikym 03.12.18: replace magic number 3
+        // with a named constant
+        return query_response_factory_->createErrorQueryResponse(
+            shared_model::interface::QueryResponseFactory::ErrorQueryType::
+                kStatefulFailed,
+            "query signatories did not pass validation",
+            3,
+            query.hash());
+      }
       return boost::apply_visitor(visitor_, query.get());
     }
 
     bool PostgresQueryExecutor::validate(
-        const shared_model::interface::BlocksQuery &query) {
+        const shared_model::interface::BlocksQuery &query,
+        const bool validate_signatories = true) {
+      if (validate_signatories and not validateSignatures(query)) {
+        log_->error("query signatories did not pass validation");
+        return false;
+      }
+      if (not visitor_.hasAccountRolePermission(Role::kGetBlocks,
+                                                query.creatorAccountId())) {
+        log_->error("query creator does not have enough permissions");
+        return false;
+      }
+
+      return true;
+    }
+
+    bool PostgresQueryExecutorVisitor::hasAccountRolePermission(
+        shared_model::interface::permissions::Role permission,
+        const std::string &account_id) const {
       using T = boost::tuple<int>;
       boost::format cmd(R"(%s)");
       try {
         soci::rowset<T> st =
-            (sql_->prepare
-                 << (cmd % checkAccountRolePermission(Role::kGetBlocks)).str(),
-             soci::use(query.creatorAccountId(), "role_account_id"));
-
+            (sql_.prepare
+                 << (cmd % getAccountRolePermissionCheckSql(permission)).str(),
+             soci::use(account_id, "role_account_id"));
         return st.begin()->get<0>();
       } catch (const std::exception &e) {
         log_->error("Failed to validate query: {}", e.what());
@@ -334,8 +394,8 @@ namespace iroha {
           error =
               "no asset with such name in account with such id: " + error_body;
           break;
-          // other error are either handled by generic response or do not appear
-          // yet
+          // other errors are either handled by generic response or do not
+          // appear yet
         default:
           error = "failed to execute query: " + error_body;
           break;
@@ -532,6 +592,57 @@ namespace iroha {
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
+        const shared_model::interface::GetBlock &q) {
+      if (not hasAccountRolePermission(Role::kGetBlocks, creator_id_)) {
+        // no permission
+        return query_response_factory_->createErrorQueryResponse(
+            shared_model::interface::QueryResponseFactory::ErrorQueryType::
+                kStatefulFailed,
+            notEnoughPermissionsResponse(perm_converter_, Role::kGetBlocks)(),
+            2,
+            query_hash_);
+      }
+
+      auto ledger_height = block_store_.last_id();
+      if (q.height() > ledger_height) {
+        // invalid height
+        return logAndReturnErrorResponse(
+            QueryErrorType::kStatefulFailed,
+            "requested height (" + std::to_string(q.height())
+                + ") is greater than the ledger's one ("
+                + std::to_string(ledger_height) + ")",
+            3);
+      }
+
+      auto block_deserialization_msg = [height = q.height()] {
+        return "could not retrieve block with given height: "
+            + std::to_string(height);
+      };
+      auto serialized_block = block_store_.get(q.height());
+      if (not serialized_block) {
+        // for some reason, block with such height was not retrieved
+        return logAndReturnErrorResponse(
+            QueryErrorType::kStatefulFailed, block_deserialization_msg(), 1);
+      }
+
+      return converter_->deserialize(bytesToString(*serialized_block))
+          .match(
+              [this](iroha::expected::Value<
+                     std::unique_ptr<shared_model::interface::Block>> &block) {
+                return this->query_response_factory_->createBlockResponse(
+                    std::move(block.value), query_hash_);
+              },
+              [this, err_msg = block_deserialization_msg()](const auto &err) {
+                auto extended_error =
+                    err_msg + ", because it was not deserialized: " + err.error;
+                return this->logAndReturnErrorResponse(
+                    QueryErrorType::kStatefulFailed,
+                    std::move(extended_error),
+                    1);
+              });
+    }
+
+    QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetSignatories &q) {
       using QueryTuple = QueryType<std::string>;
       using PermissionTuple = boost::tuple<int>;
@@ -605,7 +716,8 @@ namespace iroha {
       };
 
       auto check_query = [this](const auto &q) {
-        if (this->existsInDb<int>("account", "account_id", "quorum", q.accountId())) {
+        if (this->existsInDb<int>(
+                "account", "account_id", "quorum", q.accountId())) {
           return QueryFallbackCheckResult{};
         }
         return QueryFallbackCheckResult{
@@ -634,7 +746,8 @@ namespace iroha {
           QueryType<shared_model::interface::types::HeightType, std::string>;
       using PermissionTuple = boost::tuple<int, int>;
 
-      auto cmd = (boost::format(R"(WITH has_my_perm AS (%s),
+      auto cmd =
+          (boost::format(R"(WITH has_my_perm AS (%s),
       has_all_perm AS (%s),
       t AS (
           SELECT height, hash FROM position_by_hash WHERE hash IN (%s)
@@ -642,10 +755,10 @@ namespace iroha {
       SELECT height, hash, has_my_perm.perm, has_all_perm.perm FROM t
       RIGHT OUTER JOIN has_my_perm ON TRUE
       RIGHT OUTER JOIN has_all_perm ON TRUE
-      )") % checkAccountRolePermission(Role::kGetMyTxs, "account_id")
-                  % checkAccountRolePermission(Role::kGetAllTxs, "account_id")
-                  % hash_str)
-                     .str();
+      )") % getAccountRolePermissionCheckSql(Role::kGetMyTxs, "account_id")
+           % getAccountRolePermissionCheckSql(Role::kGetAllTxs, "account_id")
+           % hash_str)
+              .str();
 
       return executeQuery<QueryTuple, PermissionTuple>(
           [&] {
@@ -876,7 +989,7 @@ namespace iroha {
                       R"(WITH has_perms AS (%s)
       SELECT role_id, perm FROM role
       RIGHT OUTER JOIN has_perms ON TRUE
-      )") % checkAccountRolePermission(Role::kGetRoles))
+      )") % getAccountRolePermissionCheckSql(Role::kGetRoles))
                      .str();
 
       return executeQuery<QueryTuple, PermissionTuple>(
@@ -908,7 +1021,7 @@ namespace iroha {
                 WHERE role_id = :role_name)
       SELECT permission, perm FROM perms
       RIGHT OUTER JOIN has_perms ON TRUE
-      )") % checkAccountRolePermission(Role::kGetRoles))
+      )") % getAccountRolePermissionCheckSql(Role::kGetRoles))
                      .str();
 
       return executeQuery<QueryTuple, PermissionTuple>(
@@ -946,7 +1059,7 @@ namespace iroha {
                 WHERE asset_id = :asset_id)
       SELECT domain_id, precision, perm FROM perms
       RIGHT OUTER JOIN has_perms ON TRUE
-      )") % checkAccountRolePermission(Role::kReadAssets))
+      )") % getAccountRolePermissionCheckSql(Role::kReadAssets))
                      .str();
 
       return executeQuery<QueryTuple, PermissionTuple>(

@@ -2,8 +2,7 @@
 
 :star::tada: First off, thanks for taking the time to contribute! :tada::star:
 
-The following is a short set of guidelines for contributing to Iroha. 
-
+The following is a short set of guidelines for contributing to Iroha.
 
 
 #### Table Of Contents
@@ -11,136 +10,100 @@ The following is a short set of guidelines for contributing to Iroha.
 ##### [How Can I Contribute?](#how-can-i-contribute-1)
 
 - [Reporting bugs](#reporting-bugs)
-- [Suggesting Enhancements](#suggesting-enhancements)
+- [Suggesting Improvements](#suggesting-improvements)
 - [Asking Questions](#asking-questions)
 - [Your First Code Contribution](#your-first-code-contribution)
 - [Pull Requests](#pull-requests)
 
 ##### [Styleguides](#styleguides-1)
 
-- [Git Commit Messages](#git-commit-messages)
-- [C++ StyleGuide](#C++-styleguide)
+- [Git Style Guide](#git-style-guide)
+- [C++ Style Guide](#c-style-guide)
 - [Documentation Styleguide](#documentation-styleguide)
 
-##### [Additional Notes](#additional-notes)
-
-- [Informational Labels](#informational-labels)
-- [Pull Request and Issue Labels](#pull-request-and-issue-labels)
-- [Issue Labels](#issue-labels)
-- [Pull Request Labels](#pull-request-labels)
-- [Contact Developers](#contact-developers)
-
+### [Contact Developers](#places-where-community-is-active)
 
 
 ## How Can I Contribute?
 
 ### Reporting bugs
 
-*Bug* is an error, design flaw, failure or fault in Iroha that causes it to produce an incorrect or unexpected result, or to behave in unintended ways. 
+*Bug* is an error, design flaw, failure or fault in Iroha that causes it to produce an incorrect or unexpected result, or to behave in unintended ways.
 
-Bugs are tracked as [GitHub Issues](https://guides.github.com/features/issues/). To submit a bug, create new Issue and include these details:
-- **Title**
-    - Write prefix `[Bug]` for the title
-    - Use a clear and descriptive title
-- **Body** - include the following sections:
-    - System environment (OS, iroha version)
-    - Steps to reproduce
-    - Expected behavior
-    - Actual behavior
+Bugs are tracked as [JIRA issues](https://jira.hyperledger.org/projects/IR/issues/IR-275?filter=allopenissues&orderby=issuetype+ASC%2C+priority+DESC%2C+updated+DESC) in Hyperledger Jira.
 
+To submit a bug, [create new issue](https://jira.hyperledger.org/secure/CreateIssue.jspa) and include these details:
 
-
-### Suggesting Enhancements
-
-An *enhancement* is a code or idea, which makes **existing** code or design faster, more stable, portable, secure or better in any other way.
-
-Enhancements are tracked as [GitHub Issues](https://guides.github.com/features/issues/). To submit new enhancement, create new Issue and incllude these details:
-
-- **Title**
-    - Write prefix `[Enhancement]`
-    - Use a clear and descriptive title
-- **Body** - include the following sections:
-    - *Target* - what is going to be improved?
-    - *Motivation* - why do we need it?
-    - *Description* - how to implement it?
+| Field                   | What to enter                                                    |
+| :---------------------- | ---------------------------------------------------------------- |
+| Project                 | Iroha (IR)                                                       |
+| Issue Type              | Bug                                                              |
+| Summary                 | Essence of the problem                                               |
+| Description             | What the issue is about; if you have any logs, please provide them|
+| Priority                | You can use Medium though if you see the issue as a high priority, please choose that|
+| Environment             | Your OS, device's specs, Virtual Environment if you use one, version of Iroha etc. |
 
 
+
+### Suggesting Improvements
+
+An *improvement* is a code or idea, which makes **existing** code or design faster, more stable, portable, secure or better in any other way.
+
+Improvements are tracked as [JIRA improvements](https://jira.hyperledger.org/browse/IR-184?jql=project%20%3D%20IR%20and%20issuetype%20%3D%20Improvement%20ORDER%20BY%20updated%20DESC). To submit new improvement, [create new issue](https://jira.hyperledger.org/secure/CreateIssue.jspa) and include these details:
+
+| Field                   | What to enter                                                    |
+| :---------------------- | ---------------------------------------------------------------- |
+| Project                 | Iroha (IR)                                                       |
+| Issue Type              | Improvement                                                      |
+| Summary                 | Essence of the idea                                              |
+| Description             | What the idea is about; if you have any code suggestions, you are welcome to add them here |
+| Priority                | You can use Medium                                               |
+| Assign                  | You can assign the task to yourself if you are planning on working on it|
 
 ### Asking Questions
 
-A *question* is any discussion that is typically neigher a bug, nor feature request, nor improvement - "How do I do X?".
+A *question* is any discussion that is typically neigher a bug, nor feature request or improvement. If you have a question like "How do I do X?" - this paragraph is for you.
 
-Questions are tracked as [Github Issues](https://guides.github.com/features/issues/) or via private messages in [your favourite messenger](#contact-developers).
-
-To submit new question in GitHub Issues, it must include these details:
-
-- **Title**
-    - Write prefix `[Question]`
-    - Use a clear and descriptive title
-- **Body** - describe your question with as many details as possible.
-
-
+Please post your question in [your favourite messenger](#places-where-community-is-active) so members of the community could help you. You can also help others!
 
 ### Your First Code Contribution
 
-Read our [C++ Style Guide](#c++-style-guide) and start with beginner-friendly issues with label [`[good-first-issue]`](https://github.com/hyperledger/iroha/issues?q=is:open+is:issue+label:good-first-issue ). Indicate somehow that you are working on this task.
-
-
+Read our [C++ Style Guide](#c-style-guide) and start with beginner-friendly issues with JIRA label [`[good-first-issue]`](https://jira.hyperledger.org/issues/?jql=project%20%3D%20IR%20and%20labels%20%3D%20good-first-issue%20ORDER%20BY%20updated%20DESC) <- click here. Indicate somehow that you are working on this task: get in touch with maintainers team, community or simply assign this issue to yourself.
 
 ### Pull Requests
 
 - Fill in [the required template](.github/PULL_REQUEST_TEMPLATE.md)
 
-- **Write tests** for new code. Test coverage for new code must be at least 70%.
+- End all files with a newline
 
-- Every pull request should be reviewed and **get at least two approvals**.
+- **Write tests** for new code. Test coverage for new code must be at least 70%
 
-- Do not include issue numbers in the PR title or commit messages.
+- Every pull request should be reviewed and **get at least two approvals from maintainers team**. Check who is a current maintainer in [MAINTAINERS.md](https://github.com/hyperledger/iroha/blob/master/MAINTAINERS.md) file
 
-- Use [keywords for closing issues](https://help.github.com/articles/closing-issues-using-keywords/).
+- When you've finished work make sure that you've got all passing CI checks — after that **squash and merge** your pull request
 
-- Include issue numbers in Pull Request body only.
+- Follow the [C++ Style Guide](#c-style-guide)
 
-- When finished work, **rebase onto base branch** with 
-    ```bash
-    $ git fetch
-    $ git rebase -i <base-branch>
-    ```
-
-    [Step-by-step guide](https://soramitsu.atlassian.net/wiki/spaces/IS/pages/11173889/Rebase+and+merge+guide).
-
-- Follow the [C++ Style Guide](#C++-style-guide).
-
-- Follow the [Git Style Guide](#git-commit-messages) .
+- Follow the [Git Style Guide](#git-style-guide)
 
 - **Document new code** based on the [Documentation Styleguide](#documentation-styleguide)
-
-- End all files with a newline.
-
-
 
 
 ## Styleguides
 
 ### Git Style Guide
 
+- **Sign-off every commit** with [DCO](https://github.com/apps/dco): `Signed-off-by: $NAME <$EMAIL>`. You can do it automatically using `git commit -s`
 - **Use present tense** ("Add feature", not "Added feature").
 - **Use imperative mood** ("Deploy docker to..." not "Deploys docker to...").
 - Write meaningful commit message.
-- **Signed-off every commit** with [DCO](https://github.com/apps/dco): `Signed-off-by: $NAME <$EMAIL>`. 
-    You can do it automatically using `git commit -s`.
-- Do not include PR or Issue number in commit message. 
-- Limit the first line of commit message to 50 characters or less.
-- First line of commit message must contain summary of work done, second line must contain empty line, third and other lines can contain list of commit changes.
-- When only changing documentation, include `[ci skip]` in the commit description.
-- We use mixed approach of [Github Flow](https://guides.github.com/introduction/flow/) and [Git Flow](http://nvie.com/posts/a-successful-git-branching-model/). More at [Iroha Working Agreement](https://github.com/hyperledger/iroha/wiki/Iroha-working-agreement#2-version-control-system).
-
-
+- Limit the first line of commit message to 50 characters or less
+- First line of commit message must contain summary of work done, second line must contain empty line, third and other lines can contain list of commit changes
 
 
 ### C++ Style Guide
 
-- Use [clang-format](http://clang.llvm.org/docs/ClangFormat.html) for code formatting (we use google code style). 
+- Use clang-format [settings](https://github.com/hyperledger/iroha/blob/master/.clang-format) file. There are guides available on the internet (e.g. [Kratos wiki](https://github.com/KratosMultiphysics/Kratos/wiki/How-to-configure-clang%E2%80%90format))
 - Follow [CppCoreGuidelines](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines) and [Cpp Best Practices](https://lefticus.gitbooks.io/cpp-best-practices).
 - Avoid [platform-dependent](https://stackoverflow.com/questions/1558194/learning-and-cross-platform-development-c) code.
 - Use [C++14](https://en.wikipedia.org/wiki/C%2B%2B14).
@@ -154,60 +117,18 @@ Read our [C++ Style Guide](#c++-style-guide) and start with beginner-friendly is
 - Document all public API: methods, functions, members, templates, classes...
 
 
-## Additional Notes
+### Places where community is active
 
-### Informational Labels
-| Label Name              | Description                                                      |
-| :---------------------- | ---------------------------------------------------------------- |
-| `pri:low`               | Low priority.                                                    |
-| `pri:normal`            | Normal priority.                                                 |
-| `pri:important`         | Important issue.                                                 |
-| `pri:critical`          | Critical issue. Must be fixed immediately.                       |
-| `pri:blocker`           | Issue blocked by other issues.                                   |
-| `status:in-progress`    | Work in progress.                                                |
-| `status:inactive`       | Inactive PR or Issue. Likely to become a `candidate-for-closing` |
-| `status:wontfix`        | Core team has decided not to fix these issue for now.            |
+Our community members are active at:
 
-### Issue and Pull Request labels
-
-| Label Name              | Description                                                  |
-| :---------------------- | ------------------------------------------------------------ |
-| `enhancement:code`      | Any improvements in **existing** code.                       |
-| `enhancement:idea`      | Fresh ideas to enhance existing architecture, design.        |
-| `bug:needs-reproduction`| Bugs or reports that are very likely to be bugs.             |
-| `bug:confirmed`         | Confirmed bug by maintainers.                                |
-| `feature`               | Feature requests -- completely new functionality.            |
-| `accepted`              | Pull request is accepted and can be merged.                  |
-| `candidate-for-closing` | Outdated Pull Request / Issue. Lasts for more than 14 days.  |
-| `needs-correction`      | Pull Request / Issue that should be corrected by author.     |
-| `needs-review`          | Pull Request / Issue that should be reviewed by maintainer.  |
-
-
-### Issue Labels
-
-| Label Name              | Description                                                           |
-| :---------------------- | --------------------------------------------------------------------- |
-| `question`              | Questions more than bug reports or feature requests - "How do I do X" |
-| `good-first-issue`      | Good starting point to begin contributing.                            |
-| `help-wanted`           | Maintainers ask for help to work on this issue.                       |
-
-### Pull Request Labels
-
-| Label Name              | Description                                 |
-| :---------------------- | ------------------------------------------- |
-| `accepted`              | Pull request is accepted and can be merged. |
-
-
-### Contact Developers
-
-Developers are available at:
-
-| Service      | Link                                     |
-| ------------ | ---------------------------------------- |
-| RocketChat   | https://chat.hyperledger.org/channel/iroha |
-| Mailing List | [hyperledger-iroha@lists.hyperledger.org](mailto:hyperledger-iroha@lists.hyperledger.org) |
-| Gitter       | https://gitter.im/hyperledger-iroha/Lobby |
-| Telegram     | https://t.me/joinchat/Al-9jkCZ6eePL9JMQtoOJw |
+| Service      | Link                                                         |
+| ------------ | ------------------------------------------------------------ |
+| RocketChat   | https://chat.hyperledger.org/channel/iroha                   |
+| StackOverflow| https://stackoverflow.com/questions/tagged/hyperledger-iroha |
+| Mailing List | [hyperledger-iroha@lists.hyperledger.org](mailto:hyperledger-iroha@lists.hyperledger.org)                              |
+| Gitter       | https://gitter.im/hyperledger-iroha/Lobby                    |
+| Telegram     | https://t.me/hl_iroha                                        |
+| YouTube      | https://www.youtube.com/channel/UCYlK9OrZo9hvNYFuf0vrwww     |
 
 
 

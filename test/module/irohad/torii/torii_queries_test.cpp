@@ -5,7 +5,10 @@
 
 #include <boost/variant.hpp>
 #include "crypto/keypair.hpp"
-#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/ametsuchi/mock_block_query.hpp"
+#include "module/irohad/ametsuchi/mock_query_executor.hpp"
+#include "module/irohad/ametsuchi/mock_storage.hpp"
+#include "module/irohad/ametsuchi/mock_wsv_query.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/pending_txs_storage/pending_txs_storage_mock.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
@@ -74,7 +77,7 @@ class ToriiQueriesTest : public testing::Test {
 
     //----------- Server run ----------------
     initQueryFactory();
-    runner->append(std::make_unique<torii::QueryService>(qpi, query_factory))
+    runner->append(std::make_unique<QueryService>(qpi, query_factory))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {
@@ -115,7 +118,7 @@ class ToriiQueriesTest : public testing::Test {
   std::shared_ptr<iroha::MockPendingTransactionStorage> pending_txs_storage;
   std::shared_ptr<shared_model::interface::QueryResponseFactory>
       query_response_factory;
-  std::shared_ptr<torii::QueryService::QueryFactoryType> query_factory;
+  std::shared_ptr<QueryService::QueryFactoryType> query_factory;
 
   const std::string ip = "127.0.0.1";
   int port;

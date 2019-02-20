@@ -101,9 +101,9 @@ TEST_F(OnDemandConnectionManagerTest, onBatches) {
  * AND return data is forwarded
  */
 TEST_F(OnDemandConnectionManagerTest, onRequestProposal) {
-  consensus::Round round;
-  boost::optional<OnDemandConnectionManager::ProposalType> oproposal =
-      OnDemandConnectionManager::ProposalType{};
+  consensus::Round round{};
+  auto oproposal = boost::make_optional<
+      std::shared_ptr<const OnDemandConnectionManager::ProposalType>>({});
   auto proposal = oproposal.value().get();
   EXPECT_CALL(*connections[OnDemandConnectionManager::kIssuer],
               onRequestProposal(round))
@@ -123,11 +123,10 @@ TEST_F(OnDemandConnectionManagerTest, onRequestProposal) {
  * AND return data is forwarded
  */
 TEST_F(OnDemandConnectionManagerTest, onRequestProposalNone) {
-  consensus::Round round;
-  boost::optional<OnDemandConnectionManager::ProposalType> oproposal;
+  consensus::Round round{};
   EXPECT_CALL(*connections[OnDemandConnectionManager::kIssuer],
               onRequestProposal(round))
-      .WillOnce(Return(ByMove(std::move(oproposal))));
+      .WillOnce(Return(ByMove(std::move(boost::none))));
 
   auto result = manager->onRequestProposal(round);
 

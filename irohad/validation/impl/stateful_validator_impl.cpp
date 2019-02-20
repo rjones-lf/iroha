@@ -76,6 +76,23 @@ namespace iroha {
             // batch is successful; release savepoint
             validation_result = true;
             savepoint->release();
+          } else {
+            auto failed_tx_hash = transactions_errors_log.back().tx_hash;
+            for (const auto &tx : batch) {
+              if (tx.hash() != failed_tx_hash) {
+                transactions_errors_log.emplace_back(
+                    validation::TransactionError{
+                        tx.hash(),
+                        // TODO igor-egorov 22.01.2019 IR-245 add a separate
+                        // error code for failed batch case
+                        validation::CommandError{
+                            "",
+                            1,  // internal error code
+                            "Another transaction failed the batch",
+                            true,
+                            std::numeric_limits<size_t>::max()}});
+              }
+            }
           }
 
           validation_results.insert(
@@ -122,10 +139,13 @@ namespace iroha {
                                *batch_parser_);
 
       // Since proposal came from ordering gate it was already validated.
-      // All transactions has been validated as well
+      // All transactions are validated as well
       // This allows for unsafe construction of proposal
-      validation_result->verified_proposal = factory_->unsafeCreateProposal(
-          proposal.height(), proposal.createdTime(), valid_txs);
+      validation_result->verified_proposal =
+          std::const_pointer_cast<const shared_model::interface::Proposal>(
+              std::shared_ptr<shared_model::interface::Proposal>(
+                  factory_->unsafeCreateProposal(
+                      proposal.height(), proposal.createdTime(), valid_txs)));
 
       log_->info("transactions in verified proposal: {}",
                  validation_result->verified_proposal->transactions().size());

@@ -185,6 +185,13 @@ namespace shared_model {
         });
       }
 
+      auto getBlock(interface::types::HeightType height) const {
+        return queryField([&](auto proto_query) {
+          auto query = proto_query->mutable_get_block();
+          query->set_height(height);
+        });
+      }
+
       auto getRoles() const {
         return queryField(
             [&](auto proto_query) { proto_query->mutable_get_roles(); });

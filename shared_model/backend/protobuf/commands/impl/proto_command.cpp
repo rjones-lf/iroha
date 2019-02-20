@@ -57,12 +57,11 @@ namespace shared_model {
       TransportType &proto_;
 
       ProtoCommandVariantType variant_{[this] {
-        const auto &ar = proto_;
+        auto &ar = proto_;
         int which =
             ar.GetDescriptor()->FindFieldByNumber(ar.command_case())->index();
         return shared_model::detail::variant_impl<ProtoCommandListType>::
-            template load<ProtoCommandVariantType>(
-                std::forward<decltype(ar)>(ar), which);
+            template load<ProtoCommandVariantType>(ar, which);
       }()};
 
       CommandVariantType ivariant_{variant_};

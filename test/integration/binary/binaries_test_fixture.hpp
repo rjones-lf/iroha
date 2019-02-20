@@ -57,7 +57,7 @@ namespace query_validation {
     template <typename ExpectedResponseType>
     inline void checkQueryResponseType(
         const shared_model::proto::QueryResponse &response) {
-      ASSERT_NO_THROW(boost::get<ExpectedResponseType &>(response.get()));
+      ASSERT_NO_THROW(boost::get<const ExpectedResponseType &>(response.get()));
     }
 
     /**

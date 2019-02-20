@@ -12,9 +12,9 @@
 #include "datetime/time.hpp"
 #include "framework/batch_helper.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "module/shared_model/builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
+#include "multi_sig_transactions/state/mst_state.hpp"
 
 #include "logger/logger.hpp"
 
@@ -103,13 +103,27 @@ inline auto makeTx(const shared_model::interface::types::CounterType &counter,
           .finish());
 }
 
-inline auto makePeer(const std::string &address, const std::string &pub_key) {
-  return std::make_shared<shared_model::proto::Peer>(
-      shared_model::proto::PeerBuilder()
-          .address(address)
-          .pubkey(shared_model::crypto::PublicKey(
-              shared_model::crypto::Hash::fromHexString(pub_key)))
-          .build());
-}
+namespace iroha {
+  class TestCompleter : public DefaultCompleter {
+   public:
+    explicit TestCompleter() : DefaultCompleter(std::chrono::minutes(0)) {}
+
+    bool operator()(const DataType &batch) const override {
+      return std::all_of(batch->transactions().begin(),
+                         batch->transactions().end(),
+                         [](const auto &tx) {
+                           return boost::size(tx->signatures()) >= tx->quorum();
+                         });
+    }
+
+    bool operator()(const DataType &batch,
+                    const TimeType &time) const override {
+      return std::any_of(
+          batch->transactions().begin(),
+          batch->transactions().end(),
+          [&time](const auto &tx) { return tx->createdTime() < time; });
+    }
+  };
+}  // namespace iroha
 
 #endif  // IROHA_MST_TEST_HELPERS_HPP

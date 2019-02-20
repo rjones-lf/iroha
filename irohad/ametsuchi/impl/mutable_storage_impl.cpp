@@ -13,6 +13,7 @@
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "interfaces/commands/command.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 #include "logger/logger.hpp"
 #include "logger/logger_manager.hpp"
 

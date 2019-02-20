@@ -8,6 +8,7 @@
 #include <string>
 
 #include <gtest/gtest.h>
+
 #include <boost/make_shared.hpp>
 #include <boost/range/adaptor/indirected.hpp>
 #include <boost/shared_container_iterator.hpp>
@@ -38,7 +39,7 @@ auto signature() {
 TEST(YacHashProviderTest, MakeYacHashTest) {
   YacHashProviderImpl hash_provider;
   iroha::consensus::Round round{1, 0};
-  auto proposal = std::make_shared<MockProposal>();
+  auto proposal = std::make_shared<const MockProposal>();
   EXPECT_CALL(*proposal, hash())
       .WillRepeatedly(
           ReturnRefOfCopy(shared_model::crypto::Hash(std::string())));

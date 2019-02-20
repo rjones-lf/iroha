@@ -28,14 +28,6 @@ namespace iroha {
               response_factory,
           logger::LoggerPtr log);
 
-      /**
-       * Checks if query has needed signatures
-       * @param qry arrived query
-       * @return true if passes stateful validation
-       */
-      template <class Q>
-      bool checkSignatories(const Q &qry);
-
       std::unique_ptr<shared_model::interface::QueryResponse> queryHandle(
           const shared_model::interface::Query &qry) override;
 

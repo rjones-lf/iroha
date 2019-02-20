@@ -3,50 +3,41 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-import iroha
+import irohalib
 import commons
+import primitive_pb2
 
 admin = commons.new_user('admin@test')
 alice = commons.new_user('alice@test')
 bob = commons.new_user('bob@test')
+iroha = irohalib.Iroha(admin['id'])
 
 
 @commons.hex
 def genesis_tx():
-    test_permissions = iroha.RolePermissionSet([iroha.Role_kSetMyAccountDetail])
-    tx = iroha.ModelTransactionBuilder() \
-        .createdTime(commons.now()) \
-        .creatorAccountId(admin['id']) \
-        .addPeer('0.0.0.0:50541', admin['key'].publicKey()) \
-        .createRole('admin_role', commons.all_permissions()) \
-        .createRole('test_role', test_permissions) \
-        .createDomain('test', 'test_role') \
-        .createAccount('admin', 'test', admin['key'].publicKey()) \
-        .createAccount('alice', 'test', alice['key'].publicKey()) \
-        .createAccount('bob', 'test', bob['key'].publicKey()) \
-        .appendRole(admin['id'], 'admin_role') \
-        .build()
-    return iroha.ModelProtoTransaction(tx) \
-        .signAndAddSignature(admin['key']).finish()
+    test_permissions = [primitive_pb2.can_grant_can_set_my_account_detail]
+    genesis_commands = commons.genesis_block(admin, alice, test_permissions)
+    genesis_commands.append(
+        iroha.command('CreateAccount', account_name='bob', domain_id='test',
+                      public_key=irohalib.IrohaCrypto.derive_public_key(bob['key'])))
+    tx = iroha.transaction(genesis_commands)
+    irohalib.IrohaCrypto.sign_transaction(tx, admin['key'])
+    return tx
 
 
 @commons.hex
 def grant_can_set_my_account_detail_tx():
-    tx = iroha.ModelTransactionBuilder() \
-        .createdTime(commons.now()) \
-        .creatorAccountId(alice['id']) \
-        .grantPermission(bob['id'], iroha.Grantable_kSetMyAccountDetail) \
-        .build()
-    return iroha.ModelProtoTransaction(tx) \
-        .signAndAddSignature(alice['key']).finish()
+    tx = iroha.transaction([
+        iroha.command('GrantPermission', account_id=bob['id'], permission=primitive_pb2.can_set_my_account_detail)
+    ], creator_account=alice['id'])
+    irohalib.IrohaCrypto.sign_transaction(tx, alice['key'])
+    return tx
 
 
 @commons.hex
 def revoke_can_set_my_account_detail_tx():
-    tx = iroha.ModelTransactionBuilder() \
-        .createdTime(commons.now()) \
-        .creatorAccountId(alice['id']) \
-        .revokePermission(bob['id'], iroha.Grantable_kSetMyAccountDetail) \
-        .build()
-    return iroha.ModelProtoTransaction(tx) \
-        .signAndAddSignature(alice['key']).finish()
+    tx = iroha.transaction([
+        iroha.command('RevokePermission', account_id=bob['id'], permission=primitive_pb2.can_set_my_account_detail)
+    ], creator_account=alice['id'])
+    irohalib.IrohaCrypto.sign_transaction(tx, alice['key'])
+    return tx

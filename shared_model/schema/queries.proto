@@ -19,6 +19,10 @@ message GetAccount {
   string account_id = 1;
 }
 
+message GetBlock {
+  uint64 height = 1;
+}
+
 message GetSignatories {
   string account_id = 1;
 }
@@ -93,6 +97,7 @@ message Query {
        GetRolePermissions get_role_permissions = 11;
        GetAssetInfo get_asset_info = 12;
        GetPendingTransactions get_pending_transactions = 13;
+       GetBlock get_block = 14;
      }
   }
 

@@ -72,7 +72,7 @@ void OnDemandConnectionManager::onBatches(consensus::Round round,
             {round.block_round + 2, kNextCommitRoundConsumer});
 }
 
-boost::optional<OnDemandConnectionManager::ProposalType>
+boost::optional<std::shared_ptr<const OnDemandConnectionManager::ProposalType>>
 OnDemandConnectionManager::onRequestProposal(consensus::Round round) {
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
 

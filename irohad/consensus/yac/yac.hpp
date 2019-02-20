@@ -11,8 +11,8 @@
 #include <mutex>
 #include <rxcpp/rx.hpp>
 
-#include "consensus/yac/cluster_order.hpp"  //  for ClusterOrdering
-#include "consensus/yac/messages.hpp"       // because messages passed by value
+#include "consensus/yac/cluster_order.hpp"     //  for ClusterOrdering
+#include "consensus/yac/outcome_messages.hpp"  // because messages passed by value
 #include "consensus/yac/storage/yac_vote_storage.hpp"  // for VoteStorage
 #include "consensus/yac/transport/yac_network_interface.hpp"  // for YacNetworkNotifications
 #include "consensus/yac/yac_gate.hpp"                         // for HashGate

@@ -64,7 +64,7 @@ namespace iroha {
 
       void onBatches(consensus::Round round, CollectionType batches) override;
 
-      boost::optional<ProposalType> onRequestProposal(
+      boost::optional<std::shared_ptr<const ProposalType>> onRequestProposal(
           consensus::Round round) override;
 
      private:

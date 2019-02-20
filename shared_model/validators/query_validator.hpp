@@ -9,6 +9,7 @@
 #include <boost/variant/static_visitor.hpp>
 
 #include "backend/protobuf/queries/proto_get_account.hpp"
+#include "backend/protobuf/queries/proto_get_block.hpp"
 #include "backend/protobuf/queries/proto_get_account_asset_transactions.hpp"
 #include "backend/protobuf/queries/proto_get_account_assets.hpp"
 #include "backend/protobuf/queries/proto_get_account_detail.hpp"
@@ -43,6 +44,15 @@ namespace shared_model {
         reason.first = "GetAccount";
 
         validator_.validateAccountId(reason, qry.accountId());
+
+        return reason;
+      }
+
+      ReasonsGroupType operator()(const interface::GetBlock &qry) const {
+        ReasonsGroupType reason;
+        reason.first = "GetBlock";
+
+        validator_.validateHeight(reason, qry.height());
 
         return reason;
       }

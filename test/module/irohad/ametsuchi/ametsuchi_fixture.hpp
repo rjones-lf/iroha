@@ -18,6 +18,7 @@
 #include "backend/protobuf/proto_permission_to_string.hpp"
 #include "common/files.hpp"
 #include "framework/config_helper.hpp"
+#include "framework/sql_query.hpp"
 #include "logger/logger.hpp"
 #include "validators/field_validator.hpp"
 
@@ -46,7 +47,10 @@ namespace iroha {
                    [](iroha::expected::Error<std::string> &error) {
                      FAIL() << "StorageImpl: " << error.error;
                    });
-        sql = std::make_shared<soci::session>(soci::postgresql, pgopt_);
+        sql = std::make_shared<soci::session>(*soci::factory_postgresql(),
+                                              pgopt_);
+        sql_query =
+            std::make_unique<framework::ametsuchi::SqlQuery>(*sql, factory);
       }
 
       static void TearDownTestCase() {
@@ -67,6 +71,7 @@ namespace iroha {
           factory;
 
       static std::shared_ptr<StorageImpl> storage;
+      static std::unique_ptr<framework::ametsuchi::SqlQuery> sql_query;
 
       static std::shared_ptr<shared_model::interface::PermissionToString>
           perm_converter_;
@@ -188,6 +193,8 @@ CREATE TABLE IF NOT EXISTS index_by_id_height_asset (
 
     std::shared_ptr<soci::session> AmetsuchiTest::sql = nullptr;
     std::shared_ptr<StorageImpl> AmetsuchiTest::storage = nullptr;
+    std::unique_ptr<framework::ametsuchi::SqlQuery> AmetsuchiTest::sql_query =
+        nullptr;
   }  // namespace ametsuchi
 }  // namespace iroha
 

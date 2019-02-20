@@ -11,11 +11,6 @@ using namespace integration_framework;
 using namespace shared_model;
 using namespace common_constants;
 
-// TODO igor-egorov, 2018-12-27, IR-148, move all check macroses to
-// acceptance_fixture.hpp
-#define check(i) \
-  [](const auto &resp) { ASSERT_EQ(resp->transactions().size(), i); }
-
 class CreateAccount : public AcceptanceFixture {
  public:
   auto makeUserWithPerms(const interface::RolePermissionSet &perms = {
@@ -181,11 +176,11 @@ TEST_F(CreateAccount, PrivelegeElevation) {
 
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(second_domain_tx, check(1))
-      .sendTxAwait(makeUserWithPerms(), check(1))
+      .sendTxAwait(second_domain_tx, CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeUserWithPerms(), CHECK_TXS_QUANTITY(1))
       .sendTx(create_elevated_user)
       .skipProposal()
-      .checkVerifiedProposal(check(0))
+      .checkVerifiedProposal(CHECK_TXS_QUANTITY(0))
       .checkBlock([&rejected_hash](const auto &block) {
         const auto rejected_hashes = block->rejected_transactions_hashes();
         ASSERT_THAT(rejected_hashes, ::testing::Contains(rejected_hash));
