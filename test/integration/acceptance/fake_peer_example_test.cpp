@@ -3,9 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <atomic>
-#include <future>
-
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "backend/protobuf/proto_proposal_factory.hpp"
 #include "datetime/time.hpp"
