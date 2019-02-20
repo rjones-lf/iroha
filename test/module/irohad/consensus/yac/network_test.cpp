@@ -10,7 +10,6 @@
 #include "consensus/yac/transport/impl/network_impl.hpp"
 #include "consensus/yac/transport/yac_pb_converters.hpp"
 #include "framework/mock_stream.h"
-#include "network/impl/grpc_channel_builder.hpp"
 #include "yac_mock.grpc.pb.h"
 
 using ::testing::_;
@@ -30,22 +29,13 @@ namespace iroha {
           notifications = std::make_shared<MockYacNetworkNotifications>();
           async_call = std::make_shared<
               network::AsyncGrpcClient<google::protobuf::Empty>>();
-          // Custom deleter is necessary since it is necessary to construct
-          // unique_ptr in client_creator in there is not possible to make empty
-          // destructor there
-          stub =
-              std::unique_ptr<iroha::consensus::yac::proto::MockYacStub,
-                              void (*)(
-                                  iroha::consensus::yac::proto::MockYacStub *)>(
-                  new iroha::consensus::yac::proto::MockYacStub(),
-                  [](iroha::consensus::yac::proto::MockYacStub *ptr) {});
+          // stub will be deleted by unique_ptr created in client_creator
+          stub = new iroha::consensus::yac::proto::MockYacStub();
           std::function<std::unique_ptr<proto::Yac::StubInterface>(
               const shared_model::interface::Peer &)>
               client_creator([this](const shared_model::interface::Peer &peer) {
-                // stub from the YacNetworkTest will be destroyed in destructor
-                // of NetworkImpl
                 return std::unique_ptr<
-                    iroha::consensus::yac::proto::MockYacStub>(stub.get());
+                    iroha::consensus::yac::proto::MockYacStub>(stub);
               });
           network = std::make_shared<NetworkImpl>(async_call, client_creator);
 
@@ -70,7 +60,7 @@ namespace iroha {
         VoteMessage message;
         shared_model::crypto::PublicKey pubkey =
             shared_model::crypto::PublicKey{""};
-        std::shared_ptr<iroha::consensus::yac::proto::MockYacStub> stub;
+        iroha::consensus::yac::proto::MockYacStub *stub;
       };
 
       /**
@@ -99,10 +89,8 @@ namespace iroha {
         proto::State request;
         grpc::ServerContext context;
 
-        for (const auto &vote : {message}) {
-          auto pb_vote = request.add_votes();
-          *pb_vote = PbConverters::serializeVote(vote);
-        }
+        auto pb_vote = request.add_votes();
+        *pb_vote = PbConverters::serializeVote(message);
 
         auto response = network->SendState(&context, &request, nullptr);
         ASSERT_EQ(response.error_code(), grpc::StatusCode::OK);

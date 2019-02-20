@@ -13,7 +13,6 @@
 #include "consensus/yac/transport/yac_pb_converters.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "logger/logger.hpp"
-#include "network/impl/grpc_channel_builder.hpp"
 #include "yac.pb.h"
 
 namespace iroha {
