@@ -30,19 +30,24 @@ namespace iroha {
           status_factory_(std::move(status_factory)),
           log_(std::move(log)) {
       // Notifier for all clients
-      status_bus_->statuses().subscribe([this](auto response) {
-        // find response for this tx in cache; if status of received response
-        // isn't "greater" than cached one, dismiss received one
-        auto tx_hash = response->transactionHash();
-        auto cached_tx_state = cache_->findItem(tx_hash);
-        if (cached_tx_state
-            and response->comparePriorities(**cached_tx_state)
-                != shared_model::interface::TransactionResponse::
-                       PrioritiesComparisonResult::kGreater) {
-          return;
-        }
-        cache_->addItem(tx_hash, response);
-      });
+      status_subscription_ =
+          status_bus_->statuses().subscribe([this](auto response) {
+            // find response for this tx in cache; if status of received
+            // response isn't "greater" than cached one, dismiss received one
+            auto tx_hash = response->transactionHash();
+            auto cached_tx_state = cache_->findItem(tx_hash);
+            if (cached_tx_state
+                and response->comparePriorities(**cached_tx_state)
+                    != shared_model::interface::TransactionResponse::
+                           PrioritiesComparisonResult::kGreater) {
+              return;
+            }
+            cache_->addItem(tx_hash, response);
+          });
+    }
+
+    CommandServiceImpl::~CommandServiceImpl() {
+      status_subscription_.unsubscribe();
     }
 
     void CommandServiceImpl::handleTransactionBatch(
