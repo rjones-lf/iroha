@@ -40,7 +40,8 @@ class ReplayFixture : public AcceptanceFixture {
  * @when the transaction is sent to ITF twice
  * @then the second submission should be rejected
  */
-TEST_F(ReplayFixture, DISABLE_OrderingGateReplay) {
+TEST_F(ReplayFixture, DISABLED_OrderingGateReplay) {
+  // TODO igor-egorov 20.02.2019 IR-348 Rework OG replay test
   /*
    * Disabled because now it is not clear how to test replays.
    * In case of replay Iroha will just produce a warning in std output.

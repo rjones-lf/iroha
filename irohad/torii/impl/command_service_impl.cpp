@@ -12,6 +12,7 @@
 #include "common/is_any.hpp"
 #include "common/visitor.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "interfaces/transaction_responses/not_received_tx_response.hpp"
 
 namespace iroha {
   namespace torii {
@@ -152,51 +153,91 @@ namespace iroha {
 
     void CommandServiceImpl::processBatch(
         std::shared_ptr<shared_model::interface::TransactionBatch> batch) {
-      auto cache_presence = tx_presence_cache_->check(*batch);
-      if (not cache_presence) {
-        // TODO andrei 30.11.18 IR-51 Handle database error
-        log_->warn("Check tx presence database error. {}", *batch);
+      const auto status_issuer = "ToriiBatchProcessor";
+      const auto &txs = batch->transactions();
+
+      bool cache_has_at_least_one_tx{false};
+      bool batch_has_mst_pending_tx{false};
+      std::tie(cache_has_at_least_one_tx, batch_has_mst_pending_tx) =
+          std::accumulate(
+              txs.begin(),
+              txs.end(),
+              std::make_pair<bool, bool>(false, false),
+              [this, &status_issuer](std::pair<bool, bool> lookup_result,
+                                     const auto &tx) {
+                const auto &tx_hash = tx->hash();
+                if (auto found = cache_->findItem(tx_hash)) {
+                  iroha::visit_in_place(
+                      (*found)->get(),
+                      [this, &found, &lookup_result, &status_issuer](
+                          const shared_model::interface::MstPendingResponse &) {
+                        this->pushStatus(status_issuer, *found);
+                        lookup_result.second = true;
+                      },
+                      [this, &tx_hash, &status_issuer](
+                          const shared_model::interface::NotReceivedTxResponse
+                              &) {
+                        this->pushStatus(
+                            status_issuer,
+                            status_factory_->makeStatelessValid(tx_hash));
+                      },
+                      [this, &found, &status_issuer](const auto &status) {
+                        this->pushStatus(status_issuer, *found);
+                      });
+                  lookup_result.first = true;
+                }
+                return lookup_result;
+              });
+
+      if (cache_has_at_least_one_tx and not batch_has_mst_pending_tx) {
         return;
       }
-      auto is_replay = std::any_of(
-          cache_presence->begin(),
-          cache_presence->end(),
-          [](const auto &tx_status) {
-            return iroha::visit_in_place(
-                tx_status,
-                [](const iroha::ametsuchi::tx_cache_status_responses::Missing
-                       &) { return false; },
-                [](const auto &) { return true; });
-          });
-      if (is_replay) {
-        log_->warn("Replayed batch would not be served. {}", *batch);
-        return;
+
+      if (not batch_has_mst_pending_tx) {
+        auto cache_presence = tx_presence_cache_->check(*batch);
+        if (not cache_presence) {
+          // TODO andrei 30.11.18 IR-51 Handle database error
+          log_->warn("Check tx presence database error. {}", *batch);
+          return;
+        }
+        auto is_replay = std::any_of(
+            cache_presence->begin(),
+            cache_presence->end(),
+            [this, &status_issuer](const auto &tx_status) {
+              return iroha::visit_in_place(
+                  tx_status,
+                  [this, &status_issuer](
+                      const iroha::ametsuchi::tx_cache_status_responses::Missing
+                          &status) {
+                    this->pushStatus(
+                        status_issuer,
+                        status_factory_->makeStatelessValid(status.hash));
+                    return false;
+                  },
+                  [this, &status_issuer](
+                      const iroha::ametsuchi::tx_cache_status_responses::
+                          Committed &status) {
+                    this->pushStatus(
+                        status_issuer,
+                        status_factory_->makeCommitted(status.hash));
+                    return true;
+                  },
+                  [this, &status_issuer](
+                      const iroha::ametsuchi::tx_cache_status_responses::
+                          Rejected &status) {
+                    this->pushStatus(
+                        status_issuer,
+                        status_factory_->makeRejected(status.hash));
+                    return true;
+                  });
+            });
+        if (is_replay) {
+          log_->warn("Replayed batch would not be served. {}", *batch);
+          return;
+        }
       }
 
       tx_processor_->batchHandle(batch);
-      const auto &txs = batch->transactions();
-      std::for_each(txs.begin(), txs.end(), [this](const auto &tx) {
-        const auto &tx_hash = tx->hash();
-        auto found = cache_->findItem(tx_hash);
-        // StatlessValid status goes only after
-        // EnoughSignaturesCollectedResponse So doesn't skip publishing status
-        // after it
-        if (found
-            and iroha::visit_in_place(
-                    found.value()->get(),
-                    [](const shared_model::interface::
-                           EnoughSignaturesCollectedResponse &) {
-                      return false;
-                    },
-                    [](auto &) { return true; })
-            and tx->quorum() < 2) {
-          log_->warn("Found transaction {} in cache, ignoring", tx_hash.hex());
-          return;
-        }
-
-        this->pushStatus("ToriiBatchProcessor",
-                         status_factory_->makeStatelessValid(tx_hash));
-      });
     }
 
   }  // namespace torii
