@@ -56,11 +56,11 @@ struct IntervalObservableHelper {
   long last_emitted_value{0};
 };
 
-struct IntervalObservebleTakeNHelper : public IntervalObservableHelper {
-  IntervalObservebleTakeNHelper(duration period, size_t taken)
+struct IntervalObservableTakeNHelper : public IntervalObservableHelper {
+  IntervalObservableTakeNHelper(duration period, size_t taken)
       : IntervalObservableHelper(period), taken_(taken) {}
 
-  IntervalObservebleTakeNHelper(time_point start, duration period, size_t taken)
+  IntervalObservableTakeNHelper(time_point start, duration period, size_t taken)
       : IntervalObservableHelper(start, period), taken_(taken) {}
 
   rxcpp::observable<long> getObservable() override {
@@ -71,7 +71,7 @@ struct IntervalObservebleTakeNHelper : public IntervalObservableHelper {
 };
 
 using IntervalObservableHelperVariant =
-    boost::variant<IntervalObservableHelper, IntervalObservebleTakeNHelper>;
+    boost::variant<IntervalObservableHelper, IntervalObservableTakeNHelper>;
 
 template <typename... Types>
 void checkValues(
@@ -107,7 +107,7 @@ void checkValues(
 
   iroha::visit_in_place(
       observable_helpers[current_observable_idx],
-      [=, &completed](const IntervalObservebleTakeNHelper &observable_helper) {
+      [=, &completed](const IntervalObservableTakeNHelper &observable_helper) {
         const long completion_value = observable_helper.taken_;
         EXPECT_LE(last_value, completion_value)
             << "Got value after the last one from observable #"
@@ -162,7 +162,7 @@ TEST(combineLatestUntilFirstCompleted, ThreeParallel) {
   std::vector<IntervalObservableHelperVariant> observable_helpers{
       IntervalObservableHelper(17ms),
       IntervalObservableHelper(23ms),
-      IntervalObservebleTakeNHelper(29ms, 10)};
+      IntervalObservableTakeNHelper(29ms, 10)};
 
   auto values = iroha::makeCombineLatestUntilFirstCompleted(
       getObservable(observable_helpers[0]),
@@ -183,10 +183,10 @@ TEST(combineLatestUntilFirstCompleted, ThreeParallel) {
  */
 TEST(combineLatestUntilFirstCompleted, FourParallel) {
   std::vector<IntervalObservableHelperVariant> observable_helpers{
-      IntervalObservebleTakeNHelper(13ms, 15),
+      IntervalObservableTakeNHelper(13ms, 15),
       IntervalObservableHelper(17ms),
       IntervalObservableHelper(23ms),
-      IntervalObservebleTakeNHelper(29ms, 10)};
+      IntervalObservableTakeNHelper(29ms, 10)};
 
   auto values = iroha::makeCombineLatestUntilFirstCompleted(
       getObservable(observable_helpers[0]),
@@ -207,10 +207,10 @@ TEST(combineLatestUntilFirstCompleted, FourParallel) {
  */
 TEST(combineLatestUntilFirstCompleted, TwoPairsParallel) {
   std::vector<IntervalObservableHelperVariant> observable_helpers{
-      IntervalObservebleTakeNHelper(13ms, 15),
+      IntervalObservableTakeNHelper(13ms, 15),
       IntervalObservableHelper(17ms),
       IntervalObservableHelper(23ms),
-      IntervalObservebleTakeNHelper(29ms, 10)};
+      IntervalObservableTakeNHelper(29ms, 10)};
 
   auto pass_array = [](long a, long b) { return std::array<long, 2>{{a, b}}; };
 
