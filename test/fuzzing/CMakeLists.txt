@@ -46,6 +46,7 @@ target_link_libraries(send_batches_fuzz
   on_demand_ordering_service
   on_demand_ordering_service_transport_grpc
   protobuf-mutator
+  test_logger
   )
 
 add_executable(request_proposal_fuzz request_proposal_fuzz.cpp)
@@ -57,6 +58,7 @@ target_link_libraries(request_proposal_fuzz
   on_demand_ordering_service
   on_demand_ordering_service_transport_grpc
   protobuf-mutator
+  test_logger
   )
 
 add_executable(retrieve_block_fuzz retrieve_block_fuzz.cpp)
@@ -66,6 +68,7 @@ target_link_libraries(retrieve_block_fuzz
   block_loader_service
   shared_model_default_builders
   protobuf-mutator
+  test_logger
   )
 
 add_executable(retrieve_blocks_fuzz retrieve_blocks_fuzz.cpp)
@@ -75,6 +78,7 @@ target_link_libraries(retrieve_blocks_fuzz
   block_loader_service
   shared_model_default_builders
   protobuf-mutator
+  test_logger
   )
 
 add_executable(consensus_fuzz consensus_fuzz.cpp)
@@ -83,6 +87,7 @@ target_link_libraries(consensus_fuzz
   gmock::gmock
   yac_transport
   protobuf-mutator
+  test_logger
   )
 
 add_executable(mst_fuzz mst_fuzz.cpp)

@@ -9,6 +9,7 @@
 
 #include "consensus/yac/transport/impl/network_impl.hpp"
 
+#include "fuzzing/fuzzing_logger.hpp"
 #include "module/irohad/consensus/yac/mock_yac_network.hpp"
 
 using namespace testing;
@@ -23,14 +24,13 @@ namespace fuzzing {
     std::shared_ptr<iroha::consensus::yac::NetworkImpl> network_;
 
     ConsensusFixture() {
-      spdlog::set_level(spdlog::level::critical);
-
       notifications_ = std::make_shared<
           NiceMock<iroha::consensus::yac::MockYacNetworkNotifications>>();
       async_call_ = std::make_shared<
-          iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
-      network_ =
-          std::make_shared<iroha::consensus::yac::NetworkImpl>(async_call_);
+          iroha::network::AsyncGrpcClient<google::protobuf::Empty>>(
+          getFuzzLogger("AsyncCall"));
+      network_ = std::make_shared<iroha::consensus::yac::NetworkImpl>(
+          async_call_, getFuzzLogger("YacNetwork"));
       network_->subscribe(notifications_);
     }
   };

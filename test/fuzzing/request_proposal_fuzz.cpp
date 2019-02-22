@@ -6,6 +6,7 @@
 #include "fuzzing/ordering_service_fixture.hpp"
 
 #include "ametsuchi/impl/tx_presence_cache_impl.hpp"
+#include "fuzzing/fuzzing_logger.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 
 struct RequestProposalFixture : public fuzzing::OrderingServiceFixture {
@@ -26,12 +27,14 @@ struct RequestProposalFixture : public fuzzing::OrderingServiceFixture {
     ordering_service_ = std::make_shared<OnDemandOrderingServiceImpl>(
         transaction_limit,
         std::move(proposal_factory_),
-        std::move(persistent_cache_));
+        std::move(persistent_cache_),
+        getFuzzLogger("OdOs"));
     server_ =
         std::make_shared<OnDemandOsServerGrpc>(ordering_service_,
                                                transaction_factory_,
                                                batch_parser_,
-                                               transaction_batch_factory_);
+                                               transaction_batch_factory_,
+                                               getFuzzLogger("OdOsServerGrpc"));
   }
 };
 

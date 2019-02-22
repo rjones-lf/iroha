@@ -9,7 +9,7 @@
 #include <memory>
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
-#include "framework/test_logger.hpp"
+#include "fuzzing/fuzzing_logger.hpp"
 #include "libfuzzer/libfuzzer_macro.h"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
@@ -23,7 +23,7 @@ using testing::_;
 using testing::Return;
 
 struct QueryFixture {
-  std::shared_ptr<torii::QueryService> service_;
+  std::shared_ptr<iroha::torii::QueryService> service_;
   std::shared_ptr<iroha::torii::QueryProcessorImpl> qry_processor_;
   std::shared_ptr<iroha::ametsuchi::MockStorage> storage_;
   std::shared_ptr<iroha::MockPendingTransactionStorage> pending_transactions_;
@@ -45,7 +45,7 @@ struct QueryFixture {
         storage_,
         pending_transactions_,
         query_response_factory_,
-        getTestLogger("QueryProcessor"));
+        getFuzzLogger("QueryProcessor"));
 
     std::unique_ptr<shared_model::validation::AbstractValidator<
         shared_model::interface::Query>>
@@ -60,8 +60,8 @@ struct QueryFixture {
             shared_model::interface::Query,
             shared_model::proto::Query>>(std::move(query_validator),
                                          std::move(proto_query_validator));
-    service_ = std::make_shared<torii::QueryService>(
-        qry_processor_, query_factory, , getTestLogger("QueryService"));
+    service_ = std::make_shared<iroha::torii::QueryService>(
+        qry_processor_, query_factory, getFuzzLogger("QueryService"));
   }
 };
 

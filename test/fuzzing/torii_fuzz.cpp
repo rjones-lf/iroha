@@ -12,7 +12,7 @@
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "backend/protobuf/transaction.hpp"
-#include "framework/test_logger.hpp"
+#include "fuzzing/fuzzing_logger.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
@@ -29,8 +29,8 @@
 using testing::Return;
 
 struct CommandFixture {
-  std::shared_ptr<torii::CommandService> service_;
-  std::shared_ptr<torii::CommandServiceTransportGrpc> service_transport_;
+  std::shared_ptr<iroha::torii::CommandService> service_;
+  std::shared_ptr<iroha::torii::CommandServiceTransportGrpc> service_transport_;
   std::shared_ptr<iroha::torii::TransactionProcessorImpl> tx_processor_;
   std::shared_ptr<iroha::network::MockPeerCommunicationService> pcs_;
   std::shared_ptr<iroha::MockMstProcessor> mst_processor_;
@@ -55,7 +55,8 @@ struct CommandFixture {
     EXPECT_CALL(*pcs_, onVerifiedProposal())
         .WillRepeatedly(Return(vprop_notifier_.get_observable()));
 
-    mst_processor_ = std::make_shared<iroha::MockMstProcessor>();
+    mst_processor_ = std::make_shared<iroha::MockMstProcessor>(
+        getFuzzLogger("MstProcessor"));
     EXPECT_CALL(*mst_processor_, onStateUpdateImpl())
         .WillRepeatedly(Return(mst_state_notifier_.get_observable()));
     EXPECT_CALL(*mst_processor_, onPreparedBatchesImpl())
@@ -71,10 +72,14 @@ struct CommandFixture {
         mst_processor_,
         status_bus,
         status_factory,
-        getTestLogger("TransactionProcessor"));
+        getFuzzLogger("TransactionProcessor"));
     auto storage = std::make_shared<iroha::ametsuchi::MockStorage>();
-    service_ = std::make_shared<torii::CommandServiceImpl>(
-        tx_processor_, storage, status_bus, status_factory);
+    service_ = std::make_shared<iroha::torii::CommandServiceImpl>(
+        tx_processor_,
+        storage,
+        status_bus,
+        status_factory,
+        getFuzzLogger("CommandService"));
 
     std::unique_ptr<shared_model::validation::AbstractValidator<
         shared_model::interface::Transaction>>
@@ -105,16 +110,17 @@ struct CommandFixture {
     ON_CALL(*consensus_gate_, onOutcome())
         .WillByDefault(Return(consensus_notifier_.get_observable()));
 
-    service_transport_ = std::make_shared<torii::CommandServiceTransportGrpc>(
-        service_,
-        status_bus,
-        status_factory,
-        transaction_factory,
-        batch_parser,
-        transaction_batch_factory,
-        consensus_gate_,
-        2,
-        getTestLogger("CommandServiceTransportGrpc"));
+    service_transport_ =
+        std::make_shared<iroha::torii::CommandServiceTransportGrpc>(
+            service_,
+            status_bus,
+            status_factory,
+            transaction_factory,
+            batch_parser,
+            transaction_batch_factory,
+            consensus_gate_,
+            2,
+            getFuzzLogger("CommandServiceTransportGrpc"));
   }
 };
 

@@ -10,7 +10,7 @@
 
 #include "ametsuchi/impl/tx_presence_cache_impl.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
-#include "framework/test_logger.hpp"
+#include "fuzzing/fuzzing_logger.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
@@ -26,10 +26,9 @@ namespace fuzzing {
     std::shared_ptr<MstTransportGrpc> mst_transport_grpc_;
 
     MstFixture() {
-      spdlog::set_level(spdlog::level::err);
-
       auto async_call_ = std::make_shared<
-          iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
+          iroha::network::AsyncGrpcClient<google::protobuf::Empty>>(
+          getFuzzLogger("AsyncCall"));
       // TODO luckychess 25.12.2018 Component initialisation reuse
       // IR-1886, IR-142
       std::unique_ptr<shared_model::validation::AbstractValidator<
@@ -62,8 +61,8 @@ namespace fuzzing {
           std::move(cache),
           shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
               .publicKey(),
-          getTestLogger("MstState"),
-          getTestLogger("MstTransportGrpc"));
+          getFuzzLogger("MstState"),
+          getFuzzLogger("MstTransportGrpc"));
     }
   };
 }  // namespace fuzzing
