@@ -9,7 +9,8 @@ target_link_libraries(result_test
         )
 
 addtest(combine_latest_until_first_completed_test
-        combine_latest_until_first_completed_test.cpp)
+        combine_latest_until_first_completed_test.cpp
+        )
 target_link_libraries(combine_latest_until_first_completed_test
         rxcpp
         )
