@@ -5,9 +5,9 @@
 
 #include "common/combine_latest_until_first_completed.hpp"
 
-#include <gtest/gtest.h>
 #include <chrono>
 
+#include <gtest/gtest.h>
 #include <boost/variant.hpp>
 #include "common/visitor.hpp"
 #include "rxcpp/rx.hpp"
