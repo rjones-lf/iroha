@@ -16,7 +16,7 @@ namespace shared_model {
      * Class QueryPayloadMeta provides metadata of query payload
      * General note: this class is container for queries but not a base class.
      */
-    class QueryPayloadMeta final : public ModelPrimitive<QueryPayloadMeta> {
+    class QueryPayloadMeta : public ModelPrimitive<QueryPayloadMeta> {
      public:
       /**
        * @return id of query creator

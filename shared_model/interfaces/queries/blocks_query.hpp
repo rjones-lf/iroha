@@ -17,7 +17,7 @@ namespace shared_model {
      * in system. General note: this class is container for queries but not a
      * base class.
      */
-    class BlocksQuery final : public Signable<BlocksQuery> {
+    class BlocksQuery : public Signable<BlocksQuery> {
      public:
       /**
        * @return id of query creator

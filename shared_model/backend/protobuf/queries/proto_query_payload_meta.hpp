@@ -12,8 +12,8 @@
 
 namespace shared_model {
   namespace proto {
-    class QueryPayloadMeta
-        : public CopyableProto<interface::QueryPayloadMeta,
+    class QueryPayloadMeta final
+            : public CopyableProto<interface::QueryPayloadMeta,
                                iroha::protocol::QueryPayloadMeta,
                                QueryPayloadMeta> {
      public:
