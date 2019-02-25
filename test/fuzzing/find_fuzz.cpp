@@ -9,8 +9,8 @@
 #include <memory>
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
-#include "fuzzing/fuzzing_logger.hpp"
 #include "libfuzzer/libfuzzer_macro.h"
+#include "logger/dummy_logger.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/pending_txs_storage/pending_txs_storage_mock.hpp"
@@ -45,7 +45,7 @@ struct QueryFixture {
         storage_,
         pending_transactions_,
         query_response_factory_,
-        getFuzzLogger("QueryProcessor"));
+        logger::getDummyLoggerPtr());
 
     std::unique_ptr<shared_model::validation::AbstractValidator<
         shared_model::interface::Query>>
@@ -61,7 +61,7 @@ struct QueryFixture {
             shared_model::proto::Query>>(std::move(query_validator),
                                          std::move(proto_query_validator));
     service_ = std::make_shared<iroha::torii::QueryService>(
-        qry_processor_, query_factory, getFuzzLogger("QueryService"));
+        qry_processor_, query_factory, logger::getDummyLoggerPtr());
   }
 };
 

@@ -13,7 +13,7 @@
 
 #include "consensus/consensus_block_cache.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
-#include "fuzzing/fuzzing_logger.hpp"
+#include "logger/dummy_logger.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "network/impl/block_loader_service.hpp"
 
@@ -35,9 +35,7 @@ namespace fuzzing {
       block_cache_ = std::make_shared<iroha::consensus::ConsensusResultCache>();
       block_loader_service_ =
           std::make_shared<iroha::network::BlockLoaderService>(
-              block_query_factory_,
-              block_cache_,
-              getFuzzLogger("BlockLoaderService"));
+              block_query_factory_, block_cache_, logger::getDummyLoggerPtr());
       EXPECT_CALL(*block_query_factory_, createBlockQuery())
           .WillRepeatedly(Return(boost::make_optional(
               std::shared_ptr<iroha::ametsuchi::BlockQuery>(storage_))));
