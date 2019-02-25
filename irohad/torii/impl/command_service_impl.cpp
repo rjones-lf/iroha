@@ -176,6 +176,10 @@ namespace iroha {
       bool cache_has_at_least_one_tx{false};
       bool batch_has_mst_pending_tx{false};
       std::tie(cache_has_at_least_one_tx, batch_has_mst_pending_tx) =
+          // this accumulate can be split on two parts to perform visit_in_place
+          // two times - one for cache lookup with booleans initialization and
+          // another for statuses pushing. That can allow to move a part of code
+          // to a separate method for simplification
           std::accumulate(
               txs.begin(),
               txs.end(),
@@ -194,6 +198,12 @@ namespace iroha {
                       [this, &tx_hash, &status_issuer](
                           const shared_model::interface::NotReceivedTxResponse
                               &) {
+                        // This branch covers an impossible case (this cache
+                        // cannot contain NotReceivedTxResponse, because the tx
+                        // has reached processBatch method, which means that
+                        // the tx already has StatelessValid status).
+                        // That is why we are not updating its status inside
+                        // internal cache, but still pushing to status bus.
                         this->pushStatus(
                             status_issuer,
                             status_factory_->makeStatelessValid(tx_hash));
@@ -207,6 +217,18 @@ namespace iroha {
               });
 
       if (cache_has_at_least_one_tx and not batch_has_mst_pending_tx) {
+        // If a non-persistent cache says that a transaction has pending status
+        // that means we have to check persistent cache too.
+        // Non-persistent cache might be overflowed and mst replay become
+        // possible without checking persistent cache.
+
+        // If there are no pending statuses and the transaction is found in
+        // non-persistent cache, then it is considered as a replay and prevented
+        // from further propagation.
+
+        // If non-persistent cache does not contain any info about a
+        // transaction, then we just check persistent cache.
+        log_->warn("Replayed batch would not be served. {}", *batch);
         return;
       }
 

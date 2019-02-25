@@ -34,34 +34,6 @@ class ReplayFixture : public AcceptanceFixture {
 };
 
 /**
- * Basic case of transaction replay attack.
- * OG/OS should not pass replayed transaction
- * @given an initialized ITF and a transaction
- * @when the transaction is sent to ITF twice
- * @then the second submission should be rejected
- */
-TEST_F(ReplayFixture, DISABLED_OrderingGateReplay) {
-  // TODO igor-egorov 20.02.2019 IR-348 Rework OG replay test
-  /*
-   * Disabled because now it is not clear how to test replays.
-   * In case of replay Iroha will just produce a warning in std output.
-   * Iroha would not throw anymore missed proposal exception.
-   */
-
-  auto transfer_tx = complete(
-      baseTx(kAdminId).transferAsset(kAdminId, kUserId, kAssetId, "", "1.0"),
-      kAdminKeypair);
-
-  itf.sendTxAwait(transfer_tx, CHECK_TXS_QUANTITY(1));  // should be committed
-  itf.sendTx(transfer_tx);                              // should not
-  EXPECT_THROW(itf.skipProposal(),
-               std::runtime_error);  // missed proposal should be thrown here
-  // TODO 2019-01-09 igor-egorov IR-152
-  // redo without exception handling. Need to make ITF able to handle
-  // "none" answer from ordering service when there is no proposal
-}
-
-/**
  * @given ITF with hacked OS that provides the same proposal twice
  * @when YAC accepts the proposal twice
  * @then a transaction from proposal would not be committed twice
