@@ -10,10 +10,10 @@
 #include <vector>
 
 #include <boost/optional.hpp>
+#include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "consensus/yac/storage/storage_result.hpp"
 #include "consensus/yac/storage/yac_block_storage.hpp"
 #include "consensus/yac/storage/yac_common.hpp"
-#include "consensus/yac/supermajority_checker.hpp"
 #include "consensus/yac/yac_types.hpp"
 #include "logger/logger.hpp"
 
@@ -45,7 +45,8 @@ namespace iroha {
         YacProposalStorage(
             Round store_round,
             PeersNumberType peers_in_round,
-            std::shared_ptr<SupermajorityChecker> supermajority_checker);
+            std::shared_ptr<SupermajorityChecker> supermajority_checker =
+                std::make_shared<SupermajorityCheckerImpl>());
 
         /**
          * Try to insert vote to storage

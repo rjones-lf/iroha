@@ -67,7 +67,11 @@ namespace iroha {
         async_call_->log_->info(
             "Receive votes[size={}] from {}", state.size(), context->peer());
 
-        handler_.lock()->onState(state);
+        if (auto notifications = handler_.lock()) {
+          notifications->onState(std::move(state));
+        } else {
+          async_call_->log_->error("Unable to lock the subscriber");
+        }
         return grpc::Status::OK;
       }
 

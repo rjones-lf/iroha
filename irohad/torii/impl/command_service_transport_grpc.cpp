@@ -204,62 +204,57 @@ namespace iroha {
 
       boost::optional<iroha::protocol::TxStatus> last_tx_status;
       auto rounds_counter{0};
-      status_bus
-          // convert to transport objects
-          .map([&](auto response) {
-            log_->info("mapped {}, {}", *response, client_id);
-            return std::static_pointer_cast<
-                       shared_model::proto::TransactionResponse>(response)
-                ->getTransport();
-          })
-          .combine_latest(current_thread, consensus_gate_observable)
+      status_bus.combine_latest(current_thread, consensus_gate_observable)
           .map([](const auto &tuple) { return std::get<0>(tuple); })
           // complete the observable if client is disconnectedor too many
           // rounds have passed without tx status change
-          .take_while(
-              [=,
-               &rounds_counter,
-               &last_tx_status,
-               // last_tx_status_received has to be passed by reference to
-               // prevent accessing its outdated state
-               &last_tx_status_received](const auto &response) {
-                if (context->IsCancelled()) {
-                  log_->debug("client unsubscribed, {}", client_id);
-                  return false;
-                }
+          .take_while([=,
+                       &rounds_counter,
+                       &last_tx_status,
+                       // last_tx_status_received has to be passed by reference
+                       // to prevent accessing its outdated state
+                       &last_tx_status_received](const auto &response) {
+            const auto &proto_response =
+                std::static_pointer_cast<
+                    shared_model::proto::TransactionResponse>(response)
+                    ->getTransport();
 
-                // increment round counter when the same status arrived again.
-                auto status = response.tx_status();
-                auto status_is_same =
-                    last_tx_status and (status == *last_tx_status);
-                if (status_is_same) {
-                  ++rounds_counter;
-                  if (rounds_counter >= maximum_rounds_without_update_) {
-                    // we stop the stream when round counter is greater than
-                    // allowed.
-                    return false;
-                  }
-                  // omit the received status, but do not stop the stream
-                  return true;
-                }
-                rounds_counter = 0;
-                last_tx_status = status;
+            if (context->IsCancelled()) {
+              log_->debug("client unsubscribed, {}", client_id);
+              return false;
+            }
 
-                // write a new status to the stream
-                if (not response_writer->Write(response)) {
-                  log_->error("write to stream has failed to client {}",
-                              client_id);
-                  return false;
-                }
-                log_->debug("status written, {}", client_id);
-                if (last_tx_status_received) {
-                  // force stream to end because no more tx statuses will
-                  // arrive. it is thread safe because of synchronization on
-                  // current_thread
-                  return false;
-                }
-                return true;
-              })
+            // increment round counter when the same status arrived again.
+            auto status = proto_response.tx_status();
+            auto status_is_same =
+                last_tx_status and (status == *last_tx_status);
+            if (status_is_same) {
+              ++rounds_counter;
+              if (rounds_counter >= maximum_rounds_without_update_) {
+                // we stop the stream when round counter is greater than
+                // allowed.
+                return false;
+              }
+              // omit the received status, but do not stop the stream
+              return true;
+            }
+            rounds_counter = 0;
+            last_tx_status = status;
+
+            // write a new status to the stream
+            if (not response_writer->Write(proto_response)) {
+              log_->error("write to stream has failed to client {}", client_id);
+              return false;
+            }
+            log_->debug("status written, {}", client_id);
+            if (last_tx_status_received) {
+              // force stream to end because no more tx statuses will
+              // arrive. it is thread safe because of synchronization on
+              // current_thread
+              return false;
+            }
+            return true;
+          })
           .subscribe(subscription,
                      [](const auto &) {},
                      [&](std::exception_ptr ep) {

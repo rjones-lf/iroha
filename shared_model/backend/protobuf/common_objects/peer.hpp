@@ -35,7 +35,8 @@ namespace shared_model {
       }
 
      private:
-      const interface::types::PubkeyType public_key_{crypto::Hash::fromHexString(proto_->peer_key())};
+      const interface::types::PubkeyType public_key_{
+          crypto::Hash::fromHexString(proto_->peer_key())};
     };
   }  // namespace proto
 }  // namespace shared_model

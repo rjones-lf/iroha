@@ -76,9 +76,9 @@ class ChainValidationTest : public ::testing::Test {
  */
 TEST_F(ChainValidationTest, ValidCase) {
   // Valid previous hash, has supermajority, correct peers subset => valid
-  size_t block_signatures_amount;
+  shared_model::interface::types::SignatureRangeType block_signatures;
   EXPECT_CALL(*supermajority_checker, hasSupermajority(_, _))
-      .WillOnce(DoAll(SaveArg<0>(&block_signatures_amount), Return(true)));
+      .WillOnce(DoAll(SaveArg<0>(&block_signatures), Return(true)));
 
   EXPECT_CALL(*query, getLedgerPeers()).WillOnce(Return(peers));
 
@@ -86,7 +86,7 @@ TEST_F(ChainValidationTest, ValidCase) {
       .WillOnce(InvokeArgument<1>(ByRef(*block), ByRef(*query), ByRef(hash)));
 
   ASSERT_TRUE(validator->validateAndApply(blocks, *storage));
-  ASSERT_EQ(boost::size(block->signatures()), block_signatures_amount);
+  ASSERT_EQ(block->signatures(), block_signatures);
 }
 
 /**
@@ -99,8 +99,9 @@ TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
   shared_model::crypto::Hash another_hash =
       shared_model::crypto::Hash(std::string(32, '1'));
 
+  shared_model::interface::types::SignatureRangeType block_signatures;
   ON_CALL(*supermajority_checker, hasSupermajority(_, _))
-      .WillByDefault(Return(true));
+      .WillByDefault(DoAll(SaveArg<0>(&block_signatures), Return(true)));
 
   EXPECT_CALL(*query, getLedgerPeers()).WillOnce(Return(peers));
 
@@ -118,9 +119,9 @@ TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
  */
 TEST_F(ChainValidationTest, FailWhenNoSupermajority) {
   // Valid previous hash, no supermajority, correct peers subset => invalid
-  size_t block_signatures_amount;
+  shared_model::interface::types::SignatureRangeType block_signatures;
   EXPECT_CALL(*supermajority_checker, hasSupermajority(_, _))
-      .WillOnce(DoAll(SaveArg<0>(&block_signatures_amount), Return(false)));
+      .WillOnce(DoAll(SaveArg<0>(&block_signatures), Return(false)));
 
   EXPECT_CALL(*query, getLedgerPeers()).WillOnce(Return(peers));
 
@@ -128,5 +129,5 @@ TEST_F(ChainValidationTest, FailWhenNoSupermajority) {
       .WillOnce(InvokeArgument<1>(ByRef(*block), ByRef(*query), ByRef(hash)));
 
   ASSERT_FALSE(validator->validateAndApply(blocks, *storage));
-  ASSERT_EQ(boost::size(block->signatures()), block_signatures_amount);
+  ASSERT_EQ(block->signatures(), block_signatures);
 }

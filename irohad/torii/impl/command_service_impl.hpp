@@ -40,6 +40,8 @@ namespace iroha {
           std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache,
           logger::Logger log = logger::log("CommandServiceImpl"));
 
+      ~CommandServiceImpl() override;
+
       /**
        * Disable copying in any way to prevent potential issues with common
        * storage/tx_processor
@@ -97,6 +99,9 @@ namespace iroha {
       std::shared_ptr<CacheType> cache_;
       std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory_;
       std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache_;
+
+      rxcpp::composite_subscription status_subscription_;
+
       logger::Logger log_;
     };
 

@@ -9,7 +9,6 @@
 #include <string>
 #include <vector>
 
-#include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/any_range.hpp>
 
 #include "cryptography/public_key.hpp"
@@ -39,24 +38,6 @@ namespace iroha {
                                 })
                 != public_keys.end();
           });
-    }
-
-    /**
-     * Checks if `signatures' is a subset of signatures of `peers'
-     * @param signatures to check
-     * @param peers with signatures
-     * @return true if is a subset or false otherwise
-     */
-    template <typename Peers>
-    inline bool peersSubset(
-        const shared_model::interface::types::SignatureRangeType &signatures,
-        const Peers &peers) {
-      return signaturesSubset(signatures,
-                              peers
-                                  | boost::adaptors::transformed(
-                                        [](const auto &p) -> decltype(auto) {
-                                          return p->pubkey();
-                                        }));
     }
 
   }  // namespace validation

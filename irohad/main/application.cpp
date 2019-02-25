@@ -16,7 +16,7 @@
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "common/bind.hpp"
-#include "consensus/yac/consistency_model.hpp"
+#include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
@@ -60,10 +60,6 @@ using namespace iroha::torii;
 using namespace iroha::consensus::yac;
 
 using namespace std::chrono_literals;
-
-/// Consensus consistency model type.
-static constexpr iroha::consensus::yac::ConsistencyModel
-    kConsensusConsistencyModel = iroha::consensus::yac::ConsistencyModel::kBft;
 
 /**
  * Configuring iroha daemon
@@ -200,7 +196,7 @@ void Irohad::initValidators() {
   stateful_validator =
       std::make_shared<StatefulValidatorImpl>(std::move(factory), batch_parser);
   chain_validator = std::make_shared<ChainValidatorImpl>(
-      getSupermajorityChecker(kConsensusConsistencyModel));
+      std::make_shared<consensus::yac::SupermajorityCheckerImpl>());
 
   log_->info("[Init] => validators");
 }
@@ -404,8 +400,7 @@ void Irohad::initConsensusGate() {
                                               consensus_result_cache_,
                                               vote_delay_,
                                               async_call_,
-                                              common_objects_factory_,
-                                              kConsensusConsistencyModel);
+                                              common_objects_factory_);
   consensus_gate->onOutcome().subscribe(
       consensus_gate_events_subscription,
       consensus_gate_objects.get_subscriber());
@@ -567,7 +562,7 @@ Irohad::RunResult Irohad::run() {
             }
             // Run internal server
             return internal_server->append(ordering_init.service)
-                .append(yac_init.getConsensusNetwork())
+                .append(yac_init.consensus_network)
                 .append(loader_init.service)
                 .run();
           })

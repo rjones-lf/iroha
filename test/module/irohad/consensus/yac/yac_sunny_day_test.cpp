@@ -20,12 +20,6 @@ using namespace iroha::consensus::yac;
 using namespace framework::test_subscriber;
 using namespace std;
 
-/**
- * @given yac & 6 peers
- * @when the 6 peers send the yac votes for the same hash
- * @then sendState is called twice per peer
- * @and the round keeps open
- */
 TEST_F(YacTest, ValidCaseWhenReceiveSupermajority) {
   auto my_peers = decltype(default_peers)(
       {default_peers.begin(), default_peers.begin() + 4});
@@ -169,14 +163,6 @@ TEST_F(YacTest, ValidCaseWhenSoloConsensus) {
   ASSERT_TRUE(wrapper.validate());
 }
 
-/**
- * @given yac & 6 peers
- * @when first 5 peers' votes for the same hash are sent to the yac
- * @and after that the last peer's vote for the same hash is sent to yac
- * @then sendState is not called
- * @and round is closed
- * @and crypto verification is called once
- */
 TEST_F(YacTest, ValidCaseWhenVoteAfterCommit) {
   auto my_peers = decltype(default_peers)(
       {default_peers.begin(), default_peers.begin() + 4});

@@ -92,8 +92,9 @@ Structure
 Validation
 ^^^^^^^^^^
 
-1. Creator of the transaction has a role which has CanAddPeer permission
-2. Such network address has not been already added
+1. Peer key is unique (there is no other peer with such public key)
+2. Creator of the transaction has a role which has CanAddPeer permission
+3. Such network address has not been already added
 
 Possible Stateful Validation Errors
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -33,19 +33,24 @@ namespace iroha {
           tx_presence_cache_(std::move(tx_presence_cache)),
           log_(std::move(log)) {
       // Notifier for all clients
-      status_bus_->statuses().subscribe([this](auto response) {
-        // find response for this tx in cache; if status of received response
-        // isn't "greater" than cached one, dismiss received one
-        auto tx_hash = response->transactionHash();
-        auto cached_tx_state = cache_->findItem(tx_hash);
-        if (cached_tx_state
-            and response->comparePriorities(**cached_tx_state)
-                != shared_model::interface::TransactionResponse::
-                       PrioritiesComparisonResult::kGreater) {
-          return;
-        }
-        cache_->addItem(tx_hash, response);
-      });
+      status_subscription_ =
+          status_bus_->statuses().subscribe([this](auto response) {
+            // find response for this tx in cache; if status of received
+            // response isn't "greater" than cached one, dismiss received one
+            auto tx_hash = response->transactionHash();
+            auto cached_tx_state = cache_->findItem(tx_hash);
+            if (cached_tx_state
+                and response->comparePriorities(**cached_tx_state)
+                    != shared_model::interface::TransactionResponse::
+                           PrioritiesComparisonResult::kGreater) {
+              return;
+            }
+            cache_->addItem(tx_hash, response);
+          });
+    }
+
+    CommandServiceImpl::~CommandServiceImpl() {
+      status_subscription_.unsubscribe();
     }
 
     void CommandServiceImpl::handleTransactionBatch(
@@ -94,14 +99,25 @@ namespace iroha {
      * Statuses considered final for streaming. Observable stops value emission
      * after receiving a value of one of the following types
      * @tparam T concrete response type
+     *
+     * StatefulFailedTxResponse and MstExpiredResponse were removed from the
+     * list of final statuses.
+     *
+     * StatefulFailedTxResponse is not a final status because the node might be
+     * in non-synchronized state and the transaction may be stateful valid from
+     * the viewpoint of up to date nodes.
+     *
+     * MstExpiredResponse is not a final status in general case because it will
+     * depend on MST expiration timeout. The transaction might expire in MST,
+     * but remain valid in terms of Iroha validation rules. Thus, it may be
+     * resent and committed successfully. As the result the final status may
+     * differ from MstExpiredResponse.
      */
     template <typename T>
     constexpr bool FinalStatusValue =
         iroha::is_any<std::decay_t<T>,
                       shared_model::interface::StatelessFailedTxResponse,
-                      shared_model::interface::StatefulFailedTxResponse,
                       shared_model::interface::CommittedTxResponse,
-                      shared_model::interface::MstExpiredResponse,
                       shared_model::interface::RejectedTxResponse>::value;
 
     rxcpp::observable<
