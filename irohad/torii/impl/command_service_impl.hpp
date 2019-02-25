@@ -24,11 +24,17 @@ namespace iroha {
      */
     class CommandServiceImpl : public CommandService {
      public:
+      using CacheType = iroha::cache::Cache<
+          shared_model::crypto::Hash,
+          std::shared_ptr<shared_model::interface::TransactionResponse>,
+          shared_model::crypto::Hash::Hasher>;
+
       /**
        * Creates a new instance of CommandService
        * @param tx_processor - processor of received transactions
        * @param storage - to query transactions outside the cache
        * @param status_bus is a common notifier for tx statuses
+       * @param tx_presence_cache a cache over persistent storage
        * @param log to print progress
        */
       CommandServiceImpl(
@@ -37,6 +43,7 @@ namespace iroha {
           std::shared_ptr<iroha::torii::StatusBus> status_bus,
           std::shared_ptr<shared_model::interface::TxStatusFactory>
               status_factory,
+          std::shared_ptr<iroha::torii::CommandServiceImpl::CacheType> cache,
           std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache,
           logger::Logger log = logger::log("CommandServiceImpl"));
 
@@ -86,12 +93,6 @@ namespace iroha {
        */
       void processBatch(
           std::shared_ptr<shared_model::interface::TransactionBatch> batch);
-
-     private:
-      using CacheType = iroha::cache::Cache<
-          shared_model::crypto::Hash,
-          std::shared_ptr<shared_model::interface::TransactionResponse>,
-          shared_model::crypto::Hash::Hasher>;
 
       std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor_;
       std::shared_ptr<iroha::ametsuchi::Storage> storage_;

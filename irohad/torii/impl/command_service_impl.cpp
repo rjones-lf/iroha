@@ -23,12 +23,13 @@ namespace iroha {
         std::shared_ptr<iroha::torii::StatusBus> status_bus,
         std::shared_ptr<shared_model::interface::TxStatusFactory>
             status_factory,
+        std::shared_ptr<iroha::torii::CommandServiceImpl::CacheType> cache,
         std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache,
         logger::Logger log)
         : tx_processor_(std::move(tx_processor)),
           storage_(std::move(storage)),
           status_bus_(std::move(status_bus)),
-          cache_(std::make_shared<CacheType>()),
+          cache_(std::move(cache)),
           status_factory_(std::move(status_factory)),
           tx_presence_cache_(std::move(tx_presence_cache)),
           log_(std::move(log)) {
@@ -209,48 +210,44 @@ namespace iroha {
         return;
       }
 
-      if (not batch_has_mst_pending_tx) {
-        auto cache_presence = tx_presence_cache_->check(*batch);
-        if (not cache_presence) {
-          // TODO andrei 30.11.18 IR-51 Handle database error
-          log_->warn("Check tx presence database error. {}", *batch);
-          return;
-        }
-        auto is_replay = std::any_of(
-            cache_presence->begin(),
-            cache_presence->end(),
-            [this, &status_issuer](const auto &tx_status) {
-              return iroha::visit_in_place(
-                  tx_status,
-                  [this, &status_issuer](
-                      const iroha::ametsuchi::tx_cache_status_responses::Missing
-                          &status) {
-                    this->pushStatus(
-                        status_issuer,
-                        status_factory_->makeStatelessValid(status.hash));
-                    return false;
-                  },
-                  [this, &status_issuer](
-                      const iroha::ametsuchi::tx_cache_status_responses::
-                          Committed &status) {
-                    this->pushStatus(
-                        status_issuer,
-                        status_factory_->makeCommitted(status.hash));
-                    return true;
-                  },
-                  [this, &status_issuer](
-                      const iroha::ametsuchi::tx_cache_status_responses::
-                          Rejected &status) {
-                    this->pushStatus(
-                        status_issuer,
-                        status_factory_->makeRejected(status.hash));
-                    return true;
-                  });
-            });
-        if (is_replay) {
-          log_->warn("Replayed batch would not be served. {}", *batch);
-          return;
-        }
+      auto cache_presence = tx_presence_cache_->check(*batch);
+      if (not cache_presence) {
+        // TODO andrei 30.11.18 IR-51 Handle database error
+        log_->warn("Check tx presence database error. {}", *batch);
+        return;
+      }
+      auto is_replay = std::any_of(
+          cache_presence->begin(),
+          cache_presence->end(),
+          [this, &status_issuer](const auto &tx_status) {
+            return iroha::visit_in_place(
+                tx_status,
+                [this, &status_issuer](
+                    const iroha::ametsuchi::tx_cache_status_responses::Missing
+                        &status) {
+                  this->pushStatus(
+                      status_issuer,
+                      status_factory_->makeStatelessValid(status.hash));
+                  return false;
+                },
+                [this, &status_issuer](
+                    const iroha::ametsuchi::tx_cache_status_responses::Committed
+                        &status) {
+                  this->pushStatus(status_issuer,
+                                   status_factory_->makeCommitted(status.hash));
+                  return true;
+                },
+                [this, &status_issuer](
+                    const iroha::ametsuchi::tx_cache_status_responses::Rejected
+                        &status) {
+                  this->pushStatus(status_issuer,
+                                   status_factory_->makeRejected(status.hash));
+                  return true;
+                });
+          });
+      if (is_replay) {
+        log_->warn("Replayed batch would not be served. {}", *batch);
+        return;
       }
 
       tx_processor_->batchHandle(batch);

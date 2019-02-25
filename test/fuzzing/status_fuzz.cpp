@@ -16,6 +16,7 @@
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/ametsuchi/mock_tx_presence_cache.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "synchronizer/synchronizer_common.hpp"
@@ -105,8 +106,16 @@ struct CommandFixture {
     storage_ = std::make_shared<iroha::ametsuchi::MockStorage>();
     bq_ = std::make_shared<iroha::ametsuchi::MockBlockQuery>();
     EXPECT_CALL(*storage_, getBlockQuery()).WillRepeatedly(Return(bq_));
-    service_ = std::make_shared<torii::CommandServiceImpl>(
-        tx_processor_, storage_, status_bus, status_factory);
+    auto cs_cache =
+        std::make_shared<iroha::torii::CommandServiceImpl::CacheType>();
+    auto tx_cache = std::make_unique<
+        ::testing::NiceMock<iroha::ametsuchi::MockTxPresenceCache>>();
+    service_ = std::make_shared<torii::CommandServiceImpl>(tx_processor_,
+                                                           storage_,
+                                                           status_bus,
+                                                           status_factory,
+                                                           cs_cache,
+                                                           tx_cache);
     service_transport_ = std::make_shared<torii::CommandServiceTransportGrpc>(
         service_,
         status_bus,
