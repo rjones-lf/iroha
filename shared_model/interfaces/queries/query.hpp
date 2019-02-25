@@ -31,7 +31,7 @@ namespace shared_model {
      * system.
      * General note: this class is container for queries but not a base class.
      */
-    class Query final : public Signable<Query> {
+    class Query : public Signable<Query> {
      private:
       /// Shortcut type for const reference
       template <typename... Value>
