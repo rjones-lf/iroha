@@ -10,8 +10,9 @@ target_link_libraries(test_subscriber_testing
 
 add_library(test_logger test_logger.cpp)
 target_link_libraries(test_logger
-  logger
-  logger_manager)
+    logger
+    logger_manager
+    )
 
 add_library(integration_framework
     integration_framework/integration_test_framework.cpp
