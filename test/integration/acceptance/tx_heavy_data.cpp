@@ -6,13 +6,14 @@
 #include <gtest/gtest.h>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
-
+#include <boost/variant.hpp>
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+#include "interfaces/query_responses/account_response.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class HeavyTransactionTest : public AcceptanceFixture {
  public:
@@ -71,11 +72,9 @@ TEST_F(HeavyTransactionTest, DISABLED_ManyLargeTxes) {
     itf.sendTx(complete(setAcountDetailTx("foo_" + std::to_string(i),
                                           generateData(2 * 1024 * 1024))));
   }
-  itf.skipProposal()
-      .checkBlock([&](auto &b) {
-        ASSERT_EQ(b->transactions().size(), number_of_txes + 1);
-      })
-      .done();
+  itf.skipProposal().skipVerifiedProposal().checkBlock([&](auto &b) {
+    ASSERT_EQ(b->transactions().size(), number_of_txes + 1);
+  });
 }
 
 /**
@@ -94,11 +93,12 @@ TEST_F(HeavyTransactionTest, DISABLED_VeryLargeTxWithManyCommands) {
   IntegrationTestFramework(2)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
-      .sendTx(complete(large_tx_builder))
       .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 2); })
-      .done();
+      .skipVerifiedProposal()
+      .skipBlock()
+      .sendTxAwait(complete(large_tx_builder), [](auto &block) {
+        ASSERT_EQ(block->transactions().size(), 2);
+      });
 }
 
 /**
@@ -120,9 +120,9 @@ TEST_F(HeavyTransactionTest, DISABLED_QueryLargeData) {
 
   auto query_checker = [&](auto &status) {
     ASSERT_NO_THROW({
-      auto &&response = boost::apply_visitor(
-          framework::SpecifiedVisitor<const interface::AccountResponse &>(),
-          status.get());
+      auto &&response =
+          boost::get<const shared_model::interface::AccountResponse &>(
+              status.get());
 
       boost::property_tree::ptree root;
       boost::property_tree::read_json(response.account().jsonData(), root);
@@ -140,14 +140,12 @@ TEST_F(HeavyTransactionTest, DISABLED_QueryLargeData) {
   itf.setInitialState(kAdminKeypair).sendTx(makeUserWithPerms());
 
   for (auto i = 0u; i < number_of_times; ++i) {
-    itf.sendTx(complete(setAcountDetailTx(name_generator(i), data)))
-        .skipProposal()
-        .checkBlock(
-            [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
+    itf.sendTxAwait(
+        complete(setAcountDetailTx(name_generator(i), data)),
+        [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
   }
 
   // The query works fine only with ITF. It doesn't work in production version
   // of Iroha
-  itf.sendQuery(complete(baseQuery().getAccount(kUserId)), query_checker)
-      .done();
+  itf.sendQuery(complete(baseQuery().getAccount(kUserId)), query_checker);
 }

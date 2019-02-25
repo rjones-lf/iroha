@@ -8,18 +8,16 @@
 #include "multi_sig_transactions/storage/mst_storage.hpp"
 
 namespace iroha {
-  MstStorage::MstStorage() {
-    log_ = logger::log("MstStorage");
-  }
+  MstStorage::MstStorage(logger::Logger log) : log_{std::move(log)} {}
 
-  MstState MstStorage::apply(
-      const std::shared_ptr<shared_model::interface::Peer> &target_peer,
+  StateUpdateResult MstStorage::apply(
+      const shared_model::crypto::PublicKey &target_peer_key,
       const MstState &new_state) {
     std::lock_guard<std::mutex> lock{this->mutex_};
-    return applyImpl(target_peer, new_state);
+    return applyImpl(target_peer_key, new_state);
   }
 
-  MstState MstStorage::updateOwnState(const DataType &tx) {
+  StateUpdateResult MstStorage::updateOwnState(const DataType &tx) {
     std::lock_guard<std::mutex> lock{this->mutex_};
     return updateOwnStateImpl(tx);
   }
@@ -30,14 +28,18 @@ namespace iroha {
   }
 
   MstState MstStorage::getDiffState(
-      const std::shared_ptr<shared_model::interface::Peer> &target_peer,
+      const shared_model::crypto::PublicKey &target_peer_key,
       const TimeType &current_time) {
     std::lock_guard<std::mutex> lock{this->mutex_};
-    return getDiffStateImpl(target_peer, current_time);
+    return getDiffStateImpl(target_peer_key, current_time);
   }
 
   MstState MstStorage::whatsNew(ConstRefState new_state) const {
     std::lock_guard<std::mutex> lock{this->mutex_};
     return whatsNewImpl(new_state);
+  }
+
+  bool MstStorage::batchInStorage(const DataType &batch) const {
+    return batchInStorageImpl(batch);
   }
 }  // namespace iroha

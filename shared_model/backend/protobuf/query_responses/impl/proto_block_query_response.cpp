@@ -5,6 +5,8 @@
 
 #include "backend/protobuf/query_responses/proto_block_query_response.hpp"
 
+#include "utils/variant_deserializer.hpp"
+
 namespace shared_model {
   namespace proto {
 
@@ -20,9 +22,8 @@ namespace shared_model {
                 ProtoQueryResponseVariantType::types>::
                 template load<ProtoQueryResponseVariantType>(
                     std::forward<decltype(ar)>(ar), which);
-          }},
-          ivariant_{detail::makeLazyInitializer(
-              [this] { return QueryResponseVariantType(*variant_); })} {}
+          }()},
+          ivariant_{variant_} {}
 
     template BlockQueryResponse::BlockQueryResponse(
         BlockQueryResponse::TransportType &);
@@ -39,7 +40,7 @@ namespace shared_model {
 
     const BlockQueryResponse::QueryResponseVariantType &
     BlockQueryResponse::get() const {
-      return *ivariant_;
+      return ivariant_;
     }
 
   }  // namespace proto

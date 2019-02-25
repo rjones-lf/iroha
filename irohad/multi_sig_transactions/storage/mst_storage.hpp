@@ -1,25 +1,14 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_MST_STORAGE_HPP
 #define IROHA_MST_STORAGE_HPP
 
 #include <mutex>
-#include "interfaces/common_objects/peer.hpp"
+
+#include "cryptography/public_key.hpp"
 #include "logger/logger.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
@@ -37,22 +26,22 @@ namespace iroha {
 
     /**
      * Apply new state for peer
-     * @param target_peer - key for for updating state
+     * @param target_peer_key - key for for updating state
      * @param new_state - state with new data
-     * @return State with completed transaction
+     * @return State with completed or updated batches
      * General note: implementation of method covered by lock
      */
-    MstState apply(
-        const std::shared_ptr<shared_model::interface::Peer> &target_peer,
+    StateUpdateResult apply(
+        const shared_model::crypto::PublicKey &target_peer_key,
         const MstState &new_state);
 
     /**
      * Provide updating state of current peer with new transaction
      * @param tx - new transaction for insertion in state
-     * @return State with completed transaction
+     * @return completed and updated mst states
      * General note: implementation of method covered by lock
      */
-    MstState updateOwnState(const DataType &tx);
+    StateUpdateResult updateOwnState(const DataType &tx);
 
     /**
      * Remove expired transactions and return them
@@ -68,7 +57,7 @@ namespace iroha {
      * General note: implementation of method covered by lock
      */
     MstState getDiffState(
-        const std::shared_ptr<shared_model::interface::Peer> &target_peer,
+        const shared_model::crypto::PublicKey &target_peer_key,
         const TimeType &current_time);
 
     /**
@@ -79,6 +68,13 @@ namespace iroha {
      */
     MstState whatsNew(ConstRefState new_state) const;
 
+    /**
+     * Check, if passed batch is in the storage
+     * @param batch to be checked
+     * @return true, if batch is already in the storage, false otherwise
+     */
+    bool batchInStorage(const DataType &batch) const;
+
     virtual ~MstStorage() = default;
 
    protected:
@@ -87,13 +83,13 @@ namespace iroha {
     /**
      * Constructor provide initialization of protected fields, such as logger.
      */
-    MstStorage();
+    explicit MstStorage(logger::Logger log = logger::log("MstStorage"));
 
    private:
     virtual auto applyImpl(
-        const std::shared_ptr<shared_model::interface::Peer> target_peer,
+        const shared_model::crypto::PublicKey &target_peer_key,
         const MstState &new_state)
-        -> decltype(apply(target_peer, new_state)) = 0;
+        -> decltype(apply(target_peer_key, new_state)) = 0;
 
     virtual auto updateOwnStateImpl(const DataType &tx)
         -> decltype(updateOwnState(tx)) = 0;
@@ -102,12 +98,14 @@ namespace iroha {
         -> decltype(getExpiredTransactions(current_time)) = 0;
 
     virtual auto getDiffStateImpl(
-        const std::shared_ptr<shared_model::interface::Peer> target_peer,
+        const shared_model::crypto::PublicKey &target_peer_key,
         const TimeType &current_time)
-        -> decltype(getDiffState(target_peer, current_time)) = 0;
+        -> decltype(getDiffState(target_peer_key, current_time)) = 0;
 
     virtual auto whatsNewImpl(ConstRefState new_state) const
         -> decltype(whatsNew(new_state)) = 0;
+
+    virtual bool batchInStorageImpl(const DataType &batch) const = 0;
 
     // -------------------------------| fields |--------------------------------
 

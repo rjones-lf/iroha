@@ -50,27 +50,28 @@ namespace iroha {
      * The function used to compare batches for equality:
      * check only hashes of batches, without signatures
      */
-    bool operator()(const DataType &left_tx, const DataType &right_tx) const {
-      return left_tx->reducedHash() == right_tx->reducedHash();
-    }
+    bool operator()(const DataType &left_tx, const DataType &right_tx) const;
   };
 
   /**
-   * Class provides the default behavior for the batch completer:
-   * complete, if all transactions have at least quorum number of signatures
+   * Class provides the default behavior for the batch completer.
+   * Complete, if all transactions have at least quorum number of signatures.
+   * Expired if at least one transaction is expired.
    */
   class DefaultCompleter : public Completer {
-    bool operator()(const DataType &batch) const override {
-      return std::all_of(batch->transactions().begin(),
-                         batch->transactions().end(),
-                         [](const auto &tx) {
-                           return boost::size(tx->signatures()) >= tx->quorum();
-                         });
-    }
+    /**
+     * Creates new Completer with a given expiration time for transactions
+     * @param expiration_time - expiration time in minutes
+     */
+   public:
+    explicit DefaultCompleter(std::chrono::minutes expiration_time);
 
-    bool operator()(const DataType &tx, const TimeType &time) const override {
-      return false;
-    }
+    bool operator()(const DataType &batch) const override;
+
+    bool operator()(const DataType &tx, const TimeType &time) const override;
+
+   private:
+    std::chrono::minutes expiration_time_;
   };
 
   using CompleterType = std::shared_ptr<const Completer>;
@@ -84,22 +85,21 @@ namespace iroha {
      * @param completer - strategy for determine completed and expired batches
      * @return empty mst state
      */
-    static MstState empty(
-        const CompleterType &completer = std::make_shared<DefaultCompleter>());
+    static MstState empty(const CompleterType &completer);
 
     /**
      * Add batch to current state
      * @param rhs - batch for insertion
-     * @return State with completed batches
+     * @return States with completed and updated batches
      */
-    MstState operator+=(const DataType &rhs);
+    StateUpdateResult operator+=(const DataType &rhs);
 
     /**
      * Concat internal data of states
      * @param rhs - object for merging
-     * @return State with completed trasactions
+     * @return States with completed and updated batches
      */
-    MstState operator+=(const MstState &rhs);
+    StateUpdateResult operator+=(const MstState &rhs);
 
     /**
      * Operator provide difference between this and rhs operator
@@ -126,7 +126,10 @@ namespace iroha {
     /**
      * @return the batches from the state
      */
-    std::vector<DataType> getBatches() const;
+    std::unordered_set<DataType,
+                       iroha::model::PointerBatchHasher,
+                       BatchHashEquality>
+    getBatches() const;
 
     /**
      * Erase expired batches
@@ -134,6 +137,13 @@ namespace iroha {
      * @return state with expired batches
      */
     MstState eraseByTime(const TimeType &time);
+
+    /**
+     * Check, if this MST state contains that element
+     * @param element to be checked
+     * @return true, if state contains the element, false otherwise
+     */
+    bool contains(const DataType &element) const;
 
    private:
     // --------------------------| private api |------------------------------
@@ -143,31 +153,31 @@ namespace iroha {
      */
     class Less {
      public:
-      bool operator()(const DataType &left, const DataType &right) const {
-        return left->transactions().at(0)->createdTime()
-            < right->transactions().at(0)->createdTime();
-      }
+      bool operator()(const DataType &left, const DataType &right) const;
     };
 
     using InternalStateType =
         std::unordered_set<DataType,
-                           iroha::model::PointerBatchHasher<DataType>,
+                           iroha::model::PointerBatchHasher,
                            BatchHashEquality>;
 
     using IndexType =
         std::priority_queue<DataType, std::vector<DataType>, Less>;
 
-    MstState(const CompleterType &completer);
+    explicit MstState(const CompleterType &completer,
+                      logger::Logger log = logger::log("MstState"));
 
     MstState(const CompleterType &completer,
-             const InternalStateType &transactions);
+             const InternalStateType &transactions,
+             logger::Logger log = logger::log("MstState"));
 
     /**
-     * Insert batch in own state and push it in out_state if required
-     * @param out_state - state for inserting completed batches
+     * Insert batch in own state and push it in out_completed_state or
+     * out_updated_state
+     * @param state_update consists of states with updated and completed batches
      * @param rhs_tx - batch for insert
      */
-    void insertOne(MstState &out_state, const DataType &rhs_tx);
+    void insertOne(StateUpdateResult &state_update, const DataType &rhs_tx);
 
     /**
      * Insert new value in state with keeping invariant
@@ -187,4 +197,5 @@ namespace iroha {
   };
 
 }  // namespace iroha
+
 #endif  // IROHA_MST_STATE_HPP

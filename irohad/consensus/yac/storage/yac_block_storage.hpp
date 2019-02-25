@@ -23,9 +23,8 @@
 
 #include <boost/optional.hpp>
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
-#include "consensus/yac/messages.hpp"
+#include "consensus/yac/outcome_messages.hpp"
 #include "consensus/yac/storage/storage_result.hpp"
-#include "consensus/yac/yac_hash_provider.hpp"
 #include "consensus/yac/yac_types.hpp"
 #include "logger/logger.hpp"
 
@@ -90,9 +89,9 @@ namespace iroha {
         bool isContains(const VoteMessage &msg) const;
 
         /**
-         * Provide hash attached to this storage
+         * Provide key attached to this storage
          */
-        YacHash getStorageHash();
+        YacHash getStorageKey() const;
 
        private:
         // --------| private api |--------
@@ -105,8 +104,8 @@ namespace iroha {
         bool uniqueVote(VoteMessage &vote);
 
         /**
-         * Verify that vote has same proposal and
-         * blocks hashes with storage
+         * Verify that vote has the same hash attached as the storage
+         * @param vote - vote to be checked
          * @return true, if validation passed
          */
         bool validScheme(VoteMessage &vote);
@@ -114,9 +113,9 @@ namespace iroha {
         // --------| fields |--------
 
         /**
-         * Common hash of all votes in storage
+         * Key of the storage; currently it's yac hash
          */
-        YacHash hash_;
+        YacHash storage_key_;
 
         /**
          * Number of peers in current round

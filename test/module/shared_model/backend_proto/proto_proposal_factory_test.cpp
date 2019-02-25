@@ -6,6 +6,7 @@
 #include <gtest/gtest.h>
 
 #include "backend/protobuf/proto_proposal_factory.hpp"
+#include "backend/protobuf/transaction.hpp"
 #include "framework/result_fixture.hpp"
 #include "module/shared_model/validators/validators.hpp"
 #include "validators/default_validator.hpp"

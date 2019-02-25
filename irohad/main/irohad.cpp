@@ -1,30 +1,22 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <gflags/gflags.h>
-#include <grpc++/grpc++.h>
 #include <csignal>
 #include <fstream>
 #include <thread>
+
+#include <gflags/gflags.h>
+#include <grpc++/grpc++.h>
+#include "ametsuchi/storage.hpp"
 #include "common/result.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "main/application.hpp"
 #include "main/iroha_conf_loader.hpp"
 #include "main/raw_block_loader.hpp"
+
+static const std::string kListenIp = "0.0.0.0";
 
 /**
  * Gflag validator.
@@ -78,9 +70,27 @@ DEFINE_validator(keypair_name, &validate_keypair_name);
  */
 DEFINE_bool(overwrite_ledger, false, "Overwrite ledger data if existing");
 
+static bool validateVerbosity(const char *flagname, int32_t val) {
+  if (val >= 0 && val <= 6)
+    return true;
+
+  std::cout << "Invalid value for " << flagname << ": should be in range [0, 6]"
+            << std::endl;
+  return false;
+}
+
+/// Verbosity flag for spdlog configuration
+DEFINE_int32(verbosity, spdlog::level::info, "Log verbosity");
+DEFINE_validator(verbosity, validateVerbosity);
+
 std::promise<void> exit_requested;
 
 int main(int argc, char *argv[]) {
+  // Parsing command line arguments
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+  spdlog::set_level(spdlog::level::level_enum(FLAGS_verbosity));
+
   auto log = logger::log("MAIN");
   log->info("start");
 
@@ -93,10 +103,6 @@ int main(int argc, char *argv[]) {
   }
 
   namespace mbr = config_members;
-
-  // Parsing command line arguments
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
-  gflags::ShutDownCommandLineFlags();
 
   // Reading iroha configuration file
   auto config = parse_iroha_config(FLAGS_config);
@@ -115,13 +121,17 @@ int main(int argc, char *argv[]) {
   // Configuring iroha daemon
   Irohad irohad(config[mbr::BlockStorePath].GetString(),
                 config[mbr::PgOpt].GetString(),
+                kListenIp,  // TODO(mboldyrev) 17/10/2018: add a parameter in
+                            // config file and/or command-line arguments?
                 config[mbr::ToriiPort].GetUint(),
                 config[mbr::InternalPort].GetUint(),
                 config[mbr::MaxProposalSize].GetUint(),
                 std::chrono::milliseconds(config[mbr::ProposalDelay].GetUint()),
                 std::chrono::milliseconds(config[mbr::VoteDelay].GetUint()),
+                std::chrono::minutes(config[mbr::MstExpirationTime].GetUint()),
                 *keypair,
-                config[mbr::MstSupport].GetBool());
+                boost::make_optional(config[mbr::MstSupport].GetBool(),
+                                     iroha::GossipPropagationStrategyParams{}));
 
   // Check if iroha daemon storage was successfully initialized
   if (not irohad.storage) {
@@ -130,47 +140,76 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  // Check if genesis block path was specified
-  if (not FLAGS_genesis_block.empty()) {
-    // If it is so, read genesis block and store it to iroha storage
-    iroha::main::BlockLoader loader;
-    auto file = loader.loadFile(FLAGS_genesis_block);
-    auto block = loader.parseBlock(file.value());
+  /*
+   * The logic implemented below is reflected in the following truth table.
+   *
+  +------------+--------------+------------------+---------------+---------+
+  | Blockstore | New genesis  | Overwrite ledger | Genesis block | Message |
+  | presence   | block is set | flag is set      | that is used  |         |
+  +------------+--------------+------------------+---------------+---------+
+  | 0          | 1            | 0                | new           |         |
+  | 0          | 1            | 1                | new           | warning |
+  | 1          | 1            | 0                | old           | warning |
+  | 1          | 1            | 1                | new           |         |
+  | 0          | 0            | 0                | none          | error   |
+  | 0          | 0            | 1                | none          | error   |
+  | 1          | 0            | 0                | old           |         |
+  | 1          | 0            | 1                | old           | warning |
+  +------------+--------------+------------------+---------------+---------+
+   */
 
-    // Check that provided genesis block file was correct
-    if (not block) {
-      // Abort execution if not
-      log->error("Failed to parse genesis block");
-      return EXIT_FAILURE;
+  /// if there are any blocks in blockstore, then true
+  bool blockstore = irohad.storage->getBlockQuery()->getTopBlockHeight() != 0;
+
+  /// genesis block file is specified as launch parameter
+  bool genesis = not FLAGS_genesis_block.empty();
+
+  /// overwrite ledger flag was set as launch parameter
+  bool overwrite = FLAGS_overwrite_ledger;
+
+  if (genesis) {  // genesis block file is specified
+    if (blockstore and not overwrite) {
+      log->warn(
+          "Passed genesis block will be ignored without --overwrite_ledger "
+          "flag. Restoring existing state.");
+    } else {
+      iroha::main::BlockLoader loader;
+      auto file = loader.loadFile(FLAGS_genesis_block);
+      auto block = loader.parseBlock(file.value());
+
+      if (not block) {
+        log->error("Failed to parse genesis block.");
+        return EXIT_FAILURE;
+      }
+
+      if (not blockstore and overwrite) {
+        log->warn(
+            "Blockstore is empty - there is nothing to overwrite. Inserting "
+            "new genesis block.");
+      }
+
+      // clear previous storage if any
+      irohad.dropStorage();
+
+      irohad.storage->insertBlock(*block.value());
+      log->info("Genesis block inserted, number of transactions: {}",
+                block.value()->transactions().size());
     }
-
-    // check if ledger data already existing
-    auto ledger_not_empty =
-        irohad.storage->getBlockQuery()->getTopBlockHeight() != 0;
-
-    // Check if force flag to overwrite ledger is specified
-    if (ledger_not_empty && not FLAGS_overwrite_ledger) {
+  } else {  // genesis block file is not specified
+    if (not blockstore) {
       log->error(
-          "Block store not empty. Use '--overwrite_ledger' to force "
-          "overwrite it. Shutting down...");
+          "Cannot restore nor create new state. Blockstore is empty. No "
+          "genesis block is provided. Please pecify new genesis block using "
+          "--genesis_block parameter.");
       return EXIT_FAILURE;
+    } else {
+      if (overwrite) {
+        log->warn(
+            "No new genesis block is specified - blockstore cannot be "
+            "overwritten. If you want overwrite ledger state, please "
+            "specify new genesis block using --genesis_block parameter.");
+      }
     }
-
-    // TODO igor-egorov, 2018-08-10, IR-1569, create system test for
-    // --overwrite-ledger option
-
-    // clear previous storage if any
-    irohad.dropStorage();
-
-    // reset ordering service persistent counter
-    irohad.resetOrderingService();
-
-    log->info("Block is parsed");
-
-    // Applying transactions from genesis block to iroha storage
-    irohad.storage->insertBlock(*block.value());
-    log->info("Genesis block inserted, number of transactions: {}",
-              block.value()->transactions().size());
   }
 
   // check if at least one block is available in the ledger
@@ -180,7 +219,11 @@ int main(int argc, char *argv[]) {
 
   if (not blocks_exist) {
     log->error(
-        "There are no blocks in the ledger. Use --genesis_block parameter.");
+        "Unable to start the ledger. There are no blocks in the ledger. Please "
+        "ensure that you are not trying to start the newer version of "
+        "the ledger over incompatible version of the storage or there is "
+        "enough disk space. Try to specify --genesis_block and "
+        "--overwrite_ledger parameters at the same time.");
     return EXIT_FAILURE;
   }
 
@@ -190,7 +233,9 @@ int main(int argc, char *argv[]) {
   auto handler = [](int s) { exit_requested.set_value(); };
   std::signal(SIGINT, handler);
   std::signal(SIGTERM, handler);
+#ifdef SIGQUIT
   std::signal(SIGQUIT, handler);
+#endif
 
   // runs iroha
   log->info("Running iroha");
@@ -200,6 +245,8 @@ int main(int argc, char *argv[]) {
   // We do not care about shutting down grpc servers
   // They do all necessary work in their destructors
   log->info("shutting down...");
+
+  gflags::ShutDownCommandLineFlags();
 
   return 0;
 }

@@ -5,76 +5,141 @@
 
 #include "backend/protobuf/block.hpp"
 
+#include <boost/range/adaptors.hpp>
+#include "backend/protobuf/common_objects/signature.hpp"
+#include "backend/protobuf/transaction.hpp"
+#include "backend/protobuf/util.hpp"
+#include "common/byteutils.hpp"
+
 namespace shared_model {
   namespace proto {
-    Block::Block(Block &&o) noexcept : NonCopyableProto(std::move(o.proto_)) {}
 
-    Block &Block::operator=(Block &&o) noexcept {
-      proto_ = std::move(o.proto_);
-      payload_ = *proto_.mutable_payload();
+    struct Block::Impl {
+      explicit Impl(TransportType &&ref) : proto_(std::move(ref)) {}
+      explicit Impl(const TransportType &ref) : proto_(ref) {}
+      Impl(Impl &&o) noexcept = delete;
+      Impl &operator=(Impl &&o) noexcept = delete;
 
-      transactions_.invalidate();
-      blob_.invalidate();
-      prev_hash_.invalidate();
-      signatures_.invalidate();
-      payload_blob_.invalidate();
+      TransportType proto_;
+      iroha::protocol::Block_v1::Payload &payload_{*proto_.mutable_payload()};
 
-      return *this;
+      std::vector<proto::Transaction> transactions_{[this] {
+        return std::vector<proto::Transaction>(
+            payload_.mutable_transactions()->begin(),
+            payload_.mutable_transactions()->end());
+      }()};
+
+      interface::types::BlobType blob_{[this] { return makeBlob(proto_); }()};
+
+      interface::types::HashType prev_hash_{[this] {
+        return interface::types::HashType(
+            crypto::Hash::fromHexString(proto_.payload().prev_block_hash()));
+      }()};
+
+      SignatureSetType<proto::Signature> signatures_{[this] {
+        auto signatures = *proto_.mutable_signatures()
+            | boost::adaptors::transformed(
+                  [](auto &x) { return proto::Signature(x); });
+        return SignatureSetType<proto::Signature>(signatures.begin(),
+                                                  signatures.end());
+      }()};
+
+      std::vector<interface::types::HashType> rejected_transactions_hashes_{
+          [this] {
+            std::vector<interface::types::HashType> hashes;
+            for (const auto &hash :
+                 *payload_.mutable_rejected_transactions_hashes()) {
+              hashes.emplace_back(
+                  shared_model::crypto::Hash::fromHexString(hash));
+            }
+            return hashes;
+          }()};
+
+      interface::types::BlobType payload_blob_{
+          [this] { return makeBlob(payload_); }()};
+    };
+
+    Block::Block(Block &&o) noexcept = default;
+
+    Block::Block(const TransportType &ref) {
+      impl_ = std::make_unique<Block::Impl>(ref);
+    }
+
+    Block::Block(TransportType &&ref) {
+      impl_ = std::make_unique<Block::Impl>(std::move(ref));
     }
 
     interface::types::TransactionsCollectionType Block::transactions() const {
-      return *transactions_;
+      return impl_->transactions_;
     }
 
     interface::types::HeightType Block::height() const {
-      return payload_.height();
+      return impl_->payload_.height();
     }
 
     const interface::types::HashType &Block::prevHash() const {
-      return *prev_hash_;
+      return impl_->prev_hash_;
     }
 
     const interface::types::BlobType &Block::blob() const {
-      return *blob_;
+      return impl_->blob_;
     }
 
     interface::types::SignatureRangeType Block::signatures() const {
-      return *signatures_;
+      return impl_->signatures_;
     }
 
-    // TODO Alexey Chernyshov - 2018-03-28 -
-    // rework code duplication from transaction, block after fix protobuf
-    // https://soramitsu.atlassian.net/browse/IR-1175
     bool Block::addSignature(const crypto::Signed &signed_blob,
                              const crypto::PublicKey &public_key) {
       // if already has such signature
-      if (std::find_if(signatures_->begin(),
-                       signatures_->end(),
+      if (std::find_if(impl_->signatures_.begin(),
+                       impl_->signatures_.end(),
                        [&public_key](const auto &signature) {
                          return signature.publicKey() == public_key;
                        })
-          != signatures_->end()) {
+          != impl_->signatures_.end()) {
         return false;
       }
 
-      auto sig = proto_.add_signatures();
-      sig->set_signature(crypto::toBinaryString(signed_blob));
-      sig->set_public_key(crypto::toBinaryString(public_key));
+      auto sig = impl_->proto_.add_signatures();
+      sig->set_signature(signed_blob.hex());
+      sig->set_public_key(public_key.hex());
 
-      signatures_.invalidate();
+      impl_->signatures_ = [this] {
+        auto signatures = *impl_->proto_.mutable_signatures()
+            | boost::adaptors::transformed(
+                  [](auto &x) { return proto::Signature(x); });
+        return SignatureSetType<proto::Signature>(signatures.begin(),
+                                                  signatures.end());
+      }();
       return true;
     }
 
     interface::types::TimestampType Block::createdTime() const {
-      return payload_.created_time();
+      return impl_->payload_.created_time();
     }
 
     interface::types::TransactionsNumberType Block::txsNumber() const {
-      return payload_.tx_number();
+      return impl_->payload_.tx_number();
+    }
+
+    interface::types::HashCollectionType Block::rejected_transactions_hashes()
+        const {
+      return impl_->rejected_transactions_hashes_;
     }
 
     const interface::types::BlobType &Block::payload() const {
-      return *payload_blob_;
+      return impl_->payload_blob_;
     }
+
+    const iroha::protocol::Block_v1 &Block::getTransport() const {
+      return impl_->proto_;
+    }
+
+    Block::ModelType *Block::clone() const {
+      return new Block(impl_->proto_);
+    }
+
+    Block::~Block() = default;
   }  // namespace proto
 }  // namespace shared_model

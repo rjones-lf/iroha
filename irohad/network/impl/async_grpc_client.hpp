@@ -1,23 +1,12 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_ASYNC_GRPC_CLIENT_HPP
 #define IROHA_ASYNC_GRPC_CLIENT_HPP
 
+#include <ciso646>
 #include <thread>
 
 #include <google/protobuf/empty.pb.h>
@@ -35,9 +24,10 @@ namespace iroha {
     template <typename Response>
     class AsyncGrpcClient {
      public:
-      AsyncGrpcClient()
+      explicit AsyncGrpcClient(
+          logger::Logger log = logger::log("AsyncGrpcClient"))
           : thread_(&AsyncGrpcClient::asyncCompleteRpc, this),
-            log_(logger::log("AsyncGrpcClient")) {}
+            log_(std::move(log)) {}
 
       /**
        * Listen to gRPC server responses

@@ -3,23 +3,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <boost/variant.hpp>
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+
+using namespace common_constants;
 
 class AcceptanceTest : public AcceptanceFixture {
  public:
-  const std::string kAdmin = "admin@test";
-
   const std::function<void(const shared_model::proto::TransactionResponse &)>
-      checkStatelessValid = [](auto &status) {
-        ASSERT_NO_THROW(boost::apply_visitor(
-            framework::SpecifiedVisitor<
-                shared_model::interface::StatelessValidTxResponse>(),
-            status.get()));
+      checkEnoughSignaturesCollectedStatus = [](auto &status) {
+        ASSERT_NO_THROW(
+            boost::get<const shared_model::interface::
+                           EnoughSignaturesCollectedResponse &>(status.get()));
       };
   const std::function<void(
-      const std::shared_ptr<shared_model::interface::Proposal> &)>
+      const std::shared_ptr<const shared_model::interface::Proposal> &)>
       checkProposal =
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); };
   const std::function<void(
@@ -31,16 +30,20 @@ class AcceptanceTest : public AcceptanceFixture {
   auto baseTx() {
     return Builder()
         .createdTime(getUniqueTime())
-        .creatorAccountId(kAdmin)
+        .creatorAccountId(kAdminId)
         .addAssetQuantity(kAssetId, "1.0")
         .quorum(1);
   }
 };
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 convert to a separate status test
+ * and a SFV integration test of non existing tx creator account
+ * (seems not covered in postgres_executor_test or transaction_processor_test)
+ *
  * @given non existent user
  * @when sending  transaction to the ledger
- * @then receive STATELESS_VALIDATION_SUCCESS status
+ * @then receive ENOUGH_SIGNATURES_COLLECTED status
  *       @and verified proposal is empty for that transaction
  */
 TEST_F(AcceptanceTest, NonExistentCreatorAccountId) {
@@ -48,17 +51,20 @@ TEST_F(AcceptanceTest, NonExistentCreatorAccountId) {
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(complete(baseTx<>().creatorAccountId(kNonUser), kAdminKeypair),
-              checkStatelessValid)
+              checkEnoughSignaturesCollectedStatus)
       .checkProposal(checkProposal)
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 remove, covered by field validator test
+ *
  * @given some user
  * @when sending transactions with an 1 hour old UNIX time
- * @then receive STATELESS_VALIDATION_SUCCESS status
+ * @then receive ENOUGH_SIGNATURES_COLLECTED status
  *       AND STATEFUL_VALIDATION_SUCCESS on that tx
  */
 TEST_F(AcceptanceTest, Transaction1HourOld) {
@@ -67,16 +73,18 @@ TEST_F(AcceptanceTest, Transaction1HourOld) {
       .sendTx(complete(baseTx<>().createdTime(
                            iroha::time::now(std::chrono::hours(-1))),
                        kAdminKeypair),
-              checkStatelessValid)
+              checkEnoughSignaturesCollectedStatus)
       .skipProposal()
-      .checkBlock(checkStatefulValid)
-      .done();
+      .skipVerifiedProposal()
+      .checkBlock(checkStatefulValid);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 remove, covered by field validator test
+ *
  * @given some user
  * @when sending transactions with an less than 24 hour old UNIX time
- * @then receive STATELESS_VALIDATION_SUCCESS status
+ * @then receive ENOUGH_SIGNATURES_COLLECTED status
  *       AND STATEFUL_VALIDATION_SUCCESS on that tx
  */
 TEST_F(AcceptanceTest, DISABLED_TransactionLess24HourOld) {
@@ -85,13 +93,15 @@ TEST_F(AcceptanceTest, DISABLED_TransactionLess24HourOld) {
       .sendTx(complete(baseTx<>().createdTime(iroha::time::now(
                            std::chrono::hours(24) - std::chrono::minutes(1))),
                        kAdminKeypair),
-              checkStatelessValid)
+              checkEnoughSignaturesCollectedStatus)
       .skipProposal()
-      .checkBlock(checkStatefulValid)
-      .done();
+      .skipVerifiedProposal()
+      .checkBlock(checkStatefulValid);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 remove, covered by field validator test
+ *
  * @given some user
  * @when sending transactions with an more than 24 hour old UNIX time
  * @then receive STATELESS_VALIDATION_FAILED status
@@ -102,14 +112,15 @@ TEST_F(AcceptanceTest, TransactionMore24HourOld) {
       .sendTx(complete(baseTx<>().createdTime(iroha::time::now(
                            std::chrono::hours(24) + std::chrono::minutes(1))),
                        kAdminKeypair),
-              checkStatelessInvalid)
-      .done();
+              CHECK_STATELESS_INVALID);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 remove, covered by field validator test
+ *
  * @given some user
  * @when sending transactions with an less that 5 minutes from future UNIX time
- * @then receive STATELESS_VALIDATION_SUCCESS status
+ * @then receive ENOUGH_SIGNATURES_COLLECTED status
  *       AND STATEFUL_VALIDATION_SUCCESS on that tx
  */
 TEST_F(AcceptanceTest, Transaction5MinutesFromFuture) {
@@ -118,13 +129,15 @@ TEST_F(AcceptanceTest, Transaction5MinutesFromFuture) {
       .sendTx(complete(baseTx<>().createdTime(iroha::time::now(
                            std::chrono::minutes(5) - std::chrono::seconds(10))),
                        kAdminKeypair),
-              checkStatelessValid)
+              checkEnoughSignaturesCollectedStatus)
       .skipProposal()
-      .checkBlock(checkStatefulValid)
-      .done();
+      .skipVerifiedProposal()
+      .checkBlock(checkStatefulValid);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 remove, covered by field validator test
+ *
  * @given some user
  * @when sending transactions with an 10 minutes from future UNIX time
  * @then receive STATELESS_VALIDATION_FAILED status
@@ -135,11 +148,12 @@ TEST_F(AcceptanceTest, Transaction10MinutesFromFuture) {
       .sendTx(complete(baseTx<>().createdTime(
                            iroha::time::now(std::chrono::minutes(10))),
                        kAdminKeypair),
-              checkStatelessInvalid)
-      .done();
+              CHECK_STATELESS_INVALID);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 remove, covered by field validator test
+ *
  * @given some user
  * @when sending transactions with an empty public Key
  * @then receive STATELESS_VALIDATION_FAILED status
@@ -153,11 +167,14 @@ TEST_F(AcceptanceTest, TransactionEmptyPubKey) {
   tx.addSignature(signedBlob, shared_model::crypto::PublicKey(""));
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessInvalid)
-      .done();
+      .sendTx(tx, CHECK_STATELESS_INVALID);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 convert to a crypto provider unit test.
+ * Also make a single SVL integration test including SignableModelValidator or
+ * even whole torii::CommandServiceTransportGrpc and the crypto provider
+ *
  * @given some user
  * @when sending transactions with an empty signedBlob
  * @then receive STATELESS_VALIDATION_FAILED status
@@ -168,13 +185,14 @@ TEST_F(AcceptanceTest, TransactionEmptySignedblob) {
   tx.addSignature(shared_model::crypto::Signed(""), kAdminKeypair.publicKey());
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessInvalid)
-      .done();
+      .sendTx(tx, CHECK_STATELESS_INVALID);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 convert to a crypto provider unit test
+ *
  * @given some user
- * @when sending transactions with Invalid PublicKey
+ * @when sending transactions with correctly formed invalid PublicKey
  * @then receive STATELESS_VALIDATION_FAILED status
  */
 TEST_F(AcceptanceTest, TransactionInvalidPublicKey) {
@@ -189,11 +207,12 @@ TEST_F(AcceptanceTest, TransactionInvalidPublicKey) {
           'a')));
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessInvalid)
-      .done();
+      .sendTx(tx, CHECK_STATELESS_INVALID);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 convert to a crypto provider unit test
+ *
  * @given some user
  * @when sending transactions with Invalid SignedBlock
  * @then receive STATELESS_VALIDATION_FAILED status
@@ -212,26 +231,31 @@ TEST_F(AcceptanceTest, TransactionInvalidSignedBlob) {
 
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessInvalid)
-      .done();
+      .sendTx(tx, CHECK_STATELESS_INVALID);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 remove, successful case covered by
+ * higher-level tests
+ *
  * @given some user
  * @when sending transactions with valid signature
- * @then receive STATELESS_VALIDATION_SUCCESS status
+ * @then receive ENOUGH_SIGNATURES_COLLECTED status
  *       AND STATEFUL_VALIDATION_SUCCESS on that tx
  */
 TEST_F(AcceptanceTest, TransactionValidSignedBlob) {
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(complete(baseTx<>(), kAdminKeypair), checkStatelessValid)
+      .sendTx(complete(baseTx<>(), kAdminKeypair),
+              checkEnoughSignaturesCollectedStatus)
       .skipProposal()
-      .checkBlock(checkStatefulValid)
-      .done();
+      .skipVerifiedProposal()
+      .checkBlock(checkStatefulValid);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-227 convert to a SignableModelValidator test
+ *
  * @given some user
  * @when sending transaction without any signature
  * @then the response is STATELESS_VALIDATION_FAILED
@@ -243,6 +267,5 @@ TEST_F(AcceptanceTest, EmptySignatures) {
 
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessInvalid)
-      .done();
+      .sendTx(tx, CHECK_STATELESS_INVALID);
 }

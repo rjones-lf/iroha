@@ -4,18 +4,17 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/variant.hpp>
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+#include "interfaces/query_responses/account_response.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
-
-#define CHECK_BLOCK(i) \
-  [](auto &block) { ASSERT_EQ(block->transactions().size(), i); }
+using namespace common_constants;
 
 class GetAccount : public AcceptanceFixture {
  public:
@@ -42,7 +41,7 @@ class GetAccount : public AcceptanceFixture {
       const interface::RolePermissionSet &perms = {
           interface::permissions::Role::kGetMyAccount}) {
     itf.setInitialState(kAdminKeypair)
-        .sendTxAwait(makeUserWithPerms(perms), CHECK_BLOCK(1));
+        .sendTxAwait(makeUserWithPerms(perms), CHECK_TXS_QUANTITY(1));
     return itf;
   }
 
@@ -88,9 +87,9 @@ class GetAccount : public AcceptanceFixture {
                          const std::string &role) {
     return [&](const proto::QueryResponse &response) {
       ASSERT_NO_THROW({
-        const auto &resp = boost::apply_visitor(
-            framework::SpecifiedVisitor<interface::AccountResponse>(),
-            response.get());
+        const auto &resp =
+            boost::get<const shared_model::interface::AccountResponse &>(
+                response.get());
         ASSERT_EQ(resp.account().accountId(), user);
         ASSERT_EQ(resp.account().domainId(), domain);
         ASSERT_EQ(resp.roles().size(), 1);
@@ -125,7 +124,7 @@ class GetAccount : public AcceptanceFixture {
   auto makeSecondInterdomainUser() {
     return complete(
         baseTx()
-            .creatorAccountId(IntegrationTestFramework::kAdminId)
+            .creatorAccountId(kAdminId)
             .createRole(kRole2, {interface::permissions::Role::kSetQuorum})
             .createDomain(kNewDomain, kRole2)
             .createAccount(kUser2, kNewDomain, kUser2Keypair.publicKey()),
@@ -142,6 +141,8 @@ class GetAccount : public AcceptanceFixture {
 };
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 remove, covered by field validator test
+ *
  * C321 Pass an empty account id
  * @given a user with all required permissions
  * @when GetAccount is queried on the empty account name
@@ -155,6 +156,9 @@ TEST_F(GetAccount, EmptyAccount) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 remove, covered by
+ * postgres_query_executor_test GetAccountExecutorTest.InvalidNoAccount
+ *
  * C320 Get an non-existing account
  * @given a user with all required permissions
  * @when GetAccount is queried on the user
@@ -169,6 +173,10 @@ TEST_F(GetAccount, NonexistentAccount) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 convert to a SFV integration test
+ * (not covered by postgres_query_executor_test)
+ * seems we should move the common_query_permissions_test to SFV integration
+ *
  * C315 Get my account without a CanGetMyAccount permission
  * @given a user without any query-related permission
  * @when GetAccount is queried on the user
@@ -182,6 +190,9 @@ TEST_F(GetAccount, NoPermission) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 remove, covered by
+ * postgres_query_executor_test GetAccountExecutorTest.ValidMyAccount
+ *
  * C322 Get my account with a CanGetMyAccount permission
  * @given a user with GetMyAccount permission
  * @when GetAccount is queried on the user
@@ -192,6 +203,10 @@ TEST_F(GetAccount, WithGetMyPermission) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 convert to a SFV integration test
+ * (not covered by postgres_query_executor_test)
+ * seems we should move the common_query_permissions_test to SFV integration
+ *
  * C316 Get my account with only CanGetDomainAccounts permission
  * @given a user with GetDomainAccounts permission
  * @when GetAccount is queried on the user
@@ -203,6 +218,10 @@ TEST_F(GetAccount, WithGetDomainPermission) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 convert to a SFV integration test
+ * (not covered by postgres_query_executor_test)
+ * seems we should move the common_query_permissions_test to SFV integration
+ *
  * C317 Get my account with only CanGetAllAccounts permission
  * @given a user with GetAllAccounts permission
  * @when GetAccount is queried on the user
@@ -214,6 +233,10 @@ TEST_F(GetAccount, WithGetAllPermission) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 convert to a SFV integration test
+ * (not covered by postgres_query_executor_test)
+ * seems we should move the common_query_permissions_test to SFV integration
+ *
  * @given a user without any permission and a user in the same domain
  * @when GetAccount is queried on the second user
  * @then query is stateful invalid response
@@ -221,13 +244,17 @@ TEST_F(GetAccount, WithGetAllPermission) {
 TEST_F(GetAccount, NoPermissionOtherAccount) {
   const std::string kUser2Id = kUser2 + "@" + kDomain;
   prepareState({})
-      .sendTxAwait(makeSecondUser(), CHECK_BLOCK(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
       .sendQuery(makeQuery(kUser2Id),
                  checkQueryErrorResponse<
                      shared_model::interface::StatefulFailedErrorResponse>());
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 convert to a SFV integration test
+ * (not covered by postgres_query_executor_test)
+ * seems we should move the common_query_permissions_test to SFV integration
+ *
  * @given a user with GetMyAccount permission and a user in the same domain
  * @when GetAccount is queried on the second user
  * @then query is stateful invalid response
@@ -235,13 +262,16 @@ TEST_F(GetAccount, NoPermissionOtherAccount) {
 TEST_F(GetAccount, WithGetMyPermissionOtherAccount) {
   const std::string kUser2Id = kUser2 + "@" + kDomain;
   prepareState({interface::permissions::Role::kGetMyAccount})
-      .sendTxAwait(makeSecondUser(), CHECK_BLOCK(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
       .sendQuery(makeQuery(kUser2Id),
                  checkQueryErrorResponse<
                      shared_model::interface::StatefulFailedErrorResponse>());
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 remove, covered by
+ * postgres_query_executor_test GetAccountExecutorTest.ValidMyAccount
+ *
  * C318 Get an account from the domain having CanGetDomainAccounts
  * @given a user with GetDomainAccounts permission and a user in the same domain
  * @when GetAccount is queried on the second user
@@ -250,12 +280,15 @@ TEST_F(GetAccount, WithGetMyPermissionOtherAccount) {
 TEST_F(GetAccount, WithGetDomainPermissionOtherAccount) {
   const std::string kUser2Id = kUser2 + "@" + kDomain;
   prepareState({interface::permissions::Role::kGetDomainAccounts})
-      .sendTxAwait(makeSecondUser(), CHECK_BLOCK(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
       .sendQuery(makeQuery(kUser2Id),
                  checkValidAccount(kDomain, kUser2Id, kRole2));
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 remove, covered by
+ * postgres_query_executor_test GetAccountExecutorTest.ValidDomainAccount
+ *
  * @given a user with GetAllAccounts permission and a user in the same domain
  * @when GetAccount is queried on the second user
  * @then there is a valid AccountResponse
@@ -263,54 +296,70 @@ TEST_F(GetAccount, WithGetDomainPermissionOtherAccount) {
 TEST_F(GetAccount, WithGetAllPermissionOtherAccount) {
   const std::string kUser2Id = kUser2 + "@" + kDomain;
   prepareState({interface::permissions::Role::kGetAllAccounts})
-      .sendTxAwait(makeSecondUser(), CHECK_BLOCK(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
       .sendQuery(makeQuery(kUser2Id),
                  checkValidAccount(kDomain, kUser2Id, kRole2));
 }
 
 /**
- * @given a user with all required permissions and a user in other domain
+ * TODO mboldyrev 18.01.2019 IR-211 convert to a SFV integration test
+ * (not covered by postgres_query_executor_test)
+ * seems we should move the common_query_permissions_test to SFV integration
+ *
+ * @given a user with no related permissions and a user in other domain
  * @when GetAccount is queried on the second user
  * @then query is stateful invalid response
  */
 TEST_F(GetAccount, NoPermissionOtherAccountInterdomain) {
   const std::string kUser2Id = kUser2 + "@" + kNewDomain;
   prepareState({})
-      .sendTxAwait(makeSecondInterdomainUser(), CHECK_BLOCK(1))
+      .sendTxAwait(makeSecondInterdomainUser(), CHECK_TXS_QUANTITY(1))
       .sendQuery(makeQuery(kUser2Id),
                  checkQueryErrorResponse<
                      shared_model::interface::StatefulFailedErrorResponse>());
 }
 
 /**
- * @given a user with all required permissions and a user in other domain
+ * TODO mboldyrev 18.01.2019 IR-211 convert to a SFV integration test
+ * (not covered by postgres_query_executor_test)
+ * seems we should move the common_query_permissions_test to SFV integration
+ *
+ * @given a user with permission to get own account and a user in other domain
  * @when GetAccount is queried on the second user
  * @then query is stateful invalid response
  */
 TEST_F(GetAccount, WithGetMyPermissionOtherAccountInterdomain) {
   const std::string kUser2Id = kUser2 + "@" + kNewDomain;
   prepareState({interface::permissions::Role::kGetMyAccount})
-      .sendTxAwait(makeSecondInterdomainUser(), CHECK_BLOCK(1))
+      .sendTxAwait(makeSecondInterdomainUser(), CHECK_TXS_QUANTITY(1))
       .sendQuery(makeQuery(kUser2Id),
                  checkQueryErrorResponse<
                      shared_model::interface::StatefulFailedErrorResponse>());
 }
 
 /**
- * @given a user with all required permissions and a user in other domain
+ * TODO mboldyrev 18.01.2019 IR-211 remove, covered by
+ * postgres_query_executor_test GetAccountExecutorTest.InvalidDifferentDomain
+ *
+ * @given a user with rermissions to get domain accounts and a user in other
+ * domain
  * @when GetAccount is queried on the second user
  * @then query is stateful invalid response
  */
 TEST_F(GetAccount, WithGetDomainPermissionOtherAccountInterdomain) {
   const std::string kUser2Id = kUser2 + "@" + kNewDomain;
   prepareState({interface::permissions::Role::kGetDomainAccounts})
-      .sendTxAwait(makeSecondInterdomainUser(), CHECK_BLOCK(1))
+      .sendTxAwait(makeSecondInterdomainUser(), CHECK_TXS_QUANTITY(1))
       .sendQuery(makeQuery(kUser2Id),
                  checkQueryErrorResponse<
                      shared_model::interface::StatefulFailedErrorResponse>());
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 convert to a SFV integration test
+ * (not covered by postgres_query_executor_test)
+ * seems we should move the common_query_permissions_test to SFV integration
+ *
  * C319 Get an account from another domain in the system having
  * CanGetAllAccounts
  * @given a user with all required permissions and a user in other domain
@@ -320,7 +369,7 @@ TEST_F(GetAccount, WithGetDomainPermissionOtherAccountInterdomain) {
 TEST_F(GetAccount, WithGetAllPermissionOtherAccountInterdomain) {
   const std::string kUser2Id = kUser2 + "@" + kNewDomain;
   prepareState({interface::permissions::Role::kGetAllAccounts})
-      .sendTxAwait(makeSecondInterdomainUser(), CHECK_BLOCK(1))
+      .sendTxAwait(makeSecondInterdomainUser(), CHECK_TXS_QUANTITY(1))
       .sendQuery(makeQuery(kUser2Id),
                  checkValidAccount(kNewDomain, kUser2Id, kRole2));
 }

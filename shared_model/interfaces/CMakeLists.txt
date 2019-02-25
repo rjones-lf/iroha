@@ -5,6 +5,7 @@
 
 add_library(shared_model_interfaces
     impl/permissions.cpp
+    impl/transaction.cpp
     commands/impl/add_asset_quantity.cpp
     commands/impl/add_peer.cpp
     commands/impl/add_signatory.cpp
@@ -29,6 +30,7 @@ add_library(shared_model_interfaces
     queries/impl/get_account_detail.cpp
     queries/impl/get_account_transactions.cpp
     queries/impl/get_asset_info.cpp
+    queries/impl/get_block.cpp
     queries/impl/get_role_permissions.cpp
     queries/impl/get_roles.cpp
     queries/impl/get_signatories.cpp
@@ -36,7 +38,10 @@ add_library(shared_model_interfaces
     queries/impl/get_pending_transactions.cpp
     queries/impl/blocks_query.cpp
     queries/impl/query_payload_meta.cpp
+    queries/impl/tx_pagination_meta.cpp
     common_objects/impl/amount.cpp
+    common_objects/impl/signature.cpp
+    common_objects/impl/peer.cpp
     )
 
 if (IROHA_ROOT_PROJECT)
@@ -54,15 +59,28 @@ if (IROHA_ROOT_PROJECT)
       query_responses/impl/block_error_response.cpp
       query_responses/impl/block_query_response.cpp
       query_responses/impl/block_response.cpp
-      iroha_internal/block_variant.cpp
+      query_responses/impl/transactions_page_response.cpp
+      transaction_responses/impl/tx_response.cpp
       iroha_internal/transaction_sequence.cpp
-      iroha_internal/transaction_batch.cpp
-      iroha_internal/transaction_batch_factory.cpp
+      iroha_internal/transaction_batch_impl.cpp
+      iroha_internal/transaction_batch_parser_impl.cpp
+      iroha_internal/block.cpp
       )
+
+  add_library(shared_model_interfaces_factories
+      iroha_internal/transaction_sequence_factory.cpp
+      iroha_internal/transaction_batch_factory_impl.cpp
+    )
+
+  target_link_libraries(shared_model_interfaces_factories
+    shared_model_interfaces
+    shared_model_stateless_validation
+    )
 endif ()
 
 target_link_libraries(shared_model_interfaces
+    shared_model_utils
     shared_model_cryptography
-    schema
+    common
     ${Boost_LIBRARIES}
     )

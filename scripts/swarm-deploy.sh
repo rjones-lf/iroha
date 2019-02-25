@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 irohad=irohad
 cli=iroha-cli

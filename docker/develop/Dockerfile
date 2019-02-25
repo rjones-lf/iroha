@@ -9,18 +9,23 @@ ENV IROHA_HOME /opt/iroha
 ENV IROHA_BUILD /opt/iroha/build
 
 RUN apt-get update && \
-    apt-get -y --no-install-recommends install apt-utils software-properties-common; \
+    apt-get -y --no-install-recommends install apt-utils software-properties-common wget; \
     apt-get -y clean
 
-
-# add git repository
-RUN add-apt-repository -y ppa:git-core/ppa && \
+# add repos
+RUN set -e; \
+    add-apt-repository -y ppa:git-core/ppa; \
+    add-apt-repository -y ppa:ubuntu-toolchain-r/test; \
+    wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -; \
+    echo 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-6.0 main' >> /etc/apt/sources.list; \
+    echo 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main' >> /etc/apt/sources.list; \
     apt-get update
 
-
 RUN set -e; \
-    apt-get -y --no-install-recommends install build-essential python-software-properties \
+    apt-get -y --no-install-recommends install python-software-properties \
         automake libtool \
+        # compilers (gcc-5, gcc-7, clang-6)
+        build-essential clang-6.0 lldb-6.0 lld-6.0 g++-7 \
         # dev dependencies
         libssl-dev zlib1g-dev libcurl4-openssl-dev libc6-dbg golang \
         # CI dependencies
@@ -30,9 +35,17 @@ RUN set -e; \
         # SWIG dependencies
         libpcre3-dev autoconf bison  \
         # other
-        wget curl file gdb gdbserver ccache \
-        gcovr cppcheck doxygen rsync graphviz graphviz-dev unzip zip; \
+        curl file gdb gdbserver ccache \
+        gcovr cppcheck doxygen rsync graphviz graphviz-dev unzip vim zip; \
     apt-get -y clean
+
+# compiler clang-7 and libc++ only on x86_64, for debug purpose
+RUN set -e; \
+    if [ `uname -m` = "x86_64" ]; then \
+      apt-get -y --no-install-recommends install \
+        clang-7 lldb-7 lld-7 libc++-7-dev libc++abi-7-dev; \
+      apt-get -y clean; \
+    fi
 
 # install cmake 3.11.4
 RUN set -e; \
@@ -137,7 +150,8 @@ RUN set -e; \
 # install rxcpp
 RUN set -e; \
     git clone https://github.com/Reactive-Extensions/RxCpp /tmp/RxCpp; \
-    (cd /tmp/RxCpp ; git checkout 1b2e0589f19cb34d8cd58803677701dcf2161876); \
+    # this version is chosen, because it fixes 100% node overload [IR-1736] bug
+    (cd /tmp/RxCpp ; git checkout a7d5856385f126e874db6010d9dbfd37290c61de); \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -H/tmp/RxCpp \
@@ -212,7 +226,7 @@ RUN set -e; \
 ENV SONAR_CLI_VERSION=3.0.3.778
 RUN set -e; \
     mkdir -p /opt/sonar; \
-    curl -L -o /tmp/sonar.zip https://sonarsource.bintray.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_CLI_VERSION}-linux.zip; \
+    curl -L -o /tmp/sonar.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_CLI_VERSION}-linux.zip; \
     unzip -o -d /tmp/sonar-scanner /tmp/sonar.zip; \
     mv /tmp/sonar-scanner/sonar-scanner-${SONAR_CLI_VERSION}-linux /opt/sonar/scanner; \
     ln -s -f /opt/sonar/scanner/bin/sonar-scanner /usr/local/bin/sonar-scanner; \
@@ -258,8 +272,8 @@ RUN set -e; \
 
 # python bindings dependencies
 RUN set -e; \
-    pip install grpcio_tools; \
-    pip3 install grpcio_tools
+    pip install grpcio_tools pysha3; \
+    pip3 install grpcio_tools pysha3
 
 # install lcov
 RUN set -e; \

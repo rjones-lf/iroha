@@ -3,11 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef IROHA_ON_DEMAND_OS_TRANSPORT_SERVER_GRPC_HPP
-#define IROHA_ON_DEMAND_OS_TRANSPORT_SERVER_GRPC_HPP
+#ifndef IROHA_ON_DEMAND_OS_TRANSPORT_CLIENT_GRPC_HPP
+#define IROHA_ON_DEMAND_OS_TRANSPORT_CLIENT_GRPC_HPP
 
 #include "ordering/on_demand_os_transport.hpp"
 
+#include "interfaces/iroha_internal/abstract_transport_factory.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "ordering.grpc.pb.h"
 
@@ -20,6 +21,10 @@ namespace iroha {
        */
       class OnDemandOsClientGrpc : public OdOsNotification {
        public:
+        using TransportFactoryType =
+            shared_model::interface::AbstractTransportFactory<
+                shared_model::interface::Proposal,
+                iroha::protocol::Proposal>;
         using TimepointType = std::chrono::system_clock::time_point;
         using TimeoutType = std::chrono::milliseconds;
 
@@ -31,29 +36,33 @@ namespace iroha {
             std::unique_ptr<proto::OnDemandOrdering::StubInterface> stub,
             std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
                 async_call,
+            std::shared_ptr<TransportFactoryType> proposal_factory,
             std::function<TimepointType()> time_provider,
-            std::chrono::milliseconds proposal_request_timeout);
+            std::chrono::milliseconds proposal_request_timeout,
+            logger::Logger log = logger::log("OnDemandOsClientGrpc"));
 
-        void onTransactions(transport::Round round,
-                            CollectionType transactions) override;
+        void onBatches(consensus::Round round, CollectionType batches) override;
 
-        boost::optional<ProposalType> onRequestProposal(
-            transport::Round round) override;
+        boost::optional<std::shared_ptr<const ProposalType>> onRequestProposal(
+            consensus::Round round) override;
 
        private:
         logger::Logger log_;
         std::unique_ptr<proto::OnDemandOrdering::StubInterface> stub_;
         std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
             async_call_;
+        std::shared_ptr<TransportFactoryType> proposal_factory_;
         std::function<TimepointType()> time_provider_;
         std::chrono::milliseconds proposal_request_timeout_;
       };
 
       class OnDemandOsClientGrpcFactory : public OdOsNotificationFactory {
        public:
+        using TransportFactoryType = OnDemandOsClientGrpc::TransportFactoryType;
         OnDemandOsClientGrpcFactory(
             std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
                 async_call,
+            std::shared_ptr<TransportFactoryType> proposal_factory,
             std::function<OnDemandOsClientGrpc::TimepointType()> time_provider,
             OnDemandOsClientGrpc::TimeoutType proposal_request_timeout);
 
@@ -69,6 +78,7 @@ namespace iroha {
        private:
         std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
             async_call_;
+        std::shared_ptr<TransportFactoryType> proposal_factory_;
         std::function<OnDemandOsClientGrpc::TimepointType()> time_provider_;
         std::chrono::milliseconds proposal_request_timeout_;
       };
@@ -77,4 +87,4 @@ namespace iroha {
   }    // namespace ordering
 }  // namespace iroha
 
-#endif  // IROHA_ON_DEMAND_OS_TRANSPORT_SERVER_GRPC_HPP
+#endif  // IROHA_ON_DEMAND_OS_TRANSPORT_CLIENT_GRPC_HPP

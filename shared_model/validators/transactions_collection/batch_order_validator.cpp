@@ -3,11 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "validators/transactions_collection/batch_order_validator.hpp"
+
 #include <boost/format.hpp>
 #include <boost/range/algorithm/find.hpp>
-
-#include "batch_order_validator.hpp"
 #include "interfaces/iroha_internal/batch_meta.hpp"
+#include "interfaces/transaction.hpp"
 
 namespace shared_model {
   namespace validation {

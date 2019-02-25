@@ -1,29 +1,23 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <gmock/gmock.h>
 #include <grpc++/grpc++.h>
 
+#include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/impl/timer_impl.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
+#include "consensus/yac/storage/yac_vote_storage.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
+#include "consensus/yac/yac.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
+
 #include "framework/test_subscriber.hpp"
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
-#include "module/shared_model/builders/protobuf/test_signature_builder.hpp"
+#include "module/irohad/consensus/yac/mock_yac_crypto_provider.hpp"
+#include "module/irohad/consensus/yac/yac_test_util.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 
 using ::testing::_;
 using ::testing::An;
@@ -33,9 +27,11 @@ using ::testing::Return;
 using namespace iroha::consensus::yac;
 using namespace framework::test_subscriber;
 
+static size_t num_peers = 1, my_num = 0;
+
 auto mk_local_peer(uint64_t num) {
   auto address = "0.0.0.0:" + std::to_string(num);
-  return iroha::consensus::yac::mk_peer(address);
+  return iroha::consensus::yac::makePeer(address);
 }
 
 class FixedCryptoProvider : public MockYacCryptoProvider {
@@ -45,15 +41,22 @@ class FixedCryptoProvider : public MockYacCryptoProvider {
         shared_model::crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, 0);
     std::copy(public_key.begin(), public_key.end(), key.begin());
     pubkey = clone(shared_model::crypto::PublicKey(key));
+    data = std::make_unique<shared_model::crypto::Signed>("");
   }
 
   VoteMessage getVote(YacHash hash) override {
     auto vote = MockYacCryptoProvider::getVote(hash);
-    vote.signature = clone(TestSignatureBuilder().publicKey(*pubkey).build());
+    auto signature = std::make_shared<MockSignature>();
+    EXPECT_CALL(*signature, publicKey())
+        .WillRepeatedly(testing::ReturnRef(*pubkey));
+    EXPECT_CALL(*signature, signedData())
+        .WillRepeatedly(testing::ReturnRef(*data));
+    vote.signature = signature;
     return vote;
   }
 
   std::unique_ptr<shared_model::crypto::PublicKey> pubkey;
+  std::unique_ptr<shared_model::crypto::Signed> data;
 };
 
 class ConsensusSunnyDayTest : public ::testing::Test {
@@ -66,6 +69,19 @@ class ConsensusSunnyDayTest : public ::testing::Test {
   std::shared_ptr<Yac> yac;
 
   static const size_t port = 50541;
+
+  ConsensusSunnyDayTest() : my_peer(mk_local_peer(port + my_num)) {
+    for (decltype(num_peers) i = 0; i < num_peers; ++i) {
+      default_peers.push_back(mk_local_peer(port + i));
+    }
+    if (num_peers == 1) {
+      delay_before = 0;
+      delay_after = 5 * 1000;
+    } else {
+      delay_before = 10 * 1000;
+      delay_after = 3 * default_peers.size() + 10 * 1000;
+    }
+  }
 
   void SetUp() override {
     auto async_call = std::make_shared<
@@ -100,33 +116,10 @@ class ConsensusSunnyDayTest : public ::testing::Test {
     server->Shutdown();
   }
 
-  static uint64_t my_num, delay_before, delay_after;
-  static std::shared_ptr<shared_model::interface::Peer> my_peer;
-  static std::vector<std::shared_ptr<shared_model::interface::Peer>>
-      default_peers;
-
-  static void init(uint64_t num_peers, uint64_t num) {
-    my_num = num;
-    my_peer = mk_local_peer(port + my_num);
-    for (decltype(num_peers) i = 0; i < num_peers; ++i) {
-      default_peers.push_back(mk_local_peer(port + i));
-    }
-    if (num_peers == 1) {
-      delay_before = 0;
-      delay_after = 5 * 1000;
-    } else {
-      delay_before = 10 * 1000;
-      delay_after = 3 * default_peers.size() + 10 * 1000;
-    }
-  }
+  uint64_t delay_before, delay_after;
+  std::shared_ptr<shared_model::interface::Peer> my_peer;
+  std::vector<std::shared_ptr<shared_model::interface::Peer>> default_peers;
 };
-
-uint64_t ConsensusSunnyDayTest::my_num;
-uint64_t ConsensusSunnyDayTest::delay_before;
-uint64_t ConsensusSunnyDayTest::delay_after;
-std::shared_ptr<shared_model::interface::Peer> ConsensusSunnyDayTest::my_peer;
-std::vector<std::shared_ptr<shared_model::interface::Peer>>
-    ConsensusSunnyDayTest::default_peers;
 
 /**
  * @given num_peers peers with initialized YAC
@@ -146,7 +139,7 @@ TEST_F(ConsensusSunnyDayTest, SunnyDayTest) {
   // Wait for other peers to start
   std::this_thread::sleep_for(std::chrono::milliseconds(delay_before));
 
-  YacHash my_hash("proposal_hash", "block_hash");
+  YacHash my_hash(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
   my_hash.block_signature = createSig("");
   auto order = ClusterOrdering::create(default_peers);
   ASSERT_TRUE(order);
@@ -161,11 +154,9 @@ TEST_F(ConsensusSunnyDayTest, SunnyDayTest) {
 
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
-  uint64_t num_peers = 1, my_num = 0;
   if (argc == 3) {
     num_peers = std::stoul(argv[1]);
     my_num = std::stoul(argv[2]) + 1;
   }
-  ConsensusSunnyDayTest::init(num_peers, my_num);
   return RUN_ALL_TESTS();
 }

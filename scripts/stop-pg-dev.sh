@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 PG_CONTAINER_NAME="postgres"
 PG_CONTAINER_DATA="/var/lib/postgresql/data"

@@ -9,12 +9,10 @@
 #include <boost/range/irange.hpp>
 
 #include "framework/result_fixture.hpp"
-#include "interfaces/iroha_internal/transaction_batch_template_definitions.hpp"
-#include "interfaces/iroha_internal/transaction_batch.hpp"
-#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
+#include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
-#include "module/shared_model/validators/validators.hpp"
-#include "validators/transactions_collection/batch_order_validator.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 
 namespace framework {
   namespace batch {
@@ -182,8 +180,6 @@ namespace framework {
                           const size_t &created_time = iroha::time::now()) {
       using namespace shared_model::validation;
 
-      using TxsValidator = DefaultUnsignedTransactionsValidator;
-
       auto batch_type = shared_model::interface::types::BatchType::ATOMIC;
       std::vector<std::pair<decltype(batch_type), std::string>>
           transaction_fields;
@@ -192,10 +188,12 @@ namespace framework {
             batch_type, "account" + std::to_string(i) + "@domain"));
       }
 
+      std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+          batch_factory = std::make_shared<
+              shared_model::interface::TransactionBatchFactoryImpl>();
       auto txs =
           createBatchOneSignTransactions(transaction_fields, created_time);
-      auto result_batch = shared_model::interface::TransactionBatchFactory::
-          createTransactionBatch(txs, TxsValidator());
+      auto result_batch = batch_factory->createTransactionBatch(txs);
 
       return framework::expected::val(result_batch).value().value;
     }
@@ -207,21 +205,23 @@ namespace framework {
      */
     inline auto createBatchFromSingleTransaction(
         std::shared_ptr<shared_model::interface::Transaction> tx) {
-      return shared_model::interface::TransactionBatchFactory::
-          createTransactionBatch(
-                 tx,
-                 shared_model::validation::DefaultSignedTransactionValidator())
-              .match(
-                  [](const iroha::expected::Value<
-                      shared_model::interface::TransactionBatch> &value) {
-                    return value.value;
-                  },
-                  [](const auto &err)
-                      -> shared_model::interface::TransactionBatch {
-                    throw std::runtime_error(
-                        err.error
-                        + "Error transformation from transaction to batch");
-                  });
+      auto batch_factory = std::make_shared<
+          shared_model::interface::TransactionBatchFactoryImpl>();
+      return batch_factory->createTransactionBatch(std::move(tx))
+          .match(
+              [](iroha::expected::Value<std::unique_ptr<
+                     shared_model::interface::TransactionBatch>> &value)
+                  -> std::shared_ptr<
+                      shared_model::interface::TransactionBatch> {
+                return std::move(value.value);
+              },
+              [](const auto &err)
+                  -> std::shared_ptr<
+                      shared_model::interface::TransactionBatch> {
+                throw std::runtime_error(
+                    err.error
+                    + "Error transformation from transaction to batch");
+              });
     }
 
     /**
@@ -370,7 +370,7 @@ namespace framework {
       auto transactions =
           makeTestBatchTransactions(std::forward<TxBuilders>(builders)...);
 
-      return std::make_shared<shared_model::interface::TransactionBatch>(
+      return std::make_shared<shared_model::interface::TransactionBatchImpl>(
           transactions);
     }
 

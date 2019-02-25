@@ -1,32 +1,12 @@
-# Copyright 2017 Soramitsu Co., Ltd.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
-add_library(ordering_service
-    impl/ordering_gate_impl.cpp
-    impl/single_peer_ordering_service.cpp
-    impl/ordering_gate_transport_grpc.cpp
-    impl/ordering_service_transport_grpc.cpp
+add_library(on_demand_common
+    impl/on_demand_common.cpp
     )
 
-
-target_link_libraries(ordering_service
-    rxcpp
-    tbb
-    shared_model_interfaces
-    shared_model_proto_backend
-    ordering_grpc
-    logger
+target_link_libraries(on_demand_common
+    consensus_round
     )
 
 add_library(on_demand_ordering_service
@@ -34,9 +14,10 @@ add_library(on_demand_ordering_service
     )
 
 target_link_libraries(on_demand_ordering_service
+    on_demand_common
     tbb
     shared_model_interfaces
-    shared_model_proto_backend
+    consensus_round
     logger
     )
 
@@ -47,25 +28,36 @@ add_library(on_demand_ordering_service_transport_grpc
 
 target_link_libraries(on_demand_ordering_service_transport_grpc
     shared_model_interfaces
+    shared_model_interfaces_factories
     shared_model_proto_backend
+    consensus_round
     logger
     ordering_grpc
+    common
     )
 
 add_library(on_demand_connection_manager
     impl/on_demand_connection_manager.cpp
     )
 target_link_libraries(on_demand_connection_manager
+    on_demand_common
     shared_model_interfaces
+    consensus_round
     rxcpp
     boost
+    logger
     )
 
 add_library(on_demand_ordering_gate
     impl/on_demand_ordering_gate.cpp
+    impl/ordering_gate_cache/ordering_gate_cache.cpp
+    impl/ordering_gate_cache/on_demand_cache.cpp
     )
 target_link_libraries(on_demand_ordering_gate
-    shared_model_interfaces
+    on_demand_common
+    consensus_round
     rxcpp
     boost
+    logger
+    common
     )

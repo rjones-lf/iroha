@@ -6,21 +6,50 @@
 #ifndef IROHA_ACCEPTANCE_FIXTURE_HPP
 #define IROHA_ACCEPTANCE_FIXTURE_HPP
 
-#include <gtest/gtest.h>
 #include <functional>
 #include <string>
 #include <vector>
+
+#include <gtest/gtest.h>
 #include "cryptography/keypair.hpp"
+#include "framework/common_constants.hpp"
 #include "interfaces/permissions.hpp"
 #include "interfaces/query_responses/query_response.hpp"
+#include "interfaces/transaction_responses/tx_response.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
-namespace shared_model {
-  namespace proto {
-    class TransactionResponse;
-  }  // namespace proto
-}  // namespace shared_model
+namespace {
+  template <typename Type>
+  void checkTransactionResponse(
+      const shared_model::interface::TransactionResponse &resp) {
+    ASSERT_NO_THROW(boost::get<const Type &>(resp.get())) << resp.toString();
+  }
+
+#define BASE_CHECK_RESPONSE(type)                                  \
+  [](const shared_model::interface::TransactionResponse &resp) {   \
+    SCOPED_TRACE(#type);                                           \
+    checkTransactionResponse<shared_model::interface::type>(resp); \
+  }
+
+#define CHECK_ENOUGH_SIGNATURES \
+  BASE_CHECK_RESPONSE(EnoughSignaturesCollectedResponse)
+
+#define CHECK_STATELESS_INVALID BASE_CHECK_RESPONSE(StatelessFailedTxResponse)
+
+#define CHECK_STATELESS_VALID BASE_CHECK_RESPONSE(StatelessValidTxResponse)
+
+#define CHECK_STATEFUL_INVALID BASE_CHECK_RESPONSE(StatefulFailedTxResponse)
+
+#define CHECK_STATEFUL_VALID BASE_CHECK_RESPONSE(StatefulValidTxResponse)
+
+#define CHECK_COMMITTED BASE_CHECK_RESPONSE(CommittedTxResponse)
+
+#define CHECK_MST_PENDING BASE_CHECK_RESPONSE(MstPendingResponse)
+
+#define CHECK_TXS_QUANTITY(i) \
+  [](const auto &resp) { ASSERT_EQ(resp->transactions().size(), i); }
+}  // namespace
 
 /**
  * Common values (user, domain, asset)
@@ -29,6 +58,8 @@ namespace shared_model {
 class AcceptanceFixture : public ::testing::Test {
  public:
   AcceptanceFixture();
+
+  virtual ~AcceptanceFixture() = default;
 
   /**
    * Creates a set of transactions for user creation
@@ -152,18 +183,6 @@ class AcceptanceFixture : public ::testing::Test {
    * @return unique time for this fixture
    */
   iroha::time::time_t getUniqueTime();
-
-  const shared_model::interface::types::AccountNameType kUser;
-  const shared_model::interface::types::RoleIdType kRole;
-  const shared_model::interface::types::DomainIdType kDomain;
-  const shared_model::interface::types::AssetIdType kAssetId;
-  const shared_model::interface::types::AccountIdType kUserId;
-  const shared_model::interface::types::AccountIdType kAdminId;
-  const shared_model::crypto::Keypair kAdminKeypair;
-  const shared_model::crypto::Keypair kUserKeypair;
-
-  const std::function<void(const shared_model::proto::TransactionResponse &)>
-      checkStatelessInvalid;
 
   const std::vector<shared_model::interface::types::AssetNameType>
       kIllegalAssetNames = {"",

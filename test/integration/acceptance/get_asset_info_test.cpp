@@ -4,15 +4,17 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/variant.hpp>
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+#include "interfaces/query_responses/asset_response.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class GetAssetInfo : public AcceptanceFixture {
  public:
@@ -72,9 +74,9 @@ class GetAssetInfo : public AcceptanceFixture {
                        uint8_t precision) {
     return [&](const proto::QueryResponse &response) {
       ASSERT_NO_THROW({
-        const auto &resp = boost::apply_visitor(
-            framework::SpecifiedVisitor<interface::AssetResponse>(),
-            response.get());
+        const auto &resp =
+            boost::get<const shared_model::interface::AssetResponse &>(
+                response.get());
         ASSERT_EQ(resp.asset().assetId(), asset);
         ASSERT_EQ(resp.asset().domainId(), domain);
         ASSERT_EQ(resp.asset().precision(), precision);
@@ -95,6 +97,9 @@ class GetAssetInfo : public AcceptanceFixture {
 };
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-228 "Basic" tests should be replaced with a
+ * common acceptance test
+ *
  * C363 Get asset info with CanReadAssets permission
  * @given a user with GetMyAccount permission
  * @when GetAssetInfo is queried on the user
@@ -106,6 +111,9 @@ TEST_F(GetAssetInfo, DISABLED_Basic) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-212 seems can be removed (covered by field
+ * validator test)
+ *
  * C365 Pass an empty asset id
  * @given a user with all required permissions
  * @when GetAssetInfo is queried on the empty asset name
@@ -119,6 +127,9 @@ TEST_F(GetAssetInfo, EmptyAsset) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-212 remove, covered by
+ * postgres_query_executor_test GetAssetInfoExecutorTest.InvalidNoAsset
+ *
  * C366 Pass a non-existing asset id
  * @given a user with all required permissions
  * @when GetAssetInfo is queried on the user
@@ -131,6 +142,10 @@ TEST_F(GetAssetInfo, NonexistentAsset) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-212 remove, covered by
+ * postgres_query_executor_test GetAssetInfoExecutorTest.Invalid
+ * seems we should move the common_query_permissions_test to SFV integration
+ *
  * C364 Get asset info without CanReadAssets permission
  * @given a user without any query-related permission
  * @when GetAssetInfo is queried on the user

@@ -15,13 +15,14 @@
 #include <boost/range/join.hpp>
 #include "block.pb.h"
 
+#include "backend/protobuf/batch_meta.hpp"
 #include "backend/protobuf/common_objects/peer.hpp"
 #include "backend/protobuf/permissions.hpp"
 #include "backend/protobuf/queries/proto_query_payload_meta.hpp"
+#include "backend/protobuf/queries/proto_tx_pagination_meta.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "module/shared_model/validators/validators_fixture.hpp"
-#include "utils/lazy_initializer.hpp"
 #include "validators/field_validator.hpp"
 #include "validators/permissions.hpp"
 
@@ -293,7 +294,7 @@ class FieldValidatorTest : public ValidatorsTest {
     return {case_name,
             [&, address, pubkey] {
               this->peer.set_address(address);
-              this->peer.set_peer_key(pubkey);
+              this->peer.set_peer_key(shared_model::crypto::Hash(pubkey).hex());
             },
             true,
             ""};
@@ -384,7 +385,7 @@ class FieldValidatorTest : public ValidatorsTest {
       // invalid pubkey
       makeInvalidPeerPubkeyTestCase("invalid_peer_pubkey_length",
                                     "182.13.35.1:3040",
-                                    std::string(64, '0')),
+                                    std::string(123, '0')),
       makeInvalidPeerPubkeyTestCase(
           "invalid_peer_pubkey_empty", "182.13.35.1:3040", "")
       // clang-format on
@@ -583,6 +584,9 @@ class FieldValidatorTest : public ValidatorsTest {
       //                   "more than max")
   };
 
+  // TODO mboldyrev 27.11.2018, IR-25: add the test cases
+  std::vector<FieldTestCase> tx_pagination_meta_test_cases;
+
   /**************************************************************************/
 
   /// Create no-operation validator
@@ -655,6 +659,10 @@ class FieldValidatorTest : public ValidatorsTest {
                     &FieldValidator::validateAssetName,
                     &FieldValidatorTest::asset_name,
                     asset_name_test_cases),
+      makeValidator("height",
+                    &FieldValidator::validateHeight,
+                    &FieldValidatorTest::counter,
+                    counter_test_cases),
       makeValidator(
           "created_time",
           static_cast<void (FieldValidator::*)(validation::ReasonsGroupType &,
@@ -677,7 +685,13 @@ class FieldValidatorTest : public ValidatorsTest {
           &FieldValidator::validateBatchMeta,
           &FieldValidatorTest::batch_meta,
           [](auto &&x) { return shared_model::proto::BatchMeta(x); },
-          batch_meta_test_cases)};
+          batch_meta_test_cases),
+      makeTransformValidator(
+          "pagination_meta",
+          &FieldValidator::validateTxPaginationMeta,
+          &FieldValidatorTest::tx_pagination_meta,
+          [](auto &&x) { return proto::TxPaginationMeta(x); },
+          tx_pagination_meta_test_cases)};
 };
 
 /**

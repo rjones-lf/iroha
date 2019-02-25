@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "consensus/yac/transport/impl/network_impl.hpp"
@@ -20,7 +8,6 @@
 #include <grpc++/grpc++.h>
 #include <memory>
 
-#include "consensus/yac/messages.hpp"
 #include "consensus/yac/storage/yac_common.hpp"
 #include "consensus/yac/transport/yac_pb_converters.hpp"
 #include "interfaces/common_objects/peer.hpp"
@@ -70,7 +57,7 @@ namespace iroha {
           auto vote = *PbConverters::deserializeVote(pb_vote);
           state.push_back(vote);
         }
-        if (not sameProposals(state)) {
+        if (not sameKeys(state)) {
           async_call_->log_->info(
               "Votes are stateless invalid: proposals are different, or empty "
               "collection");
@@ -80,7 +67,11 @@ namespace iroha {
         async_call_->log_->info(
             "Receive votes[size={}] from {}", state.size(), context->peer());
 
-        handler_.lock()->onState(state);
+        if (auto notifications = handler_.lock()) {
+          notifications->onState(std::move(state));
+        } else {
+          async_call_->log_->error("Unable to lock the subscriber");
+        }
         return grpc::Status::OK;
       }
 

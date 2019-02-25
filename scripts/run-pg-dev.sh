@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 PG_CONTAINER_NAME="postgres"
 PG_IMAGE_NAME="postgres:9.5"

@@ -1,34 +1,24 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
+
+#include "consensus/yac/impl/peer_orderer_impl.hpp"
+
+#include <iostream>
+#include <unordered_map>
 
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/math/distributions/chi_squared.hpp>
 #include <boost/range/adaptors.hpp>
 #include <boost/range/counting_range.hpp>
 #include <boost/range/numeric.hpp>
-#include <iostream>
-#include <unordered_map>
-
-#include "consensus/yac/impl/peer_orderer_impl.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
-#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
-#include "module/shared_model/builders/common_objects/peer_builder.hpp"
-#include "module/shared_model/builders/protobuf/common_objects/proto_peer_builder.hpp"
+
+#include "module/irohad/ametsuchi/mock_peer_query.hpp"
+#include "module/irohad/ametsuchi/mock_peer_query_factory.hpp"
+#include "module/irohad/consensus/yac/yac_test_util.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 
 using namespace boost::adaptors;
 using namespace iroha::ametsuchi;
@@ -36,6 +26,7 @@ using namespace iroha::consensus::yac;
 
 using namespace std;
 using ::testing::Return;
+using ::testing::ReturnRefOfCopy;
 
 using wPeer = std::shared_ptr<shared_model::interface::Peer>;
 
@@ -57,12 +48,14 @@ class YacPeerOrdererTest : public ::testing::Test {
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers = [] {
     std::vector<std::shared_ptr<shared_model::interface::Peer>> result;
     for (size_t i = 1; i <= N_PEERS; ++i) {
-      std::shared_ptr<shared_model::interface::Peer> peer =
-          clone(shared_model::proto::PeerBuilder()
-                    .address(std::to_string(i))
-                    .pubkey(shared_model::interface::types::PubkeyType(
-                        std::string(32, '0')))
-                    .build());
+      auto peer = std::make_shared<MockPeer>();
+      EXPECT_CALL(*peer, address())
+          .WillRepeatedly(ReturnRefOfCopy(std::to_string(i)));
+      EXPECT_CALL(*peer, pubkey())
+          .WillRepeatedly(
+              ReturnRefOfCopy(shared_model::interface::types::PubkeyType(
+                  std::string(32, '0'))));
+
       result.push_back(peer);
     }
     return result;
@@ -71,14 +64,16 @@ class YacPeerOrdererTest : public ::testing::Test {
   std::vector<wPeer> s_peers = [] {
     std::vector<wPeer> result;
     for (size_t i = 1; i <= N_PEERS; ++i) {
-      auto tmp = iroha::consensus::yac::mk_peer(std::to_string(i));
-
-      shared_model::proto::PeerBuilder builder;
+      auto tmp = iroha::consensus::yac::makePeer(std::to_string(i));
 
       auto key = tmp->pubkey();
-      auto peer = builder.address(tmp->address()).pubkey(key).build();
 
-      result.emplace_back(clone(peer));
+      auto peer = std::make_shared<MockPeer>();
+      EXPECT_CALL(*peer, address())
+          .WillRepeatedly(ReturnRefOfCopy(tmp->address()));
+      EXPECT_CALL(*peer, pubkey()).WillRepeatedly(ReturnRefOfCopy(key));
+
+      result.emplace_back(peer);
     }
     return result;
   }();
@@ -140,7 +135,10 @@ TEST_F(YacPeerOrdererTest, FairnessTest) {
   auto peers_set =
       transform(boost::counting_range(1, times + 1), [this](const auto &i) {
         std::string hash = std::to_string(i);
-        return orderer.getOrdering(YacHash(hash, hash)).value().getPeers();
+        return orderer
+            .getOrdering(YacHash(iroha::consensus::Round{1, 1}, hash, hash))
+            .value()
+            .getPeers();
       });
   for (const auto &peers : peers_set) {
     std::string res = std::accumulate(peers.begin(),

@@ -6,9 +6,13 @@
 #include "ordering/impl/on_demand_os_client_grpc.hpp"
 
 #include <gtest/gtest.h>
+#include "backend/protobuf/proposal.hpp"
+#include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "framework/mock_stream.h"
 #include "interfaces/iroha_internal/proposal.hpp"
+#include "interfaces/iroha_internal/transaction_batch_impl.hpp"
+#include "module/shared_model/validators/validators.hpp"
 #include "ordering_mock.grpc.pb.h"
 
 using namespace iroha;
@@ -22,14 +26,37 @@ using ::testing::Return;
 using ::testing::SaveArg;
 using ::testing::SetArgPointee;
 
-struct OnDemandOsClientGrpcTest : public ::testing::Test {
+class OnDemandOsClientGrpcTest : public ::testing::Test {
+ public:
+  using ProtoProposalTransportFactory =
+      shared_model::proto::ProtoTransportFactory<
+          shared_model::interface::Proposal,
+          shared_model::proto::Proposal>;
+  using ProposalTransportFactory =
+      shared_model::interface::AbstractTransportFactory<
+          shared_model::interface::Proposal,
+          shared_model::proto::Proposal::TransportType>;
+  using MockProposalValidator = shared_model::validation::MockValidator<
+      shared_model::interface::Proposal>;
+  using MockProtoProposalValidator =
+      shared_model::validation::MockValidator<iroha::protocol::Proposal>;
+
   void SetUp() override {
     auto ustub = std::make_unique<proto::MockOnDemandOrderingStub>();
     stub = ustub.get();
     async_call =
         std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
-    client = std::make_shared<OnDemandOsClientGrpc>(
-        std::move(ustub), async_call, [&] { return timepoint; }, timeout);
+    auto validator = std::make_unique<MockProposalValidator>();
+    proposal_validator = validator.get();
+    auto proto_validator = std::make_unique<MockProtoProposalValidator>();
+    proto_proposal_validator = proto_validator.get();
+    proposal_factory = std::make_shared<ProtoProposalTransportFactory>(
+        std::move(validator), std::move(proto_validator));
+    client = std::make_shared<OnDemandOsClientGrpc>(std::move(ustub),
+                                                    async_call,
+                                                    proposal_factory,
+                                                    [&] { return timepoint; },
+                                                    timeout);
   }
 
   proto::MockOnDemandOrderingStub *stub;
@@ -37,19 +64,23 @@ struct OnDemandOsClientGrpcTest : public ::testing::Test {
   OnDemandOsClientGrpc::TimepointType timepoint;
   std::chrono::milliseconds timeout{1};
   std::shared_ptr<OnDemandOsClientGrpc> client;
-  Round round{1, 2};
+  consensus::Round round{1, 2};
+
+  MockProposalValidator *proposal_validator;
+  MockProtoProposalValidator *proto_proposal_validator;
+  std::shared_ptr<ProposalTransportFactory> proposal_factory;
 };
 
 /**
  * @given client
- * @when onTransactions is called
+ * @when onBatches is called
  * @then data is correctly serialized and sent
  */
-TEST_F(OnDemandOsClientGrpcTest, onTransactions) {
-  proto::TransactionsRequest request;
+TEST_F(OnDemandOsClientGrpcTest, onBatches) {
+  proto::BatchesRequest request;
   auto r = std::make_unique<
       MockClientAsyncResponseReader<google::protobuf::Empty>>();
-  EXPECT_CALL(*stub, AsyncSendTransactionsRaw(_, _, _))
+  EXPECT_CALL(*stub, AsyncSendBatchesRaw(_, _, _))
       .WillOnce(DoAll(SaveArg<1>(&request), Return(r.get())));
 
   OdOsNotification::CollectionType collection;
@@ -57,8 +88,11 @@ TEST_F(OnDemandOsClientGrpcTest, onTransactions) {
   protocol::Transaction tx;
   tx.mutable_payload()->mutable_reduced_payload()->set_creator_account_id(
       creator);
-  collection.push_back(std::make_unique<shared_model::proto::Transaction>(tx));
-  client->onTransactions(round, std::move(collection));
+  collection.push_back(
+      std::make_unique<shared_model::interface::TransactionBatchImpl>(
+          shared_model::interface::types::SharedTxsCollectionType{
+              std::make_unique<shared_model::proto::Transaction>(tx)}));
+  client->onBatches(round, std::move(collection));
 
   ASSERT_EQ(request.round().block_round(), round.block_round);
   ASSERT_EQ(request.round().reject_round(), round.reject_round);

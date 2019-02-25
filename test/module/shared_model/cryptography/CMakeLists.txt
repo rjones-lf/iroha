@@ -1,3 +1,8 @@
+#
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 addtest(blob_test blob_test.cpp)
 target_link_libraries(blob_test
         shared_model_cryptography_model

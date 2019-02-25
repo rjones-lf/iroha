@@ -6,6 +6,7 @@
 #ifndef IROHA_PROTO_QUERY_BUILDER_TEMPLATE_HPP
 #define IROHA_PROTO_QUERY_BUILDER_TEMPLATE_HPP
 
+#include <boost/optional.hpp>
 #include <boost/range/algorithm/for_each.hpp>
 
 #include "backend/protobuf/queries/proto_query.hpp"
@@ -77,6 +78,19 @@ namespace shared_model {
         return copy;
       }
 
+      /// Set tx pagination meta
+      template <typename PageMetaPayload>
+      static auto setTxPaginationMeta(
+          PageMetaPayload *page_meta_payload,
+          interface::types::TransactionsNumberType page_size,
+          const boost::optional<interface::types::HashType> &first_hash =
+              boost::none) {
+        page_meta_payload->set_page_size(page_size);
+        if (first_hash) {
+          page_meta_payload->set_first_tx_hash(first_hash->hex());
+        }
+      }
+
      public:
       TemplateQueryBuilder(const SV &validator = SV())
           : stateless_validator_(validator) {}
@@ -118,20 +132,30 @@ namespace shared_model {
       }
 
       auto getAccountTransactions(
-          const interface::types::AccountIdType &account_id) const {
+          const interface::types::AccountIdType &account_id,
+          interface::types::TransactionsNumberType page_size,
+          const boost::optional<interface::types::HashType> &first_hash =
+              boost::none) const {
         return queryField([&](auto proto_query) {
           auto query = proto_query->mutable_get_account_transactions();
           query->set_account_id(account_id);
+          setTxPaginationMeta(
+              query->mutable_pagination_meta(), page_size, first_hash);
         });
       }
 
       auto getAccountAssetTransactions(
           const interface::types::AccountIdType &account_id,
-          const interface::types::AssetIdType &asset_id) const {
+          const interface::types::AssetIdType &asset_id,
+          interface::types::TransactionsNumberType page_size,
+          const boost::optional<interface::types::HashType> &first_hash =
+              boost::none) const {
         return queryField([&](auto proto_query) {
           auto query = proto_query->mutable_get_account_asset_transactions();
           query->set_account_id(account_id);
           query->set_asset_id(asset_id);
+          setTxPaginationMeta(
+              query->mutable_pagination_meta(), page_size, first_hash);
         });
       }
 
@@ -161,6 +185,13 @@ namespace shared_model {
         });
       }
 
+      auto getBlock(interface::types::HeightType height) const {
+        return queryField([&](auto proto_query) {
+          auto query = proto_query->mutable_get_block();
+          query->set_height(height);
+        });
+      }
+
       auto getRoles() const {
         return queryField(
             [&](auto proto_query) { proto_query->mutable_get_roles(); });
@@ -186,7 +217,7 @@ namespace shared_model {
         return queryField([&](auto proto_query) {
           auto query = proto_query->mutable_get_transactions();
           boost::for_each(hashes, [&query](const auto &hash) {
-            query->add_tx_hashes(toBinaryString(hash));
+            query->add_tx_hashes(hash.hex());
           });
         });
       }

@@ -7,32 +7,42 @@
 
 #include <boost/range/combine.hpp>
 #include "interfaces/iroha_internal/proposal.hpp"
+#include "ordering/impl/on_demand_common.hpp"
 
+using namespace iroha;
 using namespace iroha::ordering;
 
 OnDemandConnectionManager::OnDemandConnectionManager(
     std::shared_ptr<transport::OdOsNotificationFactory> factory,
-    CurrentPeers initial_peers,
-    rxcpp::observable<CurrentPeers> peers)
-    : factory_(std::move(factory)),
+    rxcpp::observable<CurrentPeers> peers,
+    logger::Logger log)
+    : log_(std::move(log)),
+      factory_(std::move(factory)),
       subscription_(peers.subscribe([this](const auto &peers) {
         // exclusive lock
         std::lock_guard<std::shared_timed_mutex> lock(mutex_);
 
         this->initializeConnections(peers);
-      })) {
+      })) {}
+
+OnDemandConnectionManager::OnDemandConnectionManager(
+    std::shared_ptr<transport::OdOsNotificationFactory> factory,
+    rxcpp::observable<CurrentPeers> peers,
+    CurrentPeers initial_peers,
+    logger::Logger log)
+    : OnDemandConnectionManager(std::move(factory), peers, std::move(log)) {
   // using start_with(initial_peers) results in deadlock
   initializeConnections(initial_peers);
 }
 
-void OnDemandConnectionManager::onTransactions(transport::Round round,
-                                               CollectionType transactions) {
-  // shared lock
+OnDemandConnectionManager::~OnDemandConnectionManager() {
+  subscription_.unsubscribe();
+}
+
+void OnDemandConnectionManager::onBatches(consensus::Round round,
+                                          CollectionType batches) {
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
 
-  const PeerType types[] = {kCurrentRoundRejectConsumer,
-                            kNextRoundRejectConsumer,
-                            kNextRoundCommitConsumer};
   /*
    * Transactions are always sent to the round after the next round (+2)
    * There are 3 possibilities - next reject in the current round, first reject
@@ -45,21 +55,27 @@ void OnDemandConnectionManager::onTransactions(transport::Round round,
    * 1 x v .
    * 2 v . .
    */
-  const transport::Round rounds[] = {
-      {round.block_round, round.reject_round + 2},
-      {round.block_round + 1, 2},
-      {round.block_round + 2, 1}};
 
-  for (auto &&pair : boost::combine(types, rounds)) {
-    connections_.peers[boost::get<0>(pair)]->onTransactions(boost::get<1>(pair),
-                                                            transactions);
-  }
+  auto propagate = [this, batches](PeerType type, consensus::Round round) {
+    log_->debug("onBatches, {}", round);
+
+    connections_.peers[type]->onBatches(round, batches);
+  };
+
+  propagate(
+      kCurrentRoundRejectConsumer,
+      {round.block_round, currentRejectRoundConsumer(round.reject_round)});
+  propagate(kNextRoundRejectConsumer,
+            {round.block_round + 1, kNextRejectRoundConsumer});
+  propagate(kNextRoundCommitConsumer,
+            {round.block_round + 2, kNextCommitRoundConsumer});
 }
 
-boost::optional<OnDemandConnectionManager::ProposalType>
-OnDemandConnectionManager::onRequestProposal(transport::Round round) {
-  // shared lock
+boost::optional<std::shared_ptr<const OnDemandConnectionManager::ProposalType>>
+OnDemandConnectionManager::onRequestProposal(consensus::Round round) {
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
+
+  log_->debug("onRequestProposal, {}", round);
 
   return connections_.peers[kIssuer]->onRequestProposal(round);
 }

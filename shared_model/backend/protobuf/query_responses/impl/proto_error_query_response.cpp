@@ -24,9 +24,8 @@ namespace shared_model {
                 variant_impl<ProtoQueryErrorResponseListType>::template load<
                     ProtoQueryErrorResponseVariantType>(
                     std::forward<decltype(ar)>(ar), which);
-          }},
-          ivariant_{detail::makeLazyInitializer(
-              [this] { return QueryErrorResponseVariantType(*variant_); })} {}
+          }()},
+          ivariant_{QueryErrorResponseVariantType{variant_}} {}
 
     template ErrorQueryResponse::ErrorQueryResponse(
         ErrorQueryResponse::TransportType &);
@@ -43,12 +42,16 @@ namespace shared_model {
 
     const ErrorQueryResponse::QueryErrorResponseVariantType &
     ErrorQueryResponse::get() const {
-      return *ivariant_;
+      return ivariant_;
     }
 
     const ErrorQueryResponse::ErrorMessageType &
     ErrorQueryResponse::errorMessage() const {
       return proto_->error_response().message();
+    }
+
+    ErrorQueryResponse::ErrorCodeType ErrorQueryResponse::errorCode() const {
+      return proto_->error_response().error_code();
     }
 
   }  // namespace proto

@@ -22,15 +22,19 @@ namespace iroha {
      * @param account_id - fully qualified account id, e.g. admin@test
      * @param path_to_keypair - path to directory that contains priv and pub key
      * of an account
+     * @param log to print progress
      */
-    explicit KeysManagerImpl(const std::string &account_id,
-                             const boost::filesystem::path &path_to_keypair);
+    KeysManagerImpl(const std::string &account_id,
+                    const boost::filesystem::path &path_to_keypair,
+                    logger::Logger log = logger::log("KeysManagerImpl"));
 
     /**
      * Initialize key manager for a specific account
      * @param account_id - fully qualified account id, e.g. admin@test
+     * @param log to print progress
      */
-    explicit KeysManagerImpl(const std::string account_id);
+    KeysManagerImpl(const std::string account_id,
+                    logger::Logger log = logger::log("KeysManagerImpl"));
 
     bool createKeys() override;
 

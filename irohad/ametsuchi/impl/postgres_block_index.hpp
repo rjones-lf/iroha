@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_POSTGRES_BLOCK_INDEX_HPP
@@ -29,34 +17,26 @@ namespace iroha {
   namespace ametsuchi {
     class PostgresBlockIndex : public BlockIndex {
      public:
-      explicit PostgresBlockIndex(soci::session &sql);
+      PostgresBlockIndex(
+          soci::session &sql,
+          logger::Logger log = logger::log("PostgresBlockIndex"));
 
+      /**
+       * Create several indices for block. Namely:
+       * transaction hash -> block, where this transaction is stored
+       * transaction creator -> block where his transaction is located
+       *
+       * Additionally, for each Transfer Asset command:
+       *   1. (account, asset) -> block for each:
+       *     a. creator of the transaction
+       *     b. source account
+       *     c. destination account
+       *   2. account -> block for source and destination accounts
+       *   3. (account, height) -> list of txes
+       */
       void index(const shared_model::interface::Block &block) override;
 
      private:
-      /**
-       * Make index account_id -> list of blocks where his txs exist
-       * @param account_id of transaction creator
-       * @param height of block
-       */
-      auto indexAccountIdHeight(const std::string &account_id,
-                                const std::string &height);
-
-      /**
-       * Collect all assets belonging to creator, sender, and receiver
-       * to make account_id:height:asset_id -> list of tx indexes (where
-       * tx with certain asset is placed in the block)
-       * @param account_id of transaction creator
-       * @param height of block
-       * @param index of transaction in the block
-       * @param commands in the transaction
-       */
-      auto indexAccountAssets(
-          const std::string &account_id,
-          const std::string &height,
-          const std::string &index,
-          const shared_model::interface::Transaction::CommandsType &commands);
-
       soci::session &sql_;
       logger::Logger log_;
     };

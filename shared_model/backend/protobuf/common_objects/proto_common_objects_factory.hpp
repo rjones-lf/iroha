@@ -34,7 +34,7 @@ namespace shared_model {
           const interface::types::PubkeyType &public_key) override {
         iroha::protocol::Peer peer;
         peer.set_address(address);
-        peer.set_peer_key(crypto::toBinaryString(public_key));
+        peer.set_peer_key(public_key.hex());
         auto proto_peer = std::make_unique<Peer>(std::move(peer));
 
         auto errors =
@@ -155,8 +155,8 @@ namespace shared_model {
           const interface::types::PubkeyType &key,
           const interface::Signature::SignedType &signed_data) override {
         iroha::protocol::Signature signature;
-        signature.set_public_key(crypto::toBinaryString(key));
-        signature.set_signature(crypto::toBinaryString(signed_data));
+        signature.set_public_key(key.hex());
+        signature.set_signature(signed_data.hex());
 
         auto proto_singature =
             std::make_unique<Signature>(std::move(signature));

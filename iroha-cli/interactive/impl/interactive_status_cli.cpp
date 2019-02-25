@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "interactive/interactive_status_cli.hpp"
@@ -34,10 +22,18 @@ namespace iroha_cli {
              "Transaction has not passed stateful validation."},
             {iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS,
              "Transaction has successfully passed stateful validation."},
+            {iroha::protocol::TxStatus::REJECTED,
+             "Transaction has been rejected."},
             {iroha::protocol::TxStatus::COMMITTED,
              "Transaction was successfully committed."},
+            {iroha::protocol::TxStatus::MST_EXPIRED,
+             "Transaction has not collected enough signatures in time."},
             {iroha::protocol::TxStatus::NOT_RECEIVED,
-             "Transaction was not found in the system."}};
+             "Transaction was not found in the system."},
+            {iroha::protocol::TxStatus::MST_PENDING,
+             "Transaction has not collected quorum of signatures."},
+            {iroha::protocol::TxStatus::ENOUGH_SIGNATURES_COLLECTED,
+             "Transaction has collected all signatures."}};
 
     InteractiveStatusCli::InteractiveStatusCli(
         const std::string &default_peer_ip, int default_port)
@@ -143,7 +139,7 @@ namespace iroha_cli {
       iroha::protocol::ToriiResponse answer;
       if (iroha::hexstringToBytestring(txHash_)) {
         answer = CliClient(address.value().first, address.value().second)
-                     .getTxStatus(*iroha::hexstringToBytestring(txHash_))
+                     .getTxStatus(txHash_)
                      .answer;
         status = answer.tx_status();
       }
@@ -151,8 +147,8 @@ namespace iroha_cli {
       std::string message;
       try {
         message = userMessageMap.at(status);
-        if (not answer.error_message().empty()) {
-          message += " " + answer.error_message();
+        if (not answer.err_or_cmd_name().empty()) {
+          message += " error '" + answer.err_or_cmd_name() + "'";
         }
       } catch (const std::out_of_range &e) {
         message =

@@ -19,30 +19,36 @@ namespace shared_model {
      */
     class ProtoBlockFactory : public interface::UnsafeBlockFactory {
      public:
-      explicit ProtoBlockFactory(
+      ProtoBlockFactory(
           std::unique_ptr<shared_model::validation::AbstractValidator<
-              shared_model::interface::BlockVariant>> validator);
+              shared_model::interface::Block>> interface_validator,
+          std::unique_ptr<shared_model::validation::AbstractValidator<
+              iroha::protocol::Block>> proto_validator);
 
-      interface::BlockVariant unsafeCreateBlock(
+      std::unique_ptr<interface::Block> unsafeCreateBlock(
           interface::types::HeightType height,
           const interface::types::HashType &prev_hash,
           interface::types::TimestampType created_time,
-          const interface::types::TransactionsCollectionType &txs) override;
+          const interface::types::TransactionsCollectionType &txs,
+          const interface::types::HashCollectionType &rejected_hashes) override;
 
       /**
-       * Create block variant with nonempty block
+       * Create block variant
        *
        * @param block - proto block from which block variant is created
-       * @return BlockVariant with block.
-       *         Error if block is empty, or if it is invalid
+       * @return Pointer to block.
+       *         Error if block is invalid
        */
-      iroha::expected::Result<interface::BlockVariant, std::string> createBlock(
-          iroha::protocol::Block block);
+      iroha::expected::Result<std::unique_ptr<interface::Block>, std::string>
+      createBlock(iroha::protocol::Block block);
 
      private:
       std::unique_ptr<shared_model::validation::AbstractValidator<
-          shared_model::interface::BlockVariant>>
-          validator_;
+          shared_model::interface::Block>>
+          interface_validator_;
+      std::unique_ptr<
+          shared_model::validation::AbstractValidator<iroha::protocol::Block>>
+          proto_validator_;
     };
   }  // namespace proto
 }  // namespace shared_model

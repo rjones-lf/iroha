@@ -1,30 +1,19 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_MUTABLE_STORAGE_HPP
 #define IROHA_MUTABLE_STORAGE_HPP
 
 #include <functional>
+
+#include <rxcpp/rx.hpp>
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
     class Block;
-    class BlockVariant;
   }  // namespace interface
 }  // namespace shared_model
 
@@ -32,6 +21,7 @@ namespace iroha {
   namespace ametsuchi {
 
     class WsvQuery;
+    class PeerQuery;
 
     /**
      * Mutable storage is used apply blocks to the storage.
@@ -40,41 +30,35 @@ namespace iroha {
     class MutableStorage {
      public:
       /**
-       * Predicate type checking type T
+       * Predicate type checking block
+       * Function parameters:
+       *  - Block - block to be checked
+       *  - PeerQuery - interface for ledger peers list retrieval
+       *  - HashType - hash of top block in blockchain
        */
-      template <typename T>
-      using MutableStoragePredicateType =
-          std::function<bool(const T &,
-                             WsvQuery &,
+      using MutableStoragePredicate =
+          std::function<bool(const shared_model::interface::Block &,
+                             PeerQuery &,
                              const shared_model::interface::types::HashType &)>;
 
       /**
-       * Checks if block satisfies predicated
-       * @param block block to be checked
-       * @param predicate function returning true if predicate satisfied and
-       * false otherwise
-       * @return result of predicate
+       * Applies block without additional validation function
+       * @see apply(block, function)
        */
-      virtual bool check(const shared_model::interface::BlockVariant &block,
-                         MutableStoragePredicateType<decltype(block)>) = 0;
+      virtual bool apply(const shared_model::interface::Block &block) = 0;
 
       /**
-       * Applies a block to current mutable state
-       * using logic specified in function
-       * @param block Block to be applied
-       * @param function Function that specifies the logic used to apply the
-       * block
-       * Function parameters:
-       *  - Block @see block
-       *  - WsvQuery - world state view query interface for mutable storage
-       *  - hash256_t - hash of top block in blockchain
-       * Function returns true if the block is successfully applied, false
-       * otherwise.
-       * @return True if block was successfully applied, false otherwise.
+       * Applies an observable of blocks to current mutable state using logic
+       * specified in function
+       * @param blocks Blocks to be applied
+       * @param predicate Checks whether block is applicable prior to applying
+       * transactions
+       * @return True if blocks were successfully applied, false otherwise.
        */
       virtual bool apply(
-          const shared_model::interface::Block &block,
-          MutableStoragePredicateType<decltype(block)> function) = 0;
+          rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+              blocks,
+          MutableStoragePredicate predicate) = 0;
 
       virtual ~MutableStorage() = default;
     };

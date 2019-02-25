@@ -10,8 +10,12 @@ using namespace integration_framework;
 using namespace shared_model;
 using namespace shared_model::interface;
 using namespace shared_model::interface::permissions;
+using namespace common_constants;
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-216 remove, covered by
+ * postgres_executor_test GrantPermissions.NoAccount
+ *
  * C256 Grant permission to a non-existing account
  * @given an account with rights to grant rights to other accounts
  * @when the account grants rights to non-existing account
@@ -32,10 +36,15 @@ TEST_F(GrantablePermissionsFixture, GrantToInexistingAccount) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-216 transform to command executor storage
+ * integration test
+ * the part with queries is covered by permission SFV integration tests
+ *
  * C257 Grant add signatory permission
  * @given an account with rights to grant rights to other accounts
  * AND the account grants add signatory rights to an existing account
@@ -54,27 +63,28 @@ TEST_F(GrantablePermissionsFixture, GrantAddSignatoryPermission) {
   itf.setInitialState(kAdminKeypair);
   auto &x = createTwoAccounts(
       itf, {Role::kAddMySignatory, Role::kGetMySignatories}, {Role::kReceive});
-  x.sendTx(grantPermission(kAccount1,
-                           kAccount1Keypair,
-                           kAccount2,
-                           permissions::Grantable::kAddMySignatory))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
+  x.sendTxAwait(grantPermission(kAccount1,
+                                kAccount1Keypair,
+                                kAccount2,
+                                permissions::Grantable::kAddMySignatory),
+                [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       // Add signatory
-      .sendTx(permitteeModifySignatory(
-          &TestUnsignedTransactionBuilder::addSignatory,
-          kAccount2,
-          kAccount2Keypair,
-          kAccount1))
-      .checkBlock(
+      .sendTxAwait(
+          permitteeModifySignatory(
+              &TestUnsignedTransactionBuilder::addSignatory,
+              kAccount2,
+              kAccount2Keypair,
+              kAccount1),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendQuery(querySignatories(kAccount1, kAccount1Keypair),
-                 check_if_signatory_is_contained)
-      .done();
+                 check_if_signatory_is_contained);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-216 transform to command executor storage
+ * integration test
+ * the part with queries is covered by permission SFV integration tests
+ *
  * C258 Grant remove signatory permission
  * @given an account with rights to grant rights to other accounts
  * AND the account grants add and remove signatory rights to an existing account
@@ -102,36 +112,37 @@ TEST_F(GrantablePermissionsFixture, GrantRemoveSignatoryPermission) {
                               kAccount2,
                               permissions::Grantable::kAddMySignatory))
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
-      .sendTx(grantPermission(kAccount1,
-                              kAccount1Keypair,
-                              kAccount2,
-                              permissions::Grantable::kRemoveMySignatory))
-      .skipProposal()
-      .checkBlock(
+      .sendTxAwait(
+          grantPermission(kAccount1,
+                          kAccount1Keypair,
+                          kAccount2,
+                          permissions::Grantable::kRemoveMySignatory),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(permitteeModifySignatory(
-          &TestUnsignedTransactionBuilder::addSignatory,
-          kAccount2,
-          kAccount2Keypair,
-          kAccount1))
-      .skipProposal()
-      .checkBlock(
+      .sendTxAwait(
+          permitteeModifySignatory(
+              &TestUnsignedTransactionBuilder::addSignatory,
+              kAccount2,
+              kAccount2Keypair,
+              kAccount1),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(permitteeModifySignatory(
-          &TestUnsignedTransactionBuilder::removeSignatory,
-          kAccount2,
-          kAccount2Keypair,
-          kAccount1))
-      .skipProposal()
-      .checkBlock(
+      .sendTxAwait(
+          permitteeModifySignatory(
+              &TestUnsignedTransactionBuilder::removeSignatory,
+              kAccount2,
+              kAccount2Keypair,
+              kAccount1),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendQuery(querySignatories(kAccount1, kAccount1Keypair),
-                 check_if_signatory_is_not_contained)
-      .done();
+                 check_if_signatory_is_not_contained);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-216 remove, covered by
+ * postgres_executor_test GrantPermissions.Valid
+ * and permission tests
+ *
  * C259 Grant set quorum permission
  * @given an account with rights to grant rights to other accounts
  * AND the account grants add signatory rights
@@ -156,12 +167,14 @@ TEST_F(GrantablePermissionsFixture, GrantSetQuorumPermission) {
                               kAccount2,
                               permissions::Grantable::kSetMyQuorum))
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(grantPermission(kAccount1,
                               kAccount1Keypair,
                               kAccount2,
                               permissions::Grantable::kAddMySignatory))
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(permitteeModifySignatory(
           &TestUnsignedTransactionBuilder::addSignatory,
@@ -169,17 +182,20 @@ TEST_F(GrantablePermissionsFixture, GrantSetQuorumPermission) {
           kAccount2Keypair,
           kAccount1))
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
-      .sendTx(setQuorum(kAccount2, kAccount2Keypair, kAccount1, 2))
-      .skipProposal()
-      .checkBlock(
+      .sendTxAwait(
+          setQuorum(kAccount2, kAccount2Keypair, kAccount1, 2),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendQuery(queryAccount(kAccount1, kAccount1Keypair),
-                 check_quorum_quantity)
-      .done();
+                 check_quorum_quantity);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-216 transform to command executor storage
+ * integration test
+ * the part with queries is covered by permission SFV integration tests
+ *
  * C260 Grant set account detail permission
  * @given an account with rights to grant rights to other accounts
  * AND the account grants set account detail permission to a permittee
@@ -196,27 +212,28 @@ TEST_F(GrantablePermissionsFixture, GrantSetAccountDetailPermission) {
   itf.setInitialState(kAdminKeypair);
   createTwoAccounts(
       itf, {Role::kSetMyAccountDetail, Role::kGetMyAccDetail}, {Role::kReceive})
-      .sendTx(grantPermission(kAccount1,
-                              kAccount1Keypair,
-                              kAccount2,
-                              permissions::Grantable::kSetMyAccountDetail))
-      .skipProposal()
-      .checkBlock(
+      .sendTxAwait(
+          grantPermission(kAccount1,
+                          kAccount1Keypair,
+                          kAccount2,
+                          permissions::Grantable::kSetMyAccountDetail),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(setAccountDetail(kAccount2,
-                               kAccount2Keypair,
-                               kAccount1,
-                               kAccountDetailKey,
-                               kAccountDetailValue))
-      .skipProposal()
-      .checkBlock(
+      .sendTxAwait(
+          setAccountDetail(kAccount2,
+                           kAccount2Keypair,
+                           kAccount1,
+                           kAccountDetailKey,
+                           kAccountDetailValue),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendQuery(queryAccountDetail(kAccount1, kAccount1Keypair),
-                 check_account_detail)
-      .done();
+                 check_account_detail);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-216 transform to command executor storage
+ * integration test
+ * the part with queries is covered by permission SFV integration tests
+ *
  * C261 Grant transfer permission
  * @given an account with rights to grant transfer of his/her assets
  * AND the account can receive assets
@@ -242,22 +259,27 @@ TEST_F(GrantablePermissionsFixture, GrantTransferPermission) {
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(addAssetAndTransfer(IntegrationTestFramework::kAdminName,
-                                  kAdminKeypair,
-                                  amount_of_asset,
-                                  kAccount1))
-      .skipProposal()
-      .checkBlock(
+      .sendTxAwait(
+          addAssetAndTransfer(kAdminName,
+                              kAdminKeypair,
+                              amount_of_asset,
+                              kAccount1),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(transferAssetFromSource(
-          kAccount2, kAccount2Keypair, kAccount1, amount_of_asset, kAccount2))
-      .skipProposal()
-      .checkBlock(
+      .sendTxAwait(
+          transferAssetFromSource(kAccount2,
+                                  kAccount2Keypair,
+                                  kAccount1,
+                                  amount_of_asset,
+                                  kAccount2),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .done();
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-216 remove, covered by
+ * postgres_executor_test GrantPermissions.NoPerms
+ * the part with queries is covered by permission SFV integration tests
+ *
  * C262 GrantPermission without such permissions
  * @given an account !without! rights to grant rights to other accounts
  * @when the account grants rights to an existing account
@@ -273,11 +295,15 @@ TEST_F(GrantablePermissionsFixture, GrantWithoutGrantPermissions) {
         .checkVerifiedProposal([](auto &proposal) {
           ASSERT_EQ(proposal->transactions().size(), 0);
         })
-        .done();
+        .checkBlock(
+            [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
   }
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-216 transform to command executor storage
+ * integration test
+ *
  * C263 GrantPermission more than once
  * @given an account with rights to grant rights to other accounts
  * AND an account that have already granted a permission to a permittee
@@ -303,5 +329,6 @@ TEST_F(GrantablePermissionsFixture, GrantMoreThanOnce) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
 }

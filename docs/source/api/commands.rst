@@ -20,19 +20,7 @@ Schema
 
     message AddAssetQuantity {
         string asset_id = 1;
-        Amount amount = 2;
-    }
-
-    message uint256 {
-        uint64 first = 1;
-        uint64 second = 2;
-        uint64 third = 3;
-        uint64 fourth = 4;
-    }
-
-    message Amount {
-        uint256 value = 1;
-        uint32 precision = 2;
+        string amount = 2;
     }
 
 .. note::
@@ -56,6 +44,17 @@ Validation
 1. Asset and account should exist
 2. Added quantity precision should be equal to asset precision
 3. Creator of a transaction should have a role which has permissions for issuing assets
+
+Possible Stateful Validation Errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not add asset quantity", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Command's creator does not have permission to add asset quantity", "Grant the necessary permission"
+    "3", "No such asset", "Cannot find asset with such name or such precision", "Make sure asset id and precision are correct"
+    "4", "Summation overflow", "Resulting amount of asset is greater than the system can support", "Make sure that resulting amount is less than 2^256"
 
 Add peer
 --------
@@ -93,8 +92,18 @@ Structure
 Validation
 ^^^^^^^^^^
 
-1. Creator of the transaction has a role which has CanAddPeer permission
-2. Such network address has not been already added
+1. Peer key is unique (there is no other peer with such public key)
+2. Creator of the transaction has a role which has CanAddPeer permission
+3. Such network address has not been already added
+
+Possible Stateful Validation Errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not add peer", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Command's creator does not have permission to add peer", "Grant the necessary permission"
 
 Add signatory
 -------------
@@ -134,6 +143,17 @@ Two cases:
 
     Case 2. CanAddSignatory was granted to transaction creator
 
+Possible Stateful Validation Errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not add signatory", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Command's creator does not have permission to add signatory", "Grant the necessary permission"
+    "3", "No such account", "Cannot find account to add signatory to", "Make sure account id is correct"
+    "4", "Signatory already exists", "Account already has such signatory attached", "Choose another signatory"
+
 Append role
 -----------
 
@@ -168,6 +188,17 @@ Validation
 1. The role should exist in the system
 2. Transaction creator should have permissions to append role (CanAppendRole)
 3. Account, which appends role, has set of permissions in his roles that is a superset of appended role (in other words no-one can append role that is more powerful than what transaction creator is)
+
+Possible Stateful Validation Errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not append role", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Command's creator does not have permission to append role", "Grant the necessary permission"
+    "3", "No such account", "Cannot find account to append role to", "Make sure account id is correct"
+    "4", "No such role", "Cannot find role with such name", "Make sure role id is correct"
 
 Create account
 --------------
@@ -205,6 +236,17 @@ Validation
 1. Transaction creator has permission to create an account
 2. Domain, passed as domain_id, has already been created in the system
 3. Such public key has not been added before as first public key of account or added to a multi-signature account
+
+Possible Stateful Validation Errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not create account", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Command's creator either does not have permission to create account or tries to create account in a more privileged domain, than the one creator is in", "Grant the necessary permission or choose another domain"
+    "3", "No such domain", "Cannot find domain with such name", "Make sure domain id is correct"
+    "4", "Account already exists", "Account with such name already exists in that domain", "Choose another name"
 
 Create asset
 ------------
@@ -247,6 +289,17 @@ Validation
 1. Transaction creator has permission to create assets
 2. Asset name is unique in domain
 
+Possible Stateful Validation Errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not create asset", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Command's creator does not have permission to create asset", "Grant the necessary permission"
+    "3", "No such domain", "Cannot find domain with such name", "Make sure domain id is correct"
+    "4", "Asset already exists", "Asset with such name already exists", "Choose another name"
+
 Create domain
 -------------
 
@@ -282,6 +335,17 @@ Validation
 2. Account, who sends this command in transaction, has role with permission to create domain
 3. Role, which will be assigned to created user by default, exists in the system
 
+Possible Stateful Validation Errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not create domain", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Command's creator does not have permission to create domain", "Grant the necessary permission"
+    "3", "Domain already exists", "Domain with such name already exists", "Choose another domain name"
+    "4", "No default role found", "Role, which is provided as a default one for the domain, is not found", "Make sure the role you provided exists or create it"
+
 Create role
 -----------
 
@@ -297,8 +361,8 @@ Schema
 .. code-block:: proto
 
     message CreateRole {
-       string role_name = 1;
-       repeated string permissions = 2;
+        string role_name = 1;
+        repeated RolePermission permissions = 2;
     }
 
 Structure
@@ -309,13 +373,23 @@ Structure
     :widths: 15, 30, 20, 15
 
     "Role name", "name of role to create", "`[a-z_0-9]{1,32}`", "User"
-    "Permissions", "array of already existent permissions", "set of passed permissions is fully included into set of existing permissions", "{can_receive, can_transfer}"
+    "RolePermission", "array of already existent permissions", "set of passed permissions is fully included into set of existing permissions", "{can_receive, can_transfer}"
 
 Validation
 ^^^^^^^^^^
 
 1. Set of passed permissions is fully included into set of existing permissions
 2. Set of the permissions is not empty
+
+Possible Stateful Validation Errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not create role", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Command's creator does not have permission to create role", "Grant the necessary permission"
+    "3", "Role already exists", "Role with such name already exists", "Choose another role name"
 
 Detach role
 -----------
@@ -352,6 +426,18 @@ Validation
 1. The role exists in the system
 2. The account has such role
 
+Possible Stateful Validation Errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not detach role", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Command's creator does not have permission to detach role", "Grant the necessary permission"
+    "3", "No such account", "Cannot find account to detach role from", "Make sure account id is correct"
+    "4", "No such role in account's roles", "Account with such id does not have role with such name", "Make sure account-role pair is correct"
+    "5", "No such role", "Role with such name does not exist", "Make sure role id is correct"
+
 Grant permission
 ----------------
 
@@ -366,8 +452,8 @@ Schema
 .. code-block:: proto
 
     message GrantPermission {
-       string account_id = 1;
-       string permission_name = 2;
+        string account_id = 1;
+        GrantablePermission permission = 2;
     }
 
 Structure
@@ -377,8 +463,8 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Account ID", "id of account whom rights are granted", "already existent", "makoto@soramitsu"
-    "Permission name", "name of granted permission", "permission is defined", "CanTransferAssets"
+    "Account ID", "id of the account to which the rights are granted", "already existent", "makoto@soramitsu"
+    "GrantablePermission name", "name of grantable permission", "permission is defined", "CanTransferAssets"
 
 
 Validation
@@ -386,6 +472,16 @@ Validation
 
 1. Account exists
 2. Transaction creator is allowed to grant this permission
+
+Possible Stateful Validation Errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not grant permission", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Command's creator does not have permission to grant permission", "Grant the necessary permission"
+    "3", "No such account", "Cannot find account to grant permission to", "Make sure account id is correct"
 
 Remove signatory
 ----------------
@@ -412,7 +508,7 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Account ID", "id of account whom rights are granted", "already existent", "makoto@soramitsu"
+    "Account ID", "id of the account to which the rights are granted", "already existent", "makoto@soramitsu"
     "Public key", "Signatory to delete", "ed25519 public key", "407e57f50ca48969b08ba948171bb2435e035d82cec417e18e4a38f5fb113f83"
 
 Validation
@@ -426,6 +522,18 @@ Two cases:
     Case 1. When transaction creator wants to remove signatory from their account and he or she has permission CanRemoveSignatory
 
     Case 2. CanRemoveSignatory was granted to transaction creator
+
+Possible Stateful Validation Errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not remove signatory", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Command's creator does not have permission to remove signatory from his account", "Grant the necessary permission"
+    "3", "No such account", "Cannot find account to remove signatory from", "Make sure account id is correct"
+    "4", "No such signatory", "Cannot find signatory with such public key", "Make sure public key is correct"
+    "5", "Quorum does not allow to remove signatory", "After removing the signatory account will be left with less signatories, than its quorum allows", "Reduce the quorum"
 
 Revoke permission
 -----------------
@@ -441,8 +549,8 @@ Schema
 .. code-block:: proto
 
     message RevokePermission {
-       string account_id = 1;
-       string permission_name = 2;
+        string account_id = 1;
+        GrantablePermission permission = 2;
     }
 
 Structure
@@ -452,13 +560,23 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-        "Account ID", "id of account whom rights are granted", "already existent", "makoto@soramitsu"
-        "Permission name", "name of granted permission", "permission was granted", "CanTransferAssets"
+        "Account ID", "id of the account to which the rights are granted", "already existent", "makoto@soramitsu"
+        "GrantablePermission name", "name of grantable permission", "permission was granted", "CanTransferAssets"
 
 Validation
 ^^^^^^^^^^
 
 Transaction creator should have previously granted this permission to a target account
+
+Possible Stateful Validation Errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not revoke permission", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Command's creator does not have permission to revoke permission", "Grant the necessary permission"
+    "3", "No such account", "Cannot find account to revoke permission from", "Make sure account id is correct"
 
 Set account detail
 ------------------
@@ -488,7 +606,7 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Account ID", "id of account whom key-value information was set", "already existent", "makoto@soramitsu"
+    "Account ID", "id of the account to which the key-value information was set", "already existent", "makoto@soramitsu"
     "Key", "key of information being set", "`[A-Za-z0-9_]{1,64}`", "Name"
     "Value", "value of corresponding key", "≤ 4096", "Makoto"
 
@@ -500,6 +618,16 @@ Two cases:
     Case 1. When transaction creator wants to set account detail to his/her account and he or she has permission CanSetAccountInfo
 
     Case 2. CanSetAccountInfo was granted to transaction creator
+
+Possible Stateful Validation Errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not set account detail", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Command's creator does not have permission to set account detail for another account", "Grant the necessary permission"
+    "3", "No such account", "Cannot find account to set account detail to", "Make sure account id is correct"
 
 Set account quorum
 ------------------
@@ -528,7 +656,7 @@ Structure
     :widths: 15, 30, 20, 15
 
     "Account ID", "ID of account to set quorum", "already existent", "makoto@soramitsu"
-    "Quorum", "number of signatories needed to be included with a transaction from this account", "0 < quorum ≤ public-key set up to account ≤ 128", "5"
+    "Quorum", "number of signatories needed to be included within a transaction from this account", "0 < quorum ≤ public-key set up to account ≤ 128", "5"
 
 Validation
 ^^^^^^^^^^
@@ -540,6 +668,18 @@ Two cases:
     Case 1. When transaction creator wants to set quorum for his/her account and he or she has permission CanRemoveSignatory
 
     Case 2. CanRemoveSignatory was granted to transaction creator
+
+Possible Stateful Validation Errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not set quorum", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Command's creator does not have permission to set quorum for his account", "Grant the necessary permission"
+    "3", "No such account", "Cannot find account to set quorum to", "Make sure account id is correct"
+    "4", "No signatories on account", "Cannot find any signatories attached to the account", "Add some signatories before setting quorum"
+    "5", "New quorum is incorrect", "New quorum size is less than account's signatories amount", "Choose another value or add more signatories"
 
 Subtract asset quantity
 -----------------------
@@ -556,19 +696,7 @@ Schema
 
     message SubtractAssetQuantity {
         string asset_id = 1;
-        Amount amount = 2;
-    }
-
-    message uint256 {
-       uint64 first = 1;
-       uint64 second = 2;
-       uint64 third = 3;
-       uint64 fourth = 4;
-    }
-
-    message Amount {
-       uint256 value = 1;
-       uint32 precision = 2;
+        string amount = 2;
     }
 
 .. note::
@@ -592,6 +720,17 @@ Validation
 2. Added quantity precision should be equal to asset precision
 3. Creator of the transaction should have a role which has permissions for subtraction of assets
 
+Possible Stateful Validation Errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not subtract asset quantity", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Command's creator does not have permission to subtract asset quantity", "Grant the necessary permission"
+    "3", "No such asset found", "Cannot find asset with such name or precision in account's assets", "Make sure asset name and precision are correct"
+    "4", "Not enough balance", "Account's balance is too low to perform the operation", "Add asset to account or choose lower value to subtract"
+
 Transfer asset
 --------------
 
@@ -610,7 +749,7 @@ Schema
         string dest_account_id = 2;
         string asset_id = 3;
         string description = 4;
-        Amount amount = 5;
+        string amount = 5;
     }
 
 Structure
@@ -620,11 +759,11 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Source account ID", "ID of account to withdraw asset from", "already existent", "makoto@soramitsu"
-    "Destination account ID", "ID of account to send asset at", "already existent", "alex@california"
-    "Asset ID", "ID of asset to transfer", "already existent", "usd#usa"
-    "Description", "Message to attach to transfer", "Max length is 64", "here's my money take it"
-    "Amount", "amount of the asset to transfer", "0 < amount < max_uint256", "200.20"
+    "Source account ID", "ID of the account to withdraw the asset from", "already existent", "makoto@soramitsu"
+    "Destination account ID", "ID of the account to send the asset to", "already existent", "alex@california"
+    "Asset ID", "ID of the asset to transfer", "already existent", "usd#usa"
+    "Description", "Message to attach to the transfer", "Max length is 64", "here's my money take it"
+    "Amount", "amount of the asset to transfer", "0 <= precision <= 255", "200.20"
 
 Validation
 ^^^^^^^^^^
@@ -633,6 +772,20 @@ Validation
 2. An amount is a positive number and asset precision is consistent with the asset definition
 3. Source account has enough amount of asset to transfer and is not zero
 4. Source account can transfer money, and destination account can receive money (their roles have these permissions)
+
+Possible Stateful Validation Errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not transfer asset", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Command's creator does not have permission to transfer asset from his account", "Grant the necessary permission"
+    "3", "No such source account", "Cannot find account with such id to transfer money from", "Make sure source account id is correct"
+    "4", "No such destination account", "Cannot find account with such id to transfer money to", "Make sure destination account id is correct"
+    "5", "No such asset found", "Cannot find such asset", "Make sure asset name and precision are correct"
+    "6", "Not enough balance", "Source account's balance is too low to perform the operation", "Add asset to account or choose lower value to subtract"
+    "7", "Too much asset to transfer", "Resulting value of asset amount overflows destination account's amount", "Make sure final value is less than 2^256"
 
 .. [#f1] https://www.ietf.org/rfc/rfc1035.txt
 .. [#f2] https://www.ietf.org/rfc/rfc1123.txt

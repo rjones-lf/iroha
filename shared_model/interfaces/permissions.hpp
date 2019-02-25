@@ -58,7 +58,8 @@ namespace shared_model {
         kTransferMyAssets,
         kSetMyAccountDetail,
         kGetBlocks,
-
+        kAddDomainAssetQty,
+        kSubtractDomainAssetQty,
         COUNT
       };
 
@@ -98,6 +99,7 @@ namespace shared_model {
       PermissionSet(std::initializer_list<Perm> list);
       explicit PermissionSet(const std::string &bitstring);
 
+      // TODO [IR-1889] Akvinikym 21.11.18: introduce toString() method
       std::string toBitstring() const;
 
       static size_t size();

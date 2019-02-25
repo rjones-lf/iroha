@@ -1,24 +1,12 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <gmock/gmock.h>
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "framework/test_subscriber.hpp"
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
+
+#include "module/irohad/consensus/yac/yac_fixture.hpp"
 
 using ::testing::_;
 using ::testing::An;
@@ -49,15 +37,15 @@ TEST_F(YacTest, InvalidCaseWhenNotReceiveSupermajority) {
 
   EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
 
-  YacHash hash1("proposal_hash", "block_hash");
-  YacHash hash2("proposal_hash", "block_hash2");
+  YacHash hash1(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
+  YacHash hash2(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash2");
   yac->vote(hash1, my_order.value());
 
   for (auto i = 0; i < 2; ++i) {
-    yac->onState({create_vote(hash1, std::to_string(i))});
+    yac->onState({createVote(hash1, std::to_string(i))});
   };
   for (auto i = 2; i < 4; ++i) {
-    yac->onState({create_vote(hash2, std::to_string(i))});
+    yac->onState({createVote(hash2, std::to_string(i))});
   };
 }
 
@@ -83,14 +71,14 @@ TEST_F(YacTest, InvalidCaseWhenDoesNotVerify) {
 
   EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(false));
 
-  YacHash hash1("proposal_hash", "block_hash");
-  YacHash hash2("proposal_hash", "block_hash2");
+  YacHash hash1(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
+  YacHash hash2(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash2");
 
   for (auto i = 0; i < 2; ++i) {
-    yac->onState({create_vote(hash1, std::to_string(i))});
+    yac->onState({createVote(hash1, std::to_string(i))});
   };
   for (auto i = 2; i < 4; ++i) {
-    yac->onState({create_vote(hash2, std::to_string(i))});
+    yac->onState({createVote(hash2, std::to_string(i))});
   };
 }
 
@@ -122,19 +110,19 @@ TEST_F(YacTest, ValidCaseWhenReceiveOnVoteAfterReject) {
 
   EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
 
-  YacHash hash1("proposal_hash", "block_hash");
-  YacHash hash2("proposal_hash", "block_hash2");
+  YacHash hash1(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
+  YacHash hash2(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash2");
 
   std::vector<VoteMessage> votes;
   for (size_t i = 0; i < peers_number / 2; ++i) {
     auto peer = my_order->getPeers().at(i);
     auto pubkey = shared_model::crypto::toBinaryString(peer->pubkey());
-    votes.push_back(create_vote(hash1, pubkey));
+    votes.push_back(createVote(hash1, pubkey));
   };
   for (size_t i = peers_number / 2; i < peers_number - 1; ++i) {
     auto peer = my_order->getPeers().at(i);
     auto pubkey = shared_model::crypto::toBinaryString(peer->pubkey());
-    votes.push_back(create_vote(hash2, pubkey));
+    votes.push_back(createVote(hash2, pubkey));
   };
 
   for (const auto &vote : votes) {
@@ -144,5 +132,5 @@ TEST_F(YacTest, ValidCaseWhenReceiveOnVoteAfterReject) {
   yac->onState(votes);
   auto peer = my_order->getPeers().back();
   auto pubkey = shared_model::crypto::toBinaryString(peer->pubkey());
-  yac->onState({create_vote(hash1, pubkey)});
+  yac->onState({createVote(hash1, pubkey)});
 }

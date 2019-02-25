@@ -1,18 +1,7 @@
-/*
-Copyright 2017 Soramitsu Co., Ltd.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #ifndef TORII_QUERY_SERVICE_HPP
 #define TORII_QUERY_SERVICE_HPP
@@ -30,48 +19,66 @@ limitations under the License.
 
 #include "logger/logger.hpp"
 
-namespace torii {
-  /**
-   * Actual implementation of async QueryService.
-   * ToriiServiceHandler::(SomeMethod)Handler calls a corresponding method in
-   * this class.
-   */
-  class QueryService : public iroha::protocol::QueryService::Service {
-   public:
-    QueryService(std::shared_ptr<iroha::torii::QueryProcessor> query_processor);
+namespace shared_model {
+  namespace interface {
+    template <typename Interface, typename Transport>
+    class AbstractTransportFactory;
+  }
+}  // namespace shared_model
 
-    QueryService(const QueryService &) = delete;
-    QueryService &operator=(const QueryService &) = delete;
-
+namespace iroha {
+  namespace torii {
     /**
-     * actual implementation of async Find in QueryService
-     * @param request - Query
-     * @param response - QueryResponse
+     * Actual implementation of async QueryService.
+     * ToriiServiceHandler::(SomeMethod)Handler calls a corresponding method in
+     * this class.
      */
-    void Find(iroha::protocol::Query const &request,
-              iroha::protocol::QueryResponse &response);
+    class QueryService : public iroha::protocol::QueryService_v1::Service {
+     public:
+      using QueryFactoryType =
+          shared_model::interface::AbstractTransportFactory<
+              shared_model::interface::Query,
+              iroha::protocol::Query>;
 
-    grpc::Status Find(grpc::ServerContext *context,
-                      const iroha::protocol::Query *request,
-                      iroha::protocol::QueryResponse *response) override;
+      QueryService(
+          std::shared_ptr<iroha::torii::QueryProcessor> query_processor,
+          std::shared_ptr<QueryFactoryType> query_factory,
+          logger::Logger log = logger::log("Query Service"));
 
-    grpc::Status FetchCommits(
-        grpc::ServerContext *context,
-        const iroha::protocol::BlocksQuery *request,
-        grpc::ServerWriter<::iroha::protocol::BlockQueryResponse> *writer)
-        override;
+      QueryService(const QueryService &) = delete;
+      QueryService &operator=(const QueryService &) = delete;
 
-   private:
-    std::shared_ptr<iroha::torii::QueryProcessor> query_processor_;
+      /**
+       * actual implementation of async Find in QueryService
+       * @param request - Query
+       * @param response - QueryResponse
+       */
+      void Find(iroha::protocol::Query const &request,
+                iroha::protocol::QueryResponse &response);
 
-    iroha::cache::Cache<shared_model::crypto::Hash,
-                        iroha::protocol::QueryResponse,
-                        shared_model::crypto::Hash::Hasher>
-        cache_;
+      grpc::Status Find(grpc::ServerContext *context,
+                        const iroha::protocol::Query *request,
+                        iroha::protocol::QueryResponse *response) override;
 
-    logger::Logger log_;
-  };
+      grpc::Status FetchCommits(
+          grpc::ServerContext *context,
+          const iroha::protocol::BlocksQuery *request,
+          grpc::ServerWriter<::iroha::protocol::BlockQueryResponse> *writer)
+          override;
 
-}  // namespace torii
+     private:
+      std::shared_ptr<iroha::torii::QueryProcessor> query_processor_;
+      std::shared_ptr<QueryFactoryType> query_factory_;
+
+      // TODO 18.02.2019 lebdron: IR-336 Replace cache
+      iroha::cache::Cache<shared_model::crypto::Hash,
+                          int,
+                          shared_model::crypto::Hash::Hasher>
+          cache_;
+
+      logger::Logger log_;
+    };
+  }  // namespace torii
+}  // namespace iroha
 
 #endif  // TORII_QUERY_SERVICE_HPP

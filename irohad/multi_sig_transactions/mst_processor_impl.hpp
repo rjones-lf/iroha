@@ -1,24 +1,13 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_MST_PROCESSOR_IMPL_HPP
 #define IROHA_MST_PROCESSOR_IMPL_HPP
 
 #include <memory>
+#include "cryptography/public_key.hpp"
 #include "logger/logger.hpp"
 #include "multi_sig_transactions/mst_processor.hpp"
 #include "multi_sig_transactions/mst_propagation_strategy.hpp"
@@ -60,9 +49,11 @@ namespace iroha {
 
     auto onExpiredBatchesImpl() const -> decltype(onExpiredBatches()) override;
 
+    bool batchInStorageImpl(const DataType &batch) const override;
+
     // ------------------| MstTransportNotification override |------------------
 
-    void onNewState(const std::shared_ptr<shared_model::interface::Peer> &from,
+    void onNewState(const shared_model::crypto::PublicKey &from,
                     ConstRefState new_state) override;
 
     // ----------------------------| end override |-----------------------------
@@ -75,6 +66,26 @@ namespace iroha {
      * @param data - propagated data
      */
     void onPropagate(const PropagationStrategy::PropagationData &data);
+
+    /**
+     * Notify subscribers when some of the batches received all necessary
+     * signatures and ready to move forward
+     * @param state with those batches
+     */
+    void completedBatchesNotify(ConstRefState state) const;
+
+    /**
+     * Notify subscribers when some of the batches received new signatures, but
+     * still are not completed
+     * @param state with those batches
+     */
+    void updatedBatchesNotify(ConstRefState state) const;
+
+    /**
+     * Notify subscribers when some of the bathes get expired
+     * @param state with those batches
+     */
+    void expiredBatchesNotify(ConstRefState state) const;
 
     // -------------------------------| fields |--------------------------------
     std::shared_ptr<iroha::network::MstTransport> transport_;
@@ -94,6 +105,7 @@ namespace iroha {
     rxcpp::subjects::subject<DataType> expired_subject_;
 
     /// use for tracking the propagation subscription
+
     rxcpp::composite_subscription propagation_subscriber_;
   };
 }  // namespace iroha

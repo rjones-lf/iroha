@@ -3,39 +3,34 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-import iroha
+import irohalib
 import commons
+import primitive_pb2
 
 admin = commons.new_user('admin@test')
 alice = commons.new_user('alice@test')
+iroha = irohalib.Iroha(admin['id'])
 
 
 @commons.hex
 def genesis_tx():
-    test_permissions = iroha.RolePermissionSet([iroha.Role_kRemoveSignatory])
-    extra_key = iroha.ModelCrypto().generateKeypair()
-    tx = iroha.ModelTransactionBuilder() \
-        .createdTime(commons.now()) \
-        .creatorAccountId(admin['id']) \
-        .addPeer('0.0.0.0:50541', admin['key'].publicKey()) \
-        .createRole('admin_role', commons.all_permissions()) \
-        .createRole('test_role', test_permissions) \
-        .createDomain('test', 'test_role') \
-        .createAccount('admin', 'test', admin['key'].publicKey()) \
-        .createAccount('alice', 'test', alice['key'].publicKey()) \
-        .appendRole(admin['id'], 'admin_role') \
-        .addSignatory(alice['id'], extra_key.publicKey()) \
-        .build()
-    return iroha.ModelProtoTransaction(tx) \
-        .signAndAddSignature(admin['key']).finish()
+    test_permissions = [primitive_pb2.can_remove_signatory]
+    extra_key = irohalib.IrohaCrypto.private_key()
+    genesis_commands = commons.genesis_block(admin, alice, test_permissions)
+    genesis_commands.append(
+        iroha.command('AddSignatory', account_id=alice['id'],
+                      public_key=irohalib.IrohaCrypto.derive_public_key(extra_key))
+    )
+    tx = iroha.transaction(genesis_commands)
+    irohalib.IrohaCrypto.sign_transaction(tx, admin['key'])
+    return tx
 
 
 @commons.hex
 def remove_signatory_tx():
-    tx = iroha.ModelTransactionBuilder() \
-        .createdTime(commons.now()) \
-        .creatorAccountId(alice['id']) \
-        .removeSignatory(alice['id'], alice['key'].publicKey()) \
-        .build()
-    return iroha.ModelProtoTransaction(tx) \
-        .signAndAddSignature(alice['key']).finish()
+    tx = iroha.transaction([
+        iroha.command('RemoveSignatory', account_id=alice['id'],
+                      public_key=irohalib.IrohaCrypto.derive_public_key(alice['key']))
+    ], creator_account=alice['id'])
+    irohalib.IrohaCrypto.sign_transaction(tx, alice['key'])
+    return tx

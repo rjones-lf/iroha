@@ -7,11 +7,27 @@
 #define IROHA_SHARED_MODEL_TRANSACTION_VALIDATOR_HPP
 
 #include <boost/format.hpp>
-#include <boost/variant/static_visitor.hpp>
+#include <boost/variant.hpp>
 
-#include "backend/protobuf/commands/proto_command.hpp"
-#include "backend/protobuf/permissions.hpp"
-#include "backend/protobuf/transaction.hpp"
+#include "interfaces/commands/add_asset_quantity.hpp"
+#include "interfaces/commands/add_peer.hpp"
+#include "interfaces/commands/add_signatory.hpp"
+#include "interfaces/commands/append_role.hpp"
+#include "interfaces/commands/command.hpp"
+#include "interfaces/commands/create_account.hpp"
+#include "interfaces/commands/create_asset.hpp"
+#include "interfaces/commands/create_domain.hpp"
+#include "interfaces/commands/create_role.hpp"
+#include "interfaces/commands/detach_role.hpp"
+#include "interfaces/commands/grant_permission.hpp"
+#include "interfaces/commands/remove_signatory.hpp"
+#include "interfaces/commands/revoke_permission.hpp"
+#include "interfaces/commands/set_account_detail.hpp"
+#include "interfaces/commands/set_quorum.hpp"
+#include "interfaces/commands/subtract_asset_quantity.hpp"
+#include "interfaces/commands/transfer_asset.hpp"
+#include "interfaces/transaction.hpp"
+#include "validators/abstract_validator.hpp"
 #include "validators/answer.hpp"
 
 namespace shared_model {
@@ -20,11 +36,17 @@ namespace shared_model {
     /**
      * Visitor used by transaction validator to validate each command
      * @tparam FieldValidator - field validator type
+     * @note this class is not thread safe and never going to be
+     * so copy constructor and assignment operator are disabled explicitly
      */
     template <typename FieldValidator>
     class CommandValidatorVisitor
         : public boost::static_visitor<ReasonsGroupType> {
      public:
+      CommandValidatorVisitor(const CommandValidatorVisitor &) = delete;
+      CommandValidatorVisitor &operator=(const CommandValidatorVisitor &) =
+          delete;
+
       CommandValidatorVisitor(
           const FieldValidator &validator = FieldValidator())
           : validator_(validator) {}
@@ -106,14 +128,9 @@ namespace shared_model {
         addInvalidCommand(reason, "CreateRole");
 
         validator_.validateRoleId(reason, cr.roleName());
-        for (auto i : static_cast<const shared_model::proto::CreateRole &>(cr)
-                          .getTransport()
-                          .create_role()
-                          .permissions()) {
-          validator_.validateRolePermission(
-              reason,
-              static_cast<shared_model::interface::permissions::Role>(i));
-        }
+        cr.rolePermissions().iterate([&reason, this](auto i) {
+          validator_.validateRolePermission(reason, i);
+        });
 
         return reason;
       }
@@ -195,7 +212,7 @@ namespace shared_model {
         addInvalidCommand(reason, "TransferAsset");
 
         if (ta.srcAccountId() == ta.destAccountId()) {
-          reason.second.push_back(
+          reason.second.emplace_back(
               "Source and destination accounts cannot be the same");
         }
 
@@ -227,7 +244,8 @@ namespace shared_model {
      * @tparam CommandValidator
      */
     template <typename FieldValidator, typename CommandValidator>
-    class TransactionValidator {
+    class TransactionValidator
+        : public AbstractValidator<interface::Transaction> {
      private:
       template <typename CreatedTimeValidator>
       Answer validateImpl(const interface::Transaction &tx,
@@ -254,18 +272,7 @@ namespace shared_model {
         }
 
         for (const auto &command : tx.commands()) {
-          auto cmd_case =
-              static_cast<const shared_model::proto::Command &>(command)
-                  .getTransport()
-                  .command_case();
-          if (iroha::protocol::Command::COMMAND_NOT_SET == cmd_case) {
-            ReasonsGroupType reason;
-            reason.first = "Undefined";
-            reason.second.push_back("command is undefined");
-            answer.addReason(std::move(reason));
-            continue;
-          }
-          auto reason = boost::apply_visitor(command_validator_, command.get());
+          auto reason = boost::apply_visitor(CommandValidator(), command.get());
           if (not reason.second.empty()) {
             answer.addReason(std::move(reason));
           }
@@ -276,17 +283,15 @@ namespace shared_model {
 
      public:
       explicit TransactionValidator(
-          const FieldValidator &field_validator = FieldValidator(),
-          const CommandValidator &command_validator = CommandValidator())
-          : field_validator_(field_validator),
-            command_validator_(command_validator) {}
+          const FieldValidator &field_validator = FieldValidator())
+          : field_validator_(field_validator) {}
 
       /**
        * Applies validation to given transaction
        * @param tx - transaction to validate
        * @return Answer containing found error if any
        */
-      Answer validate(const interface::Transaction &tx) const {
+      Answer validate(const interface::Transaction &tx) const override {
         return validateImpl(tx, [this](auto &reason, auto time) {
           field_validator_.validateCreatedTime(reason, time);
         });
@@ -307,7 +312,6 @@ namespace shared_model {
 
      protected:
       FieldValidator field_validator_;
-      CommandValidator command_validator_;
     };
 
   }  // namespace validation

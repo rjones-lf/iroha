@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "client.hpp"
@@ -23,11 +11,15 @@
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/converters/pb_query_factory.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
+#include "network/impl/grpc_channel_builder.hpp"
 
 namespace iroha_cli {
 
   CliClient::CliClient(std::string target_ip, int port)
-      : command_client_(target_ip, port), query_client_(target_ip, port) {}
+      : command_client_(
+            iroha::network::createClient<iroha::protocol::CommandService_v1>(
+                target_ip + ":" + std::to_string(port))),
+        query_client_(target_ip, port) {}
 
   CliClient::Response<CliClient::TxStatus> CliClient::sendTx(
       const shared_model::interface::Transaction &tx) {

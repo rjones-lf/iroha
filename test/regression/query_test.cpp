@@ -4,11 +4,12 @@
  */
 
 #include <gtest/gtest.h>
-
+#include <boost/variant.hpp>
 #include "builders/protobuf/queries.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
+#include "interfaces/query_responses/error_query_response.hpp"
+#include "interfaces/query_responses/error_responses/stateless_failed_error_response.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 
 template <typename BaseType>
@@ -43,12 +44,9 @@ TEST(QueryTest, FailedQueryTest) {
       createInvalidQuery(makeQuery<TestQueryBuilder>(), key_pair);
   auto stateless_invalid_query_response = [](auto &status) {
     auto &resp =
-        boost::apply_visitor(framework::SpecifiedVisitor<
-                                 shared_model::interface::ErrorQueryResponse>(),
-                             status.get());
-    boost::apply_visitor(
-        framework::SpecifiedVisitor<
-            shared_model::interface::StatelessFailedErrorResponse>(),
+        boost::get<const shared_model::interface::ErrorQueryResponse &>(
+            status.get());
+    boost::get<const shared_model::interface::StatelessFailedErrorResponse &>(
         resp.get());
   };
 

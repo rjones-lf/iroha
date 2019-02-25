@@ -1,30 +1,20 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "consensus/yac/yac.hpp"
 
 #include <utility>
 
-#include "common/types.hpp"
+#include "common/bind.hpp"
 #include "common/visitor.hpp"
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "consensus/yac/timer.hpp"
 #include "consensus/yac/yac_crypto_provider.hpp"
+#include "cryptography/public_key.hpp"
+#include "cryptography/signed.hpp"
 #include "interfaces/common_objects/peer.hpp"
 
 namespace iroha {
@@ -51,23 +41,24 @@ namespace iroha {
           std::shared_ptr<YacNetwork> network,
           std::shared_ptr<YacCryptoProvider> crypto,
           std::shared_ptr<Timer> timer,
-          ClusterOrdering order) {
+          ClusterOrdering order,
+          logger::Logger log) {
         return std::make_shared<Yac>(
-            vote_storage, network, crypto, timer, order);
+            vote_storage, network, crypto, timer, order, std::move(log));
       }
 
       Yac::Yac(YacVoteStorage vote_storage,
                std::shared_ptr<YacNetwork> network,
                std::shared_ptr<YacCryptoProvider> crypto,
                std::shared_ptr<Timer> timer,
-               ClusterOrdering order)
+               ClusterOrdering order,
+               logger::Logger log)
           : vote_storage_(std::move(vote_storage)),
             network_(std::move(network)),
             crypto_(std::move(crypto)),
             timer_(std::move(timer)),
-            cluster_order_(order) {
-        log_ = logger::log("YAC");
-      }
+            cluster_order_(order),
+            log_(std::move(log)) {}
 
       // ------|Hash gate|------
 
@@ -101,16 +92,20 @@ namespace iroha {
       // ------|Private interface|------
 
       void Yac::votingStep(VoteMessage vote) {
-        auto committed = vote_storage_.isHashCommitted(vote.hash.proposal_hash);
+        auto committed = vote_storage_.isCommitted(vote.hash.vote_round);
         if (committed) {
           return;
         }
 
-        log_->info("Vote for hash ({}, {})",
-                   vote.hash.proposal_hash,
-                   vote.hash.block_hash);
+        const auto &current_leader = cluster_order_.currentLeader();
 
-        network_->sendState(cluster_order_.currentLeader(), {vote});
+        log_->info("Vote for round {}, hash ({}, {}) to peer {}",
+                   vote.hash.vote_round,
+                   vote.hash.vote_hashes.proposal_hash,
+                   vote.hash.vote_hashes.block_hash,
+                   current_leader);
+
+        network_->sendState(current_leader, {vote});
         cluster_order_.switchToNext();
         if (cluster_order_.hasNext()) {
           timer_->invokeAfterDelay([this, vote] { this->votingStep(vote); });
@@ -142,7 +137,7 @@ namespace iroha {
         // separate entity
 
         answer | [&](const auto &answer) {
-          auto &proposal_hash = state.at(0).hash.proposal_hash;
+          auto &proposal_round = state.at(0).hash.vote_round;
 
           /*
            * It is possible that a new peer with an outdated peers list may
@@ -153,29 +148,29 @@ namespace iroha {
            */
           if (state.size() > 1) {
             // some peer has already collected commit/reject, so it is sent
-            if (vote_storage_.getProcessingState(proposal_hash)
+            if (vote_storage_.getProcessingState(proposal_round)
                 == ProposalState::kNotSentNotProcessed) {
-              vote_storage_.nextProcessingState(proposal_hash);
+              vote_storage_.nextProcessingState(proposal_round);
               log_->info(
                   "Received supermajority of votes for {}, skip propagation",
-                  proposal_hash);
+                  proposal_round);
             }
           }
 
           auto processing_state =
-              vote_storage_.getProcessingState(proposal_hash);
+              vote_storage_.getProcessingState(proposal_round);
 
           auto votes = [](const auto &state) { return state.votes; };
 
           switch (processing_state) {
             case ProposalState::kNotSentNotProcessed:
-              vote_storage_.nextProcessingState(proposal_hash);
-              log_->info("Propagate state {} to whole network", proposal_hash);
+              vote_storage_.nextProcessingState(proposal_round);
+              log_->info("Propagate state {} to whole network", proposal_round);
               this->propagateState(visit_in_place(answer, votes));
               break;
             case ProposalState::kSentNotProcessed:
-              vote_storage_.nextProcessingState(proposal_hash);
-              log_->info("Pass outcome for {} to pipeline", proposal_hash);
+              vote_storage_.nextProcessingState(proposal_round);
+              log_->info("Pass outcome for {} to pipeline", proposal_round);
               this->closeRound();
               notifier_.get_subscriber().on_next(answer);
               break;
@@ -183,7 +178,7 @@ namespace iroha {
               if (state.size() == 1) {
                 this->findPeer(state.at(0)) | [&](const auto &from) {
                   log_->info("Propagate state {} directly to {}",
-                             proposal_hash,
+                             proposal_round,
                              from->address());
                   this->propagateStateDirectly(*from,
                                                visit_in_place(answer, votes));

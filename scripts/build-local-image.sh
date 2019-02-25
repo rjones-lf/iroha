@@ -1,5 +1,5 @@
-#!/bin/sh -x
-
+#!/usr/bin/env bash
+set -x
 
 IROHA_HOME=$(dirname $(realpath ${BASH_SOURCE[0]}))/..
 MOUNT=/tmp/iroha

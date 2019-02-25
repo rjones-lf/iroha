@@ -11,29 +11,21 @@
 #include "builders/protobuf/unsigned_proto.hpp"
 #include "datetime/time.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
 using namespace benchmark::utils;
-
-const std::string kUser = "user";
-const std::string kUserId = kUser + "@test";
-const std::string kAmount = "1.0";
-const std::string kAsset = "coin#test";
-const shared_model::crypto::Keypair kAdminKeypair =
-    shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
-const shared_model::crypto::Keypair kUserKeypair =
-    shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
+using namespace common_constants;
 
 auto baseTx() {
   return TestUnsignedTransactionBuilder().creatorAccountId(kUserId).createdTime(
       iroha::time::now());
 }
 
-const auto proposal_size = 100;
-const auto transaction_size = 100;
+const auto kProposalSize = 100;
+const auto kTransactionSize = 100;
+const std::string kAmount = "1.0";
 
 /**
  * This benchmark runs execution of the add asset quantity command in order to
@@ -42,7 +34,7 @@ const auto transaction_size = 100;
  */
 static void BM_AddAssetQuantity(benchmark::State &state) {
   integration_framework::IntegrationTestFramework itf(
-      proposal_size,
+      kProposalSize,
       boost::none,
       [](auto &) {},
       false,
@@ -52,11 +44,11 @@ static void BM_AddAssetQuantity(benchmark::State &state) {
       std::chrono::hours(1),
       std::chrono::hours(1));
   itf.setInitialState(kAdminKeypair);
-  for (int i = 0; i < proposal_size; i++) {
+  for (int i = 0; i < kProposalSize; i++) {
     itf.sendTx(createUserWithPerms(
                    kUser,
                    kUserKeypair.publicKey(),
-                   "role",
+                   kRole,
                    {shared_model::interface::permissions::Role::kAddAssetQty})
                    .build()
                    .signAndAddSignature(kAdminKeypair)
@@ -67,13 +59,13 @@ static void BM_AddAssetQuantity(benchmark::State &state) {
   while (state.KeepRunning()) {
     auto make_base = [&]() {
       auto base = baseTx();
-      for (int i = 0; i < transaction_size; i++) {
-        base = base.addAssetQuantity(kAsset, kAmount);
+      for (int i = 0; i < kTransactionSize; i++) {
+        base = base.addAssetQuantity(kAssetId, kAmount);
       }
       return base.quorum(1).build().signAndAddSignature(kUserKeypair).finish();
     };
 
-    for (int i = 0; i < proposal_size; i++) {
+    for (int i = 0; i < kProposalSize; i++) {
       itf.sendTx(make_base());
     }
     itf.skipProposal().skipBlock();

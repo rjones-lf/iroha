@@ -1,94 +1,39 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_SHARED_MODEL_PROTO_COMMAND_HPP
 #define IROHA_SHARED_MODEL_PROTO_COMMAND_HPP
 
-#include "interfaces/commands/command.hpp"
-
-#include "backend/protobuf/commands/proto_add_asset_quantity.hpp"
-#include "backend/protobuf/commands/proto_add_peer.hpp"
-#include "backend/protobuf/commands/proto_add_signatory.hpp"
-#include "backend/protobuf/commands/proto_append_role.hpp"
-#include "backend/protobuf/commands/proto_create_account.hpp"
-#include "backend/protobuf/commands/proto_create_asset.hpp"
-#include "backend/protobuf/commands/proto_create_domain.hpp"
-#include "backend/protobuf/commands/proto_create_role.hpp"
-#include "backend/protobuf/commands/proto_detach_role.hpp"
-#include "backend/protobuf/commands/proto_grant_permission.hpp"
-#include "backend/protobuf/commands/proto_remove_signatory.hpp"
-#include "backend/protobuf/commands/proto_revoke_permission.hpp"
-#include "backend/protobuf/commands/proto_set_account_detail.hpp"
-#include "backend/protobuf/commands/proto_set_quorum.hpp"
-#include "backend/protobuf/commands/proto_subtract_asset_quantity.hpp"
-#include "backend/protobuf/commands/proto_transfer_asset.hpp"
-#include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "commands.pb.h"
-#include "interfaces/common_objects/types.hpp"
-#include "utils/lazy_initializer.hpp"
+#include "interfaces/commands/command.hpp"
 
 namespace shared_model {
   namespace proto {
 
-    class Command final : public CopyableProto<interface::Command,
-                                               iroha::protocol::Command,
-                                               Command> {
+    class Command final : public interface::Command {
      public:
-      /// type of proto variant
-      using ProtoCommandVariantType = boost::variant<AddAssetQuantity,
-                                                     AddPeer,
-                                                     AddSignatory,
-                                                     AppendRole,
-                                                     CreateAccount,
-                                                     CreateAsset,
-                                                     CreateDomain,
-                                                     CreateRole,
-                                                     DetachRole,
-                                                     GrantPermission,
-                                                     RemoveSignatory,
-                                                     RevokePermission,
-                                                     SetAccountDetail,
-                                                     SetQuorum,
-                                                     SubtractAssetQuantity,
-                                                     TransferAsset>;
-
-      /// list of types in proto variant
-      using ProtoCommandListType = ProtoCommandVariantType::types;
-
-      template <typename CommandType>
-      explicit Command(CommandType &&command);
-
-      Command(const Command &o);
+      using TransportType = iroha::protocol::Command;
 
       Command(Command &&o) noexcept;
 
+      explicit Command(TransportType &ref);
+
+      ~Command() override;
+
       const CommandVariantType &get() const override;
 
+     protected:
+      // TODO [IR-126] Akvinikym 13.12.18: Rework inheritance hierarchy so that
+      // this clone will disappear
+      Command *clone() const override;
+
      private:
-      /// lazy variant shortcut
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
+      struct Impl;
+      std::unique_ptr<Impl> impl_;
 
-      using LazyVariantType = Lazy<ProtoCommandVariantType>;
-
-      // lazy
-      const LazyVariantType variant_;
-
-      const Lazy<CommandVariantType> ivariant_;
+      void logError(const std::string &message) const;
     };
   }  // namespace proto
 }  // namespace shared_model

@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "module/shared_model/validators/validators_fixture.hpp"
@@ -51,27 +39,6 @@ TEST_F(TransactionValidatorTest, EmptyTransactionTest) {
   auto tx = generateEmptyTransaction();
   tx.mutable_payload()->mutable_reduced_payload()->set_created_time(
       created_time);
-  auto result = proto::Transaction(iroha::protocol::Transaction(tx));
-  auto answer = transaction_validator.validate(result);
-  ASSERT_EQ(answer.getReasonsMap().size(), 1);
-}
-
-/**
- * @given transaction without any commands
- * @when commands validator is invoked
- * @then answer has error about empty transaction
- */
-TEST_F(TransactionValidatorTest, InvalidCreateRolePermission) {
-  auto tx = generateEmptyTransaction();
-  tx.mutable_payload()->mutable_reduced_payload()->set_created_time(
-      created_time);
-  iroha::protocol::Command cmd;
-  cmd.mutable_create_role()->set_role_name("role");
-  cmd.mutable_create_role()->add_permissions(
-      static_cast<iroha::protocol::RolePermission>(-1));
-  *tx.mutable_payload()->mutable_reduced_payload()->add_commands() =
-      std::move(cmd);
-  shared_model::validation::DefaultUnsignedTransactionValidator transaction_validator;
   auto result = proto::Transaction(iroha::protocol::Transaction(tx));
   auto answer = transaction_validator.validate(result);
   ASSERT_EQ(answer.getReasonsMap().size(), 1);

@@ -9,6 +9,7 @@
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class AddAssetQuantity : public AcceptanceFixture {
  public:
@@ -21,6 +22,9 @@ class AddAssetQuantity : public AcceptanceFixture {
 };
 
 /**
+ * TODO mboldyrev 17.01.2019 IR-228 "Basic" tests should be replaced with a
+ * common acceptance test
+ *
  * @given some user with can_add_asset_qty permission
  * @when execute tx with AddAssetQuantity command
  * @then there is the tx in proposal
@@ -31,14 +35,14 @@ TEST_F(AddAssetQuantity, Basic) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().addAssetQuantity(kAssetId, kAmount)))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+      .sendTxAwait(
+          complete(baseTx().addAssetQuantity(kAssetId, kAmount)),
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
 /**
+ * TODO mboldyrev 17.01.2019 IR-203 convert to an integration test
+ *
  * @given some user without can_add_asset_qty permission
  * @when execute tx with AddAssetQuantity command
  * @then verified proposal is empty
@@ -54,10 +58,13 @@ TEST_F(AddAssetQuantity, NoPermissions) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
+ * TODO mboldyrev 17.01.2019 IR-203 convert to a field validator unit test
+ *
  * @given pair of users with all required permissions
  * @when execute tx with AddAssetQuantity command with negative amount
  * @then the tx hasn't passed stateless validation
@@ -68,12 +75,16 @@ TEST_F(AddAssetQuantity, NegativeAmount) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx().addAssetQuantity(kAssetId, "-1.0")),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
+ * TODO mboldyrev 17.01.2019 IR-203 seems can be removed (covered by field
+ * validator test and the above test)
+ *
  * @given pair of users with all required permissions
  * @when execute tx with AddAssetQuantity command with zero amount
  * @then the tx hasn't passed stateless validation
@@ -84,12 +95,16 @@ TEST_F(AddAssetQuantity, ZeroAmount) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx().addAssetQuantity(kAssetId, "0.0")),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
+ * TODO mboldyrev 17.01.2019 IR-203 remove, covered by
+ * postgres_executor_test AddAccountAssetTest.Uint256Overflow
+ *
  * @given pair of users with all required permissions
  * @when execute two txes with AddAssetQuantity command with amount more than a
  * uint256 max half
@@ -107,20 +122,22 @@ TEST_F(AddAssetQuantity, Uint256DestOverflow) {
       .skipVerifiedProposal()
       .skipBlock()
       // Add first half of the maximum
-      .sendTx(complete(baseTx().addAssetQuantity(kAssetId, uint256_halfmax)))
-      .skipProposal()
-      .skipVerifiedProposal()
-      .checkBlock(
+      .sendTxAwait(
+          complete(baseTx().addAssetQuantity(kAssetId, uint256_halfmax)),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       // Add second half of the maximum
       .sendTx(complete(baseTx().addAssetQuantity(kAssetId, uint256_halfmax)))
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
+ * TODO mboldyrev 17.01.2019 IR-203 remove, covered by
+ * postgres_executor_test AddAccountAssetTest.InvalidAsset
+ *
  * @given some user with all required permissions
  * @when execute tx with AddAssetQuantity command with nonexistent asset
  * @then verified proposal is empty
@@ -137,5 +154,6 @@ TEST_F(AddAssetQuantity, NonexistentAsset) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }

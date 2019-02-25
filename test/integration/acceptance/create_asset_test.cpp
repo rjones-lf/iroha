@@ -7,11 +7,11 @@
 
 #include <gtest/gtest.h>
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class CreateAssetFixture : public AcceptanceFixture {
  public:
@@ -20,7 +20,7 @@ class CreateAssetFixture : public AcceptanceFixture {
     return AcceptanceFixture::makeUserWithPerms(perms);
   }
 
-  const interface::types::AssetNameType kAssetName = "newcoin";
+  const interface::types::AssetNameType kAnotherAssetName = "newcoin";
   const interface::types::PrecisionType kPrecision = 1;
   const interface::types::PrecisionType kNonDefaultPrecision = kPrecision + 17;
   const interface::types::DomainIdType kNonExistingDomain = "nonexisting";
@@ -29,21 +29,21 @@ class CreateAssetFixture : public AcceptanceFixture {
 /*
  * With the current implementation of crateAsset method of TransactionBuilder
  * that is not possible to create tests for the following cases:
- * C237 Create asset with a negative precision
- *   because the current implementation of TransactionBuilder does not
- *   allow to pass negative value on a type level.
  * C238 Create asset with overflow of precision data type
  *   because the current implementation of TransactionBuilder does not
  *   allow to pass oversized value on a type level.
  */
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-228 "Basic" tests should be replaced with a
+ * common acceptance test
+ *
  * @given some user with can_create_asset permission
  * @when the user tries to create an asset
  * @then asset is successfully created
  */
 TEST_F(CreateAssetFixture, Basic) {
-  const auto asset_id = kAssetName + "#" + kDomain;
+  const auto asset_id = kAnotherAssetName + "#" + kDomain;
   const auto asset_amount = "100.0";
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
@@ -53,7 +53,8 @@ TEST_F(CreateAssetFixture, Basic) {
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       // testing the target command
-      .sendTx(complete(baseTx().createAsset(kAssetName, kDomain, kPrecision)))
+      .sendTx(complete(
+          baseTx().createAsset(kAnotherAssetName, kDomain, kPrecision)))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
@@ -65,6 +66,9 @@ TEST_F(CreateAssetFixture, Basic) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-206 convert to a SLV unit test (this one has more
+ * test cases than its duplicate field validator test)
+ *
  * C235 Create asset with an empty name
  * C236 Create asset with boundary values per name validation
  * @given some user with can_create_asset permission
@@ -80,11 +84,14 @@ TEST_F(CreateAssetFixture, IllegalCharactersInName) {
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
   for (const auto &name : kIllegalAssetNames) {
     itf.sendTx(complete(baseTx().createAsset(name, kDomain, kPrecision)),
-               checkStatelessInvalid);
+               CHECK_STATELESS_INVALID);
   }
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-206 remove, covered by
+ * postgres_executor_test CreateAccount.NameNotUnique
+ *
  * C234 Create asset with an existing id (name)
  * @given a user with can_create_asset permission
  * @when the user tries to create asset that already exists
@@ -96,8 +103,7 @@ TEST_F(CreateAssetFixture, ExistingName) {
       .sendTxAwait(
           makeUserWithPerms(),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(complete(baseTx().createAsset(
-          IntegrationTestFramework::kAssetName, kDomain, kPrecision)))
+      .sendTx(complete(baseTx().createAsset(kAssetName, kDomain, kPrecision)))
       .checkProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
       .checkVerifiedProposal(
@@ -105,10 +111,14 @@ TEST_F(CreateAssetFixture, ExistingName) {
           // reason
           [](auto &vproposal) {
             ASSERT_EQ(vproposal->transactions().size(), 0);
-          });
+          })
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-206 convert to a SFV integration test
+ *
  * C234a Create asset with an existing id (name) but different precision
  * @given a user with can_create_asset permission
  * @when the user tries to create asset that already exists but with different
@@ -121,8 +131,8 @@ TEST_F(CreateAssetFixture, ExistingNameDifferentPrecision) {
       .sendTxAwait(
           makeUserWithPerms(),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(complete(baseTx().createAsset(
-          IntegrationTestFramework::kAssetName, kDomain, kNonDefaultPrecision)))
+      .sendTx(complete(
+          baseTx().createAsset(kAssetName, kDomain, kNonDefaultPrecision)))
       .checkProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
       .checkVerifiedProposal(
@@ -130,10 +140,15 @@ TEST_F(CreateAssetFixture, ExistingNameDifferentPrecision) {
           // reason
           [](auto &vproposal) {
             ASSERT_EQ(vproposal->transactions().size(), 0);
-          });
+          })
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-206 remove, covered by
+ * postgres_executor_test CreateAccount.NoPerms
+ *
  * C239 CreateAsset without such permissions
  * @given a user without can_create_asset permission
  * @when the user tries to create asset
@@ -153,10 +168,15 @@ TEST_F(CreateAssetFixture, WithoutPermission) {
           // reason
           [](auto &vproposal) {
             ASSERT_EQ(vproposal->transactions().size(), 0);
-          });
+          })
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-206 remove, covered by
+ * postgres_executor_test CreateAccount.NoDomain
+ *
  * @given a user with can_create_asset permission
  * @when the user tries to create asset in valid but non existing domain
  * @then stateful validation will be failed
@@ -176,10 +196,15 @@ TEST_F(CreateAssetFixture, ValidNonExistingDomain) {
           // reason
           [](auto &vproposal) {
             ASSERT_EQ(vproposal->transactions().size(), 0);
-          });
+          })
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-206 convert to a SLV unit test (this one has more
+ * test cases than its duplicate field validator test)
+ *
  * @given a user with can_create_asset permission
  * @when the user tries to create an asset in a domain with illegal characters
  * @then stateless validation failed
@@ -187,12 +212,11 @@ TEST_F(CreateAssetFixture, ValidNonExistingDomain) {
 TEST_F(CreateAssetFixture, InvalidDomain) {
   IntegrationTestFramework itf(1);
   itf.setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
+      .sendTxAwait(makeUserWithPerms(), [](auto &block) {
+        ASSERT_EQ(block->transactions().size(), 1);
+      });
   for (const auto &domain : kIllegalDomainNames) {
     itf.sendTx(complete(baseTx().createAsset(kAssetName, domain, kPrecision)),
-               checkStatelessInvalid);
+               CHECK_STATELESS_INVALID);
   }
 }

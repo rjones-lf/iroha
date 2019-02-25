@@ -10,3 +10,4 @@ Guides and how-tos
     deployment.rst
     libraries.rst
     dependencies.rst
+    k8s-deployment.rst

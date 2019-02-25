@@ -9,7 +9,6 @@
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/query_responses/block_error_response.hpp"
 #include "qry_responses.pb.h"
-#include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -28,12 +27,9 @@ namespace shared_model {
       const interface::types::DescriptionType &message() const override;
 
      private:
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
-
       const iroha::protocol::BlockErrorResponse &block_error_response;
 
-      const Lazy<interface::types::DescriptionType> message_;
+      const interface::types::DescriptionType message_;
     };
   }  // namespace proto
 }  // namespace shared_model

@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY =KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <gflags/gflags.h>
@@ -21,8 +9,11 @@
 #include <boost/filesystem.hpp>
 #include <iostream>
 
+#include "backend/protobuf/proto_block_json_converter.hpp"
 #include "backend/protobuf/queries/proto_query.hpp"
+#include "backend/protobuf/transaction.hpp"
 #include "client.hpp"
+#include "common/result.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "grpc_response_handler.hpp"
@@ -121,9 +112,19 @@ int main(int argc, char *argv[]) {
     // Convert to json
     std::ofstream output_file("genesis.block");
     auto bl = shared_model::proto::Block(
-        iroha::model::converters::PbBlockFactory().serialize(block));
-    output_file << shared_model::converters::protobuf::modelToJson(bl);
-    logger->info("File saved to genesis.block");
+        iroha::model::converters::PbBlockFactory().serialize(block).block_v1());
+
+    shared_model::proto::ProtoBlockJsonConverter().serialize(bl).match(
+        [&logger,
+         &output_file](const iroha::expected::Value<std::string> &json) {
+          output_file << json.value;
+          logger->info("File saved to genesis.block");
+        },
+        [&logger](const auto &error) {
+          // should not get here
+          logger->error("error while serializing genesis block");
+          std::exit(EXIT_FAILURE);
+        });
   }
   // Create new pub/priv key, register in Iroha Network
   else if (FLAGS_new_account) {

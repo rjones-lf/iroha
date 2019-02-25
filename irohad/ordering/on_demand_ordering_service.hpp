@@ -20,7 +20,7 @@ namespace iroha {
        * Method which should be invoked on outcome of collaboration for round
        * @param round - proposal round which has started
        */
-      virtual void onCollaborationOutcome(transport::Round round) = 0;
+      virtual void onCollaborationOutcome(consensus::Round round) = 0;
     };
 
   }  // namespace ordering

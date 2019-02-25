@@ -3,37 +3,26 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-import iroha
+import irohalib
 import commons
+import primitive_pb2
 
 admin = commons.new_user('admin@test')
 alice = commons.new_user('alice@test')
+iroha = irohalib.Iroha(admin['id'])
 
 
 @commons.hex
 def genesis_tx():
-    test_permissions = iroha.RolePermissionSet([iroha.Role_kGetDomainAccAst])
-    tx = iroha.ModelTransactionBuilder() \
-        .createdTime(commons.now()) \
-        .creatorAccountId(admin['id']) \
-        .addPeer('0.0.0.0:50541', admin['key'].publicKey()) \
-        .createRole('admin_role', commons.all_permissions()) \
-        .createRole('test_role', test_permissions) \
-        .createDomain('test', 'test_role') \
-        .createAccount('admin', 'test', admin['key'].publicKey()) \
-        .createAccount('alice', 'test', alice['key'].publicKey()) \
-        .build()
-    return iroha.ModelProtoTransaction(tx) \
-        .signAndAddSignature(admin['key']).finish()
+    test_permissions = [primitive_pb2.can_get_domain_acc_ast]
+    genesis_commands = commons.genesis_block(admin, alice, test_permissions)
+    tx = iroha.transaction(genesis_commands)
+    irohalib.IrohaCrypto.sign_transaction(tx, admin['key'])
+    return tx
 
 
 @commons.hex
 def account_assets_query():
-    tx = iroha.ModelQueryBuilder() \
-        .createdTime(commons.now()) \
-        .queryCounter(1) \
-        .creatorAccountId(alice['id']) \
-        .getAccountAssets(admin['id']) \
-        .build()
-    return iroha.ModelProtoQuery(tx) \
-        .signAndAddSignature(alice['key']).finish()
+    query = iroha.query('GetAccountAssets', account_id=admin['id'], creator_account=alice['id'])
+    irohalib.IrohaCrypto.sign_query(query, alice['key'])
+    return query

@@ -4,6 +4,8 @@
  */
 
 #include "interfaces/queries/get_transactions.hpp"
+
+#include "cryptography/hash.hpp"
 #include "utils/string_builder.hpp"
 
 namespace shared_model {

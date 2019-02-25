@@ -1,23 +1,12 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
+
 #include "framework/test_subscriber.hpp"
-#include "yac_mocks.hpp"
+#include "module/irohad/consensus/yac/yac_fixture.hpp"
 
 using ::testing::_;
 using ::testing::An;
@@ -43,7 +32,7 @@ TEST_F(YacTest, UnknownVoteBeforeCommit) {
   EXPECT_CALL(*crypto, verify(_)).Times(1).WillRepeatedly(Return(true));
 
   VoteMessage vote;
-  vote.hash = YacHash("my_proposal", "my_block");
+  vote.hash = YacHash(iroha::consensus::Round{1, 1}, "my_proposal", "my_block");
   std::string unknown = "unknown";
   vote.signature = createSig(unknown);
 
@@ -75,12 +64,12 @@ TEST_F(YacTest, UnknownVoteAfterCommit) {
 
   EXPECT_CALL(*crypto, verify(_)).Times(2).WillRepeatedly(Return(true));
 
-  YacHash my_hash("proposal_hash", "block_hash");
+  YacHash my_hash(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
 
   std::vector<VoteMessage> votes;
 
   for (auto i = 0; i < 3; ++i) {
-    votes.push_back(create_vote(my_hash, std::to_string(i)));
+    votes.push_back(createVote(my_hash, std::to_string(i)));
   };
   yac->onState(votes);
 

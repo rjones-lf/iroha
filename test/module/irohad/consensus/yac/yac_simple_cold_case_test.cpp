@@ -1,22 +1,8 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -24,8 +10,9 @@
 #include <vector>
 
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
+
 #include "framework/test_subscriber.hpp"
-#include "yac_mocks.hpp"
+#include "module/irohad/consensus/yac/yac_fixture.hpp"
 
 using ::testing::_;
 using ::testing::An;
@@ -45,7 +32,8 @@ TEST_F(YacTest, YacWhenVoting) {
 
   EXPECT_CALL(*network, sendState(_, _)).Times(default_peers.size());
 
-  YacHash my_hash("my_proposal_hash", "my_block_hash");
+  YacHash my_hash(
+      iroha::consensus::Round{1, 1}, "my_proposal_hash", "my_block_hash");
 
   auto order = ClusterOrdering::create(default_peers);
   ASSERT_TRUE(order);
@@ -67,7 +55,8 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveOneVote) {
 
   EXPECT_CALL(*crypto, verify(_)).Times(1).WillRepeatedly(Return(true));
 
-  YacHash received_hash("my_proposal", "my_block");
+  YacHash received_hash(
+      iroha::consensus::Round{1, 1}, "my_proposal", "my_block");
   auto peer = default_peers.at(0);
   // assume that our peer receive message
   network->notification->onState({crypto->getVote(received_hash)});
@@ -94,7 +83,8 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveSupermajorityOfVotes) {
       .Times(default_peers.size())
       .WillRepeatedly(Return(true));
 
-  YacHash received_hash("my_proposal", "my_block");
+  YacHash received_hash(
+      iroha::consensus::Round{1, 1}, "my_proposal", "my_block");
   for (size_t i = 0; i < default_peers.size(); ++i) {
     network->notification->onState({crypto->getVote(received_hash)});
   }
@@ -109,7 +99,8 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveSupermajorityOfVotes) {
  * AND commit is emitted to observable
  */
 TEST_F(YacTest, YacWhenColdStartAndAchieveCommitMessage) {
-  YacHash propagated_hash("my_proposal", "my_block");
+  YacHash propagated_hash(
+      iroha::consensus::Round{1, 1}, "my_proposal", "my_block");
 
   // verify that commit emitted
   auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 1);
@@ -127,7 +118,7 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveCommitMessage) {
   auto committed_peer = default_peers.at(0);
   auto msg = CommitMessage(std::vector<VoteMessage>{});
   for (size_t i = 0; i < default_peers.size(); ++i) {
-    msg.votes.push_back(create_vote(propagated_hash, std::to_string(i)));
+    msg.votes.push_back(createVote(propagated_hash, std::to_string(i)));
   }
   network->notification->onState(msg.votes);
 
@@ -156,7 +147,7 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyVote) {
   });
 
   for (size_t i = 0; i < default_peers.size(); ++i) {
-    yac->onState({create_vote(YacHash{}, std::to_string(i))});
+    yac->onState({createVote(YacHash{}, std::to_string(i))});
   }
 
   // verify that on_commit subscribers are notified
@@ -189,14 +180,16 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyReject) {
 
   auto f = (default_peers.size() - 1) / 3;
   for (size_t i = 0; i < 2 * f; ++i) {
-    auto vote = create_vote(YacHash{}, std::to_string(i));
+    auto vote = createVote(YacHash{}, std::to_string(i));
     yac->onState({vote});
     commit.push_back(vote);
   }
 
-  auto vote = create_vote(YacHash{}, std::to_string(2 * f + 1));
+  auto vote = createVote(YacHash{}, std::to_string(2 * f + 1));
   RejectMessage reject(
-      {vote, create_vote(YacHash("", "my_block"), std::to_string(2 * f + 2))});
+      {vote,
+       createVote(YacHash(iroha::consensus::Round{1, 1}, "", "my_block"),
+                  std::to_string(2 * f + 2))});
   commit.push_back(vote);
 
   yac->onState(reject.votes);

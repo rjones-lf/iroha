@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_TEST_SUBSCRIBER_HPP
@@ -20,7 +8,7 @@
 
 #include <functional>
 #include <memory>
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 #include <utility>
 
 namespace framework {
@@ -110,7 +98,7 @@ namespace framework {
           std::function<void(std::exception_ptr)> error =
               [](std::exception_ptr) {},
           std::function<void()> completed = []() {}) {
-        unwrapped_.subscribe(
+        subscription_ = unwrapped_.subscribe(
             [this, subscriber](T val) {
               // verify before invariant
               this->strategy_->on_next_before(val);
@@ -145,9 +133,14 @@ namespace framework {
         return strategy_->validate();
       }
 
+      void unsubscribe() {
+        subscription_.unsubscribe();
+      }
+
      private:
       rxcpp::observable<T> unwrapped_;
       std::unique_ptr<VerificationStrategy<T>> strategy_;
+      rxcpp::composite_subscription subscription_;
     };
 
     /**
@@ -167,7 +160,8 @@ namespace framework {
      *   auto sub = make_test_subscriber<CallExact>(o, 1);
      */
     template <template <typename K> class S,
-              template <typename V, typename SO> class O,
+              template <typename V, typename SO>
+              class O,
               typename T,
               typename SourceOperator,
               typename... Args>

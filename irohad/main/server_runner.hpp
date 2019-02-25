@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef MAIN_SERVER_RUNNER_HPP
@@ -20,8 +8,8 @@
 
 #include <grpc++/grpc++.h>
 #include <grpc++/impl/codegen/service_type.h>
-
 #include "common/result.hpp"
+#include "logger/logger.hpp"
 
 /**
  * Class runs Torii server for handling queries and commands.
@@ -32,8 +20,11 @@ class ServerRunner {
    * Constructor. Initialize a new instance of ServerRunner class.
    * @param address - the address the server will be bind to in URI form
    * @param reuse - allow multiple sockets to bind to the same port
+   * @param log to print progress to
    */
-  explicit ServerRunner(const std::string &address, bool reuse = true);
+  explicit ServerRunner(const std::string &address,
+                        bool reuse = true,
+                        logger::Logger log = logger::log("ServerRunner"));
 
   /**
    * Adds a new grpc service to be run.
@@ -58,7 +49,14 @@ class ServerRunner {
    */
   void shutdown();
 
+  /**
+   * Shutdown gRPC server with force on given deadline
+   */
+  void shutdown(const std::chrono::system_clock::time_point &deadline);
+
  private:
+  logger::Logger log_;
+
   std::unique_ptr<grpc::Server> serverInstance_;
   std::mutex waitForServer_;
   std::condition_variable serverInstanceCV_;

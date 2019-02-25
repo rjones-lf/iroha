@@ -73,7 +73,7 @@ Configuring Iroha Network
 
 .. note:: To keep things simple, in this guide we will create a network
   containing only one node. To understand how to run several peers, follow
-  this guide.
+  `this guide. <github.com/hyperledger/iroha/tree/master/deploy/ansible>`_
 
 Now we need to configure our Iroha network. This includes creating a
 configuration file, generating keypairs for a users, writing a list of peers
@@ -84,7 +84,7 @@ In order to get those files, you need to clone the
 
 .. code-block:: shell
 
-  git clone -b develop https://github.com/hyperledger/iroha --depth=1
+  git clone -b master https://github.com/hyperledger/iroha --depth=1
 
 .. hint:: ``--depth=1`` option allows us to download only latest commit and
   save some time and bandwidth. If you want to get a full commit history, you
@@ -103,7 +103,7 @@ command
   -v blockstore:/tmp/block_store \
   --network=iroha-network \
   --entrypoint=/bin/bash \
-  hyperledger/iroha:develop
+  hyperledger/iroha:latest
 
 Let's look in detail what this command does:
 
@@ -119,7 +119,7 @@ Let's look in detail what this command does:
 - ``--entrypoint=/bin/bash \`` Because ``hyperledger/iroha`` has
   the custom script which runs after starting the container, we want to
   override it so we can start Iroha Daemon manually.
-- ``hyperledger/iroha:develop`` is the image which has the ``develop``
+- ``hyperledger/iroha:latest`` is the image which has the ``master``
   branch.
 
 Launching Iroha Daemon

@@ -5,6 +5,7 @@
 
 #include "interfaces/query_responses/block_response.hpp"
 
+#include "interfaces/iroha_internal/block.hpp"
 #include "utils/string_builder.hpp"
 
 namespace shared_model {

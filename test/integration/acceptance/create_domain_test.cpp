@@ -9,6 +9,7 @@
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class CreateDomain : public AcceptanceFixture {
  public:
@@ -21,6 +22,9 @@ class CreateDomain : public AcceptanceFixture {
 };
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-228 "Basic" tests should be replaced with a
+ * common acceptance test
+ *
  * @given some user with can_create_domain permission
  * @when execute tx with CreateDomain command
  * @then there is the tx in proposal
@@ -31,14 +35,15 @@ TEST_F(CreateDomain, Basic) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().createDomain(kNewDomain, kRole)))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+      .sendTxAwait(
+          complete(baseTx().createDomain(kNewDomain, kRole)),
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-207 remove, covered by
+ * postgres_executor_test CreateDomain.NoPerms
+ *
  * @given some user without can_create_domain permission
  * @when execute tx with CreateDomain command
  * @then verified proposal is empty
@@ -54,10 +59,14 @@ TEST_F(CreateDomain, NoPermissions) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-207 remove, covered by
+ * postgres_executor_test CreateDomain.NoDefaultRole
+ *
  * @given some user with can_create_domain permission
  * @when execute tx with CreateDomain command with nonexistent role
  * @then verified proposal is empty
@@ -74,30 +83,36 @@ TEST_F(CreateDomain, NoRole) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-207 remove, covered by
+ * postgres_executor_test CreateDomain.NameNotUnique
+ *
  * @given some user with can_create_domain permission
  * @when execute tx with CreateDomain command with already existing domain
  * @then verified proposal is empty
  */
 TEST_F(CreateDomain, ExistingName) {
-  std::string existing_domain = IntegrationTestFramework::kDefaultDomain;
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipVerifiedProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().createDomain(existing_domain, kRole)))
+      .sendTx(complete(baseTx().createDomain(kDomain, kRole)))
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-207 remove, covered by field validator test
+ *
  * @given some user with can_create_domain permission
  * @when execute tx with CreateDomain command with maximum available length
  * @then there is the tx in proposal
@@ -114,14 +129,14 @@ TEST_F(CreateDomain, MaxLenName) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().createDomain(maxLongDomain, kRole)))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+      .sendTxAwait(
+          complete(baseTx().createDomain(maxLongDomain, kRole)),
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-207 remove, covered by field validator test
+ *
  * @given some user with can_create_domain permission
  * @when execute tx with CreateDomain command with too long length
  * @then the tx hasn't passed stateless validation
@@ -134,10 +149,12 @@ TEST_F(CreateDomain, TooLongName) {
       .skipProposal()
       .skipBlock()
       .sendTx(complete(baseTx().createDomain(std::string(257, 'a'), kRole)),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-207 remove, covered by field validator test
+ *
  * @given some user with can_create_domain permission
  * @when execute tx with CreateDomain command with empty domain name
  * @then the tx hasn't passed stateless validation
@@ -151,10 +168,12 @@ TEST_F(CreateDomain, EmptyName) {
       .skipProposal()
       .skipBlock()
       .sendTx(complete(baseTx().createDomain(empty_name, kRole)),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-207 remove, covered by field validator test
+ *
  * @given some user with can_create_domain permission
  * @when execute tx with CreateDomain command with empty role name
  * @then the tx hasn't passed stateless validation
@@ -168,5 +187,5 @@ TEST_F(CreateDomain, DISABLED_EmptyRoleName) {
       .skipProposal()
       .skipBlock()
       .sendTx(complete(baseTx().createDomain(kNewDomain, empty_name)),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }

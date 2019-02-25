@@ -10,6 +10,7 @@
 #include "datetime/time.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/block.hpp"
+#include "validators/abstract_validator.hpp"
 #include "validators/answer.hpp"
 #include "validators/container_validator.hpp"
 
@@ -23,7 +24,8 @@ namespace shared_model {
     class BlockValidator
         : public ContainerValidator<interface::Block,
                                     FieldValidator,
-                                    TransactionsCollectionValidator> {
+                                    TransactionsCollectionValidator>,
+          public AbstractValidator<interface::Block> {
      public:
       using ContainerValidator<
           interface::Block,
@@ -34,7 +36,7 @@ namespace shared_model {
        * @param block
        * @return Answer containing found error if any
        */
-      Answer validate(const interface::Block &block) const {
+      Answer validate(const interface::Block &block) const override {
         return ContainerValidator<interface::Block,
                                   FieldValidator,
                                   TransactionsCollectionValidator>::

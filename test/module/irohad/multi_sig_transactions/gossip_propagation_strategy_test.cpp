@@ -1,37 +1,26 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+
 #include <algorithm>
-#include <boost/range/irange.hpp>
 #include <iterator>
 #include <memory>
 #include <numeric>
-#include <rxcpp/rx.hpp>
 #include <string>
 #include <thread>
 #include <vector>
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <boost/range/irange.hpp>
+#include <rxcpp/rx.hpp>
 #include "ametsuchi/peer_query_factory.hpp"
-#include "model/peer.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 
 using namespace iroha;
 
@@ -51,7 +40,7 @@ PropagationData generate(std::vector<std::string> &ids, size_t num) {
   PropagationData peers;
   std::transform(
       ids.begin(), ids.end(), std::back_inserter(peers), [](auto &s) {
-        return makePeer(s, "");
+        return makePeer(s, shared_model::interface::types::PubkeyType(""));
       });
   return peers;
 }
@@ -91,7 +80,11 @@ PropagationData subscribeAndEmit(boost::optional<PropagationData> data,
   EXPECT_CALL(*pbfactory, createPeerQuery())
       .WillRepeatedly(testing::Return(boost::make_optional(
           std::shared_ptr<iroha::ametsuchi::PeerQuery>(query))));
-  GossipPropagationStrategy strategy(pbfactory, period, amount);
+  iroha::GossipPropagationStrategyParams gossip_params;
+  gossip_params.emission_period = period;
+  gossip_params.amount_per_once = amount;
+  GossipPropagationStrategy strategy(
+      pbfactory, rxcpp::observe_on_event_loop(), gossip_params);
   return subscribeAndEmit(strategy, take);
 }
 
@@ -181,7 +174,8 @@ TEST(GossipPropagationStrategyTest, ErrorEmitting) {
  * @then ensure that there's been emitted peers
  */
 TEST(GossipPropagationStrategyTest, MultipleSubsEmission) {
-  auto peers_size = 10, amount = 2, take = 10;
+  auto peers_size = 10, take = 10;
+  uint32_t amount = 2;
   constexpr auto threads = 10;
   std::vector<std::string> peersId;
   PropagationData peers = generate(peersId, peers_size);
@@ -198,7 +192,11 @@ TEST(GossipPropagationStrategyTest, MultipleSubsEmission) {
       .WillRepeatedly(testing::Return(boost::make_optional(
           std::shared_ptr<iroha::ametsuchi::PeerQuery>(query))));
   EXPECT_CALL(*query, getLedgerPeers()).WillRepeatedly(testing::Return(peers));
-  GossipPropagationStrategy strategy(pbfactory, 1ms, amount);
+  iroha::GossipPropagationStrategyParams gossip_params;
+  gossip_params.emission_period = 1ms;
+  gossip_params.amount_per_once = amount;
+  GossipPropagationStrategy strategy(
+      pbfactory, rxcpp::observe_on_new_thread(), gossip_params);
 
   // Create separate subscriber for every thread
   // Use result[i] as storage for emitent for i-th one

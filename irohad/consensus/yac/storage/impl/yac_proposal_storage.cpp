@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
@@ -25,35 +13,36 @@ namespace iroha {
 
       // --------| private api |--------
 
-      auto YacProposalStorage::findStore(ProposalHash proposal_hash,
-                                         BlockHash block_hash) {
+      auto YacProposalStorage::findStore(const YacHash &store_hash) {
         // find exist
-        auto iter =
-            std::find_if(block_storages_.begin(),
-                         block_storages_.end(),
-                         [&proposal_hash, &block_hash](auto block_storage) {
-                           auto yac_hash = block_storage.getStorageHash();
-                           return yac_hash.proposal_hash == proposal_hash
-                               and yac_hash.block_hash == block_hash;
-                         });
+        auto iter = std::find_if(block_storages_.begin(),
+                                 block_storages_.end(),
+                                 [&store_hash](auto block_storage) {
+                                   auto storage_key =
+                                       block_storage.getStorageKey();
+                                   return storage_key == store_hash;
+                                 });
         if (iter != block_storages_.end()) {
           return iter;
         }
         // insert and return new
-        return block_storages_.emplace(block_storages_.end(),
-                                       YacHash(proposal_hash, block_hash),
-                                       peers_in_round_,
-                                       supermajority_checker_);
+        return block_storages_.emplace(
+            block_storages_.end(),
+            YacHash(store_hash.vote_round,
+                    store_hash.vote_hashes.proposal_hash,
+                    store_hash.vote_hashes.block_hash),
+            peers_in_round_,
+            supermajority_checker_);
       }
 
       // --------| public api |--------
 
       YacProposalStorage::YacProposalStorage(
-          ProposalHash hash,
+          Round store_round,
           PeersNumberType peers_in_round,
           std::shared_ptr<SupermajorityChecker> supermajority_checker)
           : current_state_(boost::none),
-            hash_(std::move(hash)),
+            storage_key_(store_round),
             peers_in_round_(peers_in_round),
             supermajority_checker_(supermajority_checker) {
         log_ = log("ProposalStorage");
@@ -63,11 +52,12 @@ namespace iroha {
         if (shouldInsert(msg)) {
           // insert to block store
 
-          log_->info("Vote [{}, {}] looks valid",
-                     msg.hash.proposal_hash,
-                     msg.hash.block_hash);
+          log_->info("Vote with {} and hashes [{}, {}] looks valid",
+                     msg.hash.vote_round,
+                     msg.hash.vote_hashes.proposal_hash,
+                     msg.hash.vote_hashes.block_hash);
 
-          auto iter = findStore(msg.hash.proposal_hash, msg.hash.block_hash);
+          auto iter = findStore(msg.hash);
           auto block_state = iter->insert(msg);
 
           // Single BlockStorage always returns CommitMessage because it
@@ -94,8 +84,9 @@ namespace iroha {
         });
         return getState();
       }
-      ProposalHash YacProposalStorage::getProposalHash() {
-        return hash_;
+
+      const Round &YacProposalStorage::getStorageKey() const {
+        return storage_key_;
       }
 
       boost::optional<Answer> YacProposalStorage::getState() const {
@@ -105,19 +96,19 @@ namespace iroha {
       // --------| private api |--------
 
       bool YacProposalStorage::shouldInsert(const VoteMessage &msg) {
-        return checkProposalHash(msg.hash.proposal_hash)
+        return checkProposalRound(msg.hash.vote_round)
             and checkPeerUniqueness(msg);
       }
 
-      bool YacProposalStorage::checkProposalHash(ProposalHash vote_hash) {
-        return vote_hash == hash_;
+      bool YacProposalStorage::checkProposalRound(const Round &vote_round) {
+        return vote_round == storage_key_;
       }
 
       bool YacProposalStorage::checkPeerUniqueness(const VoteMessage &msg) {
         return std::all_of(block_storages_.begin(),
                            block_storages_.end(),
                            [&msg](YacBlockStorage &storage) {
-                             if (storage.getStorageHash() != msg.hash) {
+                             if (storage.getStorageKey() != msg.hash) {
                                return true;
                              }
                              return not storage.isContains(msg);

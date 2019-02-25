@@ -12,9 +12,7 @@ namespace shared_model {
     SubtractAssetQuantity::SubtractAssetQuantity(CommandType &&command)
         : CopyableProto(std::forward<CommandType>(command)),
           subtract_asset_quantity_{proto_->subtract_asset_quantity()},
-          amount_{[this] {
-            return interface::Amount(subtract_asset_quantity_.amount());
-          }} {}
+          amount_{subtract_asset_quantity_.amount()} {}
 
     template SubtractAssetQuantity::SubtractAssetQuantity(
         SubtractAssetQuantity::TransportType &);
@@ -36,7 +34,7 @@ namespace shared_model {
     }
 
     const interface::Amount &SubtractAssetQuantity::amount() const {
-      return *amount_;
+      return amount_;
     }
 
   }  // namespace proto

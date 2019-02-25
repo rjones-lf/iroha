@@ -10,7 +10,8 @@
 
 #include <shared_mutex>
 
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace ordering {
@@ -50,14 +51,21 @@ namespace iroha {
 
       OnDemandConnectionManager(
           std::shared_ptr<transport::OdOsNotificationFactory> factory,
+          rxcpp::observable<CurrentPeers> peers,
+          logger::Logger log = logger::log("OnDemandConnectionManager"));
+
+      OnDemandConnectionManager(
+          std::shared_ptr<transport::OdOsNotificationFactory> factory,
+          rxcpp::observable<CurrentPeers> peers,
           CurrentPeers initial_peers,
-          rxcpp::observable<CurrentPeers> peers);
+          logger::Logger log = logger::log("OnDemandConnectionManager"));
 
-      void onTransactions(transport::Round round,
-                          CollectionType transactions) override;
+      ~OnDemandConnectionManager() override;
 
-      boost::optional<ProposalType> onRequestProposal(
-          transport::Round round) override;
+      void onBatches(consensus::Round round, CollectionType batches) override;
+
+      boost::optional<std::shared_ptr<const ProposalType>> onRequestProposal(
+          consensus::Round round) override;
 
      private:
       /**
@@ -74,6 +82,7 @@ namespace iroha {
        */
       void initializeConnections(const CurrentPeers &peers);
 
+      logger::Logger log_;
       std::shared_ptr<transport::OdOsNotificationFactory> factory_;
       rxcpp::composite_subscription subscription_;
 

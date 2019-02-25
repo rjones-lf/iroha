@@ -6,13 +6,15 @@
 #ifndef IROHA_SHARED_MODEL_SIGNABLE_VALIDATOR_HPP
 #define IROHA_SHARED_MODEL_SIGNABLE_VALIDATOR_HPP
 
-#include "validators/query_validator.hpp"
-#include "validators/transaction_validator.hpp"
+#include "validators/answer.hpp"
 
 namespace shared_model {
   namespace validation {
 
-    template <typename ModelValidator, typename Model, typename FieldValidator>
+    template <typename ModelValidator,
+              typename Model,
+              typename FieldValidator,
+              bool SignatureRequired = true>
     class SignableModelValidator : public ModelValidator {
      private:
       template <typename Validator>
@@ -20,8 +22,10 @@ namespace shared_model {
         auto answer = std::forward<Validator>(validator)(model);
         std::string reason_name = "Signature";
         ReasonsGroupType reason(reason_name, GroupedReasons());
-        field_validator_.validateSignatures(
-            reason, model.signatures(), model.payload());
+        if (SignatureRequired or not model.signatures().empty()) {
+          field_validator_.validateSignatures(
+              reason, model.signatures(), model.payload());
+        }
         if (not reason.second.empty()) {
           answer.addReason(std::move(reason));
         }
@@ -35,16 +39,14 @@ namespace shared_model {
 
       Answer validate(const Model &model,
                       interface::types::TimestampType current_timestamp) const {
-        return validateImpl(
-            model, [this, current_timestamp](const auto &model) {
-              return ModelValidator::validate(model, current_timestamp);
-            });
+        return validateImpl(model, [&, current_timestamp](const Model &m) {
+          return ModelValidator::validate(m, current_timestamp);
+        });
       }
 
       Answer validate(const Model &model) const {
-        return validateImpl(model, [this](const auto &model) {
-          return ModelValidator::validate(model);
-        });
+        return validateImpl(
+            model, [&](const Model &m) { return ModelValidator::validate(m); });
       }
 
      private:

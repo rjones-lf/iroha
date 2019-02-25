@@ -5,11 +5,13 @@
 
 #include <gtest/gtest.h>
 #include <tuple>
+#include "cryptography/keypair.hpp"
 #include "datetime/time.hpp"
 #include "framework/test_subscriber.hpp"
 #include "logger/logger.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
 
@@ -20,23 +22,6 @@ using namespace framework::test_subscriber;
 
 using testing::_;
 using testing::Return;
-
-class TestCompleter : public Completer {
-  bool operator()(const DataType &batch) const override {
-    return std::all_of(batch->transactions().begin(),
-                       batch->transactions().end(),
-                       [](const auto &tx) {
-                         return boost::size(tx->signatures()) >= tx->quorum();
-                       });
-  }
-
-  bool operator()(const DataType &batch, const TimeType &time) const override {
-    return std::any_of(
-        batch->transactions().begin(),
-        batch->transactions().end(),
-        [&time](const auto &tx) { return tx->createdTime() < time; });
-  }
-};
 
 class MstProcessorTest : public testing::Test {
  public:
@@ -109,21 +94,78 @@ void check(T &t) {
 /**
  * @given initialised mst processor
  * AND wrappers on mst observables
+ * AND uncompleted batch in mst
+ *
+ * @when the same signature for that batch is received
+ *
+ * @then check that:
+ * absent state update transactions
+ * AND absent prepared transactions
+ * AND absent expired transactions
+ */
+TEST_F(MstProcessorTest, receivedSameSignatures) {
+  // ---------------------------------| given |---------------------------------
+  auto same_key = makeKey();
+  mst_processor->propagateBatch(addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(1, time_now, 2)), 0, same_key));
+
+  auto observers = initObservers(mst_processor, 0, 0, 0);
+
+  // ---------------------------------| when |----------------------------------
+  mst_processor->propagateBatch(addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(1, time_now, 2)), 0, same_key));
+
+  // ---------------------------------| then |----------------------------------
+  check(observers);
+}
+
+/**
+ * @given initialised mst processor
+ * AND wrappers on mst observables
  *
  * @when an incomplete batch is inserted
  *
  * @then check that:
- * state is not updated
+ * notification about new batch is sent
  * AND absent prepared transactions
  * AND absent expired transactions
  */
 TEST_F(MstProcessorTest, notCompletedTransactionUsecase) {
   // ---------------------------------| given |---------------------------------
-  auto observers = initObservers(mst_processor, 0, 0, 0);
+  auto observers = initObservers(mst_processor, 1, 0, 0);
 
   // ---------------------------------| when |----------------------------------
   mst_processor->propagateBatch(
       addSignaturesFromKeyPairs(makeTestBatch(txBuilder(1)), 0, makeKey()));
+
+  // ---------------------------------| then |----------------------------------
+  check(observers);
+}
+
+/**
+ * @given initialised mst processor
+ * AND wrappers on mst observables
+ * AND uncompleted batch in mst
+ *
+ * @when new signature for that batch is received, but total number of them is
+ * still not enough
+ *
+ * @then check that:
+ * state update observer is called
+ * AND absent prepared transactions
+ * AND absent expired transactions
+ */
+TEST_F(MstProcessorTest, newSignatureNotCompleted) {
+  // ---------------------------------| given |---------------------------------
+  auto same_key = makeKey();
+  mst_processor->propagateBatch(addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(1, time_now, 3)), 0, makeKey()));
+
+  auto observers = initObservers(mst_processor, 1, 0, 0);
+
+  // ---------------------------------| when |----------------------------------
+  mst_processor->propagateBatch(addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(1, time_now, 3)), 0, makeKey()));
 
   // ---------------------------------| then |----------------------------------
   check(observers);
@@ -137,13 +179,13 @@ TEST_F(MstProcessorTest, notCompletedTransactionUsecase) {
  * AND the resulting set of signatures satisfies the account quorum number
  *
  * @then check that:
- * state is not updated
+ * state is updated the same number of times as transaction arrival minus one
  * AND 1 prepared transaction
  * AND absent expired transactions
  */
 TEST_F(MstProcessorTest, completedTransactionUsecase) {
   // ---------------------------------| given |---------------------------------
-  auto observers = initObservers(mst_processor, 0, 1, 0);
+  auto observers = initObservers(mst_processor, 2, 1, 0);
 
   // ---------------------------------| when |----------------------------------
   mst_processor->propagateBatch(addSignaturesFromKeyPairs(
@@ -161,17 +203,17 @@ TEST_F(MstProcessorTest, completedTransactionUsecase) {
  * @given initialised mst processor
  * AND wrappers on mst observables
  *
- * @when insert (by propagate_transaction) method transaction that already
+ * @when insert (by propagate_batch method) batch that already
  * expired with quorum one
  *
  * @then check that:
- * state not updated
+ * state is updated
  * AND 0 prepared transaction (although quorum 1)
  * AND 1 expired transactions
  */
 TEST_F(MstProcessorTest, expiredTransactionUsecase) {
   // ---------------------------------| given |---------------------------------
-  auto observers = initObservers(mst_processor, 0, 0, 1);
+  auto observers = initObservers(mst_processor, 1, 0, 1);
 
   // ---------------------------------| when |----------------------------------
   auto quorum = 1u;
@@ -191,24 +233,24 @@ TEST_F(MstProcessorTest, expiredTransactionUsecase) {
  * that contains TX with another signature
  *
  * @then check that:
- * state updated
- * AND 1 prepared transaction (although quorum 1)
+ * state observer is not called
+ * AND 1 prepared transaction
  * AND 0 expired transactions
  */
 TEST_F(MstProcessorTest, onUpdateFromTransportUsecase) {
   // ---------------------------------| given |---------------------------------
-  auto observers = initObservers(mst_processor, 1, 1, 0);
-
   auto quorum = 2;
   mst_processor->propagateBatch(addSignaturesFromKeyPairs(
       makeTestBatch(txBuilder(1, time_now, quorum)), 0, makeKey()));
 
+  auto observers = initObservers(mst_processor, 0, 1, 0);
+
   // ---------------------------------| when |----------------------------------
-  auto another_peer = makePeer("another", "another_pubkey");
+  shared_model::crypto::PublicKey another_peer_key("another_pubkey");
   auto transported_state = MstState::empty(std::make_shared<TestCompleter>());
   transported_state += addSignaturesFromKeyPairs(
       makeTestBatch(txBuilder(1, time_now, quorum)), 0, makeKey());
-  mst_processor->onNewState(another_peer, transported_state);
+  mst_processor->onNewState(another_peer_key, transported_state);
 
   // ---------------------------------| then |----------------------------------
   check(observers);
@@ -233,7 +275,8 @@ TEST_F(MstProcessorTest, onNewPropagationUsecase) {
 
   // ---------------------------------| when |----------------------------------
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers{
-      makePeer("one", "sign_one"), makePeer("two", "sign_two")};
+      makePeer("one", shared_model::interface::types::PubkeyType("sign_one")),
+      makePeer("two", shared_model::interface::types::PubkeyType("sign_two"))};
   propagation_subject.get_subscriber().on_next(peers);
 }
 
@@ -251,13 +294,16 @@ TEST_F(MstProcessorTest, emptyStatePropagation) {
   EXPECT_CALL(*transport, sendState(_, _)).Times(0);
 
   // ---------------------------------| given |---------------------------------
-  auto another_peer = makePeer("another", "another_pubkey");
+  auto another_peer = makePeer(
+      "another", shared_model::interface::types::PubkeyType("sign_one"));
 
-  auto another_peer_state = MstState::empty();
+  auto another_peer_state = MstState::empty(
+      std::make_shared<iroha::DefaultCompleter>(std::chrono::minutes(0)));
   another_peer_state += makeTestBatch(txBuilder(1));
 
-  storage->apply(another_peer, another_peer_state);
-  ASSERT_TRUE(storage->getDiffState(another_peer, time_now).isEmpty());
+  storage->apply(another_peer->pubkey(), another_peer_state);
+  ASSERT_TRUE(
+      storage->getDiffState(another_peer->pubkey(), time_now).isEmpty());
 
   // ---------------------------------| when |----------------------------------
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers{

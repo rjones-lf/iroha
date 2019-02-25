@@ -6,25 +6,25 @@
 #ifndef IROHA_SHARED_MODEL_QUERY_HPP
 #define IROHA_SHARED_MODEL_QUERY_HPP
 
-#include <boost/variant.hpp>
-
+#include <boost/variant/variant_fwd.hpp>
 #include "interfaces/base/signable.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/queries/get_account.hpp"
-#include "interfaces/queries/get_account_asset_transactions.hpp"
-#include "interfaces/queries/get_account_assets.hpp"
-#include "interfaces/queries/get_account_detail.hpp"
-#include "interfaces/queries/get_account_transactions.hpp"
-#include "interfaces/queries/get_asset_info.hpp"
-#include "interfaces/queries/get_role_permissions.hpp"
-#include "interfaces/queries/get_roles.hpp"
-#include "interfaces/queries/get_signatories.hpp"
-#include "interfaces/queries/get_transactions.hpp"
-#include "interfaces/queries/get_pending_transactions.hpp"
-#include "interfaces/queries/query_payload_meta.hpp"
 
 namespace shared_model {
   namespace interface {
+
+    class GetAccount;
+    class GetBlock;
+    class GetSignatories;
+    class GetAccountTransactions;
+    class GetAccountAssetTransactions;
+    class GetTransactions;
+    class GetAccountAssets;
+    class GetAccountDetail;
+    class GetRoles;
+    class GetRolePermissions;
+    class GetAssetInfo;
+    class GetPendingTransactions;
 
     /**
      * Class Query provides container with one of concrete query available in
@@ -49,10 +49,8 @@ namespace shared_model {
                                     GetRoles,
                                     GetRolePermissions,
                                     GetAssetInfo,
-                                    GetPendingTransactions>;
-
-      /// Types of concrete commands, in attached variant
-      using QueryListType = QueryVariantType::types;
+                                    GetPendingTransactions,
+                                    GetBlock>;
 
       /**
        * @return reference to const variant with concrete command
@@ -79,4 +77,5 @@ namespace shared_model {
     };
   }  // namespace interface
 }  // namespace shared_model
+
 #endif  // IROHA_SHARED_MODEL_QUERY_HPP

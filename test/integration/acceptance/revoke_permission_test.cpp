@@ -3,17 +3,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "integration/acceptance/grantable_permissions_fixture.hpp"
-
 #include "builders/protobuf/builder_templates/query_template.hpp"
+
+#include "integration/acceptance/grantable_permissions_fixture.hpp"
 
 using namespace integration_framework;
 
 using namespace shared_model;
 using namespace shared_model::interface;
 using namespace shared_model::interface::permissions;
+using namespace common_constants;
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-228 "Basic" tests should be replaced with a
+ * common acceptance test
+ * also covered by postgres_executor_test RevokePermission.Valid
+ *
  * C269 Revoke permission from a non-existing account
  * @given ITF instance and only one account with can_grant permission
  * @when the account tries to revoke grantable permission from non-existing
@@ -38,10 +43,14 @@ TEST_F(GrantablePermissionsFixture, RevokeFromNonExistingAccount) {
       .checkVerifiedProposal(
           // transaction is not stateful valid (kAccount2 does not exist)
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-222 convert to a SFV integration test
+ * (no such test in postgres_executor_test)
+ *
  * C271 Revoke permission more than once
  * @given ITF instance, two accounts, the first account has granted a permission
  * to the second
@@ -60,13 +69,13 @@ TEST_F(GrantablePermissionsFixture, RevokeTwice) {
       .checkBlock(
           // permission was successfully granted
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(revokePermission(kAccount1,
-                               kAccount1Keypair,
-                               kAccount2,
-                               permissions::Grantable::kSetMyQuorum))
-      .skipVerifiedProposal()
-      .checkBlock(
-          // permission was successfully revoked
+      .sendTxAwait(
+          revokePermission(
+              kAccount1,
+              kAccount1Keypair,
+              kAccount2,
+              permissions::Grantable::kSetMyQuorum),  // permission was
+                                                      // successfully revoked
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendTx(revokePermission(kAccount1,
                                kAccount1Keypair,
@@ -75,47 +84,75 @@ TEST_F(GrantablePermissionsFixture, RevokeTwice) {
       .checkVerifiedProposal(
           // permission cannot be revoked twice
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
+      .checkBlock(
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
+}
+
+/**
+ * TODO mboldyrev 18.01.2019 IR-222 remove, covered by
+ * postgres_executor_test RevokePermission.NoPerms
+ *
+ * Revoke without permission
+ * @given ITF instance, three accounts:
+ *  - first account does not have any permissions
+ *  - second account has a grantable permission from the third account
+ *  - third account gives a grantable permissions to the second account
+ * @when first account tries to revoke permissions from the second
+ * @then revoke fails
+ */
+TEST_F(GrantablePermissionsFixture, RevokeWithoutPermission) {
+  IntegrationTestFramework itf(1);
+  itf.setInitialState(kAdminKeypair);
+  createTwoAccounts(itf, {}, {Role::kReceive})
+      .sendTxAwait(
+          makeUserWithPerms({interface::permissions::Role::kSetMyQuorum}),
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
+      .sendTxAwait(
+          grantPermission(kUser,
+                          kUserKeypair,
+                          kAccount2,
+                          permissions::Grantable::kSetMyQuorum),
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
+      .sendTxAwait(
+          revokePermission(kAccount1,
+                           kAccount1Keypair,
+                           kAccount2,
+                           permissions::Grantable::kSetMyQuorum),
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
       .done();
 }
 
 /**
- * Revoke without permission
+ * Revoke permission, which was granted, though the granter does not have a
+ * corresponding permission already
  * @given ITF instance, two accounts, at the beginning first account have
  * can_grant permission and grants a permission to second account, then the
  * first account lost can_grant permission
  * @when the first account tries to revoke permission from the second
- * @then stateful validation fails
+ * @then revoke is successful
  */
-/**
- * TODO igor-egorov, 2018-08-03, enable test case
- * https://soramitsu.atlassian.net/browse/IR-1572
- */
-TEST_F(GrantablePermissionsFixture, DISABLED_RevokeWithoutPermission) {
-  auto detach_role_tx =
-      GrantablePermissionsFixture::TxBuilder()
-          .createdTime(getUniqueTime())
-          .creatorAccountId(IntegrationTestFramework::kAdminId)
-          .quorum(1)
-          .detachRole(kAccount1 + "@" + kDomain, kRole1)
-          .build()
-          .signAndAddSignature(kAdminKeypair)
-          .finish();
+TEST_F(GrantablePermissionsFixture,
+       RevokeTheGrantedPermissionWithoutPermission) {
+  auto detach_role_tx = GrantablePermissionsFixture::TxBuilder()
+                            .createdTime(getUniqueTime())
+                            .creatorAccountId(kAdminId)
+                            .quorum(1)
+                            .detachRole(kAccount1 + "@" + kDomain, kRole1)
+                            .build()
+                            .signAndAddSignature(kAdminKeypair)
+                            .finish();
 
   IntegrationTestFramework itf(1);
   itf.setInitialState(kAdminKeypair);
   createTwoAccounts(itf, {Role::kSetMyQuorum}, {Role::kReceive})
-      .sendTx(grantPermission(kAccount1,
-                              kAccount1Keypair,
-                              kAccount2,
-                              permissions::Grantable::kSetMyQuorum))
-      .skipProposal()
-      .skipVerifiedProposal()
-      .checkBlock(
+      .sendTxAwait(
+          grantPermission(kAccount1,
+                          kAccount1Keypair,
+                          kAccount2,
+                          permissions::Grantable::kSetMyQuorum),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(detach_role_tx)
-      .skipProposal()
-      .skipVerifiedProposal()
-      .checkBlock(
+      .sendTxAwait(
+          detach_role_tx,
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendTx(revokePermission(kAccount1,
                                kAccount1Keypair,
@@ -124,7 +161,9 @@ TEST_F(GrantablePermissionsFixture, DISABLED_RevokeWithoutPermission) {
       .checkProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
       .checkVerifiedProposal(
-          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
+      .checkBlock(
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .done();
 }
 
@@ -181,7 +220,7 @@ namespace grantables {
 
     IntegrationTestFramework &prepare(GrantablePermissionsFixture &f,
                                       IntegrationTestFramework &itf) override {
-      auto account_id = f.kAccount1 + "@" + f.kDomain;
+      auto account_id = f.kAccount1 + "@" + kDomain;
       auto pkey =
           shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
               .publicKey();
@@ -248,16 +287,16 @@ namespace grantables {
       auto create_and_transfer_coins =
           GrantablePermissionsFixture::TxBuilder()
               .createdTime(f.getUniqueTime())
-              .creatorAccountId(itf.kAdminId)
+              .creatorAccountId(kAdminId)
               .quorum(1)
-              .addAssetQuantity(f.kAssetId, "9000.0")
-              .transferAsset(itf.kAdminId,
-                             f.kAccount1 + "@" + f.kDomain,
-                             f.kAssetId,
+              .addAssetQuantity(kAssetId, "9000.0")
+              .transferAsset(kAdminId,
+                             f.kAccount1 + "@" + kDomain,
+                             kAssetId,
                              "init top up",
                              "8000.0")
               .build()
-              .signAndAddSignature(f.kAdminKeypair)
+              .signAndAddSignature(kAdminKeypair)
               .finish();
       itf.sendTx(create_and_transfer_coins)
           .checkProposal(
@@ -283,6 +322,8 @@ namespace grantables {
   TYPED_TEST_CASE(GrantRevokeFixture, GrantablePermissionsTypes);
 
   /**
+   * TODO mboldyrev 18.01.2019 IR-222 convert to a SFV integration test
+   *
    * The test iterates over helper types (GrantablePermissionsTypes).
    * That helper types contain information about required Grantable and Role
    * permissions for the test.
@@ -300,21 +341,18 @@ namespace grantables {
    */
   TYPED_TEST(GrantRevokeFixture, GrantAndRevokePermission) {
     IntegrationTestFramework itf(1);
-    itf.setInitialState(gpf::kAdminKeypair);
+    itf.setInitialState(kAdminKeypair);
 
     gpf::createTwoAccounts(itf,
                            {this->grantable_type_.can_grant_permission_,
                             Role::kAddSignatory,
                             Role::kReceive},
                            {Role::kReceive})
-        .sendTx(
+        .sendTxAwait(
             gpf::grantPermission(gpf::kAccount1,
                                  gpf::kAccount1Keypair,
                                  gpf::kAccount2,
-                                 this->grantable_type_.grantable_permission_))
-        .skipProposal()
-        .skipVerifiedProposal()
-        .checkBlock(
+                                 this->grantable_type_.grantable_permission_),
             // permission was successfully granted
             [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
     this->grantable_type_.prepare(*this, itf)
@@ -325,41 +363,30 @@ namespace grantables {
         .skipVerifiedProposal()
         .checkBlock(
             [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-        .sendTx(
+        .sendTxAwait(
             gpf::revokePermission(gpf::kAccount1,
                                   gpf::kAccount1Keypair,
                                   gpf::kAccount2,
-                                  this->grantable_type_.grantable_permission_))
-        .skipProposal()
-        .skipVerifiedProposal()
-        .checkBlock(
+                                  this->grantable_type_.grantable_permission_),
             // permission was successfully revoked
             [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
     auto last_check_tx = this->grantable_type_.testTransaction(*this);
     std::vector<interface::types::HashType> hashes{last_check_tx.hash()};
     auto last_tx_status_query = TestUnsignedQueryBuilder()
-                                    .creatorAccountId(itf.kAdminId)
+                                    .creatorAccountId(kAdminId)
                                     .createdTime(this->getUniqueTime())
                                     .queryCounter(1)
                                     .getTransactions(hashes)
                                     .build()
-                                    .signAndAddSignature(this->kAdminKeypair)
+                                    .signAndAddSignature(kAdminKeypair)
                                     .finish();
     itf.sendTx(last_check_tx)
         .checkProposal([](auto &proposal) {
           ASSERT_EQ(proposal->transactions().size(), 1);
         })
-        .getTxStatus(last_check_tx.hash(),
-                     [](auto &status) {
-                       auto message = status.errorMessage();
-
-                       ASSERT_NE(message.find("did not pass verification"),
-                                 std::string::npos)
-                           << "Fail reason: " << message
-                           << "\nRaw status:" << status.toString();
-                       // we saw empty message was received once
-                       // that is why we have added the raw print of status
-                     })
+        .skipVerifiedProposal()
+        .checkBlock(
+            [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
         .done();
   }
 

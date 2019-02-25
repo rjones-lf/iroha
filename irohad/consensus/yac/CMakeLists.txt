@@ -26,11 +26,9 @@ add_library(yac
     impl/yac.cpp
     impl/cluster_order.cpp
     impl/timer_impl.cpp
-    transport/impl/network_impl.cpp
     impl/peer_orderer_impl.cpp
     impl/yac_gate_impl.cpp
     impl/yac_hash_provider_impl.cpp
-    impl/yac_crypto_provider_impl.cpp
 
     storage/impl/yac_common.cpp
     storage/impl/yac_block_storage.cpp
@@ -39,9 +37,22 @@ add_library(yac
     )
 target_link_libraries(yac
     supermajority_check
+    common
     rxcpp
-    yac_grpc
     logger
     hash
+    consensus_round
+    gate_object
+    )
+
+add_library(yac_transport
+    transport/impl/network_impl.cpp
+    impl/yac_crypto_provider_impl.cpp
+    )
+target_link_libraries(yac_transport
+    yac
+    yac_grpc
+    logger
     shared_model_proto_backend
+    shared_model_stateless_validation # ProtoCommonObjectsFactory -> FieldValidator
     )

@@ -13,6 +13,7 @@
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class CreateRole : public AcceptanceFixture {
  public:
@@ -36,24 +37,30 @@ class CreateRole : public AcceptanceFixture {
 };
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-228 "Basic" tests should be replaced with a
+ * common acceptance test
+ *
  * @given some user with can_create_role permission
  * @when execute tx with CreateRole command
  * @then there is the tx in proposal
  */
 TEST_F(CreateRole, Basic) {
+  auto tx = makeUserWithPerms();
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .skipProposal()
-      .skipBlock()
-      .sendTx(complete(baseTx()))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+      .sendTx(tx)
+      .checkStatus(tx.hash(), CHECK_ENOUGH_SIGNATURES)
+      .checkStatus(tx.hash(), CHECK_STATELESS_VALID)
+      .checkStatus(tx.hash(), CHECK_STATEFUL_VALID)
+      .checkStatus(tx.hash(), CHECK_COMMITTED)
+      .sendTxAwait(complete(baseTx()), [](auto &block) {
+        ASSERT_EQ(block->transactions().size(), 1);
+      });
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-208 remove, SFV covered by CreateRole.NoPerms
+ *
  * @given some user without can_create_role permission
  * @when execute tx with CreateRole command
  * @then there is an empty verified proposal
@@ -69,10 +76,13 @@ TEST_F(CreateRole, HaveNoPerms) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-208 remove, covered by field validator test
+ *
  * @given some user with can_create_role permission
  * @when execute tx with CreateRole command with empty role
  * @then the tx hasn't passed stateless validation
@@ -83,12 +93,15 @@ TEST_F(CreateRole, EmptyRole) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx({interface::permissions::Role::kGetMyTxs}, "")),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-208 remove, covered by field validator test
+ *
  * @given some user with can_create_role permission
  * @when execute tx with CreateRole command with empty permission
  * @then the tx hasn't passed stateless validation
@@ -99,6 +112,7 @@ TEST_F(CreateRole, EmptyPerms) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTxAwait(complete(baseTx({})), [](auto &block) {
         ASSERT_EQ(block->transactions().size(), 1);
@@ -106,6 +120,8 @@ TEST_F(CreateRole, EmptyPerms) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-208 remove, covered by field validator test
+ *
  * @given some user with can_create_role permission
  * @when execute tx with CreateRole command with too long role name
  * @then the tx hasn't passed stateless validation
@@ -116,13 +132,16 @@ TEST_F(CreateRole, LongRoleName) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx({interface::permissions::Role::kGetMyTxs},
                               std::string(33, 'a'))),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-208 remove, covered by field validator test
+ *
  * @given some user with can_create_role permission
  * @when execute tx with CreateRole command with maximal role name size
  * @then the tx is comitted
@@ -133,15 +152,15 @@ TEST_F(CreateRole, MaxLenRoleName) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx({interface::permissions::Role::kGetMyTxs},
-                              std::string(32, 'a'))))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+      .sendTxAwait(
+          complete(baseTx({interface::permissions::Role::kGetMyTxs},
+                          std::string(32, 'a'))),
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-208 remove, covered by field validator test
+ *
  * TODO 15/05/2018 andrei: IR-1267 fix builders setting default value for
  * nonexisting permissions
  * @given some user with can_create_role permission
@@ -154,12 +173,15 @@ TEST_F(CreateRole, DISABLED_NonexistentPerm) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx({static_cast<interface::permissions::Role>(-1)})),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-208 remove, SFV covered by CreateRole.NameNotUnique
+ *
  * @given some user with can_create_role permission
  * @when execute tx with CreateRole command with existing role name
  * @then there is an empty verified proposal
@@ -175,5 +197,7 @@ TEST_F(CreateRole, ExistingRole) {
           complete(baseTx({interface::permissions::Role::kGetMyTxs}, kNewRole)))
       .skipProposal()
       .checkVerifiedProposal(
-          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); });
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
+      .checkBlock(
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
 }

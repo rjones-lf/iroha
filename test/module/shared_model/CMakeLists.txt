@@ -8,24 +8,11 @@ add_subdirectory(builders)
 add_subdirectory(validators)
 add_subdirectory(cryptography)
 
-AddTest(lazy_test
-    lazy_test.cpp
-    )
-target_link_libraries(lazy_test
-    boost
-    )
-
 AddTest(reference_holder_test
     reference_holder_test.cpp
     )
 target_link_libraries(reference_holder_test
     boost
-    )
-
-AddTest(amount_utils_test amount_utils_test.cpp)
-target_link_libraries(amount_utils_test
-    shared_model_default_builders
-    shared_model_amount_utils
     )
 
 AddTest(interface_test
@@ -34,4 +21,15 @@ AddTest(interface_test
 target_link_libraries(interface_test
     shared_model_default_builders
     logger
+    )
+
+add_library(commands_mocks_factory
+    mock_objects_factories/mock_command_factory.cpp
+    )
+target_link_libraries(commands_mocks_factory
+    shared_model_interfaces
+    shared_model_proto_backend
+    logger
+    gtest::main
+    gmock::main
     )

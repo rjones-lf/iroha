@@ -1,39 +1,24 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_PEER_COMMUNICATION_SERVICE_HPP
 #define IROHA_PEER_COMMUNICATION_SERVICE_HPP
 
 #include <rxcpp/rx.hpp>
-
+#include "network/ordering_gate_common.hpp"
+#include "simulator/verified_proposal_creator_common.hpp"
 #include "synchronizer/synchronizer_common.hpp"
-#include "validation/stateful_validator_common.hpp"
 
 namespace shared_model {
   namespace interface {
-    class Block;
     class Proposal;
-    class Transaction;
     class TransactionBatch;
   }  // namespace interface
 }  // namespace shared_model
 
 namespace iroha {
-
   namespace network {
 
     /**
@@ -42,37 +27,26 @@ namespace iroha {
     class PeerCommunicationService {
      public:
       /**
-       * @deprecated use propagate_batch instead
-       * Propagate transaction in network
-       * @param transaction - object for propagation
-       */
-      virtual void propagate_transaction(
-          std::shared_ptr<const shared_model::interface::Transaction>
-              transaction) const = 0;
-
-      /**
        * Propagate batch to the network
        * @param batch - batch for propagation
        */
       virtual void propagate_batch(
-          const shared_model::interface::TransactionBatch &batch) const = 0;
+          std::shared_ptr<shared_model::interface::TransactionBatch> batch)
+          const = 0;
 
       /**
        * Event is triggered when proposal arrives from network.
        * @return observable with Proposals.
        * (List of Proposals)
        */
-      virtual rxcpp::observable<
-          std::shared_ptr<shared_model::interface::Proposal>>
-      on_proposal() const = 0;
+      virtual rxcpp::observable<OrderingEvent> onProposal() const = 0;
 
       /**
        * Event is triggered when verified proposal arrives
        * @return verified proposal and list of stateful validation errors
        */
-      virtual rxcpp::observable<
-          std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
-      on_verified_proposal() const = 0;
+      virtual rxcpp::observable<simulator::VerifiedProposalCreatorEvent>
+      onVerifiedProposal() const = 0;
 
       /**
        * Event is triggered when commit block arrives.
@@ -87,6 +61,8 @@ namespace iroha {
 
       virtual ~PeerCommunicationService() = default;
     };
+
   }  // namespace network
 }  // namespace iroha
+
 #endif  // IROHA_PEER_COMMUNICATION_SERVICE_HPP

@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <algorithm>
@@ -139,14 +127,14 @@ TEST_F(JsonCommandTest, add_peer) {
   auto orig_addPeer = std::make_shared<AddPeer>();
   orig_addPeer->peer.address = "10.90.129.23";
   auto proto_add_peer = factory.serializeAddPeer(orig_addPeer);
-  auto serial_addPeer = factory.deserializeAddPeer(proto_add_peer);
+  auto deserialized_addPeer = factory.deserializeAddPeer(proto_add_peer);
 
-  ASSERT_TRUE(serial_addPeer);
-  ASSERT_EQ(*orig_addPeer, **serial_addPeer);
+  ASSERT_TRUE(deserialized_addPeer);
+  ASSERT_EQ(*orig_addPeer, **deserialized_addPeer);
   command_converter_test(orig_addPeer);
 
   orig_addPeer->peer.address = "134";
-  ASSERT_NE(**serial_addPeer, *orig_addPeer);
+  ASSERT_NE(**deserialized_addPeer, *orig_addPeer);
 }
 
 TEST_F(JsonCommandTest, add_signatory) {

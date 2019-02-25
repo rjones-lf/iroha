@@ -7,7 +7,8 @@
 #define IROHA_QUERY_PROCESSOR_IMPL_HPP
 
 #include "ametsuchi/storage.hpp"
-#include "execution/query_execution.hpp"
+#include "interfaces/iroha_internal/query_response_factory.hpp"
+#include "logger/logger.hpp"
 #include "torii/processor/query_processor.hpp"
 
 namespace iroha {
@@ -18,16 +19,14 @@ namespace iroha {
      */
     class QueryProcessorImpl : public QueryProcessor {
      public:
-      QueryProcessorImpl(std::shared_ptr<ametsuchi::Storage> storage,
-                         std::shared_ptr<QueryExecution> qry_exec);
-
-      /**
-       * Checks if query has needed signatures
-       * @param qry arrived query
-       * @return true if passes stateful validation
-       */
-      template <class Q>
-      bool checkSignatories(const Q &qry);
+      QueryProcessorImpl(
+          std::shared_ptr<ametsuchi::Storage> storage,
+          std::shared_ptr<ametsuchi::QueryExecutorFactory> qry_exec,
+          std::shared_ptr<iroha::PendingTransactionStorage>
+              pending_transactions,
+          std::shared_ptr<shared_model::interface::QueryResponseFactory>
+              response_factory,
+          logger::Logger log = logger::log("QueryProcessorImpl"));
 
       std::unique_ptr<shared_model::interface::QueryResponse> queryHandle(
           const shared_model::interface::Query &qry) override;
@@ -42,8 +41,14 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::BlockQueryResponse>>
           blocks_query_subject_;
       std::shared_ptr<ametsuchi::Storage> storage_;
-      std::shared_ptr<QueryExecution> qry_exec_;
+      std::shared_ptr<ametsuchi::QueryExecutorFactory> qry_exec_;
+      std::shared_ptr<iroha::PendingTransactionStorage> pending_transactions_;
+      std::shared_ptr<shared_model::interface::QueryResponseFactory>
+          response_factory_;
+
+      logger::Logger log_;
     };
+
   }  // namespace torii
 }  // namespace iroha
 

@@ -4,6 +4,7 @@
  */
 
 #include "backend/protobuf/query_responses/proto_roles_response.hpp"
+
 #include <boost/range/numeric.hpp>
 
 namespace shared_model {
@@ -12,15 +13,13 @@ namespace shared_model {
     template <typename QueryResponseType>
     RolesResponse::RolesResponse(QueryResponseType &&queryResponse)
         : CopyableProto(std::forward<QueryResponseType>(queryResponse)),
-          rolesResponse_{proto_->roles_response()},
-          roles_{[this] {
-            return boost::accumulate(rolesResponse_.roles(),
-                                     RolesIdType{},
-                                     [](auto &&roles, const auto &role) {
-                                       roles.emplace_back(role);
-                                       return std::move(roles);
-                                     });
-          }} {}
+          roles_response_{proto_->roles_response()},
+          roles_{boost::accumulate(roles_response_.roles(),
+                                   RolesIdType{},
+                                   [](auto &&roles, const auto &role) {
+                                     roles.emplace_back(role);
+                                     return std::move(roles);
+                                   })} {}
 
     template RolesResponse::RolesResponse(RolesResponse::TransportType &);
     template RolesResponse::RolesResponse(const RolesResponse::TransportType &);
@@ -33,7 +32,7 @@ namespace shared_model {
         : RolesResponse(std::move(o.proto_)) {}
 
     const RolesResponse::RolesIdType &RolesResponse::roles() const {
-      return *roles_;
+      return roles_;
     }
 
   }  // namespace proto

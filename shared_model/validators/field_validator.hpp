@@ -10,13 +10,19 @@
 
 #include "datetime/time.hpp"
 #include "interfaces/base/signable.hpp"
-#include "interfaces/commands/command.hpp"
 #include "interfaces/permissions.hpp"
 #include "interfaces/queries/query_payload_meta.hpp"
-#include "interfaces/transaction.hpp"
 #include "validators/answer.hpp"
 
 namespace shared_model {
+
+  namespace interface {
+    class Amount;
+    class BatchMeta;
+    class Peer;
+    class TxPaginationMeta;
+  }  // namespace interface
+
   namespace validation {
 
     /**
@@ -155,6 +161,10 @@ namespace shared_model {
       void validateHash(ReasonsGroupType &reason,
                         const crypto::Hash &hash) const;
 
+      void validateTxPaginationMeta(
+          ReasonsGroupType &reason,
+          const interface::TxPaginationMeta &tx_pagination_meta) const;
+
      private:
       const static std::string account_name_pattern_;
       const static std::string asset_name_pattern_;
@@ -196,6 +206,10 @@ namespace shared_model {
       static const size_t value_size;
       static const size_t description_size;
     };
+
+    boost::optional<ConcreteReasonType> validatePubkey(
+        const interface::types::PubkeyType &pubkey);
+
   }  // namespace validation
 }  // namespace shared_model
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 function next_free_port {
 for port in $(seq $1 $2);

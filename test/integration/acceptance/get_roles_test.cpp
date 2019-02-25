@@ -4,25 +4,30 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/variant.hpp>
 #include "backend/protobuf/transaction.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "interfaces/permissions.hpp"
+#include "interfaces/query_responses/error_query_response.hpp"
+#include "interfaces/query_responses/error_responses/stateful_failed_error_response.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-228 "Basic" tests should be replaced with a
+ * common acceptance test
+ *
  * @given a user with CanGetRoles permission
  * @when execute query with getRoles command
  * @then the query returns list of roles
  */
 TEST_F(AcceptanceFixture, CanGetRoles) {
-  auto checkQuery = [](auto &queryResponse) {
-    ASSERT_NO_THROW(boost::apply_visitor(
-        framework::SpecifiedVisitor<shared_model::interface::RolesResponse>(),
-        queryResponse.get()));
+  auto checkQuery = [](auto &query_response) {
+    ASSERT_NO_THROW(boost::get<const shared_model::interface::RolesResponse &>(
+        query_response.get()));
   };
 
   auto query = TestUnsignedQueryBuilder()
@@ -45,21 +50,21 @@ TEST_F(AcceptanceFixture, CanGetRoles) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-214 remove, covered by
+ * postgres_query_executor_test GetRolesExecutorTest.Invalid
+ *
  * @given a user without CanGetRoles permission
  * @when execute query with getRoles command
  * @then there is no way to to get roles due to user hasn't permissions enough
  */
 TEST_F(AcceptanceFixture, CanNotGetRoles) {
-  auto checkQuery = [](auto &queryResponse) {
+  auto checkQuery = [](auto &query_response) {
     ASSERT_NO_THROW({
-      boost::apply_visitor(
-          framework::SpecifiedVisitor<
-              shared_model::interface::StatefulFailedErrorResponse>(),
-          boost::apply_visitor(
-              framework::SpecifiedVisitor<
-                  shared_model::interface::ErrorQueryResponse>(),
-              queryResponse.get())
-              .get());
+      const auto &error_rsp =
+          boost::get<const shared_model::interface::ErrorQueryResponse &>(
+              query_response.get());
+      boost::get<const shared_model::interface::StatefulFailedErrorResponse &>(
+          error_rsp.get());
     });
   };
 

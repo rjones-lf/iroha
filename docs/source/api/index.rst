@@ -11,9 +11,3 @@ We will overview commands and queries that the system has, and the set of client
 
     commands.rst
     queries.rst
-    cpp_library.rst
-    java_library.rst
-    objc_library.rst
-    swift_library.rst
-    python_library.rst
-    nodejs_library.rst

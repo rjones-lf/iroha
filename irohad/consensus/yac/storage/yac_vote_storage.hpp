@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_YAC_VOTE_STORAGE_HPP
@@ -23,15 +11,15 @@
 #include <vector>
 
 #include <boost/optional.hpp>
-#include "consensus/yac/messages.hpp"  // because messages passed by value
+#include "consensus/yac/outcome_messages.hpp"  // because messages passed by value
 #include "consensus/yac/storage/storage_result.hpp"  // for Answer
 #include "consensus/yac/storage/yac_common.hpp"      // for ProposalHash
+#include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "consensus/yac/yac_types.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
-      class YacProposalStorage;
 
       /**
        * Proposal outcome states for multicast propagation strategy
@@ -73,11 +61,11 @@ namespace iroha {
         // --------| private api |--------
 
         /**
-         * Retrieve iterator for storage with parameters hash
-         * @param hash - object for finding
+         * Retrieve iterator for storage with specified key
+         * @param round - key of that storage
          * @return iterator to proposal storage
          */
-        auto getProposalStorage(ProposalHash hash);
+        auto getProposalStorage(const Round &round);
 
         /**
          * Find existed proposal storage or create new if required
@@ -104,28 +92,29 @@ namespace iroha {
                                       PeersNumberType peers_in_round);
 
         /**
-         * Provide status about closing round with parameters hash
-         * @param hash - target hash of round
+         * Provide status about closing round of proposal/block
+         * @param round, in which proposal/block is supposed to be committed
          * @return true, if round closed
          */
-        bool isHashCommitted(ProposalHash hash);
+        bool isCommitted(const Round &round);
 
         /**
-         * Method provide state of processing for concrete hash
-         * @param hash - target tag
-         * @return value attached to parameter's hash. Default is false.
+         * Method provide state of processing for concrete proposal/block
+         * @param round, in which that proposal/block is being voted
+         * @return value attached to parameter's round. Default is
+         * kNotSentNotProcessed.
          */
-        ProposalState getProcessingState(const ProposalHash &hash);
+        ProposalState getProcessingState(const Round &round);
 
         /**
-         * Mark hash with following transition:
+         * Mark round with following transition:
          * kNotSentNotProcessed -> kSentNotProcessed
          * kSentNotProcessed -> kSentProcessed
          * kSentProcessed -> kSentProcessed
          * @see ProposalState description for transition cases
-         * @param hash - target tag
+         * @param round - target tag
          */
-        void nextProcessingState(const ProposalHash &hash);
+        void nextProcessingState(const Round &round);
 
        private:
         // --------| fields |--------
@@ -136,10 +125,12 @@ namespace iroha {
         std::vector<YacProposalStorage> proposal_storages_;
 
         /**
-         * Processing set provide user flags about processing some hashes.
-         * If hash exists <=> processed
+         * Processing set provide user flags about processing some
+         * proposals/blocks.
+         * If such round exists <=> processed
          */
-        std::unordered_map<ProposalHash, ProposalState> processing_state_;
+        std::unordered_map<Round, ProposalState, RoundTypeHasher>
+            processing_state_;
       };
 
     }  // namespace yac

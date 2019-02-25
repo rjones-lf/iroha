@@ -30,10 +30,9 @@ namespace iroha {
   class MockMstTransportNotification
       : public network::MstTransportNotification {
    public:
-    MOCK_METHOD2(
-        onNewState,
-        void(const std::shared_ptr<shared_model::interface::Peer> &peer,
-             const MstState &state));
+    MOCK_METHOD2(onNewState,
+                 void(const shared_model::crypto::PublicKey &from,
+                      const MstState &state));
   };
 
   /**
@@ -58,6 +57,7 @@ namespace iroha {
                        rxcpp::observable<std::shared_ptr<MstState>>());
     MOCK_CONST_METHOD0(onPreparedBatchesImpl, rxcpp::observable<DataType>());
     MOCK_CONST_METHOD0(onExpiredBatchesImpl, rxcpp::observable<DataType>());
+    MOCK_CONST_METHOD1(batchInStorageImpl, bool(const DataType &));
   };
 }  // namespace iroha
 #endif  // IROHA_MST_MOCKS_HPP

@@ -3,8 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-import iroha
+import irohalib
+import primitive_pb2
+import binascii
 from time import time
+
+command = irohalib.Iroha.command
 
 
 def now():
@@ -12,60 +16,98 @@ def now():
 
 
 def all_permissions():
-    return iroha.RolePermissionSet([
-        iroha.Role_kAppendRole,
-        iroha.Role_kCreateRole,
-        iroha.Role_kDetachRole,
-        iroha.Role_kAddAssetQty,
-        iroha.Role_kSubtractAssetQty,
-        iroha.Role_kAddPeer,
-        iroha.Role_kAddSignatory,
-        iroha.Role_kRemoveSignatory,
-        iroha.Role_kSetQuorum,
-        iroha.Role_kCreateAccount,
-        iroha.Role_kSetDetail,
-        iroha.Role_kCreateAsset,
-        iroha.Role_kTransfer,
-        iroha.Role_kReceive,
-        iroha.Role_kCreateDomain,
-        iroha.Role_kReadAssets,
-        iroha.Role_kGetRoles,
-        iroha.Role_kGetMyAccount,
-        iroha.Role_kGetAllAccounts,
-        iroha.Role_kGetDomainAccounts,
-        iroha.Role_kGetMySignatories,
-        iroha.Role_kGetAllSignatories,
-        iroha.Role_kGetDomainSignatories,
-        iroha.Role_kGetMyAccAst,
-        iroha.Role_kGetAllAccAst,
-        iroha.Role_kGetDomainAccAst,
-        iroha.Role_kGetMyAccDetail,
-        iroha.Role_kGetAllAccDetail,
-        iroha.Role_kGetDomainAccDetail,
-        iroha.Role_kGetMyAccTxs,
-        iroha.Role_kGetAllAccTxs,
-        iroha.Role_kGetDomainAccTxs,
-        iroha.Role_kGetMyAccAstTxs,
-        iroha.Role_kGetAllAccAstTxs,
-        iroha.Role_kGetDomainAccAstTxs,
-        iroha.Role_kGetMyTxs,
-        iroha.Role_kGetAllTxs,
-        iroha.Role_kSetMyQuorum,
-        iroha.Role_kAddMySignatory,
-        iroha.Role_kRemoveMySignatory,
-        iroha.Role_kTransferMyAssets,
-        iroha.Role_kSetMyAccountDetail,
-        iroha.Role_kGetBlocks
+    return [
+        primitive_pb2.can_append_role,
+        primitive_pb2.can_create_role,
+        primitive_pb2.can_detach_role,
+        primitive_pb2.can_add_asset_qty,
+        primitive_pb2.can_subtract_asset_qty,
+        primitive_pb2.can_add_peer,
+        primitive_pb2.can_add_signatory,
+        primitive_pb2.can_remove_signatory,
+        primitive_pb2.can_set_quorum,
+        primitive_pb2.can_create_account,
+        primitive_pb2.can_set_detail,
+        primitive_pb2.can_create_asset,
+        primitive_pb2.can_transfer,
+        primitive_pb2.can_receive,
+        primitive_pb2.can_create_domain,
+        primitive_pb2.can_read_assets,
+        primitive_pb2.can_get_roles,
+        primitive_pb2.can_get_my_account,
+        primitive_pb2.can_get_all_accounts,
+        primitive_pb2.can_get_domain_accounts,
+        primitive_pb2.can_get_my_signatories,
+        primitive_pb2.can_get_all_signatories,
+        primitive_pb2.can_get_domain_signatories,
+        primitive_pb2.can_get_my_acc_ast,
+        primitive_pb2.can_get_all_acc_ast,
+        primitive_pb2.can_get_domain_acc_ast,
+        primitive_pb2.can_get_my_acc_detail,
+        primitive_pb2.can_get_all_acc_detail,
+        primitive_pb2.can_get_domain_acc_detail,
+        primitive_pb2.can_get_my_acc_txs,
+        primitive_pb2.can_get_all_acc_txs,
+        primitive_pb2.can_get_domain_acc_txs,
+        primitive_pb2.can_get_my_acc_ast_txs,
+        primitive_pb2.can_get_all_acc_ast_txs,
+        primitive_pb2.can_get_domain_acc_ast_txs,
+        primitive_pb2.can_get_my_txs,
+        primitive_pb2.can_get_all_txs,
+        primitive_pb2.can_get_blocks,
+        primitive_pb2.can_grant_can_set_my_quorum,
+        primitive_pb2.can_grant_can_add_my_signatory,
+        primitive_pb2.can_grant_can_remove_my_signatory,
+        primitive_pb2.can_grant_can_transfer_my_assets,
+        primitive_pb2.can_grant_can_set_my_account_detail
+    ]
+
+
+def genesis_block(admin, alice, test_permissions, multidomain=False):
+    """
+    Compose a set of common for all tests' genesis block transactions
+    :param admin: dict of id and private key of admin
+    :param alice: dict of id and private key of alice
+    :param test_permissions: permissions for users in test domain
+    :param multidomain: admin and alice accounts will be created in
+    different domains and the first domain users will have admin right
+    by default if True
+    :return: a list of irohalib.Iroha.command's
+    """
+    peer = primitive_pb2.Peer()
+    peer.address = '0.0.0.0:50541'
+    peer.peer_key = admin['key']
+    commands = [
+        command('AddPeer', peer=peer),
+        command('CreateRole', role_name='admin_role', permissions=all_permissions()),
+        command('CreateRole', role_name='test_role', permissions=test_permissions)]
+    if multidomain:
+        commands.append(command('CreateDomain', domain_id='first', default_role='admin_role'))
+    commands.extend([
+        command('CreateDomain',
+                domain_id='second' if multidomain else 'test',
+                default_role='test_role'),
+        command('CreateAccount',
+                account_name='admin',
+                domain_id='first' if multidomain else 'test',
+                public_key=irohalib.IrohaCrypto.derive_public_key(admin['key'])),
+        command('CreateAccount',
+                account_name='alice',
+                domain_id='second' if multidomain else 'test',
+                public_key=irohalib.IrohaCrypto.derive_public_key(alice['key']))
     ])
+    if not multidomain:
+        commands.append(command('AppendRole', account_id=admin['id'], role_name='admin_role'))
+    return commands
 
 
 def new_user(user_id):
-    key = iroha.ModelCrypto().generateKeypair()
+    private_key = irohalib.IrohaCrypto.private_key()
     if user_id.lower().startswith('admin'):
-        print('K{}'.format(key.privateKey().hex()))
+        print('K{}'.format(private_key.decode('utf-8')))
     return {
         'id': user_id,
-        'key': key
+        'key': private_key
     }
 
 
@@ -76,4 +118,4 @@ def hex(generator):
     Allows preserving the type of binaries for Binary Testing Framework.
     """
     prefix = 'T' if generator.__name__.lower().endswith('tx') else 'Q'
-    print('{}{}'.format(prefix, generator().hex()))
+    print('{}{}'.format(prefix, binascii.hexlify(generator().SerializeToString()).decode('utf-8')))

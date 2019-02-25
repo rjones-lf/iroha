@@ -8,6 +8,7 @@
 
 #include "builders/protobuf/unsigned_proto.hpp"
 #include "datetime/time.hpp"
+#include "framework/common_constants.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
@@ -18,20 +19,13 @@ namespace benchmark {
         const shared_model::crypto::PublicKey &key,
         const std::string &role_id,
         const shared_model::interface::RolePermissionSet &perms) {
-      const auto user_id = user + "@"
-          + integration_framework::IntegrationTestFramework::kDefaultDomain;
+      const auto user_id = user + "@" + common_constants::kDomain;
       return TestUnsignedTransactionBuilder()
-          .createAccount(
-              user,
-              integration_framework::IntegrationTestFramework::kDefaultDomain,
-              key)
-          .creatorAccountId(
-              integration_framework::IntegrationTestFramework::kAdminId)
+          .createAccount(user, common_constants::kDomain, key)
+          .creatorAccountId(common_constants::kAdminId)
           .createdTime(iroha::time::now())
           .quorum(1)
-          .detachRole(
-              user_id,
-              integration_framework::IntegrationTestFramework::kDefaultRole)
+          .detachRole(user_id, common_constants::kDefaultRole)
           .createRole(role_id, perms)
           .appendRole(user_id, role_id);
     }

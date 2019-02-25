@@ -6,13 +6,15 @@
 #ifndef IROHA_TRANSACTION_SEQUENCE_COMMON_HPP
 #define IROHA_TRANSACTION_SEQUENCE_COMMON_HPP
 
-#include <boost/range/any_range.hpp>
+#include <memory>
+#include <vector>
 
-#include "interfaces/transaction.hpp"
+#include <boost/range/any_range.hpp>
 
 namespace shared_model {
   namespace interface {
 
+    class Transaction;
     class TransactionBatch;
 
     namespace types {
@@ -24,7 +26,8 @@ namespace shared_model {
 
       using SharedTxsCollectionType = std::vector<std::shared_ptr<Transaction>>;
 
-      using BatchesCollectionType = std::vector<TransactionBatch>;
+      using BatchesCollectionType =
+          std::vector<std::shared_ptr<TransactionBatch>>;
     }  // namespace types
   }    // namespace interface
 }  // namespace shared_model

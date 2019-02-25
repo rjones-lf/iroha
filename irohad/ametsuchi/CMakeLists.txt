@@ -1,3 +1,8 @@
+#
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 add_library(ametsuchi
     impl/flat_file/flat_file.cpp
     impl/storage_impl.cpp
@@ -9,17 +14,17 @@ add_library(ametsuchi
     impl/postgres_block_query.cpp
     impl/postgres_command_executor.cpp
     impl/postgres_block_index.cpp
-    impl/postgres_ordering_service_persistent_state.cpp
     impl/wsv_restorer_impl.cpp
     impl/postgres_options.cpp
+    impl/postgres_query_executor.cpp
+    impl/tx_presence_cache_impl.cpp
     )
 
 target_link_libraries(ametsuchi
     logger
     rxcpp
-    libs_common
+    libs_files
     common
-    query_execution
     shared_model_interfaces
     shared_model_stateless_validation
     SOCI::core

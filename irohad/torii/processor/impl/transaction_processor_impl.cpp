@@ -9,6 +9,7 @@
 
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 #include "validation/stateful_validator_common.hpp"
 
@@ -17,140 +18,200 @@ namespace iroha {
 
     using network::PeerCommunicationService;
 
-    static std::string composeErrorMessage(
-        const validation::TransactionError &tx_error) {
-      if (not tx_error.first.tx_passed_initial_validation) {
-        return (boost::format("Stateful validation error: transaction %s "
-                              "did not pass initial verification: "
-                              "checking '%s', error message '%s'")
-                % tx_error.second.hex() % tx_error.first.name
-                % tx_error.first.error)
+    namespace {
+      std::string composeErrorMessage(
+          const validation::TransactionError &tx_hash_and_error) {
+        const auto tx_hash = tx_hash_and_error.tx_hash.hex();
+        const auto &cmd_error = tx_hash_and_error.error;
+        if (not cmd_error.tx_passed_initial_validation) {
+          return (boost::format(
+                      "Stateful validation error: transaction %s "
+                      "did not pass initial verification: "
+                      "checking '%s', error code '%d', query arguments: %s")
+                  % tx_hash % cmd_error.name % cmd_error.error_code
+                  % cmd_error.error_extra)
+              .str();
+        }
+        return (boost::format(
+                    "Stateful validation error in transaction %s: "
+                    "command '%s' with index '%d' did not pass "
+                    "verification with code '%d', query arguments: %s")
+                % tx_hash % cmd_error.name % cmd_error.index
+                % cmd_error.error_code % cmd_error.error_extra)
             .str();
       }
-      return (boost::format("Stateful validation error in transaction %s: "
-                            "command '%s' with index '%d' did not pass "
-                            "verification with error '%s'")
-              % tx_error.second.hex() % tx_error.first.name
-              % tx_error.first.index % tx_error.first.error)
-          .str();
-    }
+    }  // namespace
 
     TransactionProcessorImpl::TransactionProcessorImpl(
         std::shared_ptr<PeerCommunicationService> pcs,
         std::shared_ptr<MstProcessor> mst_processor,
-        std::shared_ptr<iroha::torii::StatusBus> status_bus)
+        std::shared_ptr<iroha::torii::StatusBus> status_bus,
+        std::shared_ptr<shared_model::interface::TxStatusFactory>
+            status_factory,
+        logger::Logger log)
         : pcs_(std::move(pcs)),
           mst_processor_(std::move(mst_processor)),
           status_bus_(std::move(status_bus)),
-          log_(logger::log("TxProcessor")) {
-      // notify about stateless success
-      pcs_->on_proposal().subscribe([this](auto model_proposal) {
-        for (const auto &tx : model_proposal->transactions()) {
-          const auto &hash = tx.hash();
-          log_->info("on proposal stateless success: {}", hash.hex());
-          // different on_next() calls (this one and below) can happen in
-          // different threads and we don't expect emitting them concurrently
-          status_bus_->publish(
-              shared_model::builder::DefaultTransactionStatusBuilder()
-                  .statelessValidationSuccess()
-                  .txHash(hash)
-                  .build());
-        }
-      });
-
+          status_factory_(std::move(status_factory)),
+          log_(std::move(log)) {
       // process stateful validation results
-      pcs_->on_verified_proposal().subscribe(
-          [this](std::shared_ptr<validation::VerifiedProposalAndErrors>
-                     proposal_and_errors) {
+      pcs_->onVerifiedProposal().subscribe(
+          [this](const simulator::VerifiedProposalCreatorEvent &event) {
+            if (not event.verified_proposal_result) {
+              return;
+            }
+
+            const auto &proposal_and_errors = getVerifiedProposalUnsafe(event);
+
             // notify about failed txs
-            const auto &errors = proposal_and_errors->second;
-            std::lock_guard<std::mutex> lock(notifier_mutex_);
+            const auto &errors = proposal_and_errors->rejected_transactions;
             for (const auto &tx_error : errors) {
-              auto error_msg = composeErrorMessage(tx_error);
-              log_->info(error_msg);
-              status_bus_->publish(
-                  shared_model::builder::DefaultTransactionStatusBuilder()
-                      .statefulValidationFailed()
-                      .txHash(tx_error.second)
-                      .errorMsg(error_msg)
-                      .build());
+              log_->info(composeErrorMessage(tx_error));
+              this->publishStatus(TxStatusType::kStatefulFailed,
+                                  tx_error.tx_hash,
+                                  tx_error.error);
             }
             // notify about success txs
             for (const auto &successful_tx :
-                 proposal_and_errors->first->transactions()) {
-              log_->info("on stateful validation success: {}",
+                 proposal_and_errors->verified_proposal->transactions()) {
+              log_->info("VerifiedProposalCreatorEvent StatefulValid: {}",
                          successful_tx.hash().hex());
-              status_bus_->publish(
-                  shared_model::builder::DefaultTransactionStatusBuilder()
-                      .statefulValidationSuccess()
-                      .txHash(successful_tx.hash())
-                      .build());
+              this->publishStatus(TxStatusType::kStatefulValid,
+                                  successful_tx.hash());
             }
           });
 
       // commit transactions
-      pcs_->on_commit().subscribe([this](synchronizer::SynchronizationEvent
-                                             sync_event) {
-        sync_event.synced_blocks.subscribe(
-            // on next
-            [this](auto model_block) {
-              current_txs_hashes_.reserve(model_block->transactions().size());
-              std::transform(model_block->transactions().begin(),
-                             model_block->transactions().end(),
-                             std::back_inserter(current_txs_hashes_),
-                             [](const auto &tx) { return tx.hash(); });
-            },
-            // on complete
-            [this] {
-              if (current_txs_hashes_.empty()) {
-                log_->info("there are no transactions to be committed");
-              } else {
-                std::lock_guard<std::mutex> lock(notifier_mutex_);
-                for (const auto &tx_hash : current_txs_hashes_) {
-                  log_->info("on commit committed: {}", tx_hash.hex());
-                  status_bus_->publish(
-                      shared_model::builder::DefaultTransactionStatusBuilder()
-                          .committed()
-                          .txHash(tx_hash)
-                          .build());
-                }
-                current_txs_hashes_.clear();
-              }
-            });
-      });
+      pcs_->on_commit().subscribe(
+          [this](synchronizer::SynchronizationEvent sync_event) {
+            bool has_at_least_one_committed = false;
+            sync_event.synced_blocks.subscribe(
+                // on next
+                [this, &has_at_least_one_committed](auto model_block) {
+                  for (const auto &tx : model_block->transactions()) {
+                    const auto &hash = tx.hash();
+                    log_->info("SynchronizationEvent Committed: {}",
+                               hash.hex());
+                    this->publishStatus(TxStatusType::kCommitted, hash);
+                    has_at_least_one_committed = true;
+                  }
+                  for (const auto &rejected_tx_hash :
+                       model_block->rejected_transactions_hashes()) {
+                    log_->info("SynchronizationEvent Rejected: {}",
+                               rejected_tx_hash.hex());
+                    this->publishStatus(TxStatusType::kRejected,
+                                        rejected_tx_hash);
+                  }
+                },
+                // on complete
+                [this, &has_at_least_one_committed] {
+                  if (not has_at_least_one_committed) {
+                    log_->info("there are no transactions to be committed");
+                  }
+                });
+          });
 
+      mst_processor_->onStateUpdate().subscribe([this](auto &&state) {
+        log_->info("MST state updated");
+        for (auto &&batch : state->getBatches()) {
+          for (auto &&tx : batch->transactions()) {
+            this->publishStatus(TxStatusType::kMstPending, tx->hash());
+          }
+        }
+      });
       mst_processor_->onPreparedBatches().subscribe([this](auto &&batch) {
         log_->info("MST batch prepared");
-        // TODO: 07/08/2018 @muratovv rework interface of pcs::propagate batch
-        // and mst::propagate batch IR-1584
-        this->pcs_->propagate_batch(*batch);
+        this->publishEnoughSignaturesStatus(batch->transactions());
+        this->pcs_->propagate_batch(batch);
       });
       mst_processor_->onExpiredBatches().subscribe([this](auto &&batch) {
-        log_->info("MST batch {} is expired", batch->reducedHash().toString());
-        std::lock_guard<std::mutex> lock(notifier_mutex_);
+        log_->info("MST batch {} is expired", batch->reducedHash());
         for (auto &&tx : batch->transactions()) {
-          this->status_bus_->publish(
-              shared_model::builder::DefaultTransactionStatusBuilder()
-                  .mstExpired()
-                  .txHash(tx->hash())
-                  .build());
+          this->publishStatus(TxStatusType::kMstExpired, tx->hash());
         }
       });
     }
 
     void TransactionProcessorImpl::batchHandle(
-        const shared_model::interface::TransactionBatch &transaction_batch)
-        const {
-      if (transaction_batch.hasAllSignatures()) {
+        std::shared_ptr<shared_model::interface::TransactionBatch>
+            transaction_batch) const {
+      log_->info("handle batch");
+      if (transaction_batch->hasAllSignatures()
+          and not mst_processor_->batchInStorage(transaction_batch)) {
+        log_->info("propagating batch to PCS");
+        this->publishEnoughSignaturesStatus(transaction_batch->transactions());
         pcs_->propagate_batch(transaction_batch);
       } else {
-        // TODO: 07/08/2018 @muratovv rework interface of pcs::propagate batch
-        // and mst::propagate batch IR-1584
-        mst_processor_->propagateBatch(
-            std::make_shared<shared_model::interface::TransactionBatch>(
-                transaction_batch));
+        log_->info("propagating batch to MST");
+        mst_processor_->propagateBatch(transaction_batch);
       }
     }
 
+    void TransactionProcessorImpl::publishStatus(
+        TxStatusType tx_status,
+        const shared_model::crypto::Hash &hash,
+        const validation::CommandError &cmd_error) const {
+      auto tx_error = cmd_error.name.empty()
+          ? shared_model::interface::TxStatusFactory::TransactionError{}
+          : shared_model::interface::TxStatusFactory::TransactionError{
+                cmd_error.name, cmd_error.index, cmd_error.error_code};
+      switch (tx_status) {
+        case TxStatusType::kStatelessFailed: {
+          status_bus_->publish(
+              status_factory_->makeStatelessFail(hash, tx_error));
+          return;
+        };
+        case TxStatusType::kStatelessValid: {
+          status_bus_->publish(
+              status_factory_->makeStatelessValid(hash, tx_error));
+          return;
+        };
+        case TxStatusType::kStatefulFailed: {
+          status_bus_->publish(
+              status_factory_->makeStatefulFail(hash, tx_error));
+          return;
+        };
+        case TxStatusType::kStatefulValid: {
+          status_bus_->publish(
+              status_factory_->makeStatefulValid(hash, tx_error));
+          return;
+        };
+        case TxStatusType::kRejected: {
+          status_bus_->publish(status_factory_->makeRejected(hash, tx_error));
+          return;
+        };
+        case TxStatusType::kCommitted: {
+          status_bus_->publish(status_factory_->makeCommitted(hash, tx_error));
+          return;
+        };
+        case TxStatusType::kMstExpired: {
+          status_bus_->publish(status_factory_->makeMstExpired(hash, tx_error));
+          return;
+        };
+        case TxStatusType::kNotReceived: {
+          status_bus_->publish(
+              status_factory_->makeNotReceived(hash, tx_error));
+          return;
+        };
+        case TxStatusType::kMstPending: {
+          status_bus_->publish(status_factory_->makeMstPending(hash, tx_error));
+          return;
+        };
+        case TxStatusType::kEnoughSignaturesCollected: {
+          status_bus_->publish(
+              status_factory_->makeEnoughSignaturesCollected(hash, tx_error));
+          return;
+        };
+      }
+    }
+
+    void TransactionProcessorImpl::publishEnoughSignaturesStatus(
+        const shared_model::interface::types::SharedTxsCollectionType &txs)
+        const {
+      for (const auto &tx : txs) {
+        this->publishStatus(TxStatusType::kEnoughSignaturesCollected,
+                            tx->hash());
+      }
+    }
   }  // namespace torii
 }  // namespace iroha

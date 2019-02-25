@@ -8,8 +8,10 @@
 
 #include <utility>
 
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 
+#include "ametsuchi/ledger_state.hpp"
+#include "consensus/round.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 
 namespace iroha {
@@ -27,15 +29,19 @@ namespace iroha {
      * Outcome, which was decided by synchronizer based on consensus result and
      * current local ledger state
      */
-    enum class SynchronizationOutcomeType { kCommit, kCommitEmpty, kReject };
+    enum class SynchronizationOutcomeType { kCommit, kReject, kNothing };
 
     /**
      * Event, which is emitted by synchronizer, when it receives and processes
      * commit
      */
     struct SynchronizationEvent {
+      // TODO andrei 08.11.2018 IR-1852 Rework blocks collection from
+      // synchronizer with iterable
       Chain synced_blocks;
       SynchronizationOutcomeType sync_outcome;
+      consensus::Round round;
+      std::shared_ptr<iroha::LedgerState> ledger_state;
     };
 
   }  // namespace synchronizer

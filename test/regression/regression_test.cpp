@@ -1,32 +1,20 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <gtest/gtest.h>
+#include <boost/variant.hpp>
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "common/files.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "framework/common_constants.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
+#include "interfaces/query_responses/transactions_response.hpp"
 
-constexpr auto kAdmin = "user@test";
-constexpr auto kAsset = "asset#domain";
-const auto kAdminKeypair =
-    shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
+using namespace common_constants;
+using shared_model::interface::permissions::Role;
 
 /**
  * @given ITF instance with Iroha
@@ -36,8 +24,8 @@ const auto kAdminKeypair =
 TEST(RegressionTest, SequentialInitialization) {
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
-                .creatorAccountId(kAdmin)
-                .addAssetQuantity(kAsset, "1.0")
+                .creatorAccountId(kAdminId)
+                .addAssetQuantity(kAssetId, "1.0")
                 .quorum(1)
                 .build()
                 .signAndAddSignature(
@@ -45,35 +33,45 @@ TEST(RegressionTest, SequentialInitialization) {
                         generateKeypair())
                 .finish();
 
-  auto checkStatelessValid = [](auto &status) {
-    ASSERT_NO_THROW(boost::apply_visitor(
-        framework::SpecifiedVisitor<
-            shared_model::interface::StatelessValidTxResponse>(),
-        status.get()));
+  auto check_enough_signatures_collected_status = [](auto &status) {
+    ASSERT_NO_THROW(
+        boost::get<
+            const shared_model::interface::EnoughSignaturesCollectedResponse &>(
+            status.get()));
   };
   auto checkProposal = [](auto &proposal) {
     ASSERT_EQ(proposal->transactions().size(), 1);
   };
 
-  const std::string dbname = "dbseqinit";
+  auto path = (boost::filesystem::temp_directory_path()
+               / boost::filesystem::unique_path())
+                  .string();
+  const std::string dbname = "d"
+      + boost::uuids::to_string(boost::uuids::random_generator()())
+            .substr(0, 8);
   {
-    integration_framework::IntegrationTestFramework(1, dbname, [](auto &) {})
+    integration_framework::IntegrationTestFramework(
+        1, dbname, false, false, path)
         .setInitialState(kAdminKeypair)
-        .sendTx(tx, checkStatelessValid)
+        .sendTx(tx, check_enough_signatures_collected_status)
         .skipProposal()
         .checkVerifiedProposal([](auto &proposal) {
           ASSERT_EQ(proposal->transactions().size(), 0);
-        });
+        })
+        .checkBlock(
+            [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
   }
   {
-    integration_framework::IntegrationTestFramework(1, dbname)
+    integration_framework::IntegrationTestFramework(
+        1, dbname, true, false, path)
         .setInitialState(kAdminKeypair)
-        .sendTx(tx, checkStatelessValid)
+        .sendTx(tx, check_enough_signatures_collected_status)
         .checkProposal(checkProposal)
         .checkVerifiedProposal([](auto &proposal) {
           ASSERT_EQ(proposal->transactions().size(), 0);
         })
-        .done();
+        .checkBlock(
+            [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
   }
 }
 
@@ -87,11 +85,12 @@ TEST(RegressionTest, StateRecovery) {
       shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
-                .creatorAccountId("admin@test")
-                .createAccount("user", "test", userKeypair.publicKey())
-                .addAssetQuantity("coin#test", "133.0")
-                .transferAsset(
-                    "admin@test", "user@test", "coin#test", "descrs", "97.8")
+                .creatorAccountId(kAdminId)
+                .createAccount(kUser, kDomain, userKeypair.publicKey())
+                .createRole(kRole, {Role::kReceive})
+                .appendRole(kUserId, kRole)
+                .addAssetQuantity(kAssetId, "133.0")
+                .transferAsset(kAdminId, kUserId, kAssetId, "descrs", "97.8")
                 .quorum(1)
                 .build()
                 .signAndAddSignature(kAdminKeypair)
@@ -100,7 +99,7 @@ TEST(RegressionTest, StateRecovery) {
   auto makeQuery = [&hash](int query_counter, auto kAdminKeypair) {
     return shared_model::proto::QueryBuilder()
         .createdTime(iroha::time::now())
-        .creatorAccountId("admin@test")
+        .creatorAccountId(kAdminId)
         .queryCounter(query_counter)
         .getTransactions(std::vector<shared_model::crypto::Hash>{hash})
         .build()
@@ -110,18 +109,19 @@ TEST(RegressionTest, StateRecovery) {
   auto checkOne = [](auto &res) { ASSERT_EQ(res->transactions().size(), 1); };
   auto checkQuery = [&tx](auto &status) {
     ASSERT_NO_THROW({
-      const auto &resp = boost::apply_visitor(
-          framework::SpecifiedVisitor<
-              shared_model::interface::TransactionsResponse>(),
-          status.get());
+      const auto &resp =
+          boost::get<const shared_model::interface::TransactionsResponse &>(
+              status.get());
       ASSERT_EQ(resp.transactions().size(), 1);
       ASSERT_EQ(resp.transactions().front(), tx);
     });
   };
-  auto path =
-      (boost::filesystem::temp_directory_path() / "iroha-state-recovery-test")
-          .string();
-  const std::string dbname = "dbstatereq";
+  auto path = (boost::filesystem::temp_directory_path()
+               / boost::filesystem::unique_path())
+                  .string();
+  const std::string dbname = "d"
+      + boost::uuids::to_string(boost::uuids::random_generator()())
+            .substr(0, 8);
 
   // Cleanup blockstore directory, because it may contain blocks from previous
   // test launch if ITF was failed for some reason. If there are some blocks,
@@ -131,27 +131,19 @@ TEST(RegressionTest, StateRecovery) {
 
   {
     integration_framework::IntegrationTestFramework(
-        1,
-        dbname,
-        [](auto &) {},
-        false,
-        path)
+        1, dbname, false, false, path)
         .setInitialState(kAdminKeypair)
         .sendTx(tx)
         .checkProposal(checkOne)
+        .checkVerifiedProposal(checkOne)
         .checkBlock(checkOne)
         .sendQuery(makeQuery(1, kAdminKeypair), checkQuery);
   }
   {
     integration_framework::IntegrationTestFramework(
-        1,
-        dbname,
-        [](auto &itf) { itf.done(); },
-        false,
-        path)
+        1, dbname, true, false, path)
         .recoverState(kAdminKeypair)
-        .sendQuery(makeQuery(2, kAdminKeypair), checkQuery)
-        .done();
+        .sendQuery(makeQuery(2, kAdminKeypair), checkQuery);
   }
 }
 
@@ -172,6 +164,5 @@ TEST(RegressionTest, DoubleCallOfDone) {
  * @then no exceptions are risen
  */
 TEST(RegressionTest, DestructionOfNonInitializedItf) {
-  integration_framework::IntegrationTestFramework itf(
-      1, {}, [](auto &itf) { itf.done(); });
+  integration_framework::IntegrationTestFramework itf(1, {}, true);
 }

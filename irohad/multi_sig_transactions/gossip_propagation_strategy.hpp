@@ -1,36 +1,24 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_GOSSIP_PROPAGATION_STRATEGY_HPP
 #define IROHA_GOSSIP_PROPAGATION_STRATEGY_HPP
-
-#include "multi_sig_transactions/mst_propagation_strategy.hpp"
 
 #include <boost/optional.hpp>
 #include <chrono>
 #include <mutex>
 
 #include "ametsuchi/peer_query_factory.hpp"
+#include "multi_sig_transactions/gossip_propagation_strategy_params.hpp"
+#include "multi_sig_transactions/mst_propagation_strategy.hpp"
 
 namespace iroha {
 
   /**
    * This class provides strategy for propagation states in network
-   * Emits exactly (or zero iff provider is empty) amount of peers
+   * Emits exactly (or zero if provider is empty) amount of peers
    * at some period
    * note: it can be inconsistent with the peer provider
    */
@@ -41,12 +29,12 @@ namespace iroha {
     /**
      * Initialize strategy with
      * @param peer_factory is a provider of peer list
-     * @param period of emitting data in ms
-     * @param amount of peers emitted per once
+     * @param emit_worker is the coordinator for the data emitting
+     * @param params configuration parameters
      */
     GossipPropagationStrategy(PeerProviderFactory peer_factory,
-                              std::chrono::milliseconds period,
-                              uint32_t amount);
+                              rxcpp::observe_on_one_worker emit_worker,
+                              const GossipPropagationStrategyParams &params);
 
     ~GossipPropagationStrategy();
 
@@ -70,6 +58,11 @@ namespace iroha {
      * Queue that contains non-emitted indexes of peers
      */
     std::vector<size_t> non_visited;
+
+    /**
+     * Worker that performs internal loop handling
+     */
+    rxcpp::observe_on_one_worker emit_worker;
 
     /*
      * Observable for the emitting propagated data

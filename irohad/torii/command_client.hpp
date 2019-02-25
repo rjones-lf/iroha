@@ -1,18 +1,7 @@
-/*
-Copyright 2017 Soramitsu Co., Ltd.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #ifndef TORII_COMMAND_CLIENT_HPP
 #define TORII_COMMAND_CLIENT_HPP
@@ -31,13 +20,9 @@ namespace torii {
    */
   class CommandSyncClient {
    public:
-    CommandSyncClient(const std::string &ip, size_t port);
-
-    CommandSyncClient(const CommandSyncClient &);
-    CommandSyncClient &operator=(CommandSyncClient);
-
-    CommandSyncClient(CommandSyncClient &&) noexcept;
-    CommandSyncClient &operator=(CommandSyncClient &&) noexcept;
+    CommandSyncClient(
+        std::unique_ptr<iroha::protocol::CommandService_v1::StubInterface> stub,
+        logger::Logger log = logger::log("CommandSyncClient"));
 
     /**
      * requests tx to a torii server and returns response (blocking, sync)
@@ -72,10 +57,7 @@ namespace torii {
         std::vector<iroha::protocol::ToriiResponse> &response) const;
 
    private:
-    void swap(CommandSyncClient &lhs, CommandSyncClient &rhs);
-    std::string ip_;
-    size_t port_;
-    std::unique_ptr<iroha::protocol::CommandService::Stub> stub_;
+    std::unique_ptr<iroha::protocol::CommandService_v1::StubInterface> stub_;
     logger::Logger log_;
   };
 

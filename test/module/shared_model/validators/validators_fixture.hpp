@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_VALIDATORS_FIXTURE_HPP
@@ -44,6 +32,7 @@ class ValidatorsTest : public ::testing::Test {
     auto setString = setField(&google::protobuf::Reflection::SetString);
     auto addString = setField(&google::protobuf::Reflection::AddString);
     auto setUInt32 = setField(&google::protobuf::Reflection::SetUInt32);
+    auto setUInt64 = setField(&google::protobuf::Reflection::SetUInt64);
     auto addEnum = setField(&google::protobuf::Reflection::AddEnumValue);
     auto setEnum = setField(&google::protobuf::Reflection::SetEnumValue);
 
@@ -75,6 +64,10 @@ class ValidatorsTest : public ::testing::Test {
     field_setters["peer"] = [&](auto refl, auto msg, auto field) {
       refl->MutableMessage(msg, field)->CopyFrom(peer);
     };
+    field_setters["pagination_meta"] = [&](auto refl, auto msg, auto field) {
+      refl->MutableMessage(msg, field)->CopyFrom(tx_pagination_meta);
+    };
+    field_setters["height"] = setUInt64(height);
   }
 
   /**
@@ -184,19 +177,25 @@ class ValidatorsTest : public ::testing::Test {
     domain_id = "ru";
     detail_key = "key";
     writer = "account@domain";
-    public_key = std::string(public_key_size, '0');
-    hash = std::string(public_key_size, '0');
+
+    // size of public_key and hash are twice bigger `public_key_size` because it
+    // is hex representation
+    public_key = std::string(public_key_size * 2, '0');
+    hash = std::string(public_key_size * 2, '0');
+
     role_permission = iroha::protocol::RolePermission::can_append_role;
     grantable_permission =
         iroha::protocol::GrantablePermission::can_add_my_signatory;
     quorum = 2;
     peer.set_address(address_localhost);
     peer.set_peer_key(public_key);
+    tx_pagination_meta.set_page_size(10);
   }
 
   size_t public_key_size{0};
   size_t hash_size{0};
   uint64_t counter{0};
+  uint64_t height{42};
   std::string account_id;
   std::string dest_id;
   std::string asset_name;
@@ -224,6 +223,7 @@ class ValidatorsTest : public ::testing::Test {
   iroha::protocol::Peer peer;
   decltype(iroha::time::now()) created_time;
   iroha::protocol::QueryPayloadMeta meta;
+  iroha::protocol::TxPaginationMeta tx_pagination_meta;
 
   // List all used fields in commands
   std::unordered_map<

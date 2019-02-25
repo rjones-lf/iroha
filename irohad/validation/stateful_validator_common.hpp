@@ -6,8 +6,13 @@
 #ifndef IROHA_STATEFUL_VALIDATOR_COMMON_HPP
 #define IROHA_STATEFUL_VALIDATOR_COMMON_HPP
 
+#include <memory>
+#include <utility>
 #include <vector>
 
+#include <unordered_map>
+
+#include "cryptography/hash.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
@@ -19,13 +24,18 @@ namespace shared_model {
 namespace iroha {
   namespace validation {
 
-    /// Type of command error report
+    /// Type of command error report which appeared during validation
+    /// process; contains name of command, command error itself and
+    /// the command index in the transaction.
     struct CommandError {
       /// Name of the failed command
       std::string name;
 
-      /// Error, with which the command failed
-      std::string error;
+      /// Error code, with which the command failed
+      uint32_t error_code;
+
+      /// Extra information about error for developers to be placed into the log
+      std::string error_extra;
 
       /// Shows, if transaction has passed initial validation
       bool tx_passed_initial_validation;
@@ -34,21 +44,24 @@ namespace iroha {
       size_t index = 0;
     };
 
-    /// Type of transaction error, which appeared during validation
-    /// process; contains names of commands, commands errors themselves,
-    /// commands indices and transaction hashes
-    using TransactionError =
-        std::pair<CommandError, shared_model::interface::types::HashType>;
+    /// Hash of transaction with error, which appeared during validation of this
+    /// transaction
+    struct TransactionError {
+      shared_model::crypto::Hash tx_hash;
+      CommandError error;
+    };
 
     /// Collection of transactions errors
     using TransactionsErrors = std::vector<TransactionError>;
 
-    /// Type of verified proposal and errors appeared in the process; first
-    /// dimension of errors vector is transaction, second is error itself with
-    /// number of transaction, where it happened
-    using VerifiedProposalAndErrors =
-        std::pair<std::shared_ptr<shared_model::interface::Proposal>,
-                  TransactionsErrors>;
+    /// Type of verified proposal and errors appeared in the process
+    // TODO [IR-1849] mboldyrev 27.10.2018: create a special class
+    // for VerifiedProposal which will include the rejected tx hashes
+    struct VerifiedProposalAndErrors {
+      std::shared_ptr<const shared_model::interface::Proposal>
+          verified_proposal;
+      TransactionsErrors rejected_transactions;
+    };
 
   }  // namespace validation
 }  // namespace iroha

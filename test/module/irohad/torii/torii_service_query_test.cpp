@@ -5,16 +5,18 @@
 
 #include <gmock/gmock.h>
 
+#include "backend/protobuf/proto_query_response_factory.hpp"
+#include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/query_responses/proto_block_query_response.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/default_builders.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "main/server_runner.hpp"
-#include "module/irohad/torii/torii_mocks.hpp"
+#include "module/irohad/torii/processor/mock_query_processor.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
 #include "torii/query_client.hpp"
 #include "torii/query_service.hpp"
+#include "validators/protobuf/proto_query_validator.hpp"
 
 using ::testing::_;
 using ::testing::A;
@@ -35,7 +37,10 @@ class ToriiQueryServiceTest : public ::testing::Test {
     query_processor = std::make_shared<iroha::torii::MockQueryProcessor>();
 
     //----------- Server run ----------------
-    runner->append(std::make_unique<torii::QueryService>(query_processor))
+    initQueryFactory();
+    runner
+        ->append(std::make_unique<iroha::torii::QueryService>(query_processor,
+                                                              query_factory))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {
@@ -48,8 +53,24 @@ class ToriiQueryServiceTest : public ::testing::Test {
     runner->waitForServersReady();
   }
 
+  void initQueryFactory() {
+    std::unique_ptr<shared_model::validation::AbstractValidator<
+        shared_model::interface::Query>>
+        query_validator = std::make_unique<
+            shared_model::validation::DefaultSignedQueryValidator>();
+    std::unique_ptr<
+        shared_model::validation::AbstractValidator<iroha::protocol::Query>>
+        proto_query_validator =
+            std::make_unique<shared_model::validation::ProtoQueryValidator>();
+    query_factory = std::make_shared<shared_model::proto::ProtoTransportFactory<
+        shared_model::interface::Query,
+        shared_model::proto::Query>>(std::move(query_validator),
+                                     std::move(proto_query_validator));
+  }
+
   std::unique_ptr<ServerRunner> runner;
   std::shared_ptr<iroha::torii::MockQueryProcessor> query_processor;
+  std::shared_ptr<iroha::torii::QueryService::QueryFactoryType> query_factory;
 
   iroha::protocol::Block block;
 
@@ -79,13 +100,12 @@ TEST_F(ToriiQueryServiceTest, FetchBlocksWhenValidQuery) {
           .finish());
 
   iroha::protocol::Block block;
-  block.mutable_payload()->set_height(123);
-  auto proto_block = std::make_shared<shared_model::proto::Block>(block);
-
-  auto block_response =
-      shared_model::builder::DefaultBlockQueryResponseBuilder()
-          .blockResponse(*proto_block)
-          .build();
+  block.mutable_block_v1()->mutable_payload()->set_height(123);
+  auto proto_block =
+      std::make_unique<shared_model::proto::Block>(block.block_v1());
+  std::shared_ptr<shared_model::interface::BlockQueryResponse> block_response =
+      shared_model::proto::ProtoQueryResponseFactory().createBlockQueryResponse(
+          std::move(proto_block));
 
   EXPECT_CALL(*query_processor,
               blocksQueryHandle(Truly([&blocks_query](auto &query) {

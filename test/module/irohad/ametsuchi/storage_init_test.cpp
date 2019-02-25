@@ -12,6 +12,7 @@
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
+#include "backend/protobuf/proto_permission_to_string.hpp"
 #include "framework/config_helper.hpp"
 #include "validators/field_validator.hpp"
 
@@ -26,8 +27,9 @@ class StorageInitTest : public ::testing::Test {
   }
 
  protected:
-  std::string block_store_path =
-      (boost::filesystem::temp_directory_path() / "block_store").string();
+  std::string block_store_path = (boost::filesystem::temp_directory_path()
+                                  / boost::filesystem::unique_path())
+                                     .string();
 
   // generate random valid dbname
   std::string dbname_ = "d"
@@ -45,10 +47,19 @@ class StorageInitTest : public ::testing::Test {
   std::shared_ptr<shared_model::proto::ProtoBlockJsonConverter> converter =
       std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
 
+  std::shared_ptr<shared_model::interface::PermissionToString> perm_converter_ =
+      std::make_shared<shared_model::proto::ProtoPermissionToString>();
+  void SetUp() override {
+    ASSERT_FALSE(boost::filesystem::exists(block_store_path))
+        << "Temporary block store " << block_store_path
+        << " directory already exists";
+  }
+
   void TearDown() override {
-    soci::session sql(soci::postgresql, pg_opt_without_dbname_);
+    soci::session sql(*soci::factory_postgresql(), pg_opt_without_dbname_);
     std::string query = "DROP DATABASE IF EXISTS " + dbname_;
     sql << query;
+    boost::filesystem::remove_all(block_store_path);
   }
 };
 
@@ -58,15 +69,22 @@ class StorageInitTest : public ::testing::Test {
  * @then Database is created
  */
 TEST_F(StorageInitTest, CreateStorageWithDatabase) {
-  StorageImpl::create(block_store_path, pgopt_, factory, converter)
-      .match([](const Value<std::shared_ptr<StorageImpl>> &) { SUCCEED(); },
-             [](const Error<std::string> &error) { FAIL() << error.error; });
-  soci::session sql(soci::postgresql, pg_opt_without_dbname_);
+  std::shared_ptr<StorageImpl> storage;
+  StorageImpl::create(
+      block_store_path, pgopt_, factory, converter, perm_converter_)
+      .match(
+          [&storage](const Value<std::shared_ptr<StorageImpl>> &value) {
+            storage = value.value;
+            SUCCEED();
+          },
+          [](const Error<std::string> &error) { FAIL() << error.error; });
+  soci::session sql(*soci::factory_postgresql(), pg_opt_without_dbname_);
   int size;
   sql << "SELECT COUNT(datname) FROM pg_catalog.pg_database WHERE datname = "
          ":dbname",
       soci::into(size), soci::use(dbname_);
   ASSERT_EQ(size, 1);
+  storage->dropStorage();
 }
 
 /**
@@ -77,7 +95,8 @@ TEST_F(StorageInitTest, CreateStorageWithDatabase) {
 TEST_F(StorageInitTest, CreateStorageWithInvalidPgOpt) {
   std::string pg_opt =
       "host=localhost port=5432 users=nonexistinguser dbname=test";
-  StorageImpl::create(block_store_path, pg_opt, factory, converter)
+  StorageImpl::create(
+      block_store_path, pg_opt, factory, converter, perm_converter_)
       .match(
           [](const Value<std::shared_ptr<StorageImpl>> &) {
             FAIL() << "storage created, but should not";

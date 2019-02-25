@@ -6,6 +6,7 @@
 #include "integration/acceptance/grantable_permissions_fixture.hpp"
 
 using namespace shared_model::interface::permissions;
+using namespace common_constants;
 
 shared_model::proto::Transaction
 GrantablePermissionsFixture::makeAccountWithPerms(
@@ -116,9 +117,7 @@ GrantablePermissionsFixture::addAssetAndTransfer(
     const shared_model::interface::types::AccountNameType &receiver_name) {
   const auto creator_account_id = creator_name + "@" + kDomain;
   const auto receiver_account_id = receiver_name + "@" + kDomain;
-  const auto asset_id =
-      integration_framework::IntegrationTestFramework::kAssetName + "#"
-      + kDomain;
+  const auto asset_id = kAssetName + "#" + kDomain;
   return complete(
       baseTx(creator_account_id)
           .addAssetQuantity(asset_id, amount)
@@ -137,9 +136,7 @@ GrantablePermissionsFixture::transferAssetFromSource(
   const auto creator_account_id = creator_name + "@" + kDomain;
   const auto source_account_id = source_account_name + "@" + kDomain;
   const auto receiver_account_id = receiver_name + "@" + kDomain;
-  const auto asset_id =
-      integration_framework::IntegrationTestFramework::kAssetName + "#"
-      + kDomain;
+  const auto asset_id = kAssetName + "#" + kDomain;
   return complete(
       baseTx(creator_account_id)
           .transferAsset(

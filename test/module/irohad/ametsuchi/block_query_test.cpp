@@ -1,29 +1,19 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
+
+#include "ametsuchi/impl/postgres_block_query.hpp"
 
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 #include "ametsuchi/impl/postgres_block_index.hpp"
-#include "ametsuchi/impl/postgres_block_query.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
+#include "common/byteutils.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
 #include "framework/result_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
-#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/ametsuchi/mock_key_value_storage.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
@@ -40,14 +30,14 @@ class BlockQueryTest : public AmetsuchiTest {
     ASSERT_TRUE(tmp);
     file = std::move(*tmp);
     mock_file = std::make_shared<MockKeyValueStorage>();
-    sql = std::make_unique<soci::session>(soci::postgresql, pgopt_);
+    sql = std::make_unique<soci::session>(*soci::factory_postgresql(), pgopt_);
 
     index = std::make_shared<PostgresBlockIndex>(*sql);
     auto converter =
         std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
     blocks = std::make_shared<PostgresBlockQuery>(*sql, *file, converter);
-    empty_blocks =
-        std::make_shared<PostgresBlockQuery>(*sql, *mock_file, converter);
+    empty_blocks = std::make_shared<PostgresBlockQuery>(
+        *sql, *mock_file, converter, logger::log("PostgresBlockQueryEmpty"));
 
     *sql << init_;
 
@@ -59,12 +49,17 @@ class BlockQueryTest : public AmetsuchiTest {
     auto txn1_2 = TestTransactionBuilder().creatorAccountId(creator1).build();
     tx_hashes.push_back(txn1_2.hash());
 
+    std::vector<shared_model::proto::Transaction> txs1;
+    txs1.push_back(std::move(txn1_1));
+    txs1.push_back(std::move(txn1_2));
+
     auto block1 =
         TestBlockBuilder()
             .height(1)
-            .transactions(
-                std::vector<shared_model::proto::Transaction>({txn1_1, txn1_2}))
+            .transactions(txs1)
             .prevHash(shared_model::crypto::Hash(zero_string))
+            .rejectedTransactions(
+                std::vector<shared_model::crypto::Hash>{rejected_hash})
             .build();
 
     // First tx in block 1
@@ -75,20 +70,24 @@ class BlockQueryTest : public AmetsuchiTest {
     auto txn2_2 = TestTransactionBuilder().creatorAccountId(creator2).build();
     tx_hashes.push_back(txn2_2.hash());
 
-    auto block2 =
-        TestBlockBuilder()
-            .height(2)
-            .transactions(
-                std::vector<shared_model::proto::Transaction>({txn2_1, txn2_2}))
-            .prevHash(block1.hash())
-            .build();
+    std::vector<shared_model::proto::Transaction> txs2;
+    txs2.push_back(std::move(txn2_1));
+    txs2.push_back(std::move(txn2_2));
+
+    auto block2 = TestBlockBuilder()
+                      .height(2)
+                      .transactions(txs2)
+                      .prevHash(block1.hash())
+                      .build();
 
     for (const auto &b : {std::move(block1), std::move(block2)}) {
-      file->add(b.height(),
-                iroha::stringToBytes(
-                    shared_model::converters::protobuf::modelToJson(b)));
-      index->index(b);
-      blocks_total++;
+      converter->serialize(b).match(
+          [this, &b](const iroha::expected::Value<std::string> &json) {
+            file->add(b.height(), iroha::stringToBytes(json.value));
+            index->index(b);
+            blocks_total++;
+          },
+          [](const auto &error) { FAIL() << error.error; });
     }
   }
 
@@ -108,115 +107,8 @@ class BlockQueryTest : public AmetsuchiTest {
   std::string creator2 = "user2@test";
   std::size_t blocks_total{0};
   std::string zero_string = std::string(32, '0');
+  shared_model::crypto::Hash rejected_hash{"rejected_tx_hash"};
 };
-
-/**
- * @given block store with 2 blocks totally containing 3 txs created by
- * user1@test
- * AND 1 tx created by user2@test
- * @when query to get transactions created by user1@test is invoked
- * @then query over user1@test returns 3 txs
- */
-TEST_F(BlockQueryTest, GetAccountTransactionsFromSeveralBlocks) {
-  // Check that creator1 has created 3 transactions
-  auto txs = blocks->getAccountTransactions(creator1);
-  ASSERT_EQ(txs.size(), 3);
-  std::for_each(txs.begin(), txs.end(), [&](const auto &tx) {
-    EXPECT_EQ(tx->creatorAccountId(), creator1);
-  });
-}
-
-/**
- * @given block store with 2 blocks totally containing 3 txs created by
- * user1@test
- * AND 1 tx created by user2@test
- * @when query to get transactions created by user2@test is invoked
- * @then query over user2@test returns 1 tx
- */
-TEST_F(BlockQueryTest, GetAccountTransactionsFromSingleBlock) {
-  // Check that creator1 has created 1 transaction
-  auto txs = blocks->getAccountTransactions(creator2);
-  ASSERT_EQ(txs.size(), 1);
-  std::for_each(txs.begin(), txs.end(), [&](const auto &tx) {
-    EXPECT_EQ(tx->creatorAccountId(), creator2);
-  });
-}
-
-/**
- * @given block store
- * @when query to get transactions created by user with id not registered in the
- * system is invoked
- * @then query returns empty result
- */
-TEST_F(BlockQueryTest, GetAccountTransactionsNonExistingUser) {
-  // Check that "nonexisting" user has no transaction
-  auto txs = blocks->getAccountTransactions("nonexisting user");
-  ASSERT_EQ(txs.size(), 0);
-}
-
-/**
- * @given block store with 2 blocks totally containing 3 txs created by
- * user1@test
- * AND 1 tx created by user2@test
- * @when query to get transactions with existing transaction hashes
- * @then queried transactions
- */
-TEST_F(BlockQueryTest, GetTransactionsExistingTxHashes) {
-  auto txs = blocks->getTransactions({tx_hashes[1], tx_hashes[3]});
-  ASSERT_EQ(txs.size(), 2);
-  ASSERT_TRUE(txs[0]);
-  ASSERT_TRUE(txs[1]);
-  ASSERT_EQ(txs[0].get()->hash(), tx_hashes[1]);
-  ASSERT_EQ(txs[1].get()->hash(), tx_hashes[3]);
-}
-
-/**
- * @given block store with 2 blocks totally containing 3 txs created by
- * user1@test
- * AND 1 tx created by user2@test
- * @when query to get transactions with non-existing transaction hashes
- * @then nullopt values are retrieved
- */
-TEST_F(BlockQueryTest, GetTransactionsIncludesNonExistingTxHashes) {
-  shared_model::crypto::Hash invalid_tx_hash_1(zero_string),
-      invalid_tx_hash_2(std::string(
-          shared_model::crypto::DefaultCryptoAlgorithmType::kHashLength, '9'));
-
-  auto txs = blocks->getTransactions({invalid_tx_hash_1, invalid_tx_hash_2});
-  ASSERT_EQ(txs.size(), 2);
-  ASSERT_FALSE(txs[0]);
-  ASSERT_FALSE(txs[1]);
-}
-
-/**
- * @given block store with 2 blocks totally containing 3 txs created by
- * user1@test
- * AND 1 tx created by user2@test
- * @when query to get transactions with empty vector
- * @then no transactions are retrieved
- */
-TEST_F(BlockQueryTest, GetTransactionsWithEmpty) {
-  // transactions' hashes are empty.
-  auto txs = blocks->getTransactions({});
-  ASSERT_EQ(txs.size(), 0);
-}
-
-/**
- * @given block store with 2 blocks totally containing 3 txs created by
- * user1@test
- * AND 1 tx created by user2@test
- * @when query to get transactions with non-existing txhash and existing txhash
- * @then queried transactions and empty transaction
- */
-TEST_F(BlockQueryTest, GetTransactionsWithInvalidTxAndValidTx) {
-  // TODO 15/11/17 motxx - Use EqualList VerificationStrategy
-  shared_model::crypto::Hash invalid_tx_hash_1(zero_string);
-  auto txs = blocks->getTransactions({invalid_tx_hash_1, tx_hashes[0]});
-  ASSERT_EQ(txs.size(), 2);
-  ASSERT_FALSE(txs[0]);
-  ASSERT_TRUE(txs[1]);
-  ASSERT_EQ(txs[1].get()->hash(), tx_hashes[0]);
-}
 
 /**
  * @given block store with 2 blocks totally containing 3 txs created by
@@ -345,24 +237,46 @@ TEST_F(BlockQueryTest, GetTop2Blocks) {
 
 /**
  * @given block store with preinserted blocks
- * @when hasTxWithHash is invoked on existing transaction hash
- * @then True is returned
+ * @when checkTxPresence is invoked on existing transaction hash
+ * @then Committed status is returned
  */
 TEST_F(BlockQueryTest, HasTxWithExistingHash) {
   for (const auto &hash : tx_hashes) {
-    EXPECT_TRUE(blocks->hasTxWithHash(hash));
+    ASSERT_NO_THROW({
+      auto status = boost::get<tx_cache_status_responses::Committed>(
+          *blocks->checkTxPresence(hash));
+      ASSERT_EQ(status.hash, hash);
+    });
   }
 }
 
 /**
  * @given block store with preinserted blocks
  * user1@test AND 1 tx created by user2@test
- * @when hasTxWithHash is invoked on non-existing hash
- * @then False is returned
+ * @when checkTxPresence is invoked on non-existing hash
+ * @then Missing status is returned
  */
-TEST_F(BlockQueryTest, HasTxWithInvalidHash) {
-  shared_model::crypto::Hash invalid_tx_hash(zero_string);
-  EXPECT_FALSE(blocks->hasTxWithHash(invalid_tx_hash));
+TEST_F(BlockQueryTest, HasTxWithMissingHash) {
+  shared_model::crypto::Hash missing_tx_hash(zero_string);
+  ASSERT_NO_THROW({
+    auto status = boost::get<tx_cache_status_responses::Missing>(
+        *blocks->checkTxPresence(missing_tx_hash));
+    ASSERT_EQ(status.hash, missing_tx_hash);
+  });
+}
+
+/**
+ * @given block store with preinserted blocks containing rejected_hash1 in one
+ * of the block
+ * @when checkTxPresence is invoked on existing rejected hash
+ * @then Rejected is returned
+ */
+TEST_F(BlockQueryTest, HasTxWithRejectedHash) {
+  ASSERT_NO_THROW({
+    auto status = boost::get<tx_cache_status_responses::Rejected>(
+        *blocks->checkTxPresence(rejected_hash));
+    ASSERT_EQ(status.hash, rejected_hash);
+  });
 }
 
 /**

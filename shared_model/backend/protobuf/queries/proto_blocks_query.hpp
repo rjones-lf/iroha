@@ -7,20 +7,15 @@
 #define IROHA_SHARED_MODEL_PROTO_BLOCKS_QUERY_HPP
 
 #include "backend/protobuf/common_objects/signature.hpp"
+#include "backend/protobuf/util.hpp"
 #include "interfaces/queries/blocks_query.hpp"
 #include "queries.pb.h"
-#include "utils/lazy_initializer.hpp"
-#include "backend/protobuf/util.hpp"
 
 namespace shared_model {
   namespace proto {
     class BlocksQuery FINAL : public CopyableProto<interface::BlocksQuery,
                                                    iroha::protocol::BlocksQuery,
                                                    BlocksQuery> {
-     private:
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
-
      public:
       template <typename BlocksQueryType>
       explicit BlocksQuery(BlocksQueryType &&query);
@@ -47,12 +42,11 @@ namespace shared_model {
 
      private:
       // ------------------------------| fields |-------------------------------
-      // lazy
-      const Lazy<interface::types::BlobType> blob_;
+      const interface::types::BlobType blob_;
 
-      const Lazy<interface::types::BlobType> payload_;
+      const interface::types::BlobType payload_;
 
-      const Lazy<SignatureSetType<proto::Signature>> signatures_;
+      SignatureSetType<proto::Signature> signatures_;
     };
   }  // namespace proto
 }  // namespace shared_model
