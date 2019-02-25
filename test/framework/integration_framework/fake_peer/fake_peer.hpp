@@ -68,6 +68,8 @@ namespace integration_framework {
           std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache,
           logger::LoggerManagerTreePtr log_manager);
 
+      ~FakePeer();
+
       /// Initialization method.
       /// \attention Must be called prior to any other instance method (except
       /// for constructor).

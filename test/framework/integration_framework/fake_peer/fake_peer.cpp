@@ -124,6 +124,12 @@ namespace integration_framework {
       yac_transport_->subscribe(yac_network_notifier_);
     }
 
+    FakePeer::~FakePeer() {
+      if (behaviour_) {
+        behaviour_->absolve();
+      }
+    }
+
     FakePeer &FakePeer::initialize() {
       BOOST_VERIFY_MSG(not initialized_, "Already initialized!");
       // here comes the initialization of members requiring shared_from_this()
