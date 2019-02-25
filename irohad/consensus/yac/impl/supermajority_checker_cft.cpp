@@ -21,7 +21,8 @@ namespace iroha {
 
       bool SupermajorityCheckerCft::canHaveSupermajority(
           const VoteGroups &votes, PeersNumberType all) const {
-        const PeersNumberType largest_group = *boost::max_element(votes);
+        const PeersNumberType largest_group =
+            boost::empty(votes) ? 0 : *boost::max_element(votes);
         const PeersNumberType voted = boost::accumulate(votes, 0);
         const PeersNumberType not_voted = all - voted;
 
