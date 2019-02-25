@@ -50,8 +50,7 @@ TEST_F(PendingTxsStorageFixture, FixutureSelfCheck) {
       iroha::MstState::empty(mst_state_log_, completer_));
 
   auto transactions =
-      addSignatures(log_,
-                    makeTestBatch(txBuilder(1, getUniqueTime()),
+      addSignatures(makeTestBatch(txBuilder(1, getUniqueTime()),
                                   txBuilder(1, getUniqueTime())),
                     0,
                     makeSignature("1", "pub_key_1"));
@@ -72,7 +71,6 @@ TEST_F(PendingTxsStorageFixture, InsertionTest) {
   auto state = std::make_shared<iroha::MstState>(
       iroha::MstState::empty(mst_state_log_, completer_));
   auto transactions = addSignatures(
-      log_,
       makeTestBatch(txBuilder(2, getUniqueTime(), 2, "alice@iroha"),
                     txBuilder(2, getUniqueTime(), 2, "bob@iroha")),
       0,
@@ -114,13 +112,12 @@ TEST_F(PendingTxsStorageFixture, SignaturesUpdate) {
   auto state2 = std::make_shared<iroha::MstState>(
       iroha::MstState::empty(mst_state_log_, completer_));
   auto transactions = addSignatures(
-      log_,
       makeTestBatch(txBuilder(3, getUniqueTime(), 3, "alice@iroha")),
       0,
       makeSignature("1", "pub_key_1"));
   *state1 += transactions;
   transactions =
-      addSignatures(log_, transactions, 0, makeSignature("2", "pub_key_2"));
+      addSignatures(transactions, 0, makeSignature("2", "pub_key_2"));
   *state2 += transactions;
 
   auto updates =
@@ -148,19 +145,16 @@ TEST_F(PendingTxsStorageFixture, SeveralBatches) {
   auto state = std::make_shared<iroha::MstState>(
       iroha::MstState::empty(mst_state_log_, completer_));
   auto batch1 = addSignatures(
-      log_,
       makeTestBatch(txBuilder(2, getUniqueTime(), 2, "alice@iroha"),
                     txBuilder(2, getUniqueTime(), 2, "bob@iroha")),
       0,
       makeSignature("1", "pub_key_1"));
   auto batch2 = addSignatures(
-      log_,
       makeTestBatch(txBuilder(2, getUniqueTime(), 2, "alice@iroha"),
                     txBuilder(3, getUniqueTime(), 3, "alice@iroha")),
       0,
       makeSignature("1", "pub_key_1"));
   auto batch3 = addSignatures(
-      log_,
       makeTestBatch(txBuilder(2, getUniqueTime(), 2, "bob@iroha")),
       0,
       makeSignature("2", "pub_key_2"));
@@ -193,7 +187,6 @@ TEST_F(PendingTxsStorageFixture, SeparateBatchesDoNotOverwriteStorage) {
   auto state1 = std::make_shared<iroha::MstState>(
       iroha::MstState::empty(mst_state_log_, completer_));
   auto batch1 = addSignatures(
-      log_,
       makeTestBatch(txBuilder(2, getUniqueTime(), 2, "alice@iroha"),
                     txBuilder(2, getUniqueTime(), 2, "bob@iroha")),
       0,
@@ -202,7 +195,6 @@ TEST_F(PendingTxsStorageFixture, SeparateBatchesDoNotOverwriteStorage) {
   auto state2 = std::make_shared<iroha::MstState>(
       iroha::MstState::empty(mst_state_log_, completer_));
   auto batch2 = addSignatures(
-      log_,
       makeTestBatch(txBuilder(2, getUniqueTime(), 2, "alice@iroha"),
                     txBuilder(3, getUniqueTime(), 3, "alice@iroha")),
       0,
@@ -238,7 +230,6 @@ TEST_F(PendingTxsStorageFixture, PreparedBatch) {
       iroha::MstState::empty(mst_state_log_, completer_));
   std::shared_ptr<shared_model::interface::TransactionBatch> batch =
       addSignatures(
-          log_,
           makeTestBatch(txBuilder(3, getUniqueTime(), 3, "alice@iroha")),
           0,
           makeSignature("1", "pub_key_1"));
@@ -254,8 +245,7 @@ TEST_F(PendingTxsStorageFixture, PreparedBatch) {
   iroha::PendingTransactionStorageImpl storage(
       updates, prepared_batches_subject.get_observable(), dummy);
 
-  batch = addSignatures(log_,
-                        batch,
+  batch = addSignatures(batch,
                         0,
                         makeSignature("2", "pub_key_2"),
                         makeSignature("3", "pub_key_3"));
@@ -276,7 +266,6 @@ TEST_F(PendingTxsStorageFixture, ExpiredBatch) {
       iroha::MstState::empty(mst_state_log_, completer_));
   std::shared_ptr<shared_model::interface::TransactionBatch> batch =
       addSignatures(
-          log_,
           makeTestBatch(txBuilder(3, getUniqueTime(), 3, "alice@iroha")),
           0,
           makeSignature("1", "pub_key_1"));

@@ -11,6 +11,7 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "datetime/time.hpp"
 #include "framework/batch_helper.hpp"
+#include "framework/test_logger.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "logger/logger.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
@@ -39,10 +40,9 @@ auto makeTestBatch(TxBuilders... builders) {
 }
 
 template <typename Batch, typename... Signatures>
-auto addSignatures(logger::LoggerPtr log,
-                   Batch &&batch,
-                   int tx_number,
-                   Signatures... signatures) {
+auto addSignatures(Batch &&batch, int tx_number, Signatures... signatures) {
+  static logger::LoggerPtr log_ = getTestLogger("addSignatures");
+
   auto insert_signatures = [&](auto &&sig_pair) {
     batch->addSignature(tx_number, sig_pair.first, sig_pair.second);
   };
@@ -55,8 +55,8 @@ auto addSignatures(logger::LoggerPtr log,
   // use unused variable
   (void)temp;
 
-  log->info("Number of signatures was inserted {}",
-            boost::size(batch->transactions().at(tx_number)->signatures()));
+  log_->info("Number of signatures was inserted {}",
+             boost::size(batch->transactions().at(tx_number)->signatures()));
   return std::forward<Batch>(batch);
 }
 
