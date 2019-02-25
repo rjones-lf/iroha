@@ -9,6 +9,7 @@
 
 #include <gflags/gflags.h>
 #include <grpc++/grpc++.h>
+#include "ametsuchi/storage.hpp"
 #include "common/result.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "logger/logger.hpp"
@@ -151,6 +152,7 @@ int main(int argc, char *argv[]) {
                 config.max_proposal_size,
                 std::chrono::milliseconds(config.proposal_delay),
                 std::chrono::milliseconds(config.vote_delay),
+                std::chrono::minutes(config.mst_expiration_time),
                 *keypair,
                 log_manager->getChild("Irohad"),
                 boost::make_optional(config.mst_support,

@@ -3,42 +3,47 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+find_package(PythonInterp 3.5 REQUIRED)
 
-if (SWIG_PYTHON OR SWIG_JAVA)
-  get_property(SWIG_BUILD_DIR GLOBAL PROPERTY SWIG_BUILD_DIR)
-endif ()
+set(PYLIB_PATH "${PROJECT_SOURCE_DIR}/example/python")
+set(PYTHON_PROTO_INCLUDES
+    "${PYLIB_PATH}/block_pb2.py"
+    "${PYLIB_PATH}/commands_pb2.py"
+    "${PYLIB_PATH}/endpoint_pb2.py"
+    "${PYLIB_PATH}/endpoint_pb2_grpc.py"
+    "${PYLIB_PATH}/primitive_pb2.py"
+    "${PYLIB_PATH}/proposal_pb2.py"
+    "${PYLIB_PATH}/qry_responses_pb2.py"
+    "${PYLIB_PATH}/queries_pb2.py"
+    "${PYLIB_PATH}/transaction_pb2.py"
+    )
 
-if (SWIG_PYTHON)
-  if (SUPPORT_PYTHON2)
-    find_package(PythonInterp 2.7 REQUIRED)
-  else ()
-    find_package(PythonInterp 3.5 REQUIRED)
-  endif ()
+add_custom_command(
+    COMMAND make
+    WORKING_DIRECTORY ${PYLIB_PATH}
+    OUTPUT ${PYTHON_PROTO_INCLUDES}
+    COMMENT "Generating python protobuf includes"
+    VERBATIM
+)
+add_custom_target(python_proto_includes DEPENDS ${PYTHON_PROTO_INCLUDES})
 
-  # TODO, igor-egorov, 2018-06-27, IR-1481, move that foreach to a separate target
-  foreach (item "block" "commands" "primitive" "queries")
-    compile_proto_to_python("${item}.proto")
-    list(APPEND PROTO_SWIG_DEPS "${SWIG_BUILD_DIR}/${item}_pb2.py")
-  endforeach (item)
+add_executable(binary_test
+    launchers.cpp
+    binaries_test.cpp
+    )
+target_link_libraries(binary_test
+    gtest::main
+    integration_framework
+    bindings
+    )
+add_dependencies(binary_test python_proto_includes)
+target_include_directories(binary_test PUBLIC ${PROJECT_SOURCE_DIR}/test)
 
-  add_executable(binary_test
-      launchers.cpp
-      binaries_test.cpp
-      )
-  target_link_libraries(binary_test
-      gtest::main
-      shared_model_proto_backend
-      integration_framework
-      bindings
-      )
-  target_include_directories(binary_test PUBLIC ${PROJECT_SOURCE_DIR}/test)
-
-  add_dependencies(binary_test irohapy)
-  add_test(
-      NAME "python_binary_test"
-      COMMAND ${CMAKE_COMMAND} -E
-      env "PYTHON_INTERPRETER=${PYTHON_EXECUTABLE}" "PYTHONPATH=${SWIG_BUILD_DIR}"
-      "ROOT_DIR=${PROJECT_SOURCE_DIR}" $<TARGET_FILE:binary_test> --gtest_filter=*/0*
-  )
-
-endif ()
+add_test(
+    NAME python_binary_test
+    COMMAND ${CMAKE_COMMAND} -E env
+    "PYTHON_INTERPRETER=${PYTHON_EXECUTABLE}"
+    "PYTHONPATH=${PYLIB_PATH}"
+    "ROOT_DIR=${PROJECT_SOURCE_DIR}"
+    $<TARGET_FILE:binary_test> --gtest_filter=*/0*
+)

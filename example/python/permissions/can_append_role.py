@@ -3,46 +3,38 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-import iroha
+import irohalib
 import commons
+import primitive_pb2
 
 admin = commons.new_user('admin@test')
 alice = commons.new_user('alice@test')
 bob = commons.new_user('bob@test')
+iroha = irohalib.Iroha(admin['id'])
 
 
 @commons.hex
 def genesis_tx():
-    test_permissions = iroha.RolePermissionSet(
-        [iroha.Role_kAppendRole, iroha.Role_kAddPeer]
-    )
-    second_role = iroha.RolePermissionSet([iroha.Role_kAddPeer])
-    tx = iroha.ModelTransactionBuilder() \
-        .createdTime(commons.now()) \
-        .creatorAccountId(admin['id']) \
-        .addPeer('0.0.0.0:50541', admin['key'].publicKey()) \
-        .createRole('admin_role', commons.all_permissions()) \
-        .createRole('test_role', test_permissions) \
-        .createRole('second_role', second_role) \
-        .createDomain('test', 'test_role') \
-        .createAccount('admin', 'test', admin['key'].publicKey()) \
-        .createAccount('alice', 'test', alice['key'].publicKey()) \
-        .createAccount('bob', 'test', bob['key'].publicKey()) \
-        .appendRole(admin['id'], 'admin_role') \
-        .appendRole(alice['id'], 'second_role') \
-        .build()
-    return iroha.ModelProtoTransaction(tx) \
-        .signAndAddSignature(admin['key']).finish()
+    test_permissions = [primitive_pb2.can_append_role, primitive_pb2.can_add_peer]
+    second_role_permissions = [primitive_pb2.can_add_peer]
+    genesis_commands = commons.genesis_block(admin, alice, test_permissions)
+    genesis_commands.extend([
+        iroha.command('CreateRole', role_name='second_role', permissions=second_role_permissions),
+        iroha.command('CreateAccount', account_name='bob', domain_id='test',
+                      public_key=irohalib.IrohaCrypto.derive_public_key(bob['key'])),
+        iroha.command('AppendRole', account_id=alice['id'], role_name='second_role')
+    ])
+    tx = iroha.transaction(genesis_commands)
+    irohalib.IrohaCrypto.sign_transaction(tx, admin['key'])
+    return tx
 
 
 @commons.hex
 def append_role_tx():
     # Note that you can append only that role that has
     # lesser or the same set of permissions as transaction creator.
-    tx = iroha.ModelTransactionBuilder() \
-        .createdTime(commons.now()) \
-        .creatorAccountId(alice['id']) \
-        .appendRole(bob['id'], 'second_role') \
-        .build()
-    return iroha.ModelProtoTransaction(tx) \
-        .signAndAddSignature(alice['key']).finish()
+    tx = iroha.transaction([
+        iroha.command('AppendRole', account_id=bob['id'], role_name='second_role')
+    ], creator_account=alice['id'])
+    irohalib.IrohaCrypto.sign_transaction(tx, alice['key'])
+    return tx

@@ -194,9 +194,6 @@ can_create_account
 Allows creating new `accounts <../core_concepts/glossary.html#account>`__.
 
 | Related API method: `Create Account <../api/commands.html#create-account>`__
-| Usage in Java bindings: ``Role.kCreateAccount``
-| Usage in Python bindings: ``Role_kCreateAccount``
-|
 
 **Example**
 
@@ -206,7 +203,7 @@ Allows creating new `accounts <../core_concepts/glossary.html#account>`__.
 .. literalinclude:: ../../../example/python/permissions/can_create_account.py
     :language: python
     :linenos:
-    :lines: 9-42
+    :lines: 10-31
 
 can_set_detail
 ^^^^^^^^^^^^^^
@@ -218,9 +215,6 @@ The `permission <../core_concepts/glossary.html#permission>`__ allows setting de
 .. Note:: Transaction creator can always set detail for own account even without that permission.
 
 | Related API method: `Set Account Detail <../api/commands.html#set-account-detail>`__
-| Usage in Java bindings: ``Role.kSetDetail``
-| Usage in Python bindings: ``Role_kSetDetail``
-|
 
 **Example**
 
@@ -230,7 +224,7 @@ The `permission <../core_concepts/glossary.html#permission>`__ allows setting de
 .. literalinclude:: ../../../example/python/permissions/can_set_detail.py
     :language: python
     :linenos:
-    :lines: 9-39
+    :lines: 10-30
 
 can_set_my_account_detail
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -242,9 +236,6 @@ can_set_my_account_detail
 .. Note:: To grant the permission an account should already have a role with `can_grant_can_set_my_account_detail`_ permission.
 
 | Related API method: `Set Account Detail <../api/commands.html#set-account-detail>`__
-| Usage in Java bindings: ``Grantable.kSetMyAccountDetail``
-| Usage in Python bindings: ``Grantable_kSetMyAccountDetail``
-|
 
 **Example**
 
@@ -254,7 +245,7 @@ can_set_my_account_detail
 .. literalinclude:: ../../../example/python/permissions/can_set_my_account_detail.py
     :language: python
     :linenos:
-    :lines: 9-54
+    :lines: 10-44
 
 Asset
 -----
@@ -265,9 +256,6 @@ can_create_asset
 Allows creating new `assets <../core_concepts/glossary.html#asset>`__.
 
 | Related API method: `Create Asset <../api/commands.html#create-asset>`__
-| Usage in Java bindings: ``Role.kCreateAsset``
-| Usage in Python bindings: ``Role_kCreateAsset``
-|
 
 **Example**
 
@@ -277,7 +265,7 @@ Allows creating new `assets <../core_concepts/glossary.html#asset>`__.
 .. literalinclude:: ../../../example/python/permissions/can_create_asset.py
     :language: python
     :linenos:
-    :lines: 9-39
+    :lines: 10-30
 
 can_receive
 ^^^^^^^^^^^
@@ -285,9 +273,6 @@ can_receive
 Allows `account <../core_concepts/glossary.html#account>`__ receive `assets <../core_concepts/glossary.html#asset>`__.
 
 | Related API method: `Transfer Asset <../api/commands.html#transfer-asset>`__
-| Usage in Java bindings: ``Role.kReceive``
-| Usage in Python bindings: ``Role_kReceive``
-|
 
 **Example**
 
@@ -297,7 +282,7 @@ Allows `account <../core_concepts/glossary.html#account>`__ receive `assets <../
 .. literalinclude:: ../../../example/python/permissions/can_receive.py
     :language: python
     :linenos:
-    :lines: 9-47
+    :lines: 10-48
 
 can_transfer
 ^^^^^^^^^^^^
@@ -309,14 +294,11 @@ You can transfer an asset from one `domain <../core_concepts/glossary.html#domai
 .. Note:: Destination account should have `can_receive`_ permission.
 
 | Related API method: `Transfer Asset <../api/commands.html#transfer-asset>`__
-| Usage in Java bindings: ``Role.kTransfer``
-| Usage in Python bindings: ``Role_kTransfer``
-|
 
 .. literalinclude:: ../../../example/python/permissions/can_transfer.py
     :language: python
     :linenos:
-    :lines: 1-11
+    :lines: 1-10
 
 can_transfer_my_assets
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -328,9 +310,6 @@ can_transfer_my_assets
 See the example (to be done) for the usage details.
 
 | Related API method: `Transfer Asset <../api/commands.html#transfer-asset>`__
-| Usage in Java bindings: ``Grantable.kTransferMyAssets``
-| Usage in Python bindings: ``Grantable_kTransferMyAssets``
-|
 
 **Example**
 
@@ -340,7 +319,7 @@ See the example (to be done) for the usage details.
 .. literalinclude:: ../../../example/python/permissions/can_transfer_my_assets.py
     :language: python
     :linenos:
-    :lines: 9-59
+    :lines: 10-61
 
 Asset Quantity
 --------------
@@ -353,9 +332,6 @@ Allows issuing `assets <../core_concepts/glossary.html#asset>`__.
 The corresponding `command <../core_concepts/glossary.html#command>`__ can be executed only for an `account <../core_concepts/glossary.html#account>`__ of `transaction <../core_concepts/glossary.html#transaction>`__ creator and only if that account has a `role <../core_concepts/glossary.html#role>`__ with the `permission <../core_concepts/glossary.html#permission>`__.
 
 | Related API method: `Add Asset Quantity <../api/commands.html#add-asset-quantity>`__
-| Usage in Java bindings: ``Role.kAddAssetQty``
-| Usage in Python bindings: ``Role_kAddAssetQty``
-|
 
 **Example**
 
@@ -365,7 +341,7 @@ The corresponding `command <../core_concepts/glossary.html#command>`__ can be ex
 .. literalinclude:: ../../../example/python/permissions/can_add_asset_qty.py
     :language: python
     :linenos:
-    :lines: 9-40
+    :lines: 10-32
 
 can_subtract_asset_qty
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -375,9 +351,6 @@ Allows burning `assets <../core_concepts/glossary.html#asset>`__.
 The corresponding `command <../core_concepts/glossary.html#command>`__ can be executed only for an `account <../core_concepts/glossary.html#account>`__ of `transaction <../core_concepts/glossary.html#transaction>`__ creator and only if that account has a `role <../core_concepts/glossary.html#role>`__ with the `permission <../core_concepts/glossary.html#permission>`__.
 
 | Related API method: `Subtract Asset Quantity <../api/commands.html#subtract-asset-quantity>`__
-| Usage in Java bindings: ``Role.kSubtractAssetQty``
-| Usage in Python bindings: ``Role_kSubtractAssetQty``
-|
 
 **Example**
 
@@ -387,7 +360,7 @@ The corresponding `command <../core_concepts/glossary.html#command>`__ can be ex
 .. literalinclude:: ../../../example/python/permissions/can_subtract_asset_qty.py
     :language: python
     :linenos:
-    :lines: 9-42
+    :lines: 10-40
 
 can_add_domain_asset_qty
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -397,9 +370,6 @@ Allows issuing `assets <../core_concepts/glossary.html#asset>`__ only in own `do
 The corresponding `command <../core_concepts/glossary.html#command>`__ can be executed only for an `account <../core_concepts/glossary.html#account>`__ of `transaction <../core_concepts/glossary.html#transaction>`__ creator and only if that account has a `role <../core_concepts/glossary.html#role>`__ with the `permission <../core_concepts/glossary.html#permission>`__ and only for assets in creator’s domain.
 
 | Related API method: `Add Asset Quantity <../api/commands.html#add-asset-quantity>`__
-| Usage in Java bindings: ``Role.kAddDomainAssetQty``
-| Usage in Python bindings: ``Role_kAddDomainAssetQty``
-|
 
 .. literalinclude:: ../../../example/python/permissions/can_add_domain_asset_qty.py
     :language: python
@@ -414,14 +384,11 @@ Allows burning `assets <../core_concepts/glossary.html#asset>`__ only in own `do
 The corresponding `command <../core_concepts/glossary.html#command>`__ can be executed only for an `account <../core_concepts/glossary.html#account>`__ of `transaction <../core_concepts/glossary.html#transaction>`__ creator and only if that account has a `role <../core_concepts/glossary.html#role>`__ with the `permission <../core_concepts/glossary.html#permission>`__ and only for assets in creator’s domain.
 
 | Related API method: `Subtract Asset Quantity <../api/commands.html#subtract-asset-quantity>`__
-| Usage in Java bindings: ``Role.kSubtractDomainAssetQty``
-| Usage in Python bindings: ``Role_kSubtractDomainAssetQty``
-|
 
 .. literalinclude:: ../../../example/python/permissions/can_subtract_domain_asset_qty.py
     :language: python
     :linenos:
-    :lines: 1-10
+    :lines: 1-8
 
 Domain
 ------
@@ -432,9 +399,6 @@ can_create_domain
 Allows creating new `domains <../core_concepts/glossary.html#domain>`__ within the system.
 
 | Related API method: `Create Domain <../api/commands.html#create-domain>`__
-| Usage in Java bindings: ``Role.kCreateDomain``
-| Usage in Python bindings: ``Role_kCreateDomain``
-|
 
 **Example**
 
@@ -444,7 +408,7 @@ Allows creating new `domains <../core_concepts/glossary.html#domain>`__ within t
 .. literalinclude:: ../../../example/python/permissions/can_create_domain.py
     :language: python
     :linenos:
-    :lines: 9-40
+    :lines: 10-31
 
 Grant
 -----
@@ -455,9 +419,6 @@ can_grant_can_add_my_signatory
 Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_add_my_signatory`_ `permission <../core_concepts/glossary.html#permission>`__.
 
 | Related API methods: `Grant Permission <../api/commands.html#grant-permission>`__, `Revoke Permission <../api/commands.html#revoke-permission>`__
-| Usage in Java bindings: ``Role.kAddMySignatory``
-| Usage in Python bindings: ``Role_kAddMySignatory``
-|
 
 **Example**
 
@@ -467,7 +428,7 @@ Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_add_my_s
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_add_my_signatory.py
     :language: python
     :linenos:
-    :lines: 9-52
+    :lines: 10-43
 
 can_grant_can_remove_my_signatory
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -475,9 +436,6 @@ can_grant_can_remove_my_signatory
 Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_remove_my_signatory`_ `permission <../core_concepts/glossary.html#permission>`__.
 
 | Related API methods: `Grant Permission <../api/commands.html#grant-permission>`__, `Revoke Permission <../api/commands.html#revoke-permission>`__
-| Usage in Java bindings: ``Role.kRemoveMySignatory``
-| Usage in Python bindings: ``Role_kRemoveMySignatory``
-|
 
 **Example**
 
@@ -487,7 +445,7 @@ Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_remove_m
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_remove_my_signatory.py
     :language: python
     :linenos:
-    :lines: 9-52
+    :lines: 10-43
 
 can_grant_can_set_my_account_detail
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -495,9 +453,6 @@ can_grant_can_set_my_account_detail
 Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_set_my_account_detail`_ `permission <../core_concepts/glossary.html#permission>`__.
 
 | Related API methods: `Grant Permission <../api/commands.html#grant-permission>`__, `Revoke Permission <../api/commands.html#revoke-permission>`__
-| Usage in Java bindings: ``Role.kSetMyAccountDetail``
-| Usage in Python bindings: ``Role_kSetMyAccountDetail``
-|
 
 **Example**
 
@@ -507,7 +462,7 @@ Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_set_my_a
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_set_my_account_detail.py
     :language: python
     :linenos:
-    :lines: 9-52
+    :lines: 10-43
 
 can_grant_can_set_my_quorum
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -515,9 +470,6 @@ can_grant_can_set_my_quorum
 Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_set_my_quorum`_ `permission <../core_concepts/glossary.html#permission>`__.
 
 | Related API methods: `Grant Permission <../api/commands.html#grant-permission>`__, `Revoke Permission <../api/commands.html#revoke-permission>`__
-| Usage in Java bindings: ``Role.kSetMyQuorum``
-| Usage in Python bindings: ``Role_kSetMyQuorum``
-|
 
 **Example**
 
@@ -527,7 +479,7 @@ Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_set_my_q
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_set_my_quorum.py
     :language: python
     :linenos:
-    :lines: 9-52
+    :lines: 10-44
 
 can_grant_can_transfer_my_assets
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -535,9 +487,6 @@ can_grant_can_transfer_my_assets
 Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_transfer_my_assets`_ `permission <../core_concepts/glossary.html#permission>`__.
 
 | Related API methods: `Grant Permission <../api/commands.html#grant-permission>`__, `Revoke Permission <../api/commands.html#revoke-permission>`__
-| Usage in Java bindings: ``Role.kTransferMyAssets``
-| Usage in Python bindings: ``Role_kTransferMyAssets``
-|
 
 **Example**
 
@@ -547,7 +496,7 @@ Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_transfer
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_transfer_my_assets.py
     :language: python
     :linenos:
-    :lines: 9-59
+    :lines: 10-56
 
 Peer
 ----
@@ -560,9 +509,6 @@ Allows adding `peers <../core_concepts/glossary.html#peer>`__ to the network.
 A new peer will be a valid participant in the next `consensus <../core_concepts/glossary.html#consensus>`__ round after an agreement on `transaction <../core_concepts/glossary.html#transaction>`__ containing "addPeer" `command <../core_concepts/glossary.html#command>`__.
 
 | Related API method: `Add Peer <../api/commands.html#add-peer>`__
-| Usage in Java bindings: ``Role.kAddPeer``
-| Usage in Python bindings: ``Role_kAddPeer``
-|
 
 **Example**
 
@@ -572,7 +518,7 @@ A new peer will be a valid participant in the next `consensus <../core_concepts/
 .. literalinclude:: ../../../example/python/permissions/can_add_peer.py
     :language: python
     :linenos:
-    :lines: 9-40
+    :lines: 10-34
 
 Role
 ----
@@ -585,9 +531,6 @@ Allows appending `roles <../core_concepts/glossary.html#role>`__ to another `acc
 You can append only that role that has lesser or the same set of privileges as `transaction <../core_concepts/glossary.html#transaction>`__ creator.
 
 | Related API method: `Append Role <../api/commands.html#append-role>`__
-| Usage in Java bindings: ``Role.kAppendRole``
-| Usage in Python bindings: ``Role_kAppendRole``
-|
 
 **Example**
 
@@ -597,7 +540,7 @@ You can append only that role that has lesser or the same set of privileges as `
 .. literalinclude:: ../../../example/python/permissions/can_append_role.py
     :language: python
     :linenos:
-    :lines: 9-48
+    :lines: 10-40
 
 can_create_role
 ^^^^^^^^^^^^^^^
@@ -608,9 +551,6 @@ Possible set of `permissions <../core_concepts/glossary.html#permission>`__ for 
 
 
 | Related API method: `Create Role <../api/commands.html#create-role>`__
-| Usage in Java bindings: ``Role.kCreateRole``
-| Usage in Python bindings: ``Role_kCreateRole``
-|
 
 **Example**
 
@@ -620,7 +560,7 @@ Possible set of `permissions <../core_concepts/glossary.html#permission>`__ for 
 .. literalinclude:: ../../../example/python/permissions/can_create_role.py
     :language: python
     :linenos:
-    :lines: 9-44
+    :lines: 10-33
 
 can_detach_role
 ^^^^^^^^^^^^^^^
@@ -630,9 +570,6 @@ Allows revoking a `role <../core_concepts/glossary.html#role>`__ from a user.
 .. Note:: Due to a known issue the permission allows to detach any role without limitations https://soramitsu.atlassian.net/browse/IR-1468
 
 | Related API method: `Detach Role <../api/commands.html#detach-role>`__
-| Usage in Java bindings: ``Role.kDetachRole``
-| Usage in Python bindings: ``Role_kDetachRole``
-|
 
 **Example**
 
@@ -642,7 +579,7 @@ Allows revoking a `role <../core_concepts/glossary.html#role>`__ from a user.
 .. literalinclude:: ../../../example/python/permissions/can_detach_role.py
     :language: python
     :linenos:
-    :lines: 9-39
+    :lines: 10-30
 
 Signatory
 ---------
@@ -655,9 +592,6 @@ can_add_my_signatory
 `Permission <../core_concepts/glossary.html#permission>`__ that allows a specified `account <../core_concepts/glossary.html#account>`__ to add an extra public key to the another specified account.
 
 | Related API method: `Add Signatory <../api/commands.html#add-signatory>`__
-| Usage in Java bindings: ``Grantable.kAddMySignatory``
-| Usage in Python bindings: ``Grantable_kAddMySignatory``
-|
 
 **Example**
 
@@ -667,7 +601,7 @@ can_add_my_signatory
 .. literalinclude:: ../../../example/python/permissions/can_add_my_signatory.py
     :language: python
     :linenos:
-    :lines: 9-53
+    :lines: 10-45
 
 can_add_signatory
 ^^^^^^^^^^^^^^^^^
@@ -677,9 +611,6 @@ Allows linking additional public keys to `account <../core_concepts/glossary.htm
 The corresponding `command <../core_concepts/glossary.html#command>`__ can be executed only for an account of `transaction <../core_concepts/glossary.html#transaction>`__ creator and only if that account has a `role <../core_concepts/glossary.html#role>`__ with the `permission <../core_concepts/glossary.html#permission>`__.
 
 | Related API method: `Add Signatory <../api/commands.html#add-signatory>`__
-| Usage in Java bindings: ``Role.kAddSignatory``
-| Usage in Python bindings: ``Role_kAddSignatory``
-|
 
 **Example**
 
@@ -689,7 +620,7 @@ The corresponding `command <../core_concepts/glossary.html#command>`__ can be ex
 .. literalinclude:: ../../../example/python/permissions/can_add_signatory.py
     :language: python
     :linenos:
-    :lines: 9-40
+    :lines: 10-32
 
 can_remove_my_signatory
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -701,9 +632,6 @@ can_remove_my_signatory
 See the example (to be done) for the usage details.
 
 | Related API method: `Remove Signatory <../api/commands.html#remove-signatory>`__
-| Usage in Java bindings: ``Grantable.kRemoveMySignatory``
-| Usage in Python bindings: ``Grantable_kRemoveMySignatory``
-|
 
 **Example**
 
@@ -713,7 +641,7 @@ See the example (to be done) for the usage details.
 .. literalinclude:: ../../../example/python/permissions/can_remove_my_signatory.py
     :language: python
     :linenos:
-    :lines: 9-57
+    :lines: 10-51
 
 can_remove_signatory
 ^^^^^^^^^^^^^^^^^^^^
@@ -723,9 +651,6 @@ Allows unlinking additional public keys from an `account <../core_concepts/gloss
 The corresponding `command <../core_concepts/glossary.html#command>`__ can be executed only for an account of `transaction <../core_concepts/glossary.html#transaction>`__ creator and only if that account has a `role <../core_concepts/glossary.html#role>`__ with the `permission <../core_concepts/glossary.html#permission>`__.
 
 | Related API method: `Remove Signatory <../api/commands.html#remove-signatory>`__
-| Usage in Java bindings: ``Role.kRemoveSignatory``
-| Usage in Python bindings: ``Role_kRemoveSignatory``
-|
 
 **Example**
 
@@ -735,7 +660,7 @@ The corresponding `command <../core_concepts/glossary.html#command>`__ can be ex
 .. literalinclude:: ../../../example/python/permissions/can_remove_signatory.py
     :language: python
     :linenos:
-    :lines: 9-41
+    :lines: 10-36
 
 can_set_my_quorum
 ^^^^^^^^^^^^^^^^^
@@ -747,9 +672,6 @@ can_set_my_quorum
 Account should have greater or equal amount of keys than quorum.
 
 | Related API method: `Set Account Quorum <../api/commands.html#set-account-quorum>`__
-| Usage in Java bindings: ``Grantable.kSetMyQuorum``
-| Usage in Python bindings: ``Grantable_kSetMyQuorum``
-|
 
 **Example**
 
@@ -759,7 +681,7 @@ Account should have greater or equal amount of keys than quorum.
 .. literalinclude:: ../../../example/python/permissions/can_set_my_quorum.py
     :language: python
     :linenos:
-    :lines: 9-57
+    :lines: 10-50
 
 can_set_quorum
 ^^^^^^^^^^^^^^
@@ -769,9 +691,6 @@ Allows setting `quorum <../core_concepts/glossary.html#quorum>`__.
 At least the same number (or more) of public keys should be already linked to an `account <../core_concepts/glossary.html#account>`__.
 
 | Related API method: `Set Account Quorum <../api/commands.html#set-account-quorum>`__
-| Usage in Java bindings: ``Role.kSetQuorum``
-| Usage in Python bindings: ``Role_kSetQuorum``
-|
 
 **Example**
 
@@ -781,7 +700,7 @@ At least the same number (or more) of public keys should be already linked to an
 .. literalinclude:: ../../../example/python/permissions/can_set_quorum.py
     :language: python
     :linenos:
-    :lines: 9-42
+    :lines: 10-36
 
 Query-related permissions
 =========================
@@ -795,9 +714,6 @@ can_get_all_acc_detail
 Allows getting all the details set to any `account <../core_concepts/glossary.html#account>`__ within the system.
 
 | Related API method: `Get Account Detail <../api/queries.html#get-account-detail>`__
-| Usage in Java bindings: ``Role.kGetAllAccDetail``
-| Usage in Python bindings: ``Role_kGetAllAccDetail``
-|
 
 **Example**
 
@@ -807,7 +723,7 @@ Allows getting all the details set to any `account <../core_concepts/glossary.ht
 .. literalinclude:: ../../../example/python/permissions/can_get_all_acc_detail.py
     :language: python
     :linenos:
-    :lines: 9-40
+    :lines: 10-28
 
 can_get_all_accounts
 ^^^^^^^^^^^^^^^^^^^^
@@ -819,9 +735,6 @@ With this `permission <../core_concepts/glossary.html#permission>`__, `query <..
 All the details (set by the account owner or owners of other accounts) will be returned.
 
 | Related API method: `Get Account <../api/queries.html#get-account>`__
-| Usage in Java bindings: ``Role.kGetAllAccounts``
-| Usage in Python bindings: ``Role_kGetAllAccounts``
-|
 
 **Example**
 
@@ -831,7 +744,7 @@ All the details (set by the account owner or owners of other accounts) will be r
 .. literalinclude:: ../../../example/python/permissions/can_get_all_accounts.py
     :language: python
     :linenos:
-    :lines: 9-40
+    :lines: 10-28
 
 can_get_domain_acc_detail
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -839,9 +752,6 @@ can_get_domain_acc_detail
 Allows getting all the details set to any `account <../core_concepts/glossary.html#account>`__ within the same `domain <../core_concepts/glossary.html#domain>`__ as a domain of `query <../core_concepts/glossary.html#query>`__ creator account.
 
 | Related API method: `Get Account Detail <../api/queries.html#get-account-detail>`__
-| Usage in Java bindings: ``Role.kGetDomainAccDetail``
-| Usage in Python bindings: ``Role_kGetDomainAccDetail``
-|
 
 **Example**
 
@@ -851,7 +761,7 @@ Allows getting all the details set to any `account <../core_concepts/glossary.ht
 .. literalinclude:: ../../../example/python/permissions/can_get_domain_acc_detail.py
     :language: python
     :linenos:
-    :lines: 9-39
+    :lines: 10-28
 
 can_get_domain_accounts
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -863,9 +773,6 @@ With this `permission <../core_concepts/glossary.html#permission>`__, `query <..
 All the details (set by the account owner or owners of other accounts) will be returned.
 
 | Related API method: `Get Account <../api/queries.html#get-account>`__
-| Usage in Java bindings: ``Role.kGetDomainAccounts``
-| Usage in Python bindings: ``Role_kGetDomainAccounts``
-|
 
 **Example**
 
@@ -875,7 +782,7 @@ All the details (set by the account owner or owners of other accounts) will be r
 .. literalinclude:: ../../../example/python/permissions/can_get_domain_accounts.py
     :language: python
     :linenos:
-    :lines: 9-39
+    :lines: 10-28
 
 can_get_my_acc_detail
 ^^^^^^^^^^^^^^^^^^^^^
@@ -883,9 +790,6 @@ can_get_my_acc_detail
 Allows getting all the details set to the `account <../core_concepts/glossary.html#account>`__ of `query <../core_concepts/glossary.html#query>`__ creator.
 
 | Related API method: `Get Account Detail <../api/queries.html#get-account-detail>`__
-| Usage in Java bindings: ``Role.kGetMyAccDetail``
-| Usage in Python bindings: ``Role_kGetMyAccDetail``
-|
 
 **Example**
 
@@ -895,7 +799,7 @@ Allows getting all the details set to the `account <../core_concepts/glossary.ht
 .. literalinclude:: ../../../example/python/permissions/can_get_my_acc_detail.py
     :language: python
     :linenos:
-    :lines: 9-39
+    :lines: 10-28
 
 can_get_my_account
 ^^^^^^^^^^^^^^^^^^
@@ -907,9 +811,6 @@ With this `permission <../core_concepts/glossary.html#permission>`__, `query <..
 All the details (set by the account owner or owners of other accounts) will be returned.
 
 | Related API method: `Get Account <../api/queries.html#get-account>`__
-| Usage in Java bindings: ``Role.kGetMyAccount``
-| Usage in Python bindings: ``Role_kGetMyAccount``
-|
 
 **Example**
 
@@ -919,7 +820,7 @@ All the details (set by the account owner or owners of other accounts) will be r
 .. literalinclude:: ../../../example/python/permissions/can_get_my_account.py
     :language: python
     :linenos:
-    :lines: 9-39
+    :lines: 10-28
 
 Account Asset
 -------------
@@ -932,9 +833,6 @@ Allows getting a balance of `assets <../core_concepts/glossary.html#asset>`__ on
 `Query <../core_concepts/glossary.html#query>`__ response will contain information about all the assets that ever been assigned to an account.
 
 | Related API method: `Get Account Assets <../api/queries.html#get-account-assets>`__
-| Usage in Java bindings: ``Role.kGetAllAccAst``
-| Usage in Python bindings: ``Role_kGetAllAccAst``
-|
 
 **Example**
 
@@ -944,7 +842,7 @@ Allows getting a balance of `assets <../core_concepts/glossary.html#asset>`__ on
 .. literalinclude:: ../../../example/python/permissions/can_get_all_acc_ast.py
     :language: python
     :linenos:
-    :lines: 9-40
+    :lines: 10-28
 
 can_get_domain_acc_ast
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -954,9 +852,6 @@ Allows getting a balance of specified `asset <../core_concepts/glossary.html#ass
 Query response will contain information about all the assets that ever been assigned to an account.
 
 | Related API method: `Get Account Assets <../api/queries.html#get-account-assets>`__
-| Usage in Java bindings: ``Role.kGetDomainAccAst``
-| Usage in Python bindings: ``Role_kGetDomainAccAst``
-|
 
 **Example**
 
@@ -966,7 +861,7 @@ Query response will contain information about all the assets that ever been assi
 .. literalinclude:: ../../../example/python/permissions/can_get_domain_acc_ast.py
     :language: python
     :linenos:
-    :lines: 9-39
+    :lines: 10-28
 
 can_get_my_acc_ast
 ^^^^^^^^^^^^^^^^^^
@@ -976,9 +871,6 @@ Allows getting a balance of specified `asset <../core_concepts/glossary.html#ass
 Query response will contain information about all the assets that ever been assigned to an account.
 
 | Related API method: `Get Account Assets <../api/queries.html#get-account-assets>`__
-| Usage in Java bindings: ``Role.kGetMyAccAst``
-| Usage in Python bindings: ``Role_kGetMyAccAst``
-|
 
 **Example**
 
@@ -988,7 +880,7 @@ Query response will contain information about all the assets that ever been assi
 .. literalinclude:: ../../../example/python/permissions/can_get_my_acc_ast.py
     :language: python
     :linenos:
-    :lines: 9-39
+    :lines: 10-28
 
 Account Asset Transaction
 -------------------------
@@ -1001,9 +893,6 @@ Allows getting `transactions <../core_concepts/glossary.html#transaction>`__ ass
 .. Note:: Incoming asset transfers will also appear in the query response.
 
 | Related API method: `Get Account Asset Transactions <../api/queries.html#get-account-asset-transactions>`__
-| Usage in Java bindings: ``Role.kGetAllAccAstTxs``
-| Usage in Python bindings: ``Role_kGetAllAccAstTxs``
-|
 
 **Example**
 
@@ -1013,7 +902,7 @@ Allows getting `transactions <../core_concepts/glossary.html#transaction>`__ ass
 .. literalinclude:: ../../../example/python/permissions/can_get_all_acc_ast_txs.py
     :language: python
     :linenos:
-    :lines: 9-47
+    :lines: 10-43
 
 can_get_domain_acc_ast_txs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1023,9 +912,6 @@ Allows getting `transactions <../core_concepts/glossary.html#transaction>`__ ass
 .. Note:: Incoming asset transfers will also appear in the query response.
 
 | Related API method: `Get Account Asset Transactions <../api/queries.html#get-account-asset-transactions>`__
-| Usage in Java bindings: ``Role.kGetDomainAccAstTxs``
-| Usage in Python bindings: ``Role_kGetDomainAccAstTxs``
-|
 
 **Example**
 
@@ -1035,7 +921,7 @@ Allows getting `transactions <../core_concepts/glossary.html#transaction>`__ ass
 .. literalinclude:: ../../../example/python/permissions/can_get_domain_acc_ast_txs.py
     :language: python
     :linenos:
-    :lines: 9-42
+    :lines: 10-39
 
 can_get_my_acc_ast_txs
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -1045,9 +931,6 @@ Allows getting `transactions <../core_concepts/glossary.html#transaction>`__ ass
 .. Note:: Incoming asset transfers will also appear in the query response.
 
 | Related API method: `Get Account Asset Transactions <../api/queries.html#get-account-asset-transactions>`__
-| Usage in Java bindings: ``Role.kGetMyAccAstTxs``
-| Usage in Python bindings: ``Role_kGetMyAccAstTxs``
-|
 
 **Example**
 
@@ -1057,7 +940,7 @@ Allows getting `transactions <../core_concepts/glossary.html#transaction>`__ ass
 .. literalinclude:: ../../../example/python/permissions/can_get_my_acc_ast_txs.py
     :language: python
     :linenos:
-    :lines: 9-42
+    :lines: 10-39
 
 Account Transaction
 -------------------
@@ -1070,9 +953,6 @@ Allows getting all `transactions <../core_concepts/glossary.html#transaction>`__
 .. Note:: Incoming asset transfer inside a transaction would NOT lead to an appearance of the transaction in the command output.
 
 | Related API method: `Get Account Transactions <../api/queries.html#get-account-transactions>`__
-| Usage in Java bindings: ``Role.kGetAllAccTxs``
-| Usage in Python bindings: ``Role_kGetAllAccTxs``
-|
 
 **Example**
 
@@ -1082,7 +962,7 @@ Allows getting all `transactions <../core_concepts/glossary.html#transaction>`__
 .. literalinclude:: ../../../example/python/permissions/can_get_all_acc_txs.py
     :language: python
     :linenos:
-    :lines: 9-40
+    :lines: 10-28
 
 can_get_domain_acc_txs
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -1092,9 +972,6 @@ Allows getting all `transactions <../core_concepts/glossary.html#transaction>`__
 .. Note:: Incoming asset transfer inside a transaction would NOT lead to an appearance of the transaction in the command output.
 
 | Related API method: `Get Account Transactions <../api/queries.html#get-account-transactions>`__
-| Usage in Java bindings: ``Role.kGetDomainAccTxs``
-| Usage in Python bindings: ``Role_kGetDomainAccTxs``
-|
 
 **Example**
 
@@ -1104,7 +981,7 @@ Allows getting all `transactions <../core_concepts/glossary.html#transaction>`__
 .. literalinclude:: ../../../example/python/permissions/can_get_domain_acc_txs.py
     :language: python
     :linenos:
-    :lines: 9-39
+    :lines: 10-28
 
 can_get_my_acc_txs
 ^^^^^^^^^^^^^^^^^^
@@ -1114,9 +991,6 @@ Allows getting all `transactions <../core_concepts/glossary.html#transaction>`__
 .. Note:: Incoming asset transfer inside a transaction would NOT lead to an appearance of the transaction in the command output.
 
 | Related API method: `Get Account Transactions <../api/queries.html#get-account-transactions>`__
-| Usage in Java bindings: ``Role.kGetMyAccTxs``
-| Usage in Python bindings: ``Role_kGetMyAccTxs``
-|
 
 **Example**
 
@@ -1126,7 +1000,7 @@ Allows getting all `transactions <../core_concepts/glossary.html#transaction>`__
 .. literalinclude:: ../../../example/python/permissions/can_get_my_acc_txs.py
     :language: python
     :linenos:
-    :lines: 9-39
+    :lines: 10-28
 
 Asset
 -----
@@ -1137,9 +1011,6 @@ can_read_assets
 Allows getting information about `asset <../core_concepts/glossary.html#asset>`__ precision.
 
 | Related API method: `Get Asset Info <../api/queries.html#get-asset-info>`__
-| Usage in Java bindings: ``Role.kReadAssets``
-| Usage in Python bindings: ``Role_kReadAssets``
-|
 
 **Example**
 
@@ -1149,7 +1020,7 @@ Allows getting information about `asset <../core_concepts/glossary.html#asset>`_
 .. literalinclude:: ../../../example/python/permissions/can_read_assets.py
     :language: python
     :linenos:
-    :lines: 9-40
+    :lines: 10-31
 
 Block Stream
 ------------
@@ -1158,10 +1029,6 @@ can_get_blocks
 ^^^^^^^^^^^^^^
 
 Allows subscription to the stream of accepted `blocks <../core_concepts/glossary.html#block>`__.
-
-| Usage in Java bindings: ``Role.kGetBlocks``
-| Usage in Python bindings: ``Role_kGetBlocks``
-|
 
 Role
 ----
@@ -1173,9 +1040,6 @@ Allows getting a list of `roles <../core_concepts/glossary.html#role>`__ within 
 Allows getting a list of `permissions <../core_concepts/glossary.html#permission>`__ associated with a role.
 
 | Related API methods: `Get Roles <../api/queries.html#get-roles>`__, `Get Role Permissions <../api/queries.html#get-role-permissions>`__
-| Usage in Java bindings: ``Role.kGetRoles``
-| Usage in Python bindings: ``Role_kGetRoles``
-|
 
 **Example**
 
@@ -1185,7 +1049,7 @@ Allows getting a list of `permissions <../core_concepts/glossary.html#permission
 .. literalinclude:: ../../../example/python/permissions/can_get_roles.py
     :language: python
     :linenos:
-    :lines: 9-52
+    :lines: 10-35
 
 Signatory
 ---------
@@ -1196,9 +1060,6 @@ can_get_all_signatories
 Allows getting a list of public keys linked to an `account <../core_concepts/glossary.html#account>`__ within the system.
 
 | Related API method: `Get Signatories <../api/queries.html#get-signatories>`__
-| Usage in Java bindings: ``Role.kGetAllSignatories``
-| Usage in Python bindings: ``Role_kGetAllSignatories``
-|
 
 **Example**
 
@@ -1208,7 +1069,7 @@ Allows getting a list of public keys linked to an `account <../core_concepts/glo
 .. literalinclude:: ../../../example/python/permissions/can_get_all_signatories.py
     :language: python
     :linenos:
-    :lines: 9-40
+    :lines: 10-28
 
 can_get_domain_signatories
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1216,9 +1077,6 @@ can_get_domain_signatories
 Allows getting a list of public keys of any `account <../core_concepts/glossary.html#account>`__ within the same `domain <../core_concepts/glossary.html#domain>`__ as the domain of `query <../core_concepts/glossary.html#query>`__ creator account.
 
 | Related API method: `Get Signatories <../api/queries.html#get-signatories>`__
-| Usage in Java bindings: ``Role.kGetDomainSignatories``
-| Usage in Python bindings: ``Role_kGetDomainSignatories``
-|
 
 **Example**
 
@@ -1228,7 +1086,7 @@ Allows getting a list of public keys of any `account <../core_concepts/glossary.
 .. literalinclude:: ../../../example/python/permissions/can_get_domain_signatories.py
     :language: python
     :linenos:
-    :lines: 9-39
+    :lines: 10-28
 
 can_get_my_signatories
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -1236,9 +1094,6 @@ can_get_my_signatories
 Allows getting a list of public keys of `query <../core_concepts/glossary.html#query>`__ creator `account <../core_concepts/glossary.html#account>`__.
 
 | Related API method: `Get Signatories <../api/queries.html#get-signatories>`__
-| Usage in Java bindings: ``Role.kGetMySignatories``
-| Usage in Python bindings: ``Role_kGetMySignatories``
-|
 
 **Example**
 
@@ -1248,7 +1103,7 @@ Allows getting a list of public keys of `query <../core_concepts/glossary.html#q
 .. literalinclude:: ../../../example/python/permissions/can_get_my_signatories.py
     :language: python
     :linenos:
-    :lines: 9-39
+    :lines: 10-28
 
 Transaction
 -----------
@@ -1259,9 +1114,6 @@ can_get_all_txs
 Allows getting any `transaction <../core_concepts/glossary.html#transaction>`__ by hash.
 
 | Related API method: `Get Transactions <../api/queries.html#get-transactions>`__
-| Usage in Java bindings: ``Role.kGetAllTxs``
-| Usage in Python bindings: ``Role_kGetAllTxs``
-|
 
 **Example**
 
@@ -1271,7 +1123,7 @@ Allows getting any `transaction <../core_concepts/glossary.html#transaction>`__ 
 .. literalinclude:: ../../../example/python/permissions/can_get_all_txs.py
     :language: python
     :linenos:
-    :lines: 9-72
+    :lines: 11-58
 
 can_get_my_txs
 ^^^^^^^^^^^^^^
@@ -1279,9 +1131,6 @@ can_get_my_txs
 Allows getting `transaction <../core_concepts/glossary.html#transaction>`__ (that was issued by `query <../core_concepts/glossary.html#query>`__ creator) by hash.
 
 | Related API method: `Get Transactions <../api/queries.html#get-transactions>`__
-| Usage in Java bindings: ``Role.kGetMyTxs``
-| Usage in Python bindings: ``Role_kGetMyTxs``
-|
 
 **Example**
 
@@ -1291,7 +1140,7 @@ Allows getting `transaction <../core_concepts/glossary.html#transaction>`__ (tha
 .. literalinclude:: ../../../example/python/permissions/can_get_my_txs.py
     :language: python
     :linenos:
-    :lines: 9-76
+    :lines: 11-62
 
 Supplementary Sources
 =====================
@@ -1300,8 +1149,3 @@ Supplementary Sources
     :language: python
     :linenos:
     :caption: commons.py
-
-.. literalinclude:: ../../permissions_compiler/consts.py
-    :language: python
-    :linenos:
-    :caption: consts.py

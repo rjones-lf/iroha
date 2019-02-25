@@ -12,6 +12,11 @@
 #include "cryptography/hash_providers/sha3_256.hpp"
 #include "validators/abstract_validator.hpp"
 
+#ifdef _MSC_VER
+#pragma push_macro("GetMessage")
+#undef GetMessage
+#endif
+
 namespace shared_model {
   namespace proto {
 
@@ -26,7 +31,7 @@ namespace shared_model {
       using ValidatorType = std::unique_ptr<
           shared_model::validation::AbstractValidator<Interface>>;
       using ProtoValidatorType =
-          std::unique_ptr<shared_model::validation::AbstractValidator<
+          std::shared_ptr<shared_model::validation::AbstractValidator<
               typename Proto::TransportType>>;
 
       ProtoTransportFactory(ValidatorType interface_validator,
@@ -37,8 +42,15 @@ namespace shared_model {
       iroha::expected::Result<std::unique_ptr<Interface>, Error> build(
           typename Proto::TransportType m) const override {
         if (auto answer = proto_validator_->validate(m)) {
-          return iroha::expected::makeError(Error{
-              HashProvider::makeHash(makeBlob(m.payload())), answer.reason()});
+          auto payload_field_descriptor =
+              m.GetDescriptor()->FindFieldByLowercaseName("payload");
+          shared_model::crypto::Hash hash;
+          if (payload_field_descriptor) {
+            const auto &payload =
+                m.GetReflection()->GetMessage(m, payload_field_descriptor);
+            hash = HashProvider::makeHash(makeBlob(payload));
+          }
+          return iroha::expected::makeError(Error{hash, answer.reason()});
         }
 
         std::unique_ptr<Interface> result =
@@ -60,5 +72,9 @@ namespace shared_model {
 
   }  // namespace proto
 }  // namespace shared_model
+
+#ifdef _MSC_VER
+#pragma pop_macro("GetMessage")
+#endif
 
 #endif  // IROHA_PROTO_TRANSPORT_FACTORY_HPP

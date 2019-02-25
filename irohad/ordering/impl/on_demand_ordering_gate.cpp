@@ -6,9 +6,12 @@
 #include "ordering/impl/on_demand_ordering_gate.hpp"
 
 #include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/adaptor/indexed.hpp>
+#include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/empty.hpp>
 #include "ametsuchi/tx_presence_cache.hpp"
 #include "common/visitor.hpp"
+#include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "logger/logger.hpp"
 #include "ordering/impl/on_demand_common.hpp"
 
@@ -29,14 +32,12 @@ OnDemandOrderingGate::OnDemandOrderingGate(
       network_client_(std::move(network_client)),
       events_subscription_(events.subscribe([this](auto event) {
         // exclusive lock
-        std::lock_guard<std::shared_timed_mutex> lock(mutex_);
-
+        std::unique_lock<std::shared_timed_mutex> lock(mutex_);
         visit_in_place(event,
                        [this](const BlockEvent &block_event) {
                          // block committed, increment block round
                          log_->debug("BlockEvent. {}", block_event.round);
                          current_round_ = block_event.round;
-                         cache_->remove(block_event.hashes);
                        },
                        [this](const EmptyEvent &empty_event) {
                          // no blocks committed, increment reject round
@@ -44,6 +45,16 @@ OnDemandOrderingGate::OnDemandOrderingGate(
                          current_round_ = empty_event.round;
                        });
         log_->debug("Current: {}", current_round_);
+        lock.unlock();
+
+        visit_in_place(event,
+                       [this](const BlockEvent &block_event) {
+                         // block committed, remove transactions from cache
+                         cache_->remove(block_event.hashes);
+                       },
+                       [this](const EmptyEvent &) {
+                         // no blocks committed, no transactions to remove
+                       });
 
         auto batches = cache_->pop();
 
@@ -63,7 +74,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
             network_client_->onRequestProposal(current_round_));
         // vote for the object received from the network
         proposal_notifier_.get_subscriber().on_next(
-            network::OrderingEvent{proposal, current_round_});
+            network::OrderingEvent{std::move(proposal), current_round_});
       })),
       cache_(std::move(cache)),
       proposal_factory_(std::move(factory)),
@@ -76,9 +87,9 @@ OnDemandOrderingGate::~OnDemandOrderingGate() {
 
 void OnDemandOrderingGate::propagateBatch(
     std::shared_ptr<shared_model::interface::TransactionBatch> batch) {
-  std::shared_lock<std::shared_timed_mutex> lock(mutex_);
-
   cache_->addToBack({batch});
+
+  std::shared_lock<std::shared_timed_mutex> lock(mutex_);
   network_client_->onBatches(
       current_round_, transport::OdOsNotification::CollectionType{batch});
 }
@@ -93,22 +104,26 @@ void OnDemandOrderingGate::setPcs(
       "Method is deprecated. PCS observable should be set in ctor");
 }
 
-boost::optional<std::shared_ptr<shared_model::interface::Proposal>>
+boost::optional<std::shared_ptr<const shared_model::interface::Proposal>>
 OnDemandOrderingGate::processProposalRequest(
-    boost::optional<OnDemandOrderingService::ProposalType> &&proposal) const {
+    boost::optional<
+        std::shared_ptr<const OnDemandOrderingService::ProposalType>> proposal)
+    const {
   if (not proposal) {
     return boost::none;
   }
+  auto proposal_without_replays = removeReplays(*std::move(proposal));
   // no need to check empty proposal
-  if (boost::empty(proposal.value()->transactions())) {
+  if (boost::empty(proposal_without_replays->transactions())) {
     return boost::none;
   }
-  return removeReplays(std::move(**std::move(proposal)));
+  return proposal_without_replays;
 }
 
-boost::optional<std::shared_ptr<shared_model::interface::Proposal>>
+std::shared_ptr<const shared_model::interface::Proposal>
 OnDemandOrderingGate::removeReplays(
-    shared_model::interface::Proposal &&proposal) const {
+    std::shared_ptr<const shared_model::interface::Proposal> proposal) const {
+  std::vector<bool> proposal_txs_validation_results;
   auto tx_is_not_processed = [this](const auto &tx) {
     auto tx_result = tx_cache_->check(tx.hash());
     if (not tx_result) {
@@ -126,16 +141,33 @@ OnDemandOrderingGate::removeReplays(
           return false;
         });
   };
-  auto unprocessed_txs =
-      boost::adaptors::filter(proposal.transactions(), tx_is_not_processed);
 
-  auto result = proposal_factory_->unsafeCreateProposal(
-      proposal.height(), proposal.createdTime(), unprocessed_txs);
+  shared_model::interface::TransactionBatchParserImpl batch_parser;
 
-  if (boost::empty(result->transactions())) {
-    return boost::none;
+  bool has_replays = false;
+  auto batches = batch_parser.parseBatches(proposal->transactions());
+  for (auto &batch : batches) {
+    bool all_txs_are_new =
+        std::all_of(batch.begin(), batch.end(), tx_is_not_processed);
+    proposal_txs_validation_results.insert(
+        proposal_txs_validation_results.end(), batch.size(), all_txs_are_new);
+    has_replays |= not all_txs_are_new;
   }
 
-  return boost::make_optional<
-      std::shared_ptr<shared_model::interface::Proposal>>(std::move(result));
+  if (not has_replays) {
+    return std::move(proposal);
+  }
+
+  auto unprocessed_txs =
+      proposal->transactions() | boost::adaptors::indexed()
+      | boost::adaptors::filtered(
+            [proposal_txs_validation_results =
+                 std::move(proposal_txs_validation_results)](const auto &el) {
+              return proposal_txs_validation_results.at(el.index());
+            })
+      | boost::adaptors::transformed(
+            [](const auto &el) -> decltype(auto) { return el.value(); });
+
+  return proposal_factory_->unsafeCreateProposal(
+      proposal->height(), proposal->createdTime(), unprocessed_txs);
 }

@@ -20,9 +20,9 @@ namespace torii {
    */
   class CommandSyncClient {
    public:
-    CommandSyncClient(const std::string &ip,
-                      size_t port,
-                      logger::LoggerPtr log);
+    CommandSyncClient(
+        std::unique_ptr<iroha::protocol::CommandService_v1::StubInterface> stub,
+        logger::LoggerPtr log);
 
     /**
      * requests tx to a torii server and returns response (blocking, sync)
@@ -57,7 +57,7 @@ namespace torii {
         std::vector<iroha::protocol::ToriiResponse> &response) const;
 
    private:
-    std::unique_ptr<iroha::protocol::CommandService_v1::Stub> stub_;
+    std::unique_ptr<iroha::protocol::CommandService_v1::StubInterface> stub_;
     logger::LoggerPtr log_;
   };
 

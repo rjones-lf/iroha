@@ -13,10 +13,6 @@
 
 namespace iroha {
 
-  namespace ametsuchi {
-    class PeerQuery;
-  }
-
   namespace consensus {
     namespace yac {
 

@@ -17,12 +17,7 @@ namespace iroha {
 
     boost::optional<std::vector<PeerQuery::wPeer>>
     PeerQueryWsv::getLedgerPeers() {
-      auto peers = wsv_->getPeers();
-      if (peers) {
-        return boost::make_optional(peers.value());
-      } else {
-        return boost::none;
-      }
+      return wsv_->getPeers();
     }
 
   }  // namespace ametsuchi

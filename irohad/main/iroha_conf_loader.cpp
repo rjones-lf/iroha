@@ -206,6 +206,8 @@ void getVal<IrohadConfig>(const std::string &path,
   getValByKey(path, dest.proposal_delay, obj, config_members::ProposalDelay);
   getValByKey(path, dest.vote_delay, obj, config_members::VoteDelay);
   getValByKey(path, dest.mst_support, obj, config_members::MstSupport);
+  getValByKey(
+      path, dest.mst_expiration_time, obj, config_members::MstExpirationTime);
   getValByKey(path, dest.logger_manager, obj, config_members::LogSection);
 }
 

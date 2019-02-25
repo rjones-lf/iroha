@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_CONSENSUS_INIT_HPP
@@ -22,7 +10,7 @@
 
 #include "ametsuchi/peer_query_factory.hpp"
 #include "consensus/consensus_block_cache.hpp"
-#include "consensus/yac/messages.hpp"
+#include "consensus/yac/outcome_messages.hpp"
 #include "consensus/yac/timer.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
 #include "consensus/yac/yac.hpp"
@@ -70,6 +58,14 @@ namespace iroha {
             std::shared_ptr<shared_model::interface::CommonObjectsFactory>
                 common_objects_factory,
             const logger::LoggerManagerTreePtr &consensus_log_manager);
+
+        // coordinator has a worker, and a factory for coordinated
+        // observables, subscribers and schedulable functions.
+        //
+        // A new thread scheduler is created
+        // by calling .create_coordinator().get_scheduler()
+        rxcpp::observe_on_one_worker coordination_{
+            rxcpp::observe_on_new_thread()};
 
        public:
         std::shared_ptr<YacGate> initConsensusGate(

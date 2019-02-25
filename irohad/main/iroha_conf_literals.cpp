@@ -15,6 +15,7 @@ namespace config_members {
   const char *ProposalDelay = "proposal_delay";
   const char *VoteDelay = "vote_delay";
   const char *MstSupport = "mst_enable";
+  const char *MstExpirationTime = "mst_expiration_time";
   const char *LogSection = "log";
   const char *LogLevel = "level";
   const char *LogPatternsSection = "patterns";

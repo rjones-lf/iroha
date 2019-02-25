@@ -30,6 +30,7 @@ add_library(shared_model_interfaces
     queries/impl/get_account_detail.cpp
     queries/impl/get_account_transactions.cpp
     queries/impl/get_asset_info.cpp
+    queries/impl/get_block.cpp
     queries/impl/get_role_permissions.cpp
     queries/impl/get_roles.cpp
     queries/impl/get_signatories.cpp

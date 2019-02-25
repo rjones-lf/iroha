@@ -221,24 +221,24 @@ Checking Iroha peer status
 Dealing with troubles
 ^^^^^^^^^^^^^^^^^^^^^
 
-—"Please, help me, because I am…"
+—"Please, help me, because I…"
 
-Not having Iroha daemon binary
-------------------------------
-
-You can build Iroha daemon binary from sources, following API section from the `website <https://hyperledger.github.io/iroha-api/#build>`__
-
-Not having config file
-----------------------
-
-Check how to create a configuration file by following this `link <https://hyperledger.github.io/iroha-api/#prepare-configuration-file>`__
-
-Not having genesis block
-------------------------
-
-Create genesis block by generating it via `iroha-cli` or manually, as it is described `here <https://hyperledger.github.io/iroha-api/#create-genesis-block>`__
-
-Not having a keypair for a peer
+Do not have Iroha daemon binary
 -------------------------------
+
+You can build Iroha daemon binary from sources. You can get binaries `here <https://github.com/hyperledger/iroha/releases>`__
+
+Do not have a config file
+-------------------------
+
+Check how to create a configuration file by following this `link <./configuration.html>`__
+
+Do not have a genesis block
+---------------------------
+
+Create genesis block by generating it via `iroha-cli` or manually, using the `example <https://github.com/hyperledger/iroha/blob/master/example/genesis.block>`__ and checking out `permissions <https://iroha.readthedocs.io/en/latest/maintenance/permissions.html>`__
+
+Do not have a keypair for a peer
+--------------------------------
 
 In order to create a keypair for an account or a peer, use iroha-cli binary by passing the name of the peer with `--new_account` option.

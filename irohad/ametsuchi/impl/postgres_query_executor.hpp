@@ -66,8 +66,21 @@ namespace iroha {
 
       void setQueryHash(const shared_model::crypto::Hash &query_hash);
 
+      /**
+       * Check that account has a specific role permission
+       * @param permission to be in that account
+       * @param account_id of account to be checked
+       * @return true, if account has that permission, false otherwise
+       */
+      bool hasAccountRolePermission(
+          shared_model::interface::permissions::Role permission,
+          const std::string &account_id) const;
+
       QueryExecutorResult operator()(
           const shared_model::interface::GetAccount &q);
+
+      QueryExecutorResult operator()(
+          const shared_model::interface::GetBlock &q);
 
       QueryExecutorResult operator()(
           const shared_model::interface::GetSignatories &q);
@@ -240,11 +253,16 @@ namespace iroha {
           logger::LoggerManagerTreePtr log_manager);
 
       QueryExecutorResult validateAndExecute(
-          const shared_model::interface::Query &query) override;
+          const shared_model::interface::Query &query,
+          const bool validate_signatories) override;
 
-      bool validate(const shared_model::interface::BlocksQuery &query) override;
+      bool validate(const shared_model::interface::BlocksQuery &query,
+                    const bool validate_signatories) override;
 
      private:
+      template <class Q>
+      bool validateSignatures(const Q &query);
+
       std::unique_ptr<soci::session> sql_;
       KeyValueStorage &block_store_;
       std::shared_ptr<PendingTransactionStorage> pending_txs_storage_;

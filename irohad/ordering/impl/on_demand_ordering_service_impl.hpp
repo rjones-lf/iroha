@@ -53,7 +53,7 @@ namespace iroha {
 
       void onBatches(consensus::Round, CollectionType batches) override;
 
-      boost::optional<ProposalType> onRequestProposal(
+      boost::optional<std::shared_ptr<const ProposalType>> onRequestProposal(
           consensus::Round round) override;
 
      private:
@@ -69,12 +69,6 @@ namespace iroha {
        * Note: method is not thread-safe
        */
       void tryErase();
-
-      /**
-       * @return packed proposal from the given round queue
-       * Note: method is not thread-safe
-       */
-      ProposalType emitProposal(const consensus::Round &round);
 
       /**
        * Check if batch was already processed by the peer
@@ -101,7 +95,7 @@ namespace iroha {
        * Map of available proposals
        */
       std::unordered_map<consensus::Round,
-                         ProposalType,
+                         std::shared_ptr<const ProposalType>,
                          consensus::RoundTypeHasher>
           proposal_map_;
 
