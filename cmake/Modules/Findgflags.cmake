@@ -20,6 +20,9 @@ if (NOT gflags_FOUND)
   externalproject_add(gflags_gflags
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
+      CMAKE_ARGS
+        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+        -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
       BUILD_BYPRODUCTS ${EP_PREFIX}/src/gflags_gflags-build/lib/libgflags.a
       INSTALL_COMMAND "" # remove install step
       TEST_COMMAND "" # remove test step
