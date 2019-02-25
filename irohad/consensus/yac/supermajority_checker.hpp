@@ -32,7 +32,10 @@ namespace iroha {
        public:
         using VoteGroups = boost::any_range<PeersNumberType,
                                             boost::forward_traversal_tag,
-                                            PeersNumberType,
+                                            // reference type must be const for
+                                            // transform_iterator to be able to
+                                            // assign to any_iterator safely
+                                            const PeersNumberType,
                                             std::ptrdiff_t>;
 
         virtual ~SupermajorityChecker() = default;
