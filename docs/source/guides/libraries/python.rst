@@ -5,7 +5,7 @@ Where to Get
 ^^^^^^^^^^^^
 
 A supported python library for Iroha is available at its `own Hyperledger iroha-python repo <https://github.com/hyperledger/iroha-python/>`__.
-Python 3.6+ is supported.
+Python 3+ is supported.
 
 You can also install Python library via pip:
 
