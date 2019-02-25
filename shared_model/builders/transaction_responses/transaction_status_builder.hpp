@@ -19,7 +19,7 @@ namespace shared_model {
      * @tparam BuilderImpl
      */
     template <typename BuilderImpl>
-    class TransactionStatusBuilder {
+    class [[deprecated]] TransactionStatusBuilder {
      public:
       std::shared_ptr<shared_model::interface::TransactionResponse> build() {
         return clone(builder_.build());

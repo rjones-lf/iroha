@@ -28,7 +28,7 @@ namespace shared_model {
     template <int S = 0,
               typename SV = validation::DefaultUnsignedBlocksQueryValidator,
               typename BT = UnsignedWrapper<BlocksQuery>>
-    class TemplateBlocksQueryBuilder {
+    class [[deprecated]] TemplateBlocksQueryBuilder {
      private:
       template <int, typename, typename>
       friend class TemplateBlocksQueryBuilder;
