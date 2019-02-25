@@ -5,6 +5,7 @@
 
 #include <boost/variant.hpp>
 #include "crypto/keypair.hpp"
+#include "framework/test_logger.hpp"
 #include "module/irohad/ametsuchi/mock_block_query.hpp"
 #include "module/irohad/ametsuchi/mock_query_executor.hpp"
 #include "module/irohad/ametsuchi/mock_storage.hpp"
@@ -54,7 +55,8 @@ using ErrorQueryType =
 class ToriiQueriesTest : public testing::Test {
  public:
   virtual void SetUp() {
-    runner = std::make_unique<ServerRunner>(ip + ":0");
+    runner = std::make_unique<ServerRunner>(ip + ":0",
+                                            getTestLogger("ServerRunner"  ));
     wsv_query = std::make_shared<MockWsvQuery>();
     block_query = std::make_shared<MockBlockQuery>();
     query_executor = std::make_shared<MockQueryExecutor>();
@@ -73,11 +75,17 @@ class ToriiQueriesTest : public testing::Test {
             std::shared_ptr<QueryExecutor>(query_executor))));
 
     auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(
-        storage, storage, pending_txs_storage, query_response_factory);
+        storage,
+        storage,
+        pending_txs_storage,
+        query_response_factory,
+        getTestLogger("QueryProcessor"));
 
     //----------- Server run ----------------
     initQueryFactory();
-    runner->append(std::make_unique<QueryService>(qpi, query_factory))
+    runner
+        ->append(std::make_unique<QueryService>(
+            qpi, query_factory, getTestLogger("QueryService")))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {

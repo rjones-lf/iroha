@@ -10,6 +10,7 @@
 
 #include <soci/soci.h>
 #include <boost/optional.hpp>
+#include "framework/test_logger.hpp"
 #include "interfaces/common_objects/account.hpp"
 #include "interfaces/common_objects/account_asset.hpp"
 #include "interfaces/common_objects/asset.hpp"
@@ -35,7 +36,7 @@ namespace framework {
       SqlQuery(soci::session &sql,
                std::shared_ptr<shared_model::interface::CommonObjectsFactory>
                    factory,
-               logger::Logger log = logger::log("SqlQuery"));
+               logger::LoggerPtr log = getTestLogger("SqlQuery"));
 
       /**
        * Check if permitee has permission on account
@@ -135,7 +136,7 @@ namespace framework {
      private:
       soci::session &sql_;
       std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
-      logger::Logger log_;
+      logger::LoggerPtr log_;
 
       /**
        * Executes given lambda of type F, catches exceptions if any, logs the

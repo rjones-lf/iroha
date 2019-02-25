@@ -9,6 +9,7 @@
 #include <fstream>
 #include <string>
 #include "crypto/keys_manager_impl.hpp"
+#include "framework/test_logger.hpp"
 
 #define PUBKEY_HEX_SIZE 64
 #define PRIVKEY_HEX_SIZE 64
@@ -48,7 +49,8 @@ class KeyManager : public ::testing::Test {
       "00576e02f23c8c694c322796cb3ef494829fdf484f4b42312fb7d776fbd5123b"s;
   const std::string prikey =
       "36f028580bb02cc8272a9a020f4200e346e276ae664e45ee80745574e2f5ab80"s;
-  KeysManagerImpl manager = KeysManagerImpl(filepath);
+  const logger::LoggerPtr keysManagerLogger = getTestLogger("KeysManager");
+  KeysManagerImpl manager = KeysManagerImpl(filepath, keysManagerLogger);
   const std::string passphrase = "test";
   const std::string nonexistent = (boost::filesystem::temp_directory_path()
                                    / boost::filesystem::unique_path())
@@ -125,6 +127,8 @@ TEST_F(KeyManager, LoadInaccessiblePrikey) {
 
 TEST_F(KeyManager, CreateKeypairInNonexistentDir) {
   KeysManagerImpl manager =
-      KeysManagerImpl(boost::filesystem::unique_path().string(), nonexistent);
+      KeysManagerImpl(boost::filesystem::unique_path().string(),
+                      nonexistent,
+                      keysManagerLogger);
   ASSERT_FALSE(manager.createKeys(passphrase));
 }

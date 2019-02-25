@@ -12,6 +12,7 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/default_hash_provider.hpp"
 #include "cryptography/keypair.hpp"
+#include "framework/test_logger.hpp"
 #include "module/shared_model/builders/protobuf/block.hpp"
 
 namespace iroha {
@@ -21,7 +22,8 @@ namespace iroha {
     void SetUp() override {
       ametsuchi::AmetsuchiTest::SetUp();
       validator = std::make_shared<validation::ChainValidatorImpl>(
-          std::make_shared<consensus::yac::SupermajorityCheckerImpl>());
+          std::make_shared<consensus::yac::SupermajorityCheckerImpl>(),
+          getTestLogger("ChainValidator"));
 
       for (size_t i = 0; i < 5; ++i) {
         keys.push_back(shared_model::crypto::DefaultCryptoAlgorithmType::

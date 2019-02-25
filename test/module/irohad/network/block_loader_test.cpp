@@ -13,6 +13,7 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/hash.hpp"
 #include "datetime/time.hpp"
+#include "framework/test_logger.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/mock_block_query.hpp"
 #include "module/irohad/ametsuchi/mock_block_query_factory.hpp"
@@ -59,9 +60,10 @@ class BlockLoaderTest : public testing::Test {
         peer_query_factory,
         shared_model::proto::ProtoBlockFactory(
             std::move(validator_ptr),
-            std::make_unique<MockValidator<iroha::protocol::Block>>()));
+            std::make_unique<MockValidator<iroha::protocol::Block>>()),
+        getTestLogger("BlockLoader"));
     service = std::make_shared<BlockLoaderService>(
-        block_query_factory, block_cache, logger::log("BlockLoaderService"));
+        block_query_factory, block_cache, getTestLogger("BlockLoaderService"));
 
     grpc::ServerBuilder builder;
     int port = 0;

@@ -10,28 +10,27 @@
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "logger/logger.hpp"
 
+#include "framework/test_logger.hpp"
 #include "module/irohad/consensus/yac/yac_test_util.hpp"
 
 using namespace iroha::consensus::yac;
 
-static logger::Logger log_ = logger::testLog("YacBlockStorage");
+static logger::LoggerPtr log_ = getTestLogger("YacBlockStorage");
 
 class YacBlockStorageTest : public ::testing::Test {
  public:
-  YacHash hash;
-  PeersNumberType number_of_peers;
-  YacBlockStorage storage = YacBlockStorage(
-      YacHash(iroha::consensus::Round{1, 1}, "proposal", "commit"), 4);
+  YacHash hash{iroha::consensus::Round{1, 1}, "proposal", "commit"};
+  PeersNumberType number_of_peers{4};
+  YacBlockStorage storage =
+      YacBlockStorage(hash, number_of_peers, getTestLogger("YacBlockStorage"));
   std::vector<VoteMessage> valid_votes;
 
   void SetUp() override {
-    hash = YacHash(iroha::consensus::Round{1, 1}, "proposal", "commit");
-    number_of_peers = 4;
-    storage = YacBlockStorage(hash, number_of_peers);
-    valid_votes = {createVote(hash, "one"),
-                   createVote(hash, "two"),
-                   createVote(hash, "three"),
-                   createVote(hash, "four")};
+    valid_votes.reserve(number_of_peers);
+    std::generate_n(std::back_inserter(valid_votes), number_of_peers, [this] {
+      static size_t counter = 0;
+      return createVote(this->hash, std::to_string(counter++));
+    });
   }
 };
 
@@ -62,7 +61,9 @@ TEST_F(YacBlockStorageTest, YacBlockStorageWhenNotCommittedAndCommitAcheive) {
   decltype(YacBlockStorageTest::valid_votes) for_insert(valid_votes.begin() + 1,
                                                         valid_votes.end());
   auto insert_commit = storage.insert(for_insert);
-  ASSERT_EQ(4, boost::get<CommitMessage>(*insert_commit).votes.size());
+  ASSERT_TRUE(insert_commit) << "Must be a commit!";
+  ASSERT_EQ(number_of_peers,
+            boost::get<CommitMessage>(*insert_commit).votes.size());
 }
 
 TEST_F(YacBlockStorageTest, YacBlockStorageWhenGetVotes) {
