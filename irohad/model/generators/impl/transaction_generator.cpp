@@ -61,7 +61,7 @@ namespace iroha {
             makeOldModel(*manager.loadKeys()));
         tx.commands.push_back(command_generator.generateCreateAccount(
             "admin", "test", keypair.pubkey));
-        manager = KeysManagerImpl("test@test", keys_manager_logger);
+        manager = KeysManagerImpl("test@test", std::move(keys_manager_logger));
         manager.createKeys();
         keypair = *std::unique_ptr<iroha::keypair_t>(
             makeOldModel(*manager.loadKeys()));

@@ -19,7 +19,7 @@ namespace iroha_cli {
                        logger::LoggerPtr pb_qry_factory_log)
       : command_client_(target_ip, port, pb_qry_factory_log),
         query_client_(target_ip, port),
-        pb_qry_factory_log_(pb_qry_factory_log) {}
+        pb_qry_factory_log_(std::move(pb_qry_factory_log)) {}
 
   CliClient::Response<CliClient::TxStatus> CliClient::sendTx(
       const shared_model::interface::Transaction &tx) {
