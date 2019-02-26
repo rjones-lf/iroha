@@ -54,6 +54,10 @@ class GetTransactions : public AcceptanceFixture {
 };
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-215 convert to a SFV integration test
+ * (not covered by postgres_query_executor_test)
+ * convert to a common SFV permissions integration test
+ *
  * @given some user without can_get_{my,all}_txs permissions
  * @when query GetTransactions of existing transaction of the user
  * @then stateful validation fail returned
@@ -79,6 +83,10 @@ TEST_F(GetTransactions, HaveNoGetPerms) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-215 remove, covered by
+ * postgres_query_executor_test GetTransactionsHashExecutorTest.ValidAllAccounts
+ * convert to a common SFV permissions integration test
+ *
  * @given some user with only can_get_all_txs permission
  * @when query GetTransactions of existing transaction of the user
  * @then receive TransactionsResponse with the transaction hash
@@ -107,6 +115,10 @@ TEST_F(GetTransactions, HaveGetAllTx) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-215 remove, covered by
+ * postgres_query_executor_test GetTransactionsHashExecutorTest.ValidMyAccount
+ * convert to a common SFV permissions integration test
+ *
  * @given some user with only can_get_my_txs permission
  * @when query GetTransactions of existing transaction of the user
  * @then receive TransactionsResponse with the transaction hash
@@ -135,6 +147,9 @@ TEST_F(GetTransactions, HaveGetMyTx) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-215 remove, covered by
+ * query_processor_test QueryProcessorTest.QueryProcessorWithWrongKey
+ *
  * @given some user with only can_get_my_txs permission
  * @when query GetTransactions of existing transaction of the user, but with
  * invalid signatures
@@ -170,6 +185,9 @@ TEST_F(GetTransactions, InvalidSignatures) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-215 convert to a SFV integration test
+ * (not covered by postgres_query_executor_test)
+ *
  * @given some user with only can_get_my_txs permission
  * @when query GetTransactions with nonexistent hash
  * @then Stateful invalid query response
@@ -199,6 +217,10 @@ TEST_F(GetTransactions, NonexistentHash) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-215 convert to a SFV integration test
+ * (not covered by postgres_query_executor_test)
+ * seems we should move the common_query_permissions_test to SFV integration
+ *
  * @given some user with can_get_my_txs
  * @when query GetTransactions of existing transaction of the other user
  * @then TransactionsResponse with no transactions

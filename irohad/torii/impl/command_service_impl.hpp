@@ -38,6 +38,8 @@ namespace iroha {
               status_factory,
           logger::LoggerPtr log);
 
+      ~CommandServiceImpl() override;
+
       /**
        * Disable copying in any way to prevent potential issues with common
        * storage/tx_processor
@@ -94,6 +96,8 @@ namespace iroha {
       std::shared_ptr<iroha::torii::StatusBus> status_bus_;
       std::shared_ptr<CacheType> cache_;
       std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory_;
+
+      rxcpp::composite_subscription status_subscription_;
 
       logger::LoggerPtr log_;
     };

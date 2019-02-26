@@ -27,6 +27,9 @@ auto getAccountAssetsQuantityChecker(int quantity) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-210 convert to a SFV integration test
+ * (no such test in postgres_query_executor_test)
+ *
  * @given a user with all required permissions
  * @when GetAccountAssets is queried on the user with no assets
  * @then there is an AccountAssetResponse reporting no asset presence
