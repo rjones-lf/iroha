@@ -10,13 +10,14 @@
 #include <boost/range/adaptor/indirected.hpp>
 #include "logger/logger.hpp"
 
+#include "framework/test_logger.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 
 using namespace iroha::consensus::yac;
 
 using ::testing::ReturnRefOfCopy;
 
-static logger::Logger log_ = logger::testLog("YacCommon");
+static logger::LoggerPtr log_ = getTestLogger("YacCommon");
 
 class SupermajorityCheckerTest : public ::testing::Test,
                                  public SupermajorityCheckerImpl {
@@ -30,7 +31,7 @@ class SupermajorityCheckerTest : public ::testing::Test,
  * @then correct result
  */
 TEST_F(SupermajorityCheckerTest, SuperMajorityCheckWithSize2) {
-  log_->info("-----------| F(x, 2), x in {0..3} -----------");
+  log_->info("{}", "-----------| F(x, 2), x in {0..3} -----------");
 
   int N = 2;
   ASSERT_FALSE(checkSize(0, N));
@@ -45,7 +46,7 @@ TEST_F(SupermajorityCheckerTest, SuperMajorityCheckWithSize2) {
  * @then correct result
  */
 TEST_F(SupermajorityCheckerTest, SuperMajorityCheckWithSize4) {
-  log_->info("-----------| F(x, 4), x in {0..5} |-----------");
+  log_->info("{}", "-----------| F(x, 4), x in {0..5} |-----------");
 
   int N = 4;
   ASSERT_FALSE(checkSize(0, N));
@@ -62,7 +63,7 @@ TEST_F(SupermajorityCheckerTest, SuperMajorityCheckWithSize4) {
  * @then correct result
  */
 TEST_F(SupermajorityCheckerTest, RejectProofSuccessfulCase) {
-  log_->info("-----------| RejectProof(x, 6, 7) in {1..3} |-----------");
+  log_->info("{}", "-----------| RejectProof(x, 6, 7) in {1..3} |-----------");
 
   ASSERT_TRUE(hasReject(1, 6, 7));
   ASSERT_TRUE(hasReject(2, 6, 7));
@@ -75,7 +76,7 @@ TEST_F(SupermajorityCheckerTest, RejectProofSuccessfulCase) {
  * @then correct result
  */
 TEST_F(SupermajorityCheckerTest, RejectProofNegativeCase) {
-  log_->info("-----------| RejectProof(x, 6, 7) in {4..6}|-----------");
+  log_->info("{}", "-----------| RejectProof(x, 6, 7) in {4..6}|-----------");
 
   ASSERT_FALSE(hasReject(4, 6, 7));
   ASSERT_FALSE(hasReject(5, 6, 7));

@@ -11,10 +11,13 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/common_constants.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
+#include "framework/test_logger.hpp"
 #include "interfaces/query_responses/transactions_response.hpp"
 
 using namespace common_constants;
 using shared_model::interface::permissions::Role;
+
+static logger::LoggerPtr log_ = getTestLogger("RegressionTest");
 
 /**
  * @given ITF instance with Iroha
@@ -127,7 +130,7 @@ TEST(RegressionTest, StateRecovery) {
   // test launch if ITF was failed for some reason. If there are some blocks,
   // then checkProposal will fail with "missed proposal" error, because of
   // incorrect calculation of chain height.
-  iroha::remove_dir_contents(path);
+  iroha::remove_dir_contents(path, log_);
 
   {
     integration_framework::IntegrationTestFramework(

@@ -20,7 +20,7 @@ AddTest(interface_test
     )
 target_link_libraries(interface_test
     shared_model_default_builders
-    logger
+    test_logger
     )
 
 add_library(commands_mocks_factory

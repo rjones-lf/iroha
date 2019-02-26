@@ -7,6 +7,7 @@
 #include <tuple>
 #include "cryptography/keypair.hpp"
 #include "datetime/time.hpp"
+#include "framework/test_logger.hpp"
 #include "framework/test_subscriber.hpp"
 #include "logger/logger.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
@@ -15,7 +16,7 @@
 #include "multi_sig_transactions/mst_processor_impl.hpp"
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
 
-auto log_ = logger::log("MstProcessorTest");
+auto log_ = getTestLogger("MstProcessorTest");
 
 using namespace iroha;
 using namespace framework::test_subscriber;
@@ -48,8 +49,10 @@ class MstProcessorTest : public testing::Test {
  protected:
   void SetUp() override {
     transport = std::make_shared<MockMstTransport>();
-    storage = std::make_shared<MstStorageStateImpl>(
-        std::make_shared<TestCompleter>());
+    storage =
+        std::make_shared<MstStorageStateImpl>(std::make_shared<TestCompleter>(),
+                                              getTestLogger("MstState"),
+                                              getTestLogger("MstStorage"));
 
     propagation_strategy = std::make_shared<MockPropagationStrategy>();
     EXPECT_CALL(*propagation_strategy, emitter())
@@ -59,8 +62,12 @@ class MstProcessorTest : public testing::Test {
     EXPECT_CALL(*time_provider, getCurrentTime())
         .WillRepeatedly(Return(time_now));
 
-    mst_processor = std::make_shared<FairMstProcessor>(
-        transport, storage, propagation_strategy, time_provider);
+    mst_processor =
+        std::make_shared<FairMstProcessor>(transport,
+                                           storage,
+                                           propagation_strategy,
+                                           time_provider,
+                                           getTestLogger("FairMstProcessor"));
   }
 };
 
@@ -247,7 +254,8 @@ TEST_F(MstProcessorTest, onUpdateFromTransportUsecase) {
 
   // ---------------------------------| when |----------------------------------
   shared_model::crypto::PublicKey another_peer_key("another_pubkey");
-  auto transported_state = MstState::empty(std::make_shared<TestCompleter>());
+  auto transported_state = MstState::empty(getTestLogger("MstState"),
+                                           std::make_shared<TestCompleter>());
   transported_state += addSignaturesFromKeyPairs(
       makeTestBatch(txBuilder(1, time_now, quorum)), 0, makeKey());
   mst_processor->onNewState(another_peer_key, transported_state);
@@ -298,6 +306,7 @@ TEST_F(MstProcessorTest, emptyStatePropagation) {
       "another", shared_model::interface::types::PubkeyType("sign_one"));
 
   auto another_peer_state = MstState::empty(
+      getTestLogger("MstState"),
       std::make_shared<iroha::DefaultCompleter>(std::chrono::minutes(0)));
   another_peer_state += makeTestBatch(txBuilder(1));
 

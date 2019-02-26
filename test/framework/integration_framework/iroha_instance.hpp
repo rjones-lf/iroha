@@ -6,13 +6,16 @@
 #ifndef IROHA_IROHA_INSTANCE_HPP
 #define IROHA_IROHA_INSTANCE_HPP
 
-#include <boost/optional.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
 #include <chrono>
 #include <memory>
 #include <string>
+
+#include <boost/optional.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include "ametsuchi/impl/postgres_options.hpp"
+#include "logger/logger_fwd.hpp"
+#include "logger/logger_manager_fwd.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy_params.hpp"
 
 namespace shared_model {
@@ -35,6 +38,8 @@ namespace integration_framework {
      * @param listen_ip - ip address for opening ports (internal & torii)
      * @param torii_port - port to bind Torii service to
      * @param internal_port - port for internal irohad communication
+     * @param irohad_log_manager - the log manager for irohad
+     * @param log - the log for internal messages
      * @param dbname is a name of postgres database
      */
     IrohaInstance(bool mst_support,
@@ -42,6 +47,8 @@ namespace integration_framework {
                   const std::string &listen_ip,
                   size_t torii_port,
                   size_t internal_port,
+                  logger::LoggerManagerTreePtr irohad_log_manager,
+                  logger::LoggerPtr log,
                   const boost::optional<std::string> &dbname = boost::none);
 
     void makeGenesis(const shared_model::interface::Block &block);
@@ -76,6 +83,9 @@ namespace integration_framework {
 
    private:
     std::shared_ptr<TestIrohad> instance_;
+    logger::LoggerManagerTreePtr irohad_log_manager_;
+
+    logger::LoggerPtr log_;
 
     boost::optional<std::chrono::milliseconds> mst_gossip_emitting_period_;
     boost::optional<uint32_t> mst_gossip_amount_per_once_;

@@ -8,6 +8,12 @@ target_link_libraries(test_subscriber_testing
     rxcpp
     )
 
+add_library(test_logger test_logger.cpp)
+target_link_libraries(test_logger
+    logger
+    logger_manager
+    )
+
 add_library(integration_framework
     integration_framework/integration_test_framework.cpp
     integration_framework/iroha_instance.cpp
@@ -26,6 +32,7 @@ target_link_libraries(integration_framework
     shared_model_cryptography_model
     server_runner
     mst_transport
+    test_logger
     )
 
 add_library(common_test_constants common_constants.cpp)

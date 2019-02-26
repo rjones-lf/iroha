@@ -20,6 +20,7 @@
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "datetime/time.hpp"
 #include "framework/result_fixture.hpp"
+#include "framework/test_logger.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/permissions.hpp"
 #include "interfaces/query_responses/account_asset_response.hpp"
@@ -1050,7 +1051,8 @@ namespace iroha {
         auto factory =
             std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
                 shared_model::validation::FieldValidator>>();
-        auto block_store = FlatFile::create(block_store_dir);
+        auto block_store =
+            FlatFile::create(block_store_dir, getTestLogger("FlatFile"));
         ASSERT_TRUE(block_store);
         this->block_store = std::move(block_store.get());
         createDefaultAccount();
