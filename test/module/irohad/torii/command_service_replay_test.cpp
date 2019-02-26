@@ -102,7 +102,7 @@ TEST_F(CommandServiceReplayTest, OrderingGateReplayTest) {
  * pending status in internal cache, for example, after cache overflow)
  * @then transaction is not passed to transaction processor
  */
-TEST_F(CommandServiceReplayTest, OrderingGateReplayWhenPendingTest) {
+TEST_F(CommandServiceReplayTest, ReplayWhenPendingAndRejectedTest) {
   auto batch = prepareBatch();
   auto hash = batch->transactions().front()->hash();
 
