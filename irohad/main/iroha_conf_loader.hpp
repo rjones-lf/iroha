@@ -6,8 +6,6 @@
 #ifndef IROHA_CONF_LOADER_HPP
 #define IROHA_CONF_LOADER_HPP
 
-#define RAPIDJSON_HAS_STDSTRING 1
-
 #include <fstream>
 #include <string>
 
