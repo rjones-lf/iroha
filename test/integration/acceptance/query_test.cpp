@@ -49,6 +49,10 @@ class QueryAcceptanceTest : public AcceptanceFixture {
 };
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-220 remove, covered by
+ * postgres_query_executor_test GetTransactionsHashExecutorTest.ValidMyAccount
+ * seems we should move common query permissions tests to SFV integration
+ *
  * @given some user with only can_get_my_txs permission
  * @when query GetTransactions of existing transaction of the user in parallel
  * @then receive TransactionsResponse with the transaction hash

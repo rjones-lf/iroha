@@ -22,6 +22,9 @@ class AddAssetQuantity : public AcceptanceFixture {
 };
 
 /**
+ * TODO mboldyrev 17.01.2019 IR-228 "Basic" tests should be replaced with a
+ * common acceptance test
+ *
  * @given some user with can_add_asset_qty permission
  * @when execute tx with AddAssetQuantity command
  * @then there is the tx in proposal
@@ -38,6 +41,8 @@ TEST_F(AddAssetQuantity, Basic) {
 }
 
 /**
+ * TODO mboldyrev 17.01.2019 IR-203 convert to an integration test
+ *
  * @given some user without can_add_asset_qty permission
  * @when execute tx with AddAssetQuantity command
  * @then verified proposal is empty
@@ -58,6 +63,8 @@ TEST_F(AddAssetQuantity, NoPermissions) {
 }
 
 /**
+ * TODO mboldyrev 17.01.2019 IR-203 convert to a field validator unit test
+ *
  * @given pair of users with all required permissions
  * @when execute tx with AddAssetQuantity command with negative amount
  * @then the tx hasn't passed stateless validation
@@ -75,6 +82,9 @@ TEST_F(AddAssetQuantity, NegativeAmount) {
 }
 
 /**
+ * TODO mboldyrev 17.01.2019 IR-203 seems can be removed (covered by field
+ * validator test and the above test)
+ *
  * @given pair of users with all required permissions
  * @when execute tx with AddAssetQuantity command with zero amount
  * @then the tx hasn't passed stateless validation
@@ -92,6 +102,9 @@ TEST_F(AddAssetQuantity, ZeroAmount) {
 }
 
 /**
+ * TODO mboldyrev 17.01.2019 IR-203 remove, covered by
+ * postgres_executor_test AddAccountAssetTest.Uint256Overflow
+ *
  * @given pair of users with all required permissions
  * @when execute two txes with AddAssetQuantity command with amount more than a
  * uint256 max half
@@ -122,6 +135,9 @@ TEST_F(AddAssetQuantity, Uint256DestOverflow) {
 }
 
 /**
+ * TODO mboldyrev 17.01.2019 IR-203 remove, covered by
+ * postgres_executor_test AddAccountAssetTest.InvalidAsset
+ *
  * @given some user with all required permissions
  * @when execute tx with AddAssetQuantity command with nonexistent asset
  * @then verified proposal is empty

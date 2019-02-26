@@ -88,6 +88,8 @@ Read our [C++ Style Guide](#c-style-guide) and start with beginner-friendly issu
 
 - **Document new code** based on the [Documentation Styleguide](#documentation-styleguide)
 
+- When working with **PRs from forks** check [this manual](https://help.github.com/articles/checking-out-pull-requests-locally)
+
 
 ## Styleguides
 

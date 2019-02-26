@@ -38,6 +38,10 @@ class SubtractAssetQuantity : public AcceptanceFixture {
 };
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-228 "Basic" tests should be replaced with a
+ * common acceptance test
+ * also covered by postgres_executor_test SubtractAccountAssetTest.Valid
+ *
  * @given some user with all required permissions
  * @when execute tx with SubtractAssetQuantity command with max available amount
  * @then there is the tx in proposal
@@ -58,6 +62,9 @@ TEST_F(SubtractAssetQuantity, Everything) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-225 remove, covered by
+ * postgres_executor_test SubtractAccountAssetTest.NotEnoughAsset
+ *
  * @given some user with all required permissions
  * @when execute tx with SubtractAssetQuantity command with amount more than
  * user has
@@ -83,9 +90,12 @@ TEST_F(SubtractAssetQuantity, Overdraft) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-225 remove, covered by
+ * postgres_executor_test SubtractAccountAssetTest.NoPerms
+ *
  * @given some user without can_subtract_asset_qty permission
- * @when execute tx with SubtractAssetQuantity command
-there is an empty verified proposal
+ * @when execute tx with SubtractAssetQuantity command there is an empty
+ * verified proposal
  */
 TEST_F(SubtractAssetQuantity, NoPermissions) {
   IntegrationTestFramework(1)
@@ -107,6 +117,8 @@ TEST_F(SubtractAssetQuantity, NoPermissions) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-225 remove, covered by field validator test
+ *
  * @given pair of users with all required permissions
  * @when execute tx with SubtractAssetQuantity command with negative amount
  * @then the tx hasn't passed stateless validation
@@ -124,6 +136,8 @@ TEST_F(SubtractAssetQuantity, NegativeAmount) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-225 remove, covered by field validator test
+ *
  * @given pair of users with all required permissions
  * @when execute tx with SubtractAssetQuantity command with zero amount
  * @then the tx hasn't passed stateless validation
@@ -141,6 +155,9 @@ TEST_F(SubtractAssetQuantity, ZeroAmount) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-225 remove, covered by
+ * postgres_executor_test SubtractAccountAssetTest.NoAsset
+ *
  * @given some user with all required permissions
  * @when execute tx with SubtractAssetQuantity command with nonexistent asset
  * @then there is an empty verified proposal

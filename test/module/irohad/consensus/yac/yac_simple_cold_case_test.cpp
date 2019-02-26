@@ -9,7 +9,6 @@
 #include <utility>
 #include <vector>
 
-#include "consensus/yac/impl/supermajority_checker_bft.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 
 #include "framework/test_subscriber.hpp"
@@ -166,27 +165,31 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyReject) {
   EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
   EXPECT_CALL(*timer, deny()).Times(AtLeast(1));
   std::vector<std::vector<VoteMessage>> messages;
-  EXPECT_CALL(*network, sendState(_, _)).Times(0);
+  EXPECT_CALL(*network, sendState(_, _))
+      .Times(0)
+      .WillRepeatedly(Invoke(
+          [&](const auto &, const auto &msg) { messages.push_back(msg); }));
 
   yac->onOutcome().subscribe([&](auto msg) {
+    // verify that commits are already sent to the network
+    ASSERT_EQ(0, messages.size());
     messages.push_back(boost::get<CommitMessage>(msg).votes);
   });
 
   std::vector<VoteMessage> commit;
 
-  auto f = (default_peers.size() - 1)
-      / iroha::consensus::yac::detail::kSupermajorityCheckerKfPlus1Bft;
-  for (size_t i = 0; i < default_peers.size() - f - 1; ++i) {
+  auto f = (default_peers.size() - 1) / 3;
+  for (size_t i = 0; i < 2 * f; ++i) {
     auto vote = createVote(YacHash{}, std::to_string(i));
     yac->onState({vote});
     commit.push_back(vote);
   }
 
-  auto vote = createVote(YacHash{}, std::to_string(default_peers.size() - f));
+  auto vote = createVote(YacHash{}, std::to_string(2 * f + 1));
   RejectMessage reject(
       {vote,
        createVote(YacHash(iroha::consensus::Round{1, 1}, "", "my_block"),
-                   std::to_string(default_peers.size() - f + 1))});
+                  std::to_string(2 * f + 2))});
   commit.push_back(vote);
 
   yac->onState(reject.votes);

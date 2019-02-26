@@ -11,7 +11,6 @@
 #include "cryptography/public_key.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/iroha_internal/block.hpp"
-#include "validation/utils.hpp"
 
 namespace iroha {
   namespace validation {
@@ -55,9 +54,8 @@ namespace iroha {
         const std::vector<std::shared_ptr<shared_model::interface::Peer>>
             &peers) const {
       const auto &signatures = block.signatures();
-      auto has_supermajority = supermajority_checker_->hasSupermajority(
-                                   boost::size(signatures), peers.size())
-          and peersSubset(signatures, peers);
+      auto has_supermajority =
+          supermajority_checker_->hasSupermajority(signatures, peers);
 
       if (not has_supermajority) {
         log_->info(

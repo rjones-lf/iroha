@@ -15,6 +15,8 @@ using namespace common_constants;
 class InvalidField : public AcceptanceFixture {};
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-217 remove, covered by field validator test
+ *
  * @given tx with CreateAccount command and invalid signature size
  * @when send it
  * @then Torii returns stateless fail
@@ -31,6 +33,8 @@ TEST_F(InvalidField, Signature) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-217 remove, covered by field validator test
+ *
  * @given tx with CreateAccount command and invalid pub key size
  * @when send it
  * @then Torii returns stateless fail
