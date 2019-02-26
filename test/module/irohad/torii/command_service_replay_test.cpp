@@ -123,7 +123,7 @@ TEST_F(CommandServiceReplayTest, OrderingGateReplayWhenPendingTest) {
  * @when the transaction arrives
  * @then the transaction is passed to transaction processor
  */
-TEST_F(CommandServiceReplayTest, OrderingGateReplayWhenPending2Test) {
+TEST_F(CommandServiceReplayTest, ReplayWhenPendingAndMissingTest) {
   auto batch = prepareBatch();
   auto hash = batch->transactions().front()->hash();
 
