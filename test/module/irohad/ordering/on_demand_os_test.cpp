@@ -17,7 +17,6 @@
 #include "module/shared_model/interface_mocks.hpp"
 #include "module/shared_model/validators/validators.hpp"
 #include "ordering/impl/on_demand_common.hpp"
-#include "ametsuchi/
 
 using namespace iroha;
 using namespace iroha::ordering;
