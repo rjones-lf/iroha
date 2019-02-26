@@ -117,14 +117,22 @@ void checkValues(
       [](const auto &) {});
 }
 
-auto makeValuesChecker(
-    const std::vector<IntervalObservableHelperVariant> &observable_helpers) {
-  return [&observable_helpers](auto... values) {
-    bool completed;
-    checkValues(observable_helpers, 0, completed, values...);
-    return completed;
-  };
-}
+class ValuesChecker {
+ public:
+  ValuesChecker(
+      const std::vector<IntervalObservableHelperVariant> &observable_helpers)
+      : observable_helpers_(observable_helpers) {}
+
+  template <typename... Types>
+  bool operator()(Types... values) const {
+    checkValues(observable_helpers_, 0, completed_, values...);
+    return completed_;
+  }
+
+ private:
+  const std::vector<IntervalObservableHelperVariant> &observable_helpers_;
+  mutable bool completed_{false};
+};
 
 template <class T>
 rxcpp::observable<long> getObservable(T &observable_helper) {
@@ -138,10 +146,11 @@ rxcpp::observable<long> getObservable(T &observable_helper) {
  * any of them completes.
  * @return whether the final value of any source observable was reached
  */
-bool check(rxcpp::observable<bool> observable) {
-  bool completed;
+void check(rxcpp::observable<bool> observable) {
   observable.last().as_blocking().subscribe(
-      [&completed](bool val) { completed = val; },
+      [](bool completed) {
+        EXPECT_TRUE(completed) << "Did not reach completed state!";
+      },
       [](std::exception_ptr ep) {
         try {
           std::rethrow_exception(ep);
@@ -149,7 +158,6 @@ bool check(rxcpp::observable<bool> observable) {
           FAIL() << "OnError: " << e.what();
         }
       });
-  return completed;
 }
 
 /**
@@ -167,12 +175,11 @@ TEST(combineLatestUntilFirstCompleted, ThreeParallel) {
   auto values = iroha::makeCombineLatestUntilFirstCompleted(
       getObservable(observable_helpers[0]),
       rxcpp::identity_current_thread(),
-      makeValuesChecker(observable_helpers),
+      ValuesChecker(observable_helpers),
       getObservable(observable_helpers[1]),
       getObservable(observable_helpers[2]));
 
-  bool completed = check(values);
-  EXPECT_TRUE(completed) << "Did not reach completed state!";
+  check(values);
 }
 
 /**
@@ -191,12 +198,11 @@ TEST(combineLatestUntilFirstCompleted, FourParallel) {
   auto values = iroha::makeCombineLatestUntilFirstCompleted(
       getObservable(observable_helpers[0]),
       rxcpp::identity_current_thread(),
-      makeValuesChecker(observable_helpers),
+      ValuesChecker(observable_helpers),
       getObservable(observable_helpers[1]),
       getObservable(observable_helpers[2]));
 
-  bool completed = check(values);
-  EXPECT_TRUE(completed) << "Did not reach completed state!";
+  check(values);
 }
 
 /**
@@ -229,8 +235,7 @@ TEST(combineLatestUntilFirstCompleted, TwoPairsParallel) {
   auto values = iroha::makeCombineLatestUntilFirstCompleted(
       pair1,
       rxcpp::identity_current_thread(),
-      [checker = makeValuesChecker(observable_helpers)](auto pair1,
-                                                        auto pair2) {
+      [checker = ValuesChecker(observable_helpers)](auto pair1, auto pair2) {
         return checker(pair1[0], pair1[1], pair2[0], pair2[1]);
       },
       pair2);
