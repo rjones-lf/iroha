@@ -38,7 +38,6 @@ struct IntervalObservableHelper {
   }
 
   long lastValue() const {
-    //return valueAtTime(steady_clock::now());
     return last_emitted_value;
   }
 
