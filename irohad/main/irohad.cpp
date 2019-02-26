@@ -10,6 +10,7 @@
 #include <gflags/gflags.h>
 #include <grpc++/grpc++.h>
 #include "ametsuchi/storage.hpp"
+#include "common/irohad_version.hpp"
 #include "common/result.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "main/application.hpp"
@@ -86,6 +87,8 @@ DEFINE_validator(verbosity, validateVerbosity);
 std::promise<void> exit_requested;
 
 int main(int argc, char *argv[]) {
+  gflags::SetVersionString(iroha::kGitPrettyVersion);
+
   // Parsing command line arguments
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
