@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef IROHA_YAC_STORAGE_CLEANUP_STRATEGY_HPP
-#define IROHA_YAC_STORAGE_CLEANUP_STRATEGY_HPP
+#ifndef IROHA_CLEANUP_STRATEGY_HPP
+#define IROHA_CLEANUP_STRATEGY_HPP
 
 #include <vector>
 
@@ -33,9 +33,9 @@ namespace iroha {
                                                      Answer answer) = 0;
 
         /**
-         * The method checks should we add new round or not
-         * @param round - interested round
-         * @return true if round makes sense
+         * The method checks whether we should add a new round
+         * @param round - round for creation
+         * @return true if round should be created
          */
         virtual bool shouldCreateRound(const Round &round) = 0;
 
@@ -45,4 +45,4 @@ namespace iroha {
   }    // namespace consensus
 }  // namespace iroha
 
-#endif  // IROHA_YAC_STORAGE_CLEANUP_STRATEGY_HPP
+#endif  // IROHA_CLEANUP_STRATEGY_HPP

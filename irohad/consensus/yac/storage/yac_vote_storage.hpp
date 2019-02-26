@@ -12,10 +12,10 @@
 
 #include <boost/optional.hpp>
 #include "consensus/yac/outcome_messages.hpp"  // because messages passed by value
+#include "consensus/yac/storage/cleanup_strategy.hpp"
 #include "consensus/yac/storage/storage_result.hpp"  // for Answer
 #include "consensus/yac/storage/yac_common.hpp"      // for ProposalHash
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
-#include "consensus/yac/storage/yac_storage_cleanup_strategy.hpp"
 #include "consensus/yac/yac_types.hpp"
 
 namespace iroha {
@@ -83,7 +83,7 @@ namespace iroha {
         /**
          * Remove proposal storage by round
          */
-        void removeByRound(const Round &round);
+        void remove(const Round &round);
 
        public:
         // --------| public api |--------

@@ -9,8 +9,8 @@
 #include "consensus/yac/impl/yac_crypto_provider_impl.hpp"
 #include "consensus/yac/impl/yac_gate_impl.hpp"
 #include "consensus/yac/impl/yac_hash_provider_impl.hpp"
+#include "consensus/yac/storage/buffered_cleanup_strategy.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
-#include "consensus/yac/storage/yac_storage_cleanup_strategy_impl.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
 
 namespace iroha {
@@ -70,14 +70,9 @@ namespace iroha {
               async_call,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               common_objects_factory) {
-        // TODO: 2018-12-25 @muratovv make dynamic change of the number IR-154
-        const BufferedCleanupStrategy::QueueSizeType kNumberOfSavedRounds = 10;
         std::shared_ptr<iroha::consensus::yac::CleanupStrategy>
             cleanup_strategy = std::make_shared<
-                iroha::consensus::yac::BufferedCleanupStrategy>(
-                kNumberOfSavedRounds,
-                iroha::consensus::Round(1, 0),
-                std::queue<iroha::consensus::Round>());
+                iroha::consensus::yac::BufferedCleanupStrategy>();
         return Yac::create(
             YacVoteStorage(cleanup_strategy),
             createNetwork(std::move(async_call)),

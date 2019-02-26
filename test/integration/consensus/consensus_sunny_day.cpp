@@ -8,8 +8,8 @@
 
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/impl/timer_impl.hpp"
+#include "consensus/yac/storage/buffered_cleanup_strategy.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
-#include "consensus/yac/storage/yac_storage_cleanup_strategy_impl.hpp"
 #include "consensus/yac/storage/yac_vote_storage.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
 #include "consensus/yac/yac.hpp"
@@ -86,12 +86,8 @@ class ConsensusSunnyDayTest : public ::testing::Test {
   }
 
   void SetUp() override {
-    const BufferedCleanupStrategy::QueueSizeType kNumberOfSavedRounds = 1;
     cleanup_strategy =
-        std::make_shared<iroha::consensus::yac::BufferedCleanupStrategy>(
-            kNumberOfSavedRounds,
-            iroha::consensus::Round(1, 0),
-            std::queue<iroha::consensus::Round>());
+        std::make_shared<iroha::consensus::yac::BufferedCleanupStrategy>();
     auto async_call = std::make_shared<
         iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
     network = std::make_shared<NetworkImpl>(async_call);

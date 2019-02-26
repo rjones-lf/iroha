@@ -44,7 +44,7 @@ namespace iroha {
         }
       }
 
-      void YacVoteStorage::removeByRound(const iroha::consensus::Round &round) {
+      void YacVoteStorage::remove(const iroha::consensus::Round &round) {
         auto val = getProposalStorage(round);
         if (val != proposal_storages_.end()) {
           proposal_storages_.erase(val);
@@ -59,22 +59,22 @@ namespace iroha {
 
       boost::optional<Answer> YacVoteStorage::store(
           std::vector<VoteMessage> state, PeersNumberType peers_in_round) {
-        Round r;
         return findProposalStorage(state.at(0), peers_in_round) |
-                   [&state, &r](auto &&storage) {
-                     r = storage->getStorageKey();
-                     return storage->insert(state);
-                   }
-                   | [this,
-                      &r](auto &&insert_outcome) -> boost::optional<Answer> {
-          this->strategy_->finalize(r, insert_outcome) | [this](auto &&remove) {
-            std::for_each(
-                remove.begin(), remove.end(), [this](const auto &round) {
-                  this->removeByRound(round);
-                });
-          };
-          return insert_outcome;
-        };
+            [this, &state](auto &&storage) {
+              const auto &round = storage->getStorageKey();
+              return storage->insert(state) |
+                         [this, &round](
+                             auto &&insert_outcome) -> boost::optional<Answer> {
+                this->strategy_->finalize(round, insert_outcome) |
+                    [this](auto &&remove) {
+                      std::for_each(
+                          remove.begin(),
+                          remove.end(),
+                          [this](const auto &round) { this->remove(round); });
+                    };
+                return insert_outcome;
+              };
+            };
       }
 
       bool YacVoteStorage::isCommitted(const Round &round) {
