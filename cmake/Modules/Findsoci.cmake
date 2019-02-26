@@ -48,7 +48,9 @@ if (NOT soci_FOUND)
                       -DCMAKE_INCLUDE_PATH=${pq_INCLUDE_DIR}
                       -DCMAKE_LIBRARY_PATH=${pq_INCLUDE_DIR}
                       -DCMAKE_PROGRAM_PATH=${pg_config_EXECUTABLE_DIR}
+                      -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                      -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
                       -DCMAKE_CXX_FLAGS=${CMAKE_CXX_SOCI_FLAGS}
                       -DCMAKE_INSTALL_PREFIX=${EP_PREFIX}
                       -DWITH_BOOST=ON
