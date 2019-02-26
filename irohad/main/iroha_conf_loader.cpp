@@ -68,6 +68,19 @@ bool tryGetValByKey(const std::string &path,
                     const TKey &key);
 
 /**
+ * Gets an optional value by a key from a JSON object.
+ * @param path - current config node path used to denote the possible error
+ *    place.
+ * @param obj - the source JSON object
+ * @param key - the key for the requested value
+ * @return the value if present in the JSON object, otherwise boost::none.
+ */
+template <typename TDest, typename TKey>
+boost::optional<TDest> getOptValByKey(const std::string &path,
+                                      const rapidjson::Value::ConstObject &obj,
+                                      const TKey &key);
+
+/**
  * Adds one sublevel to the path denoting a place in config tree.
  * @param parent - the location of the sublevel
  * @param child - the name of sublevel
@@ -234,14 +247,15 @@ bool tryGetValByKey(const std::string &path,
   }
 }
 
-/**
- * Gets an optional value by a key from a JSON object.
- * @param path - current config node path used to denote the possible error
- *    place.
- * @param obj - the source JSON object
- * @param key - the key for the requested value
- * @return the value if present in the JSON object, otherwise boost::none.
- */
+template <typename TDest, typename TKey>
+bool tryGetValByKey(const std::string &path,
+                    boost::optional<TDest> &dest,
+                    const rapidjson::Value::ConstObject &obj,
+                    const TKey &key) {
+  dest = getOptValByKey<TDest>(path, obj, key);
+  return true; // value loaded any way, either from file or boost::none
+}
+
 template <typename TDest, typename TKey>
 boost::optional<TDest> getOptValByKey(const std::string &path,
                                       const rapidjson::Value::ConstObject &obj,

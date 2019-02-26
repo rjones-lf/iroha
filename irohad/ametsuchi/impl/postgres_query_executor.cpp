@@ -401,7 +401,7 @@ namespace iroha {
           break;
       }
 
-      log_->error(error);
+      log_->error("{}", error);
       return query_response_factory_->createErrorQueryResponse(
           error_type, error, error_code, query_hash_);
     }

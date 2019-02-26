@@ -97,6 +97,11 @@ DEFINE_validator(verbosity, &validateVerbosity);
 
 std::promise<void> exit_requested;
 
+logger::LoggerManagerTreePtr getDefaultLogManager() {
+  return std::make_shared<logger::LoggerManagerTree>(logger::LoggerConfig{
+      logger::LogLevel::kInfo, logger::kDefaultLogPatterns});
+}
+
 int main(int argc, char *argv[]) {
   // Parsing command line arguments
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -126,7 +131,7 @@ int main(int argc, char *argv[]) {
   // Reading iroha configuration file
   const auto config = parse_iroha_config(FLAGS_config);
   if (not log_manager) {
-    log_manager = config.logger_manager;
+    log_manager = config.logger_manager.value_or(getDefaultLogManager());
     log = log_manager->getChild("Init")->getLogger();
   }
   log->info("config initialized");

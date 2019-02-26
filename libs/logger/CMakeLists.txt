@@ -4,9 +4,15 @@
 #
 
 add_library(logger
-  logger.cpp
-  logger_spdlog.cpp)
+    logger.cpp
+    logger_spdlog.cpp
+)
 target_link_libraries(logger
+    fmt
+    spdlog
+)
+# ensure that externals are downloaded before any dependants
+add_dependencies(logger
     fmt
     spdlog
 )
