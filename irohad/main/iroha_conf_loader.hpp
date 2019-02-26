@@ -6,6 +6,8 @@
 #ifndef IROHA_CONF_LOADER_HPP
 #define IROHA_CONF_LOADER_HPP
 
+#define RAPIDJSON_HAS_STDSTRING 1
+
 #include <fstream>
 #include <string>
 
@@ -65,6 +67,7 @@ inline rapidjson::Document parse_iroha_config(const std::string &conf_path) {
   const std::string kUintType = "uint";
   const std::string kBoolType = "bool";
   doc.ParseStream(isw);
+  auto &allocator = doc.GetAllocator();
   ac::assert_fatal(not doc.HasParseError(),
                    reportJsonParsingError(doc, conf_path, ifs_iroha));
 
@@ -109,15 +112,28 @@ inline rapidjson::Document parse_iroha_config(const std::string &conf_path) {
   ac::assert_fatal(doc[mbr::MstExpirationTime].IsUint(),
                    ac::type_error(mbr::MstExpirationTime, kUintType));
 
-  ac::assert_fatal(doc.HasMember(mbr::MaxRoundsDelay),
-                   ac::no_member_error(mbr::MaxRoundsDelay));
-  ac::assert_fatal(doc[mbr::MaxRoundsDelay].IsUint(),
-                   ac::type_error(mbr::MaxRoundsDelay, kUintType));
+  // This way of initialization of unspecified config parameters is going to
+  // be substituted very soon with completely different approach introduced by
+  // pr https://github.com/hyperledger/iroha/pull/2126
+  const auto kMaxRoundsDelayDefault = 3000u;
+  const auto kStaleStreamMaxRoundsDefault = 2u;
 
-  ac::assert_fatal(doc.HasMember(mbr::StaleStreamMaxRounds),
-                   ac::no_member_error(mbr::StaleStreamMaxRounds));
-  ac::assert_fatal(doc[mbr::StaleStreamMaxRounds].IsUint(),
-                   ac::type_error(mbr::StaleStreamMaxRounds, kUintType));
+  if (not doc.HasMember(mbr::MaxRoundsDelay)) {
+    rapidjson::Value key(mbr::MaxRoundsDelay, allocator);
+    doc.AddMember(key, kMaxRoundsDelayDefault, allocator);
+  } else {
+    ac::assert_fatal(doc[mbr::MaxRoundsDelay].IsUint(),
+                     ac::type_error(mbr::MaxRoundsDelay, kUintType));
+  }
+
+  if (not doc.HasMember(mbr::StaleStreamMaxRounds)) {
+    rapidjson::Value key(mbr::StaleStreamMaxRounds, allocator);
+    doc.AddMember(key, kStaleStreamMaxRoundsDefault, allocator);
+  } else {
+    ac::assert_fatal(doc[mbr::StaleStreamMaxRounds].IsUint(),
+                     ac::type_error(mbr::StaleStreamMaxRounds, kUintType));
+  }
+
   return doc;
 }
 
