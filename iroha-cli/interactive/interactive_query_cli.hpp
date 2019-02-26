@@ -10,21 +10,21 @@
 #include <unordered_map>
 
 #include "interactive/interactive_common_cli.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
+#include "logger/logger_manager_fwd.hpp"
 #include "model/generators/query_generator.hpp"
 
 namespace iroha {
   namespace model {
     class ModelCryptoProvider;
     struct Query;
-  }
-}
+  }  // namespace model
+}  // namespace iroha
 
 namespace iroha_cli {
   namespace interactive {
     class InteractiveQueryCli {
      public:
-
       /**
        * Class to form and send Iroha queries  in interactive mode
        * @param creator_account creator's account identification
@@ -32,13 +32,21 @@ namespace iroha_cli {
        * @param default_port of Iroha peer
        * @param query_counter counter associated with creator's account
        * @param provider for signing queries
+       * @param responce_handler_log_manager for ResponseHandler mesages
+       * @param pb_qry_factory_log for PbQueryFactory mesages
+       * @param json_qry_factory_log for JsonQueryFactory mesages
+       * @param log for internal messages
        */
       InteractiveQueryCli(
           const std::string &account_id,
           const std::string &default_peer_ip,
           int default_port,
           uint64_t query_counter,
-          const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider);
+          const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider,
+          logger::LoggerManagerTreePtr responce_handler_log_manager,
+          logger::LoggerPtr pb_qry_factory_log,
+          logger::LoggerPtr json_qry_factory_log,
+          logger::LoggerPtr log);
       /**
        * Run interactive query command line
        */
@@ -150,11 +158,20 @@ namespace iroha_cli {
       // Query generator for new queries
       iroha::model::generators::QueryGenerator generator_;
 
-      // Logger
-      logger::Logger log_;
-
       // Crypto provider
       std::shared_ptr<iroha::model::ModelCryptoProvider> provider_;
+
+      /// Logger manager for GrpcResponseHandler
+      logger::LoggerManagerTreePtr responce_handler_log_manager_;
+
+      /// Logger for PbQueryFactory
+      logger::LoggerPtr pb_qry_factory_log_;
+
+      /// Logger for JsonQueryFactory
+      logger::LoggerPtr json_qry_factory_log_;
+
+      /// Internal logger
+      logger::LoggerPtr log_;
     };
   }  // namespace interactive
 }  // namespace iroha_cli

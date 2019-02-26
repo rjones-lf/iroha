@@ -15,6 +15,7 @@
 #include "datetime/time.hpp"
 #include "grpc_response_handler.hpp"
 #include "interactive/interactive_query_cli.hpp"
+#include "logger/logger.hpp"
 #include "model/converters/json_query_factory.hpp"
 #include "model/converters/pb_query_factory.hpp"
 #include "model/model_crypto_provider.hpp"  // for ModelCryptoProvider
@@ -94,14 +95,22 @@ namespace iroha_cli {
         const std::string &default_peer_ip,
         int default_port,
         uint64_t query_counter,
-        const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider)
+        const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider,
+        logger::LoggerManagerTreePtr responce_handler_log_manager,
+        logger::LoggerPtr pb_qry_factory_log,
+        logger::LoggerPtr json_qry_factory_log,
+        logger::LoggerPtr log)
         : current_context_(MAIN),
           creator_(account_name),
           default_peer_ip_(default_peer_ip),
           default_port_(default_port),
           counter_(query_counter),
-          provider_(provider) {
-      log_ = logger::log("InteractiveQueryCli");
+          provider_(provider),
+          responce_handler_log_manager_(
+              std::move(responce_handler_log_manager)),
+          pb_qry_factory_log_(std::move(pb_qry_factory_log)),
+          json_qry_factory_log_(std::move(json_qry_factory_log)),
+          log_(std::move(log)) {
       create_queries_menu();
       create_result_menu();
     }
@@ -261,10 +270,13 @@ namespace iroha_cli {
 
       provider_->sign(*query_);
 
-      CliClient client(address.value().first, address.value().second);
+      CliClient client(
+          address.value().first, address.value().second, pb_qry_factory_log_);
       auto query = shared_model::proto::Query(
-          *iroha::model::converters::PbQueryFactory().serialize(query_));
-      GrpcResponseHandler{}.handle(client.sendQuery(query));
+          *iroha::model::converters::PbQueryFactory(pb_qry_factory_log_)
+               .serialize(query_));
+      GrpcResponseHandler{responce_handler_log_manager_}.handle(
+          client.sendQuery(query));
       printEnd();
       // Stop parsing
       return false;
@@ -274,7 +286,8 @@ namespace iroha_cli {
       provider_->sign(*query_);
 
       auto path = params[0];
-      iroha::model::converters::JsonQueryFactory json_factory;
+      iroha::model::converters::JsonQueryFactory json_factory(
+          json_qry_factory_log_);
       auto json_string = json_factory.serialize(query_);
       std::ofstream output_file(path);
       if (not output_file) {

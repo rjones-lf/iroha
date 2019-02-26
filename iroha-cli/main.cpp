@@ -18,6 +18,8 @@
 #include "crypto/keys_manager_impl.hpp"
 #include "grpc_response_handler.hpp"
 #include "interactive/interactive_cli.hpp"
+#include "logger/logger.hpp"
+#include "logger/logger_manager.hpp"
 #include "model/converters/json_block_factory.hpp"
 #include "model/converters/json_query_factory.hpp"
 #include "model/converters/pb_block_factory.hpp"
@@ -74,7 +76,19 @@ iroha::keypair_t *makeOldModel(const shared_model::crypto::Keypair &keypair) {
 int main(int argc, char *argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   gflags::ShutDownCommandLineFlags();
-  auto logger = logger::log("CLI-MAIN");
+  auto log_manager = std::make_shared<logger::LoggerManagerTree>(
+                         logger::LoggerConfig{logger::LogLevel::kInfo,
+                                              logger::kDefaultLogPatterns})
+                         ->getChild("CLI");
+  const auto logger = log_manager->getChild("Main")->getLogger();
+  const auto responce_handler_log_manager =
+      log_manager->getChild("ResponseHandler");
+  const auto pb_qry_factory_log =
+      log_manager->getChild("PbQueryFactory")->getLogger();
+  const auto json_qry_factory_log =
+      log_manager->getChild("JsonQueryFactory")->getLogger();
+  const auto keys_manager_log =
+      log_manager->getChild("KeysManager")->getLogger();
   // Generate new genesis block now Iroha network
   if (FLAGS_genesis_block) {
     BlockGenerator generator;
@@ -91,7 +105,7 @@ int main(int argc, char *argv[]) {
                 std::back_inserter(peers_address));
       // Generate genesis block
       transaction = TransactionGenerator().generateGenesisTransaction(
-          0, std::move(peers_address));
+          0, std::move(peers_address), keys_manager_log);
     } else {
       rapidjson::Document doc;
       std::ifstream file(FLAGS_genesis_transaction);
@@ -132,7 +146,8 @@ int main(int argc, char *argv[]) {
       logger->error("No account name specified");
       return EXIT_FAILURE;
     }
-    auto keysManager = iroha::KeysManagerImpl(FLAGS_account_name);
+    auto keysManager =
+        iroha::KeysManagerImpl(FLAGS_account_name, keys_manager_log);
     if (not(FLAGS_pass_phrase.size() == 0
                 ? keysManager.createKeys()
                 : keysManager.createKeys(FLAGS_pass_phrase))) {
@@ -145,8 +160,10 @@ int main(int argc, char *argv[]) {
   }
   // Send to Iroha Peer json transaction/query
   else if (not FLAGS_json_transaction.empty() or not FLAGS_json_query.empty()) {
-    iroha_cli::CliClient client(FLAGS_peer_ip, FLAGS_torii_port);
-    iroha_cli::GrpcResponseHandler response_handler;
+    iroha_cli::CliClient client(
+        FLAGS_peer_ip, FLAGS_torii_port, pb_qry_factory_log);
+    iroha_cli::GrpcResponseHandler response_handler(
+        responce_handler_log_manager);
     if (not FLAGS_json_transaction.empty()) {
       logger->info(
           "Send transaction to {}:{} ", FLAGS_peer_ip, FLAGS_torii_port);
@@ -176,14 +193,16 @@ int main(int argc, char *argv[]) {
       std::ifstream file(FLAGS_json_query);
       std::string str((std::istreambuf_iterator<char>(file)),
                       std::istreambuf_iterator<char>());
-      iroha::model::converters::JsonQueryFactory serializer;
+      iroha::model::converters::JsonQueryFactory serializer(
+          json_qry_factory_log);
       auto query_opt = serializer.deserialize(std::move(str));
       if (not query_opt) {
         logger->error("Json has wrong format.");
         return EXIT_FAILURE;
       } else {
         auto query = shared_model::proto::Query(
-            *iroha::model::converters::PbQueryFactory().serialize(*query_opt));
+            *iroha::model::converters::PbQueryFactory(pb_qry_factory_log)
+                 .serialize(*query_opt));
         auto response = client.sendQuery(query);
         response_handler.handle(response);
       }
@@ -200,7 +219,8 @@ int main(int argc, char *argv[]) {
       logger->error("Path {} not found.", path.string());
       return EXIT_FAILURE;
     }
-    iroha::KeysManagerImpl manager((path / FLAGS_account_name).string());
+    iroha::KeysManagerImpl manager((path / FLAGS_account_name).string(),
+                                   keys_manager_log);
     auto keypair = FLAGS_pass_phrase.size() != 0
         ? manager.loadKeys(FLAGS_pass_phrase)
         : manager.loadKeys();
@@ -222,7 +242,11 @@ int main(int argc, char *argv[]) {
         FLAGS_torii_port,
         0,
         std::make_shared<iroha::model::ModelCryptoProviderImpl>(
-            *std::unique_ptr<iroha::keypair_t>(makeOldModel(*keypair))));
+            *std::unique_ptr<iroha::keypair_t>(makeOldModel(*keypair))),
+        responce_handler_log_manager,
+        pb_qry_factory_log,
+        json_qry_factory_log,
+        log_manager->getChild("InteractiveCli"));
     interactiveCli.run();
   } else {
     logger->error("Invalid flags");
