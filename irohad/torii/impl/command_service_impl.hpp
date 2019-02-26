@@ -34,6 +34,8 @@ namespace iroha {
        * @param tx_processor - processor of received transactions
        * @param storage - to query transactions outside the cache
        * @param status_bus is a common notifier for tx statuses
+       * @param cache - non-persistent cache, an instance of type
+       * CommandServiceImpl::CacheType
        * @param tx_presence_cache a cache over persistent storage
        * @param log to print progress
        */

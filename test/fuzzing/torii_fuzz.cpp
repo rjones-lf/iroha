@@ -15,7 +15,6 @@
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
-#include "module/irohad/ametsuchi/mock_tx_presence_cache.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "synchronizer/synchronizer_common.hpp"
@@ -69,12 +68,8 @@ struct CommandFixture {
     tx_processor_ = std::make_shared<iroha::torii::TransactionProcessorImpl>(
         pcs_, mst_processor_, status_bus, status_factory);
     auto storage = std::make_shared<iroha::ametsuchi::MockStorage>();
-    auto cs_cache =
-        std::make_shared<iroha::torii::CommandServiceImpl::CacheType>();
-    auto tx_cache = std::make_unique<
-        ::testing::NiceMock<iroha::ametsuchi::MockTxPresenceCache>>();
     service_ = std::make_shared<torii::CommandServiceImpl>(
-        tx_processor_, storage, status_bus, status_factory, cs_cache, tx_cache);
+        tx_processor_, storage, status_bus, status_factory);
 
     std::unique_ptr<shared_model::validation::AbstractValidator<
         shared_model::interface::Transaction>>

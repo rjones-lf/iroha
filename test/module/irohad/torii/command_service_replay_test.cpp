@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <gtest/gtest.h>
+#include "torii/impl/command_service_impl.hpp"
 
+#include <gtest/gtest.h>
 #include "ametsuchi/tx_cache_response.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "framework/batch_helper.hpp"
@@ -13,7 +14,6 @@
 #include "module/irohad/ametsuchi/mock_storage.hpp"
 #include "module/irohad/ametsuchi/mock_tx_presence_cache.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
-#include "torii/impl/command_service_impl.hpp"
 #include "torii/impl/status_bus_impl.hpp"
 
 using ::testing::_;
@@ -82,7 +82,7 @@ class CommandServiceReplayTest : public ::testing::Test {
  * @when an already committed transaction arrives
  * @then the transaction is not passed to transaction processor
  */
-TEST_F(CommandServiceReplayTest, OrderingGateReplayTest) {
+TEST_F(CommandServiceReplayTest, ReplayTest) {
   auto batch = prepareBatch();
   auto hash = batch->transactions().front()->hash();
 
