@@ -101,6 +101,7 @@ TEST_F(FakePeerExampleFixture,
           .quorum(2),
       kAdminKeypair));
 
+  // TODO 26.02.2019 mboldyrev fix timeout waiting in success case
   mst_states_observable.timeout(kMstStateWaitingTime)
       .take(1)
       .as_blocking()
@@ -268,9 +269,7 @@ TEST_F(FakePeerExampleFixture, SynchronizeTheRightVersionOfForkedLedger) {
                 ->hash()
                 .hex();
         const auto commited_hash = committed_block->hash().hex();
-        if (commited_hash == valid_hash) {
-          ASSERT_EQ(commited_hash, valid_hash) << "Wrong block got committed!";
-        }
+        ASSERT_EQ(commited_hash, valid_hash) << "Wrong block got committed!";
       })
       .filter([expected_height = valid_block_storage->getTopBlock()->height()](
                   const auto &committed_block) {
@@ -332,11 +331,10 @@ TEST_F(FakePeerExampleFixture,
                                 shared_model::interface::Proposal>> &v) {
                   // casting std::shared_ptr<shared_model::interface::Proposal>
                   // to std::shared_ptr<const shared_model::proto::Proposal>
-                  proposal = std::const_pointer_cast<
+                  proposal = std::static_pointer_cast<
                       const shared_model::proto::Proposal>(
-                      std::static_pointer_cast<shared_model::proto::Proposal>(
-                          std::shared_ptr<shared_model::interface::Proposal>(
-                              std::move(v).value)));
+                      std::shared_ptr<shared_model::interface::Proposal>(
+                          std::move(v).value));
                 },
                 [](const iroha::expected::Error<std::string> &e) {
                   FAIL() << "Could not create proposal: " << e.error;
