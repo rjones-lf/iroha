@@ -47,3 +47,5 @@ add_test(
     "ROOT_DIR=${PROJECT_SOURCE_DIR}"
     $<TARGET_FILE:binary_test> --gtest_filter=*/0*
 )
+
+add_subdirectory(bindings)
