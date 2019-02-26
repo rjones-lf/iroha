@@ -111,7 +111,7 @@ void checkValues(
         EXPECT_LE(last_value, completion_value)
             << "Got value after the last one from observable #"
             << current_observable_idx;
-        completed |= completion_value <= last_value;
+        completed |= last_value >= completion_value;
       },
       [](const auto &) {});
 }
