@@ -22,8 +22,8 @@ To use Iroha in your Java/Kotlin project you should declare a dependency in the 
   compile "com.github.hyperledger.iroha-java:client:$irohaJavaVersion"
 
 The version of the library release should correspond to the version of the Iroha. 
-You can find information about this correpsondence at the GitHub page of the library: https://github.com/hyperledger/iroha-java/releases
-For example, if you using Iroha version 1.0 RC3. then you should use version 2.0.0 of Iroha-Java library:
+You can find information about this correspondence at the GitHub page of the library: https://github.com/hyperledger/iroha-java/releases
+For example, if you are using Iroha version `1.0 RC3`. then you should use version `2.0.0` of Iroha Java library:
 
 .. code-block:: groovy
 
