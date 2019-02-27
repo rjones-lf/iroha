@@ -76,6 +76,7 @@ target_link_libraries(iroha_conf_loader
 )
 
 add_library(iroha_conf_literals iroha_conf_literals.cpp)
+add_dependencies(iroha_conf_literals logger_manager)
 target_include_directories(iroha_conf_literals PUBLIC ${fmt_INCLUDE_DIR})
 
 add_install_step_for_bin(irohad)
