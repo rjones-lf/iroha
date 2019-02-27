@@ -107,14 +107,21 @@ inline rapidjson::Document parse_iroha_config(const std::string &conf_path) {
                    ac::no_member_error(mbr::MstSupport));
   ac::assert_fatal(doc[mbr::MstSupport].IsBool(),
                    ac::type_error(mbr::MstSupport, kBoolType));
-  ac::assert_fatal(doc[mbr::MstExpirationTime].IsUint(),
-                   ac::type_error(mbr::MstExpirationTime, kUintType));
 
   // This way of initialization of unspecified config parameters is going to
   // be substituted very soon with completely different approach introduced by
   // pr https://github.com/hyperledger/iroha/pull/2126
   const auto kMaxRoundsDelayDefault = 3000u;
   const auto kStaleStreamMaxRoundsDefault = 2u;
+  const auto kMstExpirationTimeDefault = 1440u;
+
+  if (not doc.HasMember(mbr::MstExpirationTime)) {
+    rapidjson::Value key(mbr::MstExpirationTime, allocator);
+    doc.AddMember(key, kMstExpirationTimeDefault, allocator);
+  } else {
+    ac::assert_fatal(doc[mbr::MstExpirationTime].IsUint(),
+                     ac::type_error(mbr::MstExpirationTime, kUintType));
+  }
 
   if (not doc.HasMember(mbr::MaxRoundsDelay)) {
     rapidjson::Value key(mbr::MaxRoundsDelay, allocator);
