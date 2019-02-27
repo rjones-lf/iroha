@@ -16,8 +16,6 @@
 
 namespace {
 
-  const std::string kDefaultPattern = R"([%Y-%m-%d %H:%M:%S.%F] [%L] [%n]: %v)";
-
   spdlog::level::level_enum getSpdlogLogLevel(logger::LogLevel level) {
     static const std::map<logger::LogLevel, const spdlog::level::level_enum>
         kSpdLogLevels = {
@@ -55,7 +53,8 @@ namespace logger {
     if (not is_initialized.test_and_set()) {
       default_patterns.setPattern(
           LogLevel::kTrace, R"([%Y-%m-%d %H:%M:%S.%F] [th:%t] [%5l] [%n]: %v)");
-      default_patterns.setPattern(LogLevel::kInfo, kDefaultPattern);
+      default_patterns.setPattern(LogLevel::kInfo,
+                                  R"([%Y-%m-%d %H:%M:%S.%F] [%L] [%n]: %v)");
     }
     return default_patterns;
   }
@@ -70,7 +69,7 @@ namespace logger {
         return it->second;
       }
     }
-    return kDefaultPattern;
+    return getDefaultLogPatterns().getPattern(level);
   }
 
   LoggerSpdlog::LoggerSpdlog(std::string tag, ConstLoggerConfigPtr config)
