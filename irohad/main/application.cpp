@@ -310,11 +310,13 @@ void Irohad::initOrderingGate() {
 
   const uint64_t kCounter = 0, kMaxLocalCounter = 2;
   // reject_delay and local_counter are local mutable variables of lambda
-  const auto kMaxDelay = max_rounds_delay_;
+  const auto kMaxDelay(max_rounds_delay_);
+  const auto kMaxDelayIncrement(std::chrono::milliseconds(1000));
   auto delay = [reject_delay = std::chrono::milliseconds(0),
                 local_counter = kCounter,
                 // MSVC requires const variables to be captured
                 kMaxDelay,
+                kMaxDelayIncrement,
                 kMaxLocalCounter](const auto &commit) mutable {
     using iroha::synchronizer::SynchronizationOutcomeType;
     if (commit.sync_outcome == SynchronizationOutcomeType::kReject
@@ -324,7 +326,7 @@ void Irohad::initOrderingGate() {
       if (local_counter == kMaxLocalCounter) {
         local_counter = 0;
         if (reject_delay < kMaxDelay) {
-          reject_delay += std::min(kMaxDelay, std::chrono::milliseconds(1000));
+          reject_delay += std::min(kMaxDelay, kMaxDelayIncrement);
         }
       }
     } else {
