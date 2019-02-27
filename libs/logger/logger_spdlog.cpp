@@ -5,6 +5,7 @@
 
 #include "logger/logger_spdlog.hpp"
 
+#include <atomic>
 #include <mutex>
 
 #define SPDLOG_FMT_EXTERNAL
@@ -48,13 +49,16 @@ namespace {
 
 namespace logger {
 
-  const LogPatterns kDefaultLogPatterns = ([] {
-    LogPatterns p;
-    p.setPattern(LogLevel::kTrace,
-                 R"([%Y-%m-%d %H:%M:%S.%F] [th:%t] [%5l] [%n]: %v)");
-    p.setPattern(LogLevel::kInfo, kDefaultPattern);
-    return p;
-  })();
+  LogPatterns getDefaultLogPatterns() {
+    static std::atomic_flag is_initialized = ATOMIC_FLAG_INIT;
+    static LogPatterns default_patterns;
+    if (not is_initialized.test_and_set()) {
+      default_patterns.setPattern(
+          LogLevel::kTrace, R"([%Y-%m-%d %H:%M:%S.%F] [th:%t] [%5l] [%n]: %v)");
+      default_patterns.setPattern(LogLevel::kInfo, kDefaultPattern);
+    }
+    return default_patterns;
+  }
 
   void LogPatterns::setPattern(LogLevel level, std::string pattern) {
     patterns_[level] = pattern;

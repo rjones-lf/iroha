@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
   gflags::ShutDownCommandLineFlags();
   auto log_manager = std::make_shared<logger::LoggerManagerTree>(
                          logger::LoggerConfig{logger::LogLevel::kInfo,
-                                              logger::kDefaultLogPatterns})
+                                              logger::getDefaultLogPatterns()})
                          ->getChild("CLI");
   const auto logger = log_manager->getChild("Main")->getLogger();
   const auto responce_handler_log_manager =

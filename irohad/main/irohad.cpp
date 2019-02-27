@@ -99,7 +99,7 @@ std::promise<void> exit_requested;
 
 logger::LoggerManagerTreePtr getDefaultLogManager() {
   return std::make_shared<logger::LoggerManagerTree>(logger::LoggerConfig{
-      logger::LogLevel::kInfo, logger::kDefaultLogPatterns});
+      logger::LogLevel::kInfo, logger::getDefaultLogPatterns()});
 }
 
 int main(int argc, char *argv[]) {
