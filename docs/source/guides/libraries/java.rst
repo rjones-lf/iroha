@@ -8,7 +8,7 @@ Please, read corresponding README.md file in aim to get more actual information
 Prerequisites
 ^^^^^^^^^^^^^
 
-- Java 6 / Kotlin
+- Java 8 / Kotlin
 - Gradle
 
 
@@ -19,15 +19,16 @@ To use Iroha in your Java/Kotlin project you should declare a dependency in the 
 
 .. code-block:: groovy
 
-  compile "com.github.hyperledger.iroha-java:client:$irohaJavaVersion-SNAPSHOT"
+  compile "com.github.hyperledger.iroha-java:client:$irohaJavaVersion"
 
-The version of the library should correspond to the version of the Iroha. 
-For example, if you using Iroha version 1.0 RC3. then you should use following version of Iroha-Java library:
+The version of the library release should correspond to the version of the Iroha. 
+You can find information about this correpsondence at the GitHub page of the library: https://github.com/hyperledger/iroha-java/releases
+For example, if you using Iroha version 1.0 RC3. then you should use version 2.0.0 of Iroha-Java library:
 
 .. code-block:: groovy
 
   ext {
-    irohaJavaVersion = '1.0.0_rc3'
+    irohaJavaVersion = '2.0.0'
   }
 
 
