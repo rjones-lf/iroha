@@ -33,6 +33,17 @@ namespace {
         : it->second;
   }
 
+  std::shared_ptr<spdlog::logger> getOrCreateLogger(const std::string tag) {
+    std::shared_ptr<spdlog::logger> logger;
+    try {
+      logger = spdlog::stdout_color_mt(tag);
+    } catch (const spdlog::spdlog_ex &) {
+      logger = spdlog::get(tag);
+    }
+    assert(logger);
+    return logger;
+  }
+
 }  // namespace
 
 namespace logger {
@@ -59,9 +70,7 @@ namespace logger {
   }
 
   LoggerSpdlog::LoggerSpdlog(std::string tag, ConstLoggerConfigPtr config)
-      : tag_(tag),
-        config_(std::move(config)),
-        logger_(spdlog::stdout_color_mt(tag)) {
+      : tag_(tag), config_(std::move(config)), logger_(getOrCreateLogger(tag)) {
     setupLogger();
   }
 
