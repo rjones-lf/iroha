@@ -16,6 +16,8 @@ namespace config_members {
   const char *VoteDelay = "vote_delay";
   const char *MstSupport = "mst_enable";
   const char *MstExpirationTime = "mst_expiration_time";
+  const char *MaxRoundsDelay = "max_rounds_delay";
+  const char *StaleStreamMaxRounds = "stale_stream_max_rounds";
   const char *LogSection = "log";
   const char *LogLevel = "level";
   const char *LogPatternsSection = "patterns";

@@ -82,6 +82,10 @@ class Irohad {
    * @param mst_expiration_time - maximum time until until MST transaction is
    * not considered as expired (in minutes)
    * @param keypair - public and private keys for crypto signer
+   * @param max_rounds_delay - maximum delay between consecutive rounds without
+   * transactions
+   * @param stale_stream_max_rounds - maximum number of rounds between
+   * consecutive status emissions
    * @param logger_manager - the logger manager to use
    * @param opt_mst_gossip_params - parameters for Gossip MST propagation
    * (optional). If not provided, disables mst processing support
@@ -97,6 +101,8 @@ class Irohad {
          std::chrono::milliseconds vote_delay,
          std::chrono::minutes mst_expiration_time,
          const shared_model::crypto::Keypair &keypair,
+         std::chrono::milliseconds max_rounds_delay,
+         size_t stale_stream_max_rounds,
          logger::LoggerManagerTreePtr logger_manager,
          const boost::optional<iroha::GossipPropagationStrategyParams>
              &opt_mst_gossip_params = boost::none);
@@ -182,6 +188,8 @@ class Irohad {
   std::chrono::milliseconds vote_delay_;
   bool is_mst_supported_;
   std::chrono::minutes mst_expiration_time_;
+  std::chrono::milliseconds max_rounds_delay_;
+  size_t stale_stream_max_rounds_;
   boost::optional<iroha::GossipPropagationStrategyParams>
       opt_mst_gossip_params_;
 

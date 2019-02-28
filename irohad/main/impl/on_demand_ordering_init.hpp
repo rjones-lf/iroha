@@ -73,7 +73,7 @@ namespace iroha {
               proposal_factory,
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
           consensus::Round initial_round,
-          std::function<std::chrono::seconds(
+          std::function<std::chrono::milliseconds(
               const synchronizer::SynchronizationEvent &)> delay_func,
           const logger::LoggerManagerTreePtr &ordering_log_manager);
 
@@ -138,7 +138,7 @@ namespace iroha {
           std::shared_ptr<TransportFactoryType> proposal_transport_factory,
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
           consensus::Round initial_round,
-          std::function<std::chrono::seconds(
+          std::function<std::chrono::milliseconds(
               const synchronizer::SynchronizationEvent &)> delay_func,
           logger::LoggerManagerTreePtr ordering_log_manager);
 

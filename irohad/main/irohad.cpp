@@ -21,6 +21,9 @@
 
 static const std::string kListenIp = "0.0.0.0";
 static const std::string kLogSettingsFromConfigFile = "config_file";
+static const uint32_t kMstExpirationTimeDefault = 1440;
+static const uint32_t kMaxRoundsDelayDefault = 3000;
+static const uint32_t kStaleStreamMaxRoundsDefault = 2;
 
 /**
  * Gflag validator.
@@ -148,20 +151,25 @@ int main(int argc, char *argv[]) {
   }
 
   // Configuring iroha daemon
-  Irohad irohad(config.blok_store_path,
-                config.pg_opt,
-                kListenIp,  // TODO(mboldyrev) 17/10/2018: add a parameter in
-                            // config file and/or command-line arguments?
-                config.torii_port,
-                config.internal_port,
-                config.max_proposal_size,
-                std::chrono::milliseconds(config.proposal_delay),
-                std::chrono::milliseconds(config.vote_delay),
-                std::chrono::minutes(config.mst_expiration_time),
-                *keypair,
-                log_manager->getChild("Irohad"),
-                boost::make_optional(config.mst_support,
-                                     iroha::GossipPropagationStrategyParams{}));
+  Irohad irohad(
+      config.blok_store_path,
+      config.pg_opt,
+      kListenIp,  // TODO(mboldyrev) 17/10/2018: add a parameter in
+                  // config file and/or command-line arguments?
+      config.torii_port,
+      config.internal_port,
+      config.max_proposal_size,
+      std::chrono::milliseconds(config.proposal_delay),
+      std::chrono::milliseconds(config.vote_delay),
+      std::chrono::minutes(
+          config.mst_expiration_time.value_or(kMstExpirationTimeDefault)),
+      *keypair,
+      std::chrono::milliseconds(
+          config.max_round_delay_ms.value_or(kMaxRoundsDelayDefault)),
+      config.stale_stream_max_rounds.value_or(kStaleStreamMaxRoundsDefault),
+      log_manager->getChild("Irohad"),
+      boost::make_optional(config.mst_support,
+                           iroha::GossipPropagationStrategyParams{}));
 
   // Check if iroha daemon storage was successfully initialized
   if (not irohad.storage) {

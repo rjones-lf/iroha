@@ -8,12 +8,14 @@
 #include "torii/impl/command_service_transport_grpc.hpp"
 
 #include <atomic>
+#include <condition_variable>
 #include <iterator>
 
 #include <boost/format.hpp>
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
+#include "common/combine_latest_until_first_completed.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser.hpp"
@@ -166,8 +168,26 @@ namespace iroha {
     namespace {
       void handleEvents(rxcpp::composite_subscription &subscription,
                         rxcpp::schedulers::run_loop &run_loop) {
+        std::condition_variable wait_cv;
+
+        run_loop.set_notify_earlier_wakeup(
+            [&wait_cv](const auto &) { wait_cv.notify_one(); });
+
+        std::mutex wait_mutex;
+        std::unique_lock<std::mutex> lock(wait_mutex);
         while (subscription.is_subscribed() or not run_loop.empty()) {
-          run_loop.dispatch();
+          while (not run_loop.empty()
+                 and run_loop.peek().when <= run_loop.now()) {
+            run_loop.dispatch();
+          }
+
+          if (run_loop.empty()) {
+            wait_cv.wait(lock, [&run_loop, &subscription]() {
+              return not subscription.is_subscribed() or not run_loop.empty();
+            });
+          } else {
+            wait_cv.wait_until(lock, run_loop.peek().when);
+          }
         }
       }
     }  // namespace
@@ -188,33 +208,24 @@ namespace iroha {
       auto client_id_format = boost::format("Peer: '%s', %s");
       std::string client_id =
           (client_id_format % context->peer() % hash.toString()).str();
-      bool last_tx_status_received = false;
-      auto status_bus = command_service_->getStatusStream(hash)
-                            .finally([&last_tx_status_received] {
-                              last_tx_status_received = true;
-                            })
-                            .publish()
-                            .ref_count();
+      auto status_bus = command_service_->getStatusStream(hash);
       auto consensus_gate_observable =
           consensus_gate_objects_
               // a dummy start_with lets us don't wait for the consensus event
               // on further combine_latest
-              .start_with(ConsensusGateEvent{})
-              .publish()
-              .ref_count();
+              .start_with(ConsensusGateEvent{});
 
       boost::optional<iroha::protocol::TxStatus> last_tx_status;
       auto rounds_counter{0};
-      status_bus.combine_latest(current_thread, consensus_gate_observable)
-          .map([](const auto &tuple) { return std::get<0>(tuple); })
-          // complete the observable if client is disconnectedor too many
+      makeCombineLatestUntilFirstCompleted(
+          status_bus,
+          current_thread,
+          [](auto status, auto) { return status; },
+          consensus_gate_observable)
+          // complete the observable if client is disconnected or too many
           // rounds have passed without tx status change
-          .take_while([=,
-                       &rounds_counter,
-                       &last_tx_status,
-                       // last_tx_status_received has to be passed by reference
-                       // to prevent accessing its outdated state
-                       &last_tx_status_received](const auto &response) {
+          .take_while([=, &rounds_counter, &last_tx_status](
+                          const auto &response) {
             const auto &proto_response =
                 std::static_pointer_cast<
                     shared_model::proto::TransactionResponse>(response)
@@ -248,12 +259,6 @@ namespace iroha {
               return false;
             }
             log_->debug("status written, {}", client_id);
-            if (last_tx_status_received) {
-              // force stream to end because no more tx statuses will
-              // arrive. it is thread safe because of synchronization on
-              // current_thread
-              return false;
-            }
             return true;
           })
           .subscribe(subscription,
