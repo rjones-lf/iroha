@@ -23,7 +23,7 @@ namespace logger {
 
   using ConstLoggerConfigPtr = std::shared_ptr<const LoggerConfig>;
 
-  extern const LogPatterns kDefaultLogPatterns;
+  LogPatterns getDefaultLogPatterns();
 
   /// Patterns for logging depending on the log level.
   class LogPatterns {

@@ -18,7 +18,7 @@ namespace iroha {
       std::make_shared<logger::LoggerSpdlog>(
           "QueryFactory",
           std::make_shared<logger::LoggerConfig>(logger::LoggerConfig{
-              logger::kDefaultLogLevel, logger::kDefaultLogPatterns})));
+              logger::kDefaultLogLevel, logger::getDefaultLogPatterns()})));
 
   hash256_t hash(const model::Transaction &tx) {
     auto &&pb_dat = tx_factory.serialize(tx);

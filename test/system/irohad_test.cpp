@@ -45,7 +45,7 @@ static logger::LoggerManagerTreePtr getIrohadTestLoggerManager() {
   if (!irohad_test_logger_manager) {
     irohad_test_logger_manager =
         std::make_shared<logger::LoggerManagerTree>(logger::LoggerConfig{
-            logger::LogLevel::kInfo, logger::kDefaultLogPatterns});
+            logger::LogLevel::kInfo, logger::getDefaultLogPatterns()});
   }
   return irohad_test_logger_manager->getChild("IrohadTest");
 }

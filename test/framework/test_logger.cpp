@@ -10,7 +10,7 @@
 logger::LoggerManagerTreePtr getTestLoggerManager() {
   static logger::LoggerManagerTreePtr log_manager(
       std::make_shared<logger::LoggerManagerTree>(logger::LoggerConfig{
-          logger::LogLevel::kInfo, logger::kDefaultLogPatterns}));
+          logger::LogLevel::kInfo, logger::getDefaultLogPatterns()}));
   return log_manager->getChild("Test");
 }
 

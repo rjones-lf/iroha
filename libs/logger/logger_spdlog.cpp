@@ -5,6 +5,7 @@
 
 #include "logger/logger_spdlog.hpp"
 
+#include <atomic>
 #include <mutex>
 
 #define SPDLOG_FMT_EXTERNAL
@@ -14,8 +15,6 @@
 #include <boost/assert.hpp>
 
 namespace {
-
-  const std::string kDefaultPattern = R"([%Y-%m-%d %H:%M:%S.%F] [%L] [%n]: %v)";
 
   spdlog::level::level_enum getSpdlogLogLevel(logger::LogLevel level) {
     static const std::map<logger::LogLevel, const spdlog::level::level_enum>
@@ -33,17 +32,32 @@ namespace {
         : it->second;
   }
 
+  std::shared_ptr<spdlog::logger> getOrCreateLogger(const std::string tag) {
+    std::shared_ptr<spdlog::logger> logger;
+    try {
+      logger = spdlog::stdout_color_mt(tag);
+    } catch (const spdlog::spdlog_ex &) {
+      logger = spdlog::get(tag);
+    }
+    assert(logger);
+    return logger;
+  }
+
 }  // namespace
 
 namespace logger {
 
-  const LogPatterns kDefaultLogPatterns = ([] {
-    LogPatterns p;
-    p.setPattern(LogLevel::kTrace,
-                 R"([%Y-%m-%d %H:%M:%S.%F] [th:%t] [%5l] [%n]: %v)");
-    p.setPattern(LogLevel::kInfo, kDefaultPattern);
-    return p;
-  })();
+  LogPatterns getDefaultLogPatterns() {
+    static std::atomic_flag is_initialized = ATOMIC_FLAG_INIT;
+    static LogPatterns default_patterns;
+    if (not is_initialized.test_and_set()) {
+      default_patterns.setPattern(
+          LogLevel::kTrace, R"([%Y-%m-%d %H:%M:%S.%F] [th:%t] [%5l] [%n]: %v)");
+      default_patterns.setPattern(LogLevel::kInfo,
+                                  R"([%Y-%m-%d %H:%M:%S.%F] [%L] [%n]: %v)");
+    }
+    return default_patterns;
+  }
 
   void LogPatterns::setPattern(LogLevel level, std::string pattern) {
     patterns_[level] = pattern;
@@ -55,13 +69,11 @@ namespace logger {
         return it->second;
       }
     }
-    return kDefaultPattern;
+    return getDefaultLogPatterns().getPattern(level);
   }
 
   LoggerSpdlog::LoggerSpdlog(std::string tag, ConstLoggerConfigPtr config)
-      : tag_(tag),
-        config_(std::move(config)),
-        logger_(spdlog::stdout_color_mt(tag)) {
+      : tag_(tag), config_(std::move(config)), logger_(getOrCreateLogger(tag)) {
     setupLogger();
   }
 
