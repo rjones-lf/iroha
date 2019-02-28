@@ -49,6 +49,10 @@ namespace iroha {
         if (val != proposal_storages_.end()) {
           proposal_storages_.erase(val);
         }
+        auto state = processing_state_.find(round);
+        if (state != processing_state_.end()) {
+          processing_state_.erase(state);
+        }
       }
 
       // --------| public api |--------

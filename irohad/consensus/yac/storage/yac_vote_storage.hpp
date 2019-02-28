@@ -131,6 +131,9 @@ namespace iroha {
        private:
         // --------| fields |--------
 
+        // TODO: 2019-02-28 @muratovv refactor proposal_storages_ &
+        // processing_state_ with separate entity IR-360
+
         /**
          * Active proposal storages
          */
