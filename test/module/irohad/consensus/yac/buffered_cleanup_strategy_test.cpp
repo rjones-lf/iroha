@@ -85,7 +85,7 @@ TEST_F(BufferedCleanupStrategyTest, FinalizeWhenManyRounds) {
   auto removed = strategy_->finalize({1, 7}, makeMockCommit());
   ASSERT_TRUE(removed);
   ASSERT_EQ(6, removed->size());
-  for (auto i = 1u; i < 7; ++i) {
-    ASSERT_EQ((Round{1, i}), removed->at(i));
+  for (auto i = 0u; i < 6; ++i) {
+    ASSERT_EQ((Round{1, i + 1}), removed->at(i));
   }
 }

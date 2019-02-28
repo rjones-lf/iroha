@@ -25,7 +25,7 @@ namespace iroha {
          * reject round if commit is greater.
          * @param consensus_round - finalized round of the consensus
          * @param answer - the output of the round
-         * @return removed rounds. If rounds are empty returns none
+         * @return rounds to be removed, if any.
          */
         boost::optional<CleanupStrategy::RoundsType> finalize(
             RoundType consensus_round, Answer answer) override;
@@ -35,7 +35,8 @@ namespace iroha {
        private:
         /**
          * Remove all rounds before last committed
-         * @return removed rounds
+         * @return rounds to be removed. Also, the same rounds are removed from
+         * created_rounds_ collection
          */
         RoundsType truncateCreatedRounds();
 
@@ -44,6 +45,19 @@ namespace iroha {
          * rounds, if the operation can't be applied - returns none
          */
         boost::optional<RoundType> minimalRound() const;
+
+        /**
+         * The method creates round into created_rounds_ collection
+         * @param round - round for insertion
+         */
+        void createRound(const Round &round);
+
+        /**
+         * Checks whether we should add round into created_rounds_ collection
+         * @param round - round for checking
+         * @return true if could be inserted
+         */
+        bool isRequiredCreation(const Round &round) const;
 
         /// all stored rounds
         std::priority_queue<RoundType,

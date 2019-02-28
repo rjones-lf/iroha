@@ -16,7 +16,7 @@ boost::optional<CleanupStrategy::RoundsType> BufferedCleanupStrategy::finalize(
       answer,
       [this](
           const iroha::consensus::yac::CommitMessage &msg) -> OptRefRoundType {
-        // greater commit removes last reject because previous rejects doesn't
+        // greater commit removes last reject because previous rejects are not
         // required anymore for the consensus
         if (last_commit_round_ and last_reject_round_
             and *last_commit_round_ < *last_reject_round_) {
@@ -27,11 +27,7 @@ boost::optional<CleanupStrategy::RoundsType> BufferedCleanupStrategy::finalize(
       [this](const iroha::consensus::yac::RejectMessage &msg)
           -> OptRefRoundType { return last_reject_round_; });
 
-  if (target_round) {
-    if (*target_round < consensus_round) {
-      target_round = consensus_round;
-    }
-  } else {
+  if (not target_round or *target_round < consensus_round) {
     target_round = consensus_round;
   }
 
@@ -56,34 +52,39 @@ CleanupStrategy::RoundsType BufferedCleanupStrategy::truncateCreatedRounds() {
 
 boost::optional<BufferedCleanupStrategy::RoundType>
 BufferedCleanupStrategy::minimalRound() const {
-  // both value unavailable
+  // both values unavailable
   if (not last_reject_round_ and not last_commit_round_) {
     return boost::none;
   }
 
   // both values present
-  if (last_reject_round_ and last_commit_round_) {
-    return *last_commit_round_ < *last_reject_round_ ? last_commit_round_
-                                                     : last_reject_round_;
+  if (last_commit_round_ and last_reject_round_) {
+    return std::min(*last_commit_round_, *last_reject_round_);
   }
 
-  // one value presents
-  if (last_commit_round_) {
-    return last_commit_round_;
-  } else {
-    return last_reject_round_;
-  }
+  // one value present
+  return last_commit_round_ ? last_commit_round_ : last_reject_round_;
 }
 
 bool BufferedCleanupStrategy::shouldCreateRound(const Round &round) {
+  if (isRequiredCreation(round)) {
+    createRound(round);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+void BufferedCleanupStrategy::createRound(const Round &round) {
+  created_rounds_.push(round);
+}
+
+bool BufferedCleanupStrategy::isRequiredCreation(const Round &round) const {
   // TODO: 13/12/2018 @muratovv possible DOS-attack on consensus IR-128
-  auto should_create = false;
   auto min_round = minimalRound();
   if (min_round) {
-    should_create = min_round <= round;
+    return *min_round <= round;
   } else {
-    should_create = true;
+    return true;
   }
-  created_rounds_.push(round);
-  return should_create;
 }
