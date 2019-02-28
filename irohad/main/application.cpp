@@ -542,6 +542,7 @@ void Irohad::initTransactionCommandService() {
   auto command_service_log_manager = log_manager_->getChild("CommandService");
   auto status_factory =
       std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
+  auto cs_cache = std::make_shared<::torii::CommandServiceImpl::CacheType>();
   auto tx_processor = std::make_shared<TransactionProcessorImpl>(
       pcs,
       mst_processor,
@@ -553,6 +554,8 @@ void Irohad::initTransactionCommandService() {
       storage,
       status_bus_,
       status_factory,
+      cs_cache,
+      persistent_cache,
       command_service_log_manager->getLogger());
   command_service_transport =
       std::make_shared<::torii::CommandServiceTransportGrpc>(
