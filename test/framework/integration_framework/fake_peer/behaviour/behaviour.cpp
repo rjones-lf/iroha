@@ -19,30 +19,32 @@ namespace integration_framework {
       // This code feels like part of constructor, but the use of `this'
       // to call virtual functions from base class constructor seems wrong.
       // Hint: such calls would precede the derived class construction.
-      fake_peer_wptr_ = fake_peer;
+      fake_peer_ = fake_peer;
       log_ = std::move(log);
       // subscribe for all messages
       subscriptions_.emplace_back(
           getFakePeer().getMstStatesObservable().subscribe(
-              [this](const auto &message) {
+              [this, alive = fake_peer](const auto &message) {
                 this->processMstMessage(message);
               }));
       subscriptions_.emplace_back(
           getFakePeer().getYacStatesObservable().subscribe(
-              [this](const auto &message) {
+              [this, alive = fake_peer](const auto &message) {
                 this->processYacMessage(message);
               }));
       subscriptions_.emplace_back(
           getFakePeer().getOsBatchesObservable().subscribe(
-              [this](const auto &batch) { this->processOsBatch(batch); }));
+              [this, alive = fake_peer](const auto &batch) {
+                this->processOsBatch(batch);
+              }));
       subscriptions_.emplace_back(
           getFakePeer().getOgProposalsObservable().subscribe(
-              [this](const auto &proposal) {
+              [this, alive = fake_peer](const auto &proposal) {
                 this->processOgProposal(proposal);
               }));
       subscriptions_.emplace_back(
           getFakePeer().getBatchesObservable().subscribe(
-              [this](const auto &batches) {
+              [this, alive = fake_peer](const auto &batches) {
                 this->processOrderingBatches(*batches);
               }));
     }
@@ -51,14 +53,11 @@ namespace integration_framework {
       for (auto &subscription : subscriptions_) {
         subscription.unsubscribe();
       }
-      fake_peer_wptr_.reset();
+      fake_peer_.reset();
     }
 
     FakePeer &Behaviour::getFakePeer() {
-      auto fake_peer = fake_peer_wptr_.lock();
-      assert(fake_peer && "Fake peer shared pointer is not set!"
-        " Probably the fake peer has gone before the associated behaviour.");
-      return *fake_peer;
+      return *fake_peer_;
     }
 
     logger::LoggerPtr &Behaviour::getLogger() {
