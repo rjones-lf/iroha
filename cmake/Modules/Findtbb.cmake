@@ -23,6 +23,7 @@ if (NOT tbb_FOUND)
       GIT_TAG        ${VERSION}
       BUILD_IN_SOURCE 1
       BUILD_COMMAND   ${MAKE}
+                      compiler=${CMAKE_C_COMPILER}
                       CXXFLAGS=${CMAKE_CXX_FLAGS}
                       LDFLAGS=${CMAKE_CXX_FLAGS}
                       tbb_build_prefix=build
