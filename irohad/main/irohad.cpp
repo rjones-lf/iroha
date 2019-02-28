@@ -95,6 +95,7 @@ int main(int argc, char *argv[]) {
   spdlog::set_level(spdlog::level::level_enum(FLAGS_verbosity));
 
   auto log = logger::log("MAIN");
+  log->info("Irohad version: {}", iroha::kGitPrettyVersion);
   log->info("start");
 
   // Check if validators are registered.
