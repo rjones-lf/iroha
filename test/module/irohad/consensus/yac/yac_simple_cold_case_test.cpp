@@ -57,9 +57,8 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveOneVote) {
 
   YacHash received_hash(
       iroha::consensus::Round{1, 1}, "my_proposal", "my_block");
-  auto peer = default_peers.at(0);
   // assume that our peer receive message
-  network->notification->onState({crypto->getVote(received_hash)});
+  network->notification->onState({crypto->getVote(received_hash, "0")});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -86,7 +85,8 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveSupermajorityOfVotes) {
   YacHash received_hash(
       iroha::consensus::Round{1, 1}, "my_proposal", "my_block");
   for (size_t i = 0; i < default_peers.size(); ++i) {
-    network->notification->onState({crypto->getVote(received_hash)});
+    network->notification->onState(
+        {crypto->getVote(received_hash, std::to_string(i))});
   }
 
   ASSERT_TRUE(wrapper.validate());

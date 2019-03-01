@@ -51,6 +51,13 @@ namespace iroha {
           return vote;
         }
 
+        VoteMessage getVote(YacHash hash, std::string pub_key) {
+          VoteMessage vote;
+          vote.hash = std::move(hash);
+          vote.signature = createSig(std::move(pub_key));
+          return vote;
+        }
+
         MockYacCryptoProvider() = default;
 
         MockYacCryptoProvider(const MockYacCryptoProvider &) {}
