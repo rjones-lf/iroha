@@ -162,14 +162,14 @@ namespace iroha {
 
     void CommandServiceImpl::pushStatus(
         const std::string &who,
-        std::shared_ptr<shared_model::interface::TransactionResponse>
+        const std::shared_ptr<shared_model::interface::TransactionResponse>&
             response) {
       log_->debug("{}: adding item to cache: {}", who, *response);
       status_bus_->publish(response);
     }
 
     void CommandServiceImpl::processBatch(
-        std::shared_ptr<shared_model::interface::TransactionBatch> batch) {
+        const std::shared_ptr<shared_model::interface::TransactionBatch>& batch) {
       const auto status_issuer = "ToriiBatchProcessor";
       const auto &txs = batch->transactions();
 

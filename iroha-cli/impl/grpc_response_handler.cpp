@@ -9,7 +9,7 @@
 using namespace grpc;
 namespace iroha_cli {
 
-  GrpcResponseHandler::GrpcResponseHandler(logger::Logger log)
+  GrpcResponseHandler::GrpcResponseHandler(const logger::Logger& log)
       : log_(std::move(log)) {
     handler_map_[CANCELLED] = "Operation canceled";
     handler_map_[UNKNOWN] = "Unknown error";

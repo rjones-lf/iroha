@@ -5,6 +5,8 @@
 
 #include "validation/impl/chain_validator_impl.hpp"
 
+#include <utility>
+
 #include "ametsuchi/mutable_storage.hpp"
 #include "ametsuchi/peer_query.hpp"
 #include "consensus/yac/supermajority_checker.hpp"
@@ -18,7 +20,7 @@ namespace iroha {
         std::shared_ptr<consensus::yac::SupermajorityChecker>
             supermajority_checker,
         logger::Logger log)
-        : supermajority_checker_(supermajority_checker), log_(std::move(log)) {}
+        : supermajority_checker_(std::move(supermajority_checker)), log_(std::move(log)) {}
 
     bool ChainValidatorImpl::validateAndApply(
         rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>

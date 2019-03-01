@@ -55,7 +55,7 @@ namespace iroha {
    * since there are usages of KeysManagerImpl with path passed as a part of
    * account_id.
    */
-  KeysManagerImpl::KeysManagerImpl(const std::string account_id,
+  KeysManagerImpl::KeysManagerImpl(const std::string& account_id,
                                    logger::Logger log)
       : KeysManagerImpl(account_id, "", std::move(log)) {}
 
@@ -77,7 +77,7 @@ namespace iroha {
 
   boost::optional<std::string> KeysManagerImpl::loadFile(
       const boost::filesystem::path &path) const {
-    auto file_path = path.string();
+    const auto& file_path = path.string();
     std::ifstream file(file_path);
     if (not file) {
       log_->error("Cannot read '" + file_path + "'");

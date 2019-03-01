@@ -6,6 +6,7 @@
 #include "simulator/impl/simulator.hpp"
 
 #include <boost/range/adaptor/transformed.hpp>
+#include <utility>
 #include "common/bind.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
@@ -14,7 +15,7 @@ namespace iroha {
   namespace simulator {
 
     Simulator::Simulator(
-        std::shared_ptr<network::OrderingGate> ordering_gate,
+        const std::shared_ptr<network::OrderingGate>& ordering_gate,
         std::shared_ptr<validation::StatefulValidator> statefulValidator,
         std::shared_ptr<ametsuchi::TemporaryFactory> factory,
         std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
@@ -24,7 +25,7 @@ namespace iroha {
         logger::Logger log)
         : validator_(std::move(statefulValidator)),
           ametsuchi_factory_(std::move(factory)),
-          block_query_factory_(block_query_factory),
+          block_query_factory_(std::move(block_query_factory)),
           crypto_signer_(std::move(crypto_signer)),
           block_factory_(std::move(block_factory)),
           log_(std::move(log)) {

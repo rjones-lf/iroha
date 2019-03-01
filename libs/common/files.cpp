@@ -34,7 +34,7 @@ void iroha::remove_dir_contents(const std::string &dump_dir) {
     return;
   }
 
-  for (auto entry : boost::filesystem::directory_iterator(dump_dir)) {
+  for (const auto& entry : boost::filesystem::directory_iterator(dump_dir)) {
     boost::filesystem::remove_all(entry.path(), error_code);
     if (error_code != boost::system::errc::success)
       log->error(error_code.message());

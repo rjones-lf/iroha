@@ -29,7 +29,7 @@ namespace iroha {
      */
     class BlockLoader {
      public:
-      explicit BlockLoader(logger::Logger log = logger::log("BlockLoader"));
+      explicit BlockLoader(const logger::Logger& log = logger::log("BlockLoader"));
 
       /**
        * Parse block from file

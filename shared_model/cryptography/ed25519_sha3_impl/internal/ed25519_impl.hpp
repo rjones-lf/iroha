@@ -54,7 +54,7 @@ namespace iroha {
    * @param passphrase
    * @return
    */
-  blob_t<32> create_seed(std::string passphrase);
+  blob_t<32> create_seed(const std::string& passphrase);
 
   /**
    * Create new keypair

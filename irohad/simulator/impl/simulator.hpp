@@ -27,7 +27,7 @@ namespace iroha {
           shared_model::interface::Block>;
 
       Simulator(
-          std::shared_ptr<network::OrderingGate> ordering_gate,
+          const std::shared_ptr<network::OrderingGate>& ordering_gate,
           std::shared_ptr<validation::StatefulValidator> statefulValidator,
           std::shared_ptr<ametsuchi::TemporaryFactory> factory,
           std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,

@@ -30,7 +30,7 @@ namespace iroha_cli {
 
   class QueryResponseHandler {
    public:
-    explicit QueryResponseHandler(std::shared_ptr<spdlog::logger> log =
+    explicit QueryResponseHandler(const std::shared_ptr<spdlog::logger>& log =
                                       logger::log("QueryResponseHandler"));
 
     /**

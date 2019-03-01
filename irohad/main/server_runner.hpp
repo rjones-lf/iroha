@@ -31,7 +31,7 @@ class ServerRunner {
    * @param service - service to append.
    * @return reference to this with service appended
    */
-  ServerRunner &append(std::shared_ptr<grpc::Service> service);
+  ServerRunner &append(const std::shared_ptr<grpc::Service>& service);
 
   /**
    * Initialize the server and run main loop.

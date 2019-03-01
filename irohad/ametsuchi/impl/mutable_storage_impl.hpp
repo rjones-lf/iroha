@@ -54,7 +54,7 @@ namespace iroha {
        * the block
        */
       bool apply(const shared_model::interface::Block &block,
-                 MutableStoragePredicate predicate);
+                 const MutableStoragePredicate& predicate);
 
       shared_model::interface::types::HashType top_hash_;
       // ordered collection is used to enforce block insertion order in

@@ -15,7 +15,7 @@
 
 namespace iroha_cli {
 
-  CliClient::CliClient(std::string target_ip, int port)
+  CliClient::CliClient(const std::string& target_ip, int port)
       : command_client_(
             iroha::network::createClient<iroha::protocol::CommandService_v1>(
                 target_ip + ":" + std::to_string(port))),
@@ -36,7 +36,7 @@ namespace iroha_cli {
   }
 
   CliClient::Response<iroha::protocol::ToriiResponse> CliClient::getTxStatus(
-      std::string tx_hash) {
+      const std::string& tx_hash) {
     CliClient::Response<iroha::protocol::ToriiResponse> response;
     // Send to iroha:
     iroha::protocol::TxStatusRequest statusRequest;

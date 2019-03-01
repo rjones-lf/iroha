@@ -69,7 +69,7 @@ namespace iroha {
    * @param passphrase
    * @return
    */
-  blob_t<32> create_seed(std::string passphrase) {
+  blob_t<32> create_seed(const std::string& passphrase) {
     return sha3_256((uint8_t *)passphrase.data(), passphrase.size());
   }
 

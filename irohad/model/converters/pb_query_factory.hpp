@@ -38,7 +38,7 @@ namespace iroha {
             std::shared_ptr<const model::Query> query) const;
 
         explicit PbQueryFactory(
-            logger::Logger log = logger::log("PbQueryFactory"));
+            const logger::Logger& log = logger::log("PbQueryFactory"));
 
        private:
         // Query serializer:

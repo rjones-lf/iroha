@@ -22,7 +22,7 @@ OnDemandOsClientGrpc::OnDemandOsClientGrpc(
     std::shared_ptr<TransportFactoryType> proposal_factory,
     std::function<TimepointType()> time_provider,
     std::chrono::milliseconds proposal_request_timeout,
-    logger::Logger log)
+    const logger::Logger& log)
     : log_(std::move(log)),
       stub_(std::move(stub)),
       async_call_(std::move(async_call)),

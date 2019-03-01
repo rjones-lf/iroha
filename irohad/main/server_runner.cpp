@@ -14,7 +14,7 @@ ServerRunner::ServerRunner(const std::string &address,
                            logger::Logger log)
     : log_(std::move(log)), serverAddress_(address), reuse_(reuse) {}
 
-ServerRunner &ServerRunner::append(std::shared_ptr<grpc::Service> service) {
+ServerRunner &ServerRunner::append(const std::shared_ptr<grpc::Service>& service) {
   services_.push_back(service);
   return *this;
 }

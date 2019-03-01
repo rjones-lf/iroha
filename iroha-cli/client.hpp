@@ -31,7 +31,7 @@ namespace iroha_cli {
     // TODO 13/09/17 luckychess: check if we need more status codes IR-494
     enum TxStatus { OK };
 
-    CliClient(std::string target_ip, int port);
+    CliClient(const std::string& target_ip, int port);
     /**
      * Send Transaction to Iroha Peer, i.e. target_ip:port
      * @param tx
@@ -49,7 +49,7 @@ namespace iroha_cli {
         const shared_model::interface::Query &query);
 
     CliClient::Response<iroha::protocol::ToriiResponse> getTxStatus(
-        std::string tx_hash);
+        const std::string& tx_hash);
 
    private:
     torii::CommandSyncClient command_client_;

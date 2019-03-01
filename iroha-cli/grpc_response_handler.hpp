@@ -17,7 +17,7 @@ namespace iroha_cli {
   class GrpcResponseHandler {
    public:
     explicit GrpcResponseHandler(
-        logger::Logger log = logger::log("GrpcResponseHandler"));
+        const logger::Logger& log = logger::log("GrpcResponseHandler"));
     /**
      * Handle iroha GRPC TxResponse
      * @param response

@@ -14,7 +14,7 @@ namespace iroha {
     namespace yac {
       CryptoProviderImpl::CryptoProviderImpl(
           const shared_model::crypto::Keypair &keypair,
-          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+          const std::shared_ptr<shared_model::interface::CommonObjectsFactory>&
               factory)
           : keypair_(keypair), factory_(std::move(factory)) {}
 

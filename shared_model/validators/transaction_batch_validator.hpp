@@ -16,7 +16,7 @@ namespace shared_model {
      public:
       Answer validate(const interface::TransactionBatch &batch) const override;
 
-      Answer validate(interface::types::TransactionsForwardCollectionType
+      Answer validate(const interface::types::TransactionsForwardCollectionType&
                           transactions) const;
     };
   }  // namespace validation

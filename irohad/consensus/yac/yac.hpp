@@ -43,7 +43,7 @@ namespace iroha {
             std::shared_ptr<YacNetwork> network,
             std::shared_ptr<YacCryptoProvider> crypto,
             std::shared_ptr<Timer> timer,
-            ClusterOrdering order,
+            const ClusterOrdering& order,
             logger::Logger log = logger::log("YAC"));
 
         // ------|Hash gate|------

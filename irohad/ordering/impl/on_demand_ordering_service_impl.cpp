@@ -125,7 +125,7 @@ OnDemandOrderingServiceImpl::onRequestProposal(consensus::Round round) {
 static std::vector<std::shared_ptr<shared_model::interface::Transaction>>
 getTransactions(size_t requested_tx_amount,
                 tbb::concurrent_queue<TransactionBatchType> &tx_batches_queue,
-                boost::optional<size_t &> discarded_txs_amount) {
+                const boost::optional<size_t &>& discarded_txs_amount) {
   TransactionBatchType batch;
   std::vector<std::shared_ptr<shared_model::interface::Transaction>> collection;
   std::unordered_set<std::string> inserted;
@@ -166,7 +166,7 @@ void OnDemandOrderingServiceImpl::packNextProposals(
           auto proposal = proposal_factory_->unsafeCreateProposal(
               round.block_round,
               iroha::time::now(),
-              std::move(txs) | boost::adaptors::indirected);
+              txs | boost::adaptors::indirected);
           proposal_map_.emplace(round, std::move(proposal));
           log_->debug(
               "packNextProposal: data has been fetched for {}. "

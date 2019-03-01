@@ -102,7 +102,7 @@ namespace iroha {
 
       // AddAssetQuantity
       Document JsonCommandFactory::serializeAddAssetQuantity(
-          std::shared_ptr<Command> command) {
+          const std::shared_ptr<Command>& command) {
         auto add_asset_quantity =
             static_cast<AddAssetQuantity *>(command.get());
 
@@ -127,7 +127,7 @@ namespace iroha {
 
       // AddPeer
       Document JsonCommandFactory::serializeAddPeer(
-          std::shared_ptr<Command> command) {
+          const std::shared_ptr<Command>& command) {
         auto add_peer = static_cast<AddPeer *>(command.get());
         Document document;
         auto &allocator = document.GetAllocator();
@@ -155,7 +155,7 @@ namespace iroha {
 
       // AddSignatory
       Document JsonCommandFactory::serializeAddSignatory(
-          std::shared_ptr<Command> command) {
+          const std::shared_ptr<Command>& command) {
         auto add_signatory = static_cast<AddSignatory *>(command.get());
 
         Document document;
@@ -180,7 +180,7 @@ namespace iroha {
 
       // CreateAccount
       Document JsonCommandFactory::serializeCreateAccount(
-          std::shared_ptr<Command> command) {
+          const std::shared_ptr<Command>& command) {
         auto create_account = static_cast<CreateAccount *>(command.get());
 
         Document document;
@@ -207,7 +207,7 @@ namespace iroha {
 
       // Set Account Detail
       rapidjson::Document JsonCommandFactory::serializeSetAccountDetail(
-          std::shared_ptr<Command> command) {
+          const std::shared_ptr<Command>& command) {
         auto set_account_detail =
             static_cast<SetAccountDetail *>(command.get());
 
@@ -235,7 +235,7 @@ namespace iroha {
 
       // CreateAsset
       Document JsonCommandFactory::serializeCreateAsset(
-          std::shared_ptr<Command> command) {
+          const std::shared_ptr<Command>& command) {
         auto create_asset = static_cast<CreateAsset *>(command.get());
 
         Document document;
@@ -261,7 +261,7 @@ namespace iroha {
 
       // CreateDomain
       Document JsonCommandFactory::serializeCreateDomain(
-          std::shared_ptr<Command> command) {
+          const std::shared_ptr<Command>& command) {
         auto create_domain = static_cast<CreateDomain *>(command.get());
 
         Document document;
@@ -287,7 +287,7 @@ namespace iroha {
 
       // RemoveSignatory
       Document JsonCommandFactory::serializeRemoveSignatory(
-          std::shared_ptr<Command> command) {
+          const std::shared_ptr<Command>& command) {
         auto remove_signatory = static_cast<RemoveSignatory *>(command.get());
 
         Document document;
@@ -313,7 +313,7 @@ namespace iroha {
 
       // SetAccountQuorum
       Document JsonCommandFactory::serializeSetQuorum(
-          std::shared_ptr<Command> command) {
+          const std::shared_ptr<Command>& command) {
         auto set_quorum = static_cast<SetQuorum *>(command.get());
 
         Document document;
@@ -337,7 +337,7 @@ namespace iroha {
 
       // TransferAsset
       Document JsonCommandFactory::serializeTransferAsset(
-          std::shared_ptr<Command> command) {
+          const std::shared_ptr<Command>& command) {
         auto transfer_asset = static_cast<TransferAsset *>(command.get());
 
         Document document;
@@ -369,7 +369,7 @@ namespace iroha {
       }
 
       rapidjson::Document JsonCommandFactory::serializeAppendRole(
-          std::shared_ptr<Command> command) {
+          const std::shared_ptr<Command>& command) {
         auto cmd = static_cast<AppendRole *>(command.get());
 
         Document document;
@@ -391,7 +391,7 @@ namespace iroha {
       }
 
       rapidjson::Document JsonCommandFactory::serializeDetachRole(
-          std::shared_ptr<Command> command) {
+          const std::shared_ptr<Command>& command) {
         auto cmd = static_cast<DetachRole *>(command.get());
 
         Document document;
@@ -413,7 +413,7 @@ namespace iroha {
       }
 
       rapidjson::Document JsonCommandFactory::serializeCreateRole(
-          std::shared_ptr<Command> command) {
+          const std::shared_ptr<Command>& command) {
         auto cmd = static_cast<CreateRole *>(command.get());
 
         Document document;
@@ -424,7 +424,7 @@ namespace iroha {
         document.AddMember("role_name", cmd->role_name, allocator);
         Value perms;
         perms.SetArray();
-        for (auto perm : cmd->permissions) {
+        for (const auto& perm : cmd->permissions) {
           Value perm_value;
           perm_value.Set(perm, allocator);
           perms.PushBack(perm_value, allocator);
@@ -452,7 +452,7 @@ namespace iroha {
       }
 
       rapidjson::Document JsonCommandFactory::serializeGrantPermission(
-          std::shared_ptr<Command> command) {
+          const std::shared_ptr<Command>& command) {
         auto cmd = static_cast<GrantPermission *>(command.get());
 
         Document document;
@@ -474,7 +474,7 @@ namespace iroha {
       }
 
       rapidjson::Document JsonCommandFactory::serializeRevokePermission(
-          std::shared_ptr<Command> command) {
+          const std::shared_ptr<Command>& command) {
         auto cmd = static_cast<RevokePermission *>(command.get());
 
         Document document;
@@ -497,7 +497,7 @@ namespace iroha {
 
       // SubtractAssetQuantity
       Document JsonCommandFactory::serializeSubtractAssetQuantity(
-          std::shared_ptr<Command> command) {
+          const std::shared_ptr<Command>& command) {
         auto subtract_asset_quantity =
             static_cast<SubtractAssetQuantity *>(command.get());
 

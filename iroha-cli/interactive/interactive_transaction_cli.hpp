@@ -147,7 +147,7 @@ namespace iroha_cli {
        * @return True - if parsing process must be continued. False if parsing
        * context should be changed
        */
-      bool parseResult(std::string line);
+      bool parseResult(const std::string& line);
       // --- Specific result parsers ---
       bool parseSendToIroha(std::vector<std::string> params);
       bool parseSaveFile(std::vector<std::string> params);

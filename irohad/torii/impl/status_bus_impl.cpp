@@ -5,10 +5,12 @@
 
 #include "torii/impl/status_bus_impl.hpp"
 
+#include <utility>
+
 namespace iroha {
   namespace torii {
     StatusBusImpl::StatusBusImpl(rxcpp::observe_on_one_worker worker)
-        : worker_(worker), subject_(worker_, cs_) {}
+        : worker_(std::move(worker)), subject_(worker_, cs_) {}
 
     StatusBusImpl::~StatusBusImpl() {
       cs_.unsubscribe();

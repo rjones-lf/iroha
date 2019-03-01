@@ -43,7 +43,7 @@ namespace iroha_cli {
       assign_main_handlers();
     }
 
-    void InteractiveCli::parseMain(std::string line) {
+    void InteractiveCli::parseMain(const std::string& line) {
       auto raw_command = parser::parseFirstCommand(std::move(line));
       if (not raw_command) {
         handleEmptyCommand();

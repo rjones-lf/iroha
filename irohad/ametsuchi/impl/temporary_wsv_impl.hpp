@@ -43,7 +43,7 @@ namespace iroha {
 
       TemporaryWsvImpl(
           std::unique_ptr<soci::session> sql,
-          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+          const std::shared_ptr<shared_model::interface::CommonObjectsFactory>&
               factory,
           std::shared_ptr<shared_model::interface::PermissionToString>
               perm_converter,

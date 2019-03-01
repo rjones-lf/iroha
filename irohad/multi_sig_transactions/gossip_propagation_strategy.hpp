@@ -33,7 +33,7 @@ namespace iroha {
      * @param params configuration parameters
      */
     GossipPropagationStrategy(PeerProviderFactory peer_factory,
-                              rxcpp::observe_on_one_worker emit_worker,
+                              const rxcpp::observe_on_one_worker& emit_worker,
                               const GossipPropagationStrategyParams &params);
 
     ~GossipPropagationStrategy();

@@ -55,17 +55,17 @@ namespace iroha {
         : block_store(std::move(block_store)) {}
 
     StorageImpl::StorageImpl(
-        std::string block_store_dir,
-        PostgresOptions postgres_options,
+        const std::string& block_store_dir,
+        const PostgresOptions& postgres_options,
         std::unique_ptr<KeyValueStorage> block_store,
-        std::shared_ptr<soci::connection_pool> connection,
-        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
-        std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
-        std::shared_ptr<shared_model::interface::PermissionToString>
+        const std::shared_ptr<soci::connection_pool>& connection,
+        const std::shared_ptr<shared_model::interface::CommonObjectsFactory>& factory,
+        const std::shared_ptr<shared_model::interface::BlockJsonConverter>& converter,
+        const std::shared_ptr<shared_model::interface::PermissionToString>&
             perm_converter,
         size_t pool_size,
         bool enable_prepared_blocks,
-        logger::Logger log)
+        const logger::Logger& log)
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
           block_store_(std::move(block_store)),
@@ -291,7 +291,7 @@ namespace iroha {
                           options_str_without_dbname);
 
         int size;
-        std::string name = dbname;
+        const std::string& name = dbname;
 
         sql << "SELECT count(datname) FROM pg_catalog.pg_database WHERE "
                "datname = :dbname",
@@ -311,7 +311,7 @@ namespace iroha {
     }
 
     expected::Result<ConnectionContext, std::string>
-    StorageImpl::initConnections(std::string block_store_dir) {
+    StorageImpl::initConnections(const std::string& block_store_dir) {
       auto log_ = logger::log("StorageImpl:initConnection");
       log_->info("Start storage creation");
 
@@ -344,11 +344,11 @@ namespace iroha {
 
     expected::Result<std::shared_ptr<StorageImpl>, std::string>
     StorageImpl::create(
-        std::string block_store_dir,
-        std::string postgres_options,
-        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
-        std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
-        std::shared_ptr<shared_model::interface::PermissionToString>
+        const std::string& block_store_dir,
+        const std::string& postgres_options,
+        const std::shared_ptr<shared_model::interface::CommonObjectsFactory>& factory,
+        const std::shared_ptr<shared_model::interface::BlockJsonConverter>& converter,
+        const std::shared_ptr<shared_model::interface::PermissionToString>&
             perm_converter,
         size_t pool_size) {
       boost::optional<std::string> string_res = boost::none;

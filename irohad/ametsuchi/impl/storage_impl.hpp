@@ -40,7 +40,7 @@ namespace iroha {
           const std::string &options_str_without_dbname);
 
       static expected::Result<ConnectionContext, std::string> initConnections(
-          std::string block_store_dir);
+          const std::string& block_store_dir);
 
       static expected::Result<std::shared_ptr<soci::connection_pool>,
                               std::string>
@@ -48,13 +48,13 @@ namespace iroha {
 
      public:
       static expected::Result<std::shared_ptr<StorageImpl>, std::string> create(
-          std::string block_store_dir,
-          std::string postgres_connection,
-          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+          const std::string& block_store_dir,
+          const std::string& postgres_connection,
+          const std::shared_ptr<shared_model::interface::CommonObjectsFactory>&
               factory,
-          std::shared_ptr<shared_model::interface::BlockJsonConverter>
+          const std::shared_ptr<shared_model::interface::BlockJsonConverter>&
               converter,
-          std::shared_ptr<shared_model::interface::PermissionToString>
+          const std::shared_ptr<shared_model::interface::PermissionToString>&
               perm_converter,
           size_t pool_size = 10);
 

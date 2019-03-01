@@ -11,9 +11,9 @@
 namespace iroha {
 
   PendingTransactionStorageImpl::PendingTransactionStorageImpl(
-      StateObservable updated_batches,
-      BatchObservable prepared_batch,
-      BatchObservable expired_batch) {
+      const StateObservable& updated_batches,
+      const BatchObservable& prepared_batch,
+      const BatchObservable& expired_batch) {
     updated_batches_subscription_ =
         updated_batches.subscribe([this](const SharedState &batches) {
           this->updatedBatchesHandler(batches);

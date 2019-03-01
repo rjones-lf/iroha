@@ -6,6 +6,7 @@
 #include "consensus/yac/impl/peer_orderer_impl.hpp"
 
 #include <random>
+#include <utility>
 
 #include "common/bind.hpp"
 #include "consensus/yac/cluster_order.hpp"
@@ -17,7 +18,7 @@ namespace iroha {
     namespace yac {
       PeerOrdererImpl::PeerOrdererImpl(
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory)
-          : peer_query_factory_(peer_query_factory) {}
+          : peer_query_factory_(std::move(peer_query_factory)) {}
 
       boost::optional<ClusterOrdering> PeerOrdererImpl::getInitialOrdering() {
         return peer_query_factory_->createPeerQuery() |

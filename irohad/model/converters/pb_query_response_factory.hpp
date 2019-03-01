@@ -39,7 +39,7 @@ namespace iroha {
         protocol::AccountResponse serializeAccountResponse(
             const model::AccountResponse &accountResponse) const;
         model::AccountResponse deserializeAccountResponse(
-            const protocol::AccountResponse pb_response) const;
+            const protocol::AccountResponse& pb_response) const;
 
         protocol::AccountAsset serializeAccountAsset(
             const model::AccountAsset &account_asset) const;

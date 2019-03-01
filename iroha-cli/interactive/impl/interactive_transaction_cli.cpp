@@ -209,7 +209,7 @@ namespace iroha_cli {
     }
 
     bool InteractiveTransactionCli::parseCommand(std::string line) {
-      if (isBackOption(line)) {
+      if (isBackOption(std::move(line))) {
         // Switch current context
         return false;
       }
@@ -423,7 +423,7 @@ namespace iroha_cli {
 
     // --------- Result parsers -------------
 
-    bool InteractiveTransactionCli::parseResult(std::string line) {
+    bool InteractiveTransactionCli::parseResult(const std::string& line) {
       // Find in result handler map
       auto res =
           handleParse<bool>(this, line, result_handlers_, result_params_map);

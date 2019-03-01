@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <utility>
+
 #include "model/generators/transaction_generator.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
@@ -78,8 +80,8 @@ namespace iroha {
           std::vector<std::shared_ptr<Command>> commands) {
         Transaction tx;
         tx.created_ts = timestamp;
-        tx.creator_account_id = creator_account_id;
-        tx.commands = commands;
+        tx.creator_account_id = std::move(creator_account_id);
+        tx.commands = std::move(commands);
         return tx;
       }
 
@@ -87,7 +89,7 @@ namespace iroha {
           std::string creator_account_id,
           std::vector<std::shared_ptr<Command>> commands) {
         return generateTransaction(
-            iroha::time::now(), creator_account_id, commands);
+            iroha::time::now(), std::move(creator_account_id), std::move(commands));
       }
 
     }  // namespace generators

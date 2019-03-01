@@ -57,7 +57,7 @@ namespace {
   // make index account_id:height -> list of tx indexes
   // (where tx is placed in the block)
   std::string makeCreatorHeightIndex(
-      const shared_model::interface::types::AccountIdType creator,
+      const shared_model::interface::types::AccountIdType& creator,
       shared_model::interface::types::HeightType height,
       size_t tx_index) {
     boost::format base(

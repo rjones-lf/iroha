@@ -20,7 +20,7 @@ namespace iroha {
       class JsonQueryFactory {
        public:
         explicit JsonQueryFactory(
-            logger::Logger log = logger::log("JsonQueryFactory"));
+            const logger::Logger& log = logger::log("JsonQueryFactory"));
 
         /**
          * get query from string json

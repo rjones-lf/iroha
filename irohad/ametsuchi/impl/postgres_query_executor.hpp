@@ -155,7 +155,7 @@ namespace iroha {
        */
       std::unique_ptr<shared_model::interface::QueryResponse>
       logAndReturnErrorResponse(iroha::ametsuchi::QueryErrorType error_type,
-                                QueryErrorMessageType error_body,
+                                const QueryErrorMessageType& error_body,
                                 QueryErrorCodeType error_code) const;
 
       /**

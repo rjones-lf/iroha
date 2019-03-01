@@ -43,7 +43,7 @@ namespace iroha_cli {
        * Parse main menu commands
        * @param line, command to parse
        */
-      void parseMain(std::string line);
+      void parseMain(const std::string& line);
 
       /**
        * Start new query

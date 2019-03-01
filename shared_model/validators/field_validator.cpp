@@ -9,6 +9,7 @@
 
 #include <boost/algorithm/string_regex.hpp>
 #include <boost/format.hpp>
+#include <utility>
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/crypto_provider/crypto_verifier.hpp"
 #include "interfaces/common_objects/amount.hpp"
@@ -64,7 +65,7 @@ namespace shared_model {
 
     FieldValidator::FieldValidator(time_t future_gap,
                                    TimeFunction time_provider)
-        : future_gap_(future_gap), time_provider_(time_provider) {}
+        : future_gap_(future_gap), time_provider_(std::move(time_provider)) {}
 
     void FieldValidator::validateAccountId(
         ReasonsGroupType &reason,

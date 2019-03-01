@@ -68,7 +68,7 @@ namespace shared_model {
     }
 
     Answer BatchValidator::validate(
-        interface::types::TransactionsForwardCollectionType transactions)
+        const interface::types::TransactionsForwardCollectionType& transactions)
         const {
       std::string reason_name = "Transaction batch factory: ";
       validation::ReasonsGroupType batch_reason;

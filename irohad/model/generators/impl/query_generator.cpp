@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include <memory>
+#include <utility>
 
 #include "model/generators/query_generator.hpp"
 
@@ -10,11 +11,11 @@ namespace iroha {
   namespace model {
     namespace generators {
 
-      void QueryGenerator::setQueryMetaData(std::shared_ptr<Query> query,
+      void QueryGenerator::setQueryMetaData(const std::shared_ptr<Query>& query,
                                             ts64_t timestamp,
                                             std::string creator,
                                             uint64_t query_counter) {
-        query->creator_account_id = creator;
+        query->creator_account_id = std::move(creator);
         query->query_counter = query_counter;
         query->created_ts = timestamp;
       }
@@ -26,8 +27,8 @@ namespace iroha {
           std::string account_id) {
         auto query = std::make_shared<GetAccount>();
         query->created_ts = timestamp;
-        query->creator_account_id = creator;
-        query->account_id = account_id;
+        query->creator_account_id = std::move(creator);
+        query->account_id = std::move(account_id);
         query->query_counter = query_counter;
         return query;
       }
@@ -37,12 +38,12 @@ namespace iroha {
                                                std::string creator,
                                                uint64_t query_counter,
                                                std::string account_id,
-                                               std::string asset_id) {
+                                               const std::string& asset_id) {
         auto query = std::make_shared<GetAccountAssets>();
         query->created_ts = timestamp;
-        query->creator_account_id = creator;
+        query->creator_account_id = std::move(creator);
         query->query_counter = query_counter;
-        query->account_id = account_id;
+        query->account_id = std::move(account_id);
         return query;
       }
 
@@ -54,10 +55,10 @@ namespace iroha {
                                                std::string creator_account_id) {
         auto query = std::make_shared<GetAccountDetail>();
         query->created_ts = timestamp;
-        query->creator_account_id = creator;
+        query->creator_account_id = std::move(creator);
         query->query_counter = query_counter;
-        query->account_id = account_id;
-        query->creator_account_id = creator_account_id;
+        query->account_id = std::move(account_id);
+        query->creator_account_id = std::move(creator_account_id);
         return query;
       }
 
@@ -68,9 +69,9 @@ namespace iroha {
           std::string account_id) {
         auto query = std::make_shared<GetSignatories>();
         query->created_ts = timestamp;
-        query->creator_account_id = creator;
+        query->creator_account_id = std::move(creator);
         query->query_counter = query_counter;
-        query->account_id = account_id;
+        query->account_id = std::move(account_id);
         return query;
       }
 
@@ -81,9 +82,9 @@ namespace iroha {
                                                      std::string account_id) {
         auto query = std::make_shared<GetAccountTransactions>();
         query->created_ts = timestamp;
-        query->creator_account_id = creator;
+        query->creator_account_id = std::move(creator);
         query->query_counter = query_counter;
-        query->account_id = account_id;
+        query->account_id = std::move(account_id);
         return query;
       }
 
@@ -96,10 +97,10 @@ namespace iroha {
           std::string asset_id) {
         auto query = std::make_shared<GetAccountAssetTransactions>();
         query->created_ts = timestamp;
-        query->creator_account_id = creator;
+        query->creator_account_id = std::move(creator);
         query->query_counter = query_counter;
-        query->account_id = account_id;
-        query->asset_id = asset_id;
+        query->account_id = std::move(account_id);
+        query->asset_id = std::move(asset_id);
         return query;
       }
 

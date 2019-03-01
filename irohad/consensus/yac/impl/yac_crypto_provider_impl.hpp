@@ -18,7 +18,7 @@ namespace iroha {
        public:
         CryptoProviderImpl(
             const shared_model::crypto::Keypair &keypair,
-            std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+            const std::shared_ptr<shared_model::interface::CommonObjectsFactory>&
                 factory);
 
         bool verify(const std::vector<VoteMessage> &msg) override;

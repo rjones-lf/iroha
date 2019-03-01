@@ -31,9 +31,9 @@ namespace iroha {
     using StateObservable = rxcpp::observable<SharedState>;
     using BatchObservable = rxcpp::observable<SharedBatch>;
 
-    PendingTransactionStorageImpl(StateObservable updated_batches,
-                                  BatchObservable prepared_batch,
-                                  BatchObservable expired_batch);
+    PendingTransactionStorageImpl(const StateObservable& updated_batches,
+                                  const BatchObservable& prepared_batch,
+                                  const BatchObservable& expired_batch);
 
     ~PendingTransactionStorageImpl() override;
 

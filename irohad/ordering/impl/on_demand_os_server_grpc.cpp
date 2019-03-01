@@ -23,7 +23,7 @@ OnDemandOsServerGrpc::OnDemandOsServerGrpc(
         batch_parser,
     std::shared_ptr<shared_model::interface::TransactionBatchFactory>
         transaction_batch_factory,
-    logger::Logger log)
+    const logger::Logger& log)
     : ordering_service_(ordering_service),
       transaction_factory_(std::move(transaction_factory)),
       batch_parser_(std::move(batch_parser)),

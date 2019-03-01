@@ -6,6 +6,7 @@
 #include "ametsuchi/impl/mutable_storage_impl.hpp"
 
 #include <boost/variant/apply_visitor.hpp>
+#include <utility>
 #include "ametsuchi/impl/peer_query_wsv.hpp"
 #include "ametsuchi/impl/postgres_block_index.hpp"
 #include "ametsuchi/impl/postgres_command_executor.hpp"
@@ -23,7 +24,7 @@ namespace iroha {
         std::unique_ptr<soci::session> sql,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
         logger::Logger log)
-        : top_hash_(top_hash),
+        : top_hash_(std::move(top_hash)),
           sql_(std::move(sql)),
           peer_query_(std::make_unique<PeerQueryWsv>(
               std::make_shared<PostgresWsvQuery>(*sql_, std::move(factory)))),
@@ -35,7 +36,7 @@ namespace iroha {
     }
 
     bool MutableStorageImpl::apply(const shared_model::interface::Block &block,
-                                   MutableStoragePredicate predicate) {
+                                   const MutableStoragePredicate& predicate) {
       auto execute_transaction = [this](auto &transaction) {
         command_executor_->setCreatorAccountId(transaction.creatorAccountId());
         command_executor_->doValidation(false);

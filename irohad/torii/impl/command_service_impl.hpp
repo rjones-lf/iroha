@@ -85,7 +85,7 @@ namespace iroha {
        */
       void pushStatus(
           const std::string &who,
-          std::shared_ptr<shared_model::interface::TransactionResponse>
+          const std::shared_ptr<shared_model::interface::TransactionResponse>&
               response);
 
       /**
@@ -94,7 +94,7 @@ namespace iroha {
        * @param batch to be processed
        */
       void processBatch(
-          std::shared_ptr<shared_model::interface::TransactionBatch> batch);
+          const std::shared_ptr<shared_model::interface::TransactionBatch>& batch);
 
       std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor_;
       std::shared_ptr<iroha::ametsuchi::Storage> storage_;

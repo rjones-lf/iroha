@@ -26,7 +26,7 @@ namespace iroha {
     class SynchronizerImpl : public Synchronizer {
      public:
       SynchronizerImpl(
-          std::shared_ptr<network::ConsensusGate> consensus_gate,
+          const std::shared_ptr<network::ConsensusGate>& consensus_gate,
           std::shared_ptr<validation::ChainValidator> validator,
           std::shared_ptr<ametsuchi::MutableFactory> mutable_factory,
           std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,

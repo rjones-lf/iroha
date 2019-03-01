@@ -55,7 +55,7 @@ namespace iroha {
       OnDemandOrderingGate(
           std::shared_ptr<OnDemandOrderingService> ordering_service,
           std::shared_ptr<transport::OdOsNotification> network_client,
-          rxcpp::observable<BlockRoundEventType> events,
+          const rxcpp::observable<BlockRoundEventType>& events,
           std::shared_ptr<cache::OrderingGateCache>
               cache,  // TODO: IR-1863 12.11.18 kamilsa change cache to
                       // unique_ptr

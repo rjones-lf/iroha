@@ -33,7 +33,7 @@ namespace iroha {
      * @param account_id - fully qualified account id, e.g. admin@test
      * @param log to print progress
      */
-    KeysManagerImpl(const std::string account_id,
+    KeysManagerImpl(const std::string& account_id,
                     logger::Logger log = logger::log("KeysManagerImpl"));
 
     bool createKeys() override;

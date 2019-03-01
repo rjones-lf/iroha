@@ -59,7 +59,7 @@ namespace iroha {
       std::vector<bool> validation_results;
       validation_results.reserve(boost::size(txs));
 
-      for (auto batch : batch_parser.parseBatches(txs)) {
+      for (const auto& batch : batch_parser.parseBatches(txs)) {
         auto validation = [&](auto &tx) {
           return checkTransactions(temporary_wsv, transactions_errors_log, tx);
         };

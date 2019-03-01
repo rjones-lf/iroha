@@ -147,7 +147,7 @@ namespace iroha {
       }
 
       model::AccountResponse PbQueryResponseFactory::deserializeAccountResponse(
-          const protocol::AccountResponse pb_response) const {
+          const protocol::AccountResponse& pb_response) const {
         model::AccountResponse accountResponse;
         accountResponse.account = deserializeAccount(pb_response.account());
         return accountResponse;
@@ -256,7 +256,7 @@ namespace iroha {
       model::AssetResponse PbQueryResponseFactory::deserializeAssetResponse(
           const protocol::AssetResponse &response) const {
         model::AssetResponse res;
-        auto asset = response.asset();
+        const auto& asset = response.asset();
         res.asset =
             Asset(asset.asset_id(), asset.domain_id(), asset.precision());
         return res;

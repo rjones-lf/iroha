@@ -7,6 +7,7 @@
 
 #include <cctype>
 #include <ciso646>
+#include <utility>
 
 namespace parser {
 
@@ -18,7 +19,7 @@ namespace parser {
   }
 
   boost::optional<std::string> parseFirstCommand(std::string line) {
-    auto vec = split(line);
+    auto vec = split(std::move(line));
     if (vec.size() == 0) {
       return boost::none;
     }

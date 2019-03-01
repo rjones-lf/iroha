@@ -15,6 +15,7 @@
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/algorithm/transform.hpp>
 #include <boost/range/irange.hpp>
+#include <utility>
 
 #include "ametsuchi/impl/soci_utils.hpp"
 #include "common/byteutils.hpp"
@@ -133,7 +134,7 @@ namespace {
    */
   template <typename... Roles>
   auto notEnoughPermissionsResponse(
-      std::shared_ptr<shared_model::interface::PermissionToString>
+      const std::shared_ptr<shared_model::interface::PermissionToString>&
           perm_converter,
       Roles... roles) {
     return [perm_converter, roles...] {
@@ -284,7 +285,7 @@ namespace iroha {
                    pending_txs_storage_,
                    std::move(converter),
                    response_factory,
-                   perm_converter),
+                   std::move(perm_converter)),
           query_response_factory_{std::move(response_factory)},
           log_(std::move(log)) {}
 
@@ -370,7 +371,7 @@ namespace iroha {
     std::unique_ptr<shared_model::interface::QueryResponse>
     PostgresQueryExecutorVisitor::logAndReturnErrorResponse(
         QueryErrorType error_type,
-        QueryErrorMessageType error_body,
+        const QueryErrorMessageType& error_body,
         QueryErrorCodeType error_code) const {
       std::string error;
       switch (error_type) {

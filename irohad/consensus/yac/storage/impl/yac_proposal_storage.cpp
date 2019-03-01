@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <utility>
+
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 
 using namespace logger;
@@ -44,7 +46,7 @@ namespace iroha {
           : current_state_(boost::none),
             storage_key_(store_round),
             peers_in_round_(peers_in_round),
-            supermajority_checker_(supermajority_checker) {
+            supermajority_checker_(std::move(supermajority_checker)) {
         log_ = log("ProposalStorage");
       }
 

@@ -51,7 +51,7 @@ namespace iroha {
                std::shared_ptr<YacNetwork> network,
                std::shared_ptr<YacCryptoProvider> crypto,
                std::shared_ptr<Timer> timer,
-               ClusterOrdering order,
+               const ClusterOrdering& order,
                logger::Logger log)
           : vote_storage_(std::move(vote_storage)),
             network_(std::move(network)),
