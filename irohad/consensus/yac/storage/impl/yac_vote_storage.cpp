@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "consensus/yac/storage/yac_vote_storage.hpp"
@@ -20,6 +8,7 @@
 #include <algorithm>
 #include <utility>
 
+#include "common/bind.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 
 namespace iroha {
@@ -36,28 +25,63 @@ namespace iroha {
                             });
       }
 
-      auto YacVoteStorage::findProposalStorage(const VoteMessage &msg,
-                                               PeersNumberType peers_in_round) {
-        auto val = getProposalStorage(msg.hash.vote_round);
+      boost::optional<std::vector<YacProposalStorage>::iterator>
+      YacVoteStorage::findProposalStorage(const VoteMessage &msg,
+                                          PeersNumberType peers_in_round) {
+        const auto &round = msg.hash.vote_round;
+        auto val = getProposalStorage(round);
         if (val != proposal_storages_.end()) {
           return val;
         }
-        return proposal_storages_.emplace(
-            proposal_storages_.end(),
-            msg.hash.vote_round,
-            peers_in_round,
-            std::make_shared<SupermajorityCheckerImpl>());
+        if (strategy_->shouldCreateRound(round)) {
+          return proposal_storages_.emplace(
+              proposal_storages_.end(),
+              msg.hash.vote_round,
+              peers_in_round,
+              std::make_shared<SupermajorityCheckerImpl>());
+        } else {
+          return boost::none;
+        }
+      }
+
+      void YacVoteStorage::remove(const iroha::consensus::Round &round) {
+        auto val = getProposalStorage(round);
+        if (val != proposal_storages_.end()) {
+          proposal_storages_.erase(val);
+        }
+        auto state = processing_state_.find(round);
+        if (state != processing_state_.end()) {
+          processing_state_.erase(state);
+        }
       }
 
       // --------| public api |--------
+
+      YacVoteStorage::YacVoteStorage(
+          std::shared_ptr<CleanupStrategy> cleanup_strategy)
+          : strategy_(std::move(cleanup_strategy)) {}
 
       boost::optional<Answer> YacVoteStorage::store(
           std::vector<VoteMessage> state, PeersNumberType peers_in_round) {
         if (state.empty()) {
           return boost::none;
         }
-        auto storage = findProposalStorage(state.at(0), peers_in_round);
-        return storage->insert(state);
+        return findProposalStorage(state.at(0), peers_in_round) |
+            [this, &state](auto &&storage) {
+              const auto &round = storage->getStorageKey();
+              return storage->insert(state) |
+                         [this, &round](
+                             auto &&insert_outcome) -> boost::optional<Answer> {
+                this->strategy_->finalize(round, insert_outcome) |
+                    [this](auto &&remove) {
+                      std::for_each(
+                          remove.begin(),
+                          remove.end(),
+                          [this](const auto &round) { this->remove(round); });
+                    };
+                return insert_outcome;
+              };
+            };
       }
 
       bool YacVoteStorage::isCommitted(const Round &round) {

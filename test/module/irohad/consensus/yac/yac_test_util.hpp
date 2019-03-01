@@ -34,6 +34,16 @@ namespace iroha {
 
       inline VoteMessage createVote(YacHash hash, const std::string &pub_key) {
         VoteMessage vote;
+
+        auto signature = std::make_shared<MockSignature>();
+        EXPECT_CALL(*signature, publicKey())
+            .WillRepeatedly(::testing::ReturnRefOfCopy(
+                shared_model::crypto::PublicKey(pub_key)));
+        EXPECT_CALL(*signature, signedData())
+            .WillRepeatedly(::testing::ReturnRefOfCopy(
+                shared_model::crypto::Signed(pub_key)));
+
+        hash.block_signature = signature;
         vote.hash = std::move(hash);
         vote.signature = createSig(pub_key);
         return vote;
