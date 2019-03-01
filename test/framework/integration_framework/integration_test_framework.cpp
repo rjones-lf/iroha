@@ -313,7 +313,8 @@ namespace integration_framework {
     iroha_instance_->getIrohaInstance()->getStatusBus()->statuses().subscribe(
         [this](auto response) {
           responses_queues_[response->transactionHash().hex()].push(response);
-          log_->info("response");
+          log_->info("response added to status queue: {}",
+                     response->toString());
           queue_cond.notify_all();
         });
 

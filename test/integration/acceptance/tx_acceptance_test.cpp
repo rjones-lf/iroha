@@ -12,10 +12,11 @@ using namespace common_constants;
 class AcceptanceTest : public AcceptanceFixture {
  public:
   const std::function<void(const shared_model::proto::TransactionResponse &)>
-      checkEnoughSignaturesCollectedStatus = [](auto &status) {
+      checkStatelessValidStatus = [](auto &status) {
         ASSERT_NO_THROW(
-            boost::get<const shared_model::interface::
-                           EnoughSignaturesCollectedResponse &>(status.get()));
+            boost::get<const shared_model::interface::StatelessValidTxResponse
+                           &>(status.get()))
+            << status.toString();
       };
   const std::function<void(
       const std::shared_ptr<const shared_model::interface::Proposal> &)>
@@ -51,7 +52,7 @@ TEST_F(AcceptanceTest, NonExistentCreatorAccountId) {
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(complete(baseTx<>().creatorAccountId(kNonUser), kAdminKeypair),
-              checkEnoughSignaturesCollectedStatus)
+              checkStatelessValidStatus)
       .checkProposal(checkProposal)
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
@@ -73,7 +74,7 @@ TEST_F(AcceptanceTest, Transaction1HourOld) {
       .sendTx(complete(baseTx<>().createdTime(
                            iroha::time::now(std::chrono::hours(-1))),
                        kAdminKeypair),
-              checkEnoughSignaturesCollectedStatus)
+              checkStatelessValidStatus)
       .skipProposal()
       .skipVerifiedProposal()
       .checkBlock(checkStatefulValid);
@@ -93,7 +94,7 @@ TEST_F(AcceptanceTest, DISABLED_TransactionLess24HourOld) {
       .sendTx(complete(baseTx<>().createdTime(iroha::time::now(
                            std::chrono::hours(24) - std::chrono::minutes(1))),
                        kAdminKeypair),
-              checkEnoughSignaturesCollectedStatus)
+              checkStatelessValidStatus)
       .skipProposal()
       .skipVerifiedProposal()
       .checkBlock(checkStatefulValid);
@@ -129,7 +130,7 @@ TEST_F(AcceptanceTest, Transaction5MinutesFromFuture) {
       .sendTx(complete(baseTx<>().createdTime(iroha::time::now(
                            std::chrono::minutes(5) - std::chrono::seconds(10))),
                        kAdminKeypair),
-              checkEnoughSignaturesCollectedStatus)
+              checkStatelessValidStatus)
       .skipProposal()
       .skipVerifiedProposal()
       .checkBlock(checkStatefulValid);
@@ -246,8 +247,7 @@ TEST_F(AcceptanceTest, TransactionInvalidSignedBlob) {
 TEST_F(AcceptanceTest, TransactionValidSignedBlob) {
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(complete(baseTx<>(), kAdminKeypair),
-              checkEnoughSignaturesCollectedStatus)
+      .sendTx(complete(baseTx<>(), kAdminKeypair), checkStatelessValidStatus)
       .skipProposal()
       .skipVerifiedProposal()
       .checkBlock(checkStatefulValid);

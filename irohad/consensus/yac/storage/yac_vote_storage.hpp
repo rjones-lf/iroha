@@ -12,6 +12,7 @@
 
 #include <boost/optional.hpp>
 #include "consensus/yac/outcome_messages.hpp"  // because messages passed by value
+#include "consensus/yac/storage/cleanup_strategy.hpp"
 #include "consensus/yac/storage/storage_result.hpp"  // for Answer
 #include "consensus/yac/storage/yac_common.hpp"      // for ProposalHash
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
@@ -75,11 +76,22 @@ namespace iroha {
          * This parameter used on creation of proposal storage
          * @return - iter for required proposal storage
          */
-        auto findProposalStorage(const VoteMessage &msg,
-                                 PeersNumberType peers_in_round);
+        boost::optional<std::vector<YacProposalStorage>::iterator>
+        findProposalStorage(const VoteMessage &msg,
+                            PeersNumberType peers_in_round);
+
+        /**
+         * Remove proposal storage by round
+         */
+        void remove(const Round &round);
 
        public:
         // --------| public api |--------
+
+        /**
+         * @param cleanup_strategy - strategy for removing elements from storage
+         */
+        YacVoteStorage(std::shared_ptr<CleanupStrategy> cleanup_strategy);
 
         /**
          * Insert votes in storage
@@ -119,6 +131,9 @@ namespace iroha {
        private:
         // --------| fields |--------
 
+        // TODO: 2019-02-28 @muratovv refactor proposal_storages_ &
+        // processing_state_ with separate entity IR-360
+
         /**
          * Active proposal storages
          */
@@ -131,6 +146,12 @@ namespace iroha {
          */
         std::unordered_map<Round, ProposalState, RoundTypeHasher>
             processing_state_;
+
+        /**
+         * Provides strategy managing rounds (adding and removing) for the
+         * storage
+         */
+        std::shared_ptr<CleanupStrategy> strategy_;
       };
 
     }  // namespace yac

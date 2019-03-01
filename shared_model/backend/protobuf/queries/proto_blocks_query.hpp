@@ -13,7 +13,7 @@
 
 namespace shared_model {
   namespace proto {
-    class BlocksQuery FINAL : public CopyableProto<interface::BlocksQuery,
+    class BlocksQuery final : public CopyableProto<interface::BlocksQuery,
                                                    iroha::protocol::BlocksQuery,
                                                    BlocksQuery> {
      public:

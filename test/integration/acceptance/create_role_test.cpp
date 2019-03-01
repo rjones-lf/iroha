@@ -49,8 +49,8 @@ TEST_F(CreateRole, Basic) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(tx)
-      .checkStatus(tx.hash(), CHECK_ENOUGH_SIGNATURES)
       .checkStatus(tx.hash(), CHECK_STATELESS_VALID)
+      .checkStatus(tx.hash(), CHECK_ENOUGH_SIGNATURES)
       .checkStatus(tx.hash(), CHECK_STATEFUL_VALID)
       .checkStatus(tx.hash(), CHECK_COMMITTED)
       .sendTxAwait(complete(baseTx()), [](auto &block) {
@@ -180,7 +180,8 @@ TEST_F(CreateRole, DISABLED_NonexistentPerm) {
 }
 
 /**
- * TODO mboldyrev 18.01.2019 IR-208 remove, SFV covered by CreateRole.NameNotUnique
+ * TODO mboldyrev 18.01.2019 IR-208 remove, SFV covered by
+ * CreateRole.NameNotUnique
  *
  * @given some user with can_create_role permission
  * @when execute tx with CreateRole command with existing role name
