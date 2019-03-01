@@ -44,7 +44,7 @@ namespace iroha {
 
       static expected::Result<std::shared_ptr<soci::connection_pool>,
                               std::string>
-      initPostgresConnection(std::string &options_str, size_t pool_size);
+      initPostgresConnection(const std::string &options_str, size_t pool_size);
 
      public:
       static expected::Result<std::shared_ptr<StorageImpl>, std::string> create(
@@ -115,19 +115,17 @@ namespace iroha {
       ~StorageImpl() override;
 
      protected:
-      StorageImpl(std::string block_store_dir,
-                  PostgresOptions postgres_options,
+      StorageImpl(const std::string& block_store_dir,
+                  const PostgresOptions& postgres_options,
                   std::unique_ptr<KeyValueStorage> block_store,
-                  std::shared_ptr<soci::connection_pool> connection,
-                  std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-                      factory,
-                  std::shared_ptr<shared_model::interface::BlockJsonConverter>
-                      converter,
-                  std::shared_ptr<shared_model::interface::PermissionToString>
-                      perm_converter,
+                  const std::shared_ptr<soci::connection_pool>& connection,
+                  const std::shared_ptr<shared_model::interface::CommonObjectsFactory>& factory,
+                  const std::shared_ptr<shared_model::interface::BlockJsonConverter>& converter,
+                  const std::shared_ptr<shared_model::interface::PermissionToString>&
+                  perm_converter,
                   size_t pool_size,
                   bool enable_prepared_blocks,
-                  logger::Logger log = logger::log("StorageImpl"));
+                  const logger::Logger& log = logger::log("StorageImpl"));
 
       /**
        * Folder with raw blocks

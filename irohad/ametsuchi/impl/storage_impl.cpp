@@ -327,7 +327,7 @@ namespace iroha {
     }
 
     expected::Result<std::shared_ptr<soci::connection_pool>, std::string>
-    StorageImpl::initPostgresConnection(std::string &options_str,
+    StorageImpl::initPostgresConnection(const std::string &options_str,
                                         size_t pool_size) {
       auto pool = std::make_shared<soci::connection_pool>(pool_size);
 

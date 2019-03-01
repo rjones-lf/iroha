@@ -233,7 +233,7 @@ namespace iroha_cli {
     template <typename T, typename V, typename C>
     boost::optional<T> handleParse(
         C class_pointer,
-        std::string &line,
+        const std::string &line,
         std::unordered_map<std::string, V> &parsers_map,
         ParamsMap &params_map) {
       auto raw_command = parser::parseFirstCommand(line);
