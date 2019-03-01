@@ -78,3 +78,9 @@ addtest(supermajority_checker_test supermajority_checker_test.cpp)
 target_link_libraries(supermajority_checker_test
     yac
     )
+
+addtest(buffered_cleanup_strategy_test buffered_cleanup_strategy_test.cpp)
+target_link_libraries(buffered_cleanup_strategy_test
+    yac
+    consensus_round
+    )

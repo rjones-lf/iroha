@@ -1,5 +1,5 @@
 Javascript library
------------------
+------------------
 
 .. image:: https://img.shields.io/npm/v/iroha-helpers.svg
 

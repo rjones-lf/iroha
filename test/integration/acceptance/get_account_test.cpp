@@ -141,6 +141,8 @@ class GetAccount : public AcceptanceFixture {
 };
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 remove, covered by field validator test
+ *
  * C321 Pass an empty account id
  * @given a user with all required permissions
  * @when GetAccount is queried on the empty account name
@@ -154,6 +156,9 @@ TEST_F(GetAccount, EmptyAccount) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 remove, covered by
+ * postgres_query_executor_test GetAccountExecutorTest.InvalidNoAccount
+ *
  * C320 Get an non-existing account
  * @given a user with all required permissions
  * @when GetAccount is queried on the user
@@ -168,6 +173,10 @@ TEST_F(GetAccount, NonexistentAccount) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 convert to a SFV integration test
+ * (not covered by postgres_query_executor_test)
+ * seems we should move the common_query_permissions_test to SFV integration
+ *
  * C315 Get my account without a CanGetMyAccount permission
  * @given a user without any query-related permission
  * @when GetAccount is queried on the user
@@ -181,6 +190,9 @@ TEST_F(GetAccount, NoPermission) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 remove, covered by
+ * postgres_query_executor_test GetAccountExecutorTest.ValidMyAccount
+ *
  * C322 Get my account with a CanGetMyAccount permission
  * @given a user with GetMyAccount permission
  * @when GetAccount is queried on the user
@@ -191,6 +203,10 @@ TEST_F(GetAccount, WithGetMyPermission) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 convert to a SFV integration test
+ * (not covered by postgres_query_executor_test)
+ * seems we should move the common_query_permissions_test to SFV integration
+ *
  * C316 Get my account with only CanGetDomainAccounts permission
  * @given a user with GetDomainAccounts permission
  * @when GetAccount is queried on the user
@@ -202,6 +218,10 @@ TEST_F(GetAccount, WithGetDomainPermission) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 convert to a SFV integration test
+ * (not covered by postgres_query_executor_test)
+ * seems we should move the common_query_permissions_test to SFV integration
+ *
  * C317 Get my account with only CanGetAllAccounts permission
  * @given a user with GetAllAccounts permission
  * @when GetAccount is queried on the user
@@ -213,6 +233,10 @@ TEST_F(GetAccount, WithGetAllPermission) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 convert to a SFV integration test
+ * (not covered by postgres_query_executor_test)
+ * seems we should move the common_query_permissions_test to SFV integration
+ *
  * @given a user without any permission and a user in the same domain
  * @when GetAccount is queried on the second user
  * @then query is stateful invalid response
@@ -227,6 +251,10 @@ TEST_F(GetAccount, NoPermissionOtherAccount) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 convert to a SFV integration test
+ * (not covered by postgres_query_executor_test)
+ * seems we should move the common_query_permissions_test to SFV integration
+ *
  * @given a user with GetMyAccount permission and a user in the same domain
  * @when GetAccount is queried on the second user
  * @then query is stateful invalid response
@@ -241,6 +269,9 @@ TEST_F(GetAccount, WithGetMyPermissionOtherAccount) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 remove, covered by
+ * postgres_query_executor_test GetAccountExecutorTest.ValidMyAccount
+ *
  * C318 Get an account from the domain having CanGetDomainAccounts
  * @given a user with GetDomainAccounts permission and a user in the same domain
  * @when GetAccount is queried on the second user
@@ -255,6 +286,9 @@ TEST_F(GetAccount, WithGetDomainPermissionOtherAccount) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 remove, covered by
+ * postgres_query_executor_test GetAccountExecutorTest.ValidDomainAccount
+ *
  * @given a user with GetAllAccounts permission and a user in the same domain
  * @when GetAccount is queried on the second user
  * @then there is a valid AccountResponse
@@ -268,7 +302,11 @@ TEST_F(GetAccount, WithGetAllPermissionOtherAccount) {
 }
 
 /**
- * @given a user with all required permissions and a user in other domain
+ * TODO mboldyrev 18.01.2019 IR-211 convert to a SFV integration test
+ * (not covered by postgres_query_executor_test)
+ * seems we should move the common_query_permissions_test to SFV integration
+ *
+ * @given a user with no related permissions and a user in other domain
  * @when GetAccount is queried on the second user
  * @then query is stateful invalid response
  */
@@ -282,7 +320,11 @@ TEST_F(GetAccount, NoPermissionOtherAccountInterdomain) {
 }
 
 /**
- * @given a user with all required permissions and a user in other domain
+ * TODO mboldyrev 18.01.2019 IR-211 convert to a SFV integration test
+ * (not covered by postgres_query_executor_test)
+ * seems we should move the common_query_permissions_test to SFV integration
+ *
+ * @given a user with permission to get own account and a user in other domain
  * @when GetAccount is queried on the second user
  * @then query is stateful invalid response
  */
@@ -296,7 +338,11 @@ TEST_F(GetAccount, WithGetMyPermissionOtherAccountInterdomain) {
 }
 
 /**
- * @given a user with all required permissions and a user in other domain
+ * TODO mboldyrev 18.01.2019 IR-211 remove, covered by
+ * postgres_query_executor_test GetAccountExecutorTest.InvalidDifferentDomain
+ *
+ * @given a user with rermissions to get domain accounts and a user in other
+ * domain
  * @when GetAccount is queried on the second user
  * @then query is stateful invalid response
  */
@@ -310,6 +356,10 @@ TEST_F(GetAccount, WithGetDomainPermissionOtherAccountInterdomain) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-211 convert to a SFV integration test
+ * (not covered by postgres_query_executor_test)
+ * seems we should move the common_query_permissions_test to SFV integration
+ *
  * C319 Get an account from another domain in the system having
  * CanGetAllAccounts
  * @given a user with all required permissions and a user in other domain

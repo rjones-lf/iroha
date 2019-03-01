@@ -13,6 +13,8 @@ static constexpr shared_model::interface::types::TransactionsNumberType
     kTxPageSize(10);
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-209 remove, covered by field validator test
+ *
  * C346 Pass an empty asset id
  * @given a user with kGetAllAccAstTxs permission
  * @when the user tries to retrieve a list of own asset transactions specifying
@@ -28,6 +30,9 @@ TEST_F(AccountAssetTxsFixture, ReadEmptyAssetHavingAllTxsPermission) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-209 convert to a SFV integration test
+ * (no such test in postgres_query_executor_test)
+ *
  * C347 Pass a non existing asset id
  * @given a user with kGetAllAccAstTxs permission
  * @when the user tries tor retrieve a list of own asset transactions specifying
@@ -47,6 +52,9 @@ TEST_F(AccountAssetTxsFixture,
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-209 convert to a SFV integration test
+ * (no such test in postgres_query_executor_test)
+ *
  * @given a user with kGetAllAccAstTxs permission
  * @when the user tries to retrieve a list of own asset transactions, which
  * contain a transaction with addAssetQuantity command
@@ -67,6 +75,9 @@ TEST_F(AccountAssetTxsFixture, DISABLED_OwnTxsIncludingAddAssetQuantity) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-209 convert to a SFV integration test
+ * (no such test in postgres_query_executor_test)
+ *
  * @given a user with kGetAllAccAstTxs permission
  * @when the user tries to retrieve a list of own asset transactions, which
  * contain a transaction with subtractAssetQuantity command

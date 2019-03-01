@@ -36,6 +36,11 @@ class RemoveSignatory : public AcceptanceFixture {
 };
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-228 "Basic" tests should be replaced with a
+ * common acceptance test
+ * the second part of the test is covered by
+ * postgres_executor_test RemoveSignatory.NoSuchSignatory
+ *
  * C264 Remove signatory from own account
  * C267 Remove signatory more than once
  * @given some user with CanRemoveSignatory permission and its signatory
@@ -62,6 +67,9 @@ TEST_F(RemoveSignatory, Basic) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-221 remove, covered by
+ * postgres_executor_test RemoveSignatory.NoPerms
+ *
  * C263 RemoveSignatory without such permissions
  * @given some user without CanRemoveSignatory permission and its signatory
  * @when execute tx with RemoveSignatory where the first is a creator and the
@@ -84,6 +92,9 @@ TEST_F(RemoveSignatory, NoPermission) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-221 remove, covered by
+ * postgres_executor_test RemoveSignatory.ValidGrantablePerm
+ *
  * C265 Remove signatory from granted account
  * @given some user with CanRemoveMySignatory permission and its signatory with
  *        granted CanRemoveMySignatory
@@ -113,10 +124,13 @@ TEST_F(RemoveSignatory, GrantedPermission) {
 }
 
 /**
- * @given some user with CanRemoveMySignatory permission and its signatory
- *        without granted CanRemoveMySignatory
- * @when execute tx with RemoveSignatory where the second is a creator and the
- *       second's key is removed as a signatory
+ * TODO mboldyrev 18.01.2019 IR-221 remove, covered by
+ * postgres_executor_test RemoveSignatory.NoPerms
+ *
+ * @given first user with CanRemoveMySignatory permission and second without it
+ *        second user's key is added to first user's signatories
+ * @when second user executes RemoveSignatory to remove his key from the first
+ *       user's signatories
  * @then there is no tx in proposal
  */
 TEST_F(RemoveSignatory, NonGrantedPermission) {
@@ -138,6 +152,9 @@ TEST_F(RemoveSignatory, NonGrantedPermission) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-221 remove, covered by
+ * postgres_executor_test RemoveSignatory.NoAccount
+ *
  * @given some user with CanRemoveSignatory permission
  * @when execute tx with RemoveSignatory with inexistent user
  * @then there is no tx in proposal
@@ -154,7 +171,9 @@ TEST_F(RemoveSignatory, NonExistentUser) {
 }
 
 /**
- * C266 Remove signatory with an invalid public key
+ * TODO mboldyrev 18.01.2019 IR-221 remove, covered by field validator test
+ *
+ * C266 Remove signatory with an incorrectly formed public key
  * @given some user with CanRemoveSignatory permission
  * @when execute tx with RemoveSignatory with invalid public key
  * @then the tx is stateless invalid
@@ -170,6 +189,9 @@ TEST_F(RemoveSignatory, InvalidKey) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-221 remove, covered by
+ * postgres_executor_test RemoveSignatory.NoSuchSignatory
+ *
  * @given some user with CanRemoveSignatory permission
  * @when execute tx with RemoveSignatory with a key which isn't associated with
  *       any user
@@ -186,6 +208,9 @@ TEST_F(RemoveSignatory, NonExistedKey) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-221 remove, covered by
+ * postgres_executor_test RemoveSignatory.SignatoriesLessThanQuorum
+ *
  * C268 Remove signatory so that account may have less signatories than the
  *      quorum
  * @given some user with CanRemoveSignatory permission, which account quorum is

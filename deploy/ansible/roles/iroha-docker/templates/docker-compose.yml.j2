@@ -25,7 +25,7 @@ services:
     depends_on:
       - {{ node.human_hostname }}-postgres
     networks:
-      - iroha-net
+      - {{ iroha_network_name }}
       - iroha-db-net
 
   {{ node.human_hostname }}-postgres:
@@ -49,8 +49,8 @@ volumes:
 {% endfor %}
 
 networks:
-  iroha-net:
+  {{ iroha_network_name }}:
     external:
-      name: iroha-net
+      name: {{ iroha_network_name }}
   iroha-db-net:
     name: iroha-db-net

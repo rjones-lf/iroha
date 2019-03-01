@@ -23,7 +23,7 @@ namespace iroha {
   namespace simulator {
 
     struct RoundData {
-      std::shared_ptr<shared_model::interface::Proposal> proposal;
+      std::shared_ptr<const shared_model::interface::Proposal> proposal;
       std::shared_ptr<shared_model::interface::Block> block;
     };
 

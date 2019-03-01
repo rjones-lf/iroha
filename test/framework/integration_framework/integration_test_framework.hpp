@@ -67,7 +67,8 @@ namespace integration_framework {
 
   class IntegrationTestFramework {
    private:
-    using ProposalType = std::shared_ptr<shared_model::interface::Proposal>;
+    using ProposalType =
+        std::shared_ptr<const shared_model::interface::Proposal>;
     using VerifiedProposalType =
         std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>;
     using BlockType = std::shared_ptr<shared_model::interface::Block>;

@@ -10,6 +10,7 @@
 #include "consensus/yac/impl/yac_crypto_provider_impl.hpp"
 #include "consensus/yac/impl/yac_gate_impl.hpp"
 #include "consensus/yac/impl/yac_hash_provider_impl.hpp"
+#include "consensus/yac/storage/buffered_cleanup_strategy.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
 
@@ -70,8 +71,11 @@ namespace iroha {
               async_call,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               common_objects_factory) {
+        std::shared_ptr<iroha::consensus::yac::CleanupStrategy>
+            cleanup_strategy = std::make_shared<
+                iroha::consensus::yac::BufferedCleanupStrategy>();
         return Yac::create(
-            YacVoteStorage(),
+            YacVoteStorage(cleanup_strategy),
             createNetwork(std::move(async_call)),
             createCryptoProvider(keypair, std::move(common_objects_factory)),
             createTimer(delay_milliseconds),

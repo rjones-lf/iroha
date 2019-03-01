@@ -41,7 +41,8 @@ def testSteps(String buildDir, List environment, String testList) {
 }
 
 def buildSteps(int parallelism, List compilerVersions, String build_type, boolean specialBranch, boolean coverage,
-      boolean testing, String testList, boolean cppcheck, boolean sonar, boolean docs, boolean packagebuild, boolean sanitize, boolean fuzzing, List environment) {
+      boolean testing, String testList, boolean cppcheck, boolean sonar, boolean docs, boolean packagebuild,
+      boolean sanitize, boolean fuzzing, boolean useBTF, List environment) {
   withEnv(environment) {
     scmVars = checkout scm
     def build = load '.jenkinsci-new/build.groovy'
@@ -99,7 +100,8 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
             -DTESTING=${cmakeBooleanOption[testing]} \
             -DFUZZING=${cmakeBooleanOption[fuzzing]} \
             -DPACKAGE_DEB=${cmakeBooleanOption[packagebuild]} \
-            -DPACKAGE_TGZ=${cmakeBooleanOption[packagebuild]} ${cmakeOptions}")
+            -DPACKAGE_TGZ=${cmakeBooleanOption[packagebuild]} \
+            -DUSE_BTF=${cmakeBooleanOption[useBTF]} ${cmakeOptions}")
           build.cmakeBuild(buildDir, cmakeBuildOptions, parallelism)
         }
         if (testing) {

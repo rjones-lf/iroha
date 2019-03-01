@@ -12,7 +12,7 @@
 
 namespace shared_model {
   namespace proto {
-    class QueryPayloadMeta FINAL
+    class QueryPayloadMeta final
         : public CopyableProto<interface::QueryPayloadMeta,
                                iroha::protocol::QueryPayloadMeta,
                                QueryPayloadMeta> {

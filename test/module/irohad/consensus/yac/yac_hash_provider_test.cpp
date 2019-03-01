@@ -43,7 +43,7 @@ TEST(YacHashProviderTest, MakeYacHashTest) {
   auto peer = makePeer("127.0.0.1", shared_model::crypto::PublicKey("111"));
   auto ledger_peers = std::make_shared<PeerList>(PeerList{peer});
   auto ledger_state = std::make_shared<LedgerState>(ledger_peers);
-  auto proposal = std::make_shared<MockProposal>();
+  auto proposal = std::make_shared<const MockProposal>();
   EXPECT_CALL(*proposal, hash())
       .WillRepeatedly(
           ReturnRefOfCopy(shared_model::crypto::Hash(std::string())));

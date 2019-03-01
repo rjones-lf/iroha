@@ -138,10 +138,13 @@ namespace iroha {
                                *batch_parser_);
 
       // Since proposal came from ordering gate it was already validated.
-      // All transactions has been validated as well
+      // All transactions are validated as well
       // This allows for unsafe construction of proposal
-      validation_result->verified_proposal = factory_->unsafeCreateProposal(
-          proposal.height(), proposal.createdTime(), valid_txs);
+      validation_result->verified_proposal =
+          std::const_pointer_cast<const shared_model::interface::Proposal>(
+              std::shared_ptr<shared_model::interface::Proposal>(
+                  factory_->unsafeCreateProposal(
+                      proposal.height(), proposal.createdTime(), valid_txs)));
 
       log_->info("transactions in verified proposal: {}",
                  validation_result->verified_proposal->transactions().size());

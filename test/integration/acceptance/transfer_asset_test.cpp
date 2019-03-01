@@ -72,6 +72,10 @@ class TransferAsset : public AcceptanceFixture {
 };
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-228 "Basic" tests should be replaced with a
+ * common acceptance test
+ * also covered by postgres_executor_test TransferAccountAssetTest.Valid
+ *
  * @given pair of users with all required permissions
  * @when execute tx with TransferAsset command
  * @then there is the tx in proposal
@@ -86,6 +90,9 @@ TEST_F(TransferAsset, Basic) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 remove, covered by
+ * postgres_executor_test TransferAccountAssetTest.NoPerms
+ *
  * @given pair of users
  *        AND the first user without can_transfer permission
  * @when execute tx with TransferAsset command
@@ -105,6 +112,9 @@ TEST_F(TransferAsset, WithoutCanTransfer) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 convert to a SFV integration test
+ * (not covered by postgres_executor_test)
+ *
  * @given pair of users
  *        AND the second user without can_receive permission
  * @when execute tx with TransferAsset command
@@ -126,6 +136,9 @@ TEST_F(TransferAsset, WithoutCanReceive) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 remove, covered by
+ * postgres_executor_test TransferAccountAssetTest.NoAccount
+ *
  * @given some user with all required permissions
  * @when execute tx with TransferAsset command to nonexistent destination
  * @then there is an empty verified proposal
@@ -145,6 +158,9 @@ TEST_F(TransferAsset, NonexistentDest) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 remove, covered by
+ * postgres_executor_test TransferAccountAssetTest.NoAsset
+ *
  * @given pair of users with all required permissions
  * @when execute tx with TransferAsset command with nonexistent asset
  * @then there is an empty verified proposal
@@ -165,6 +181,8 @@ TEST_F(TransferAsset, NonexistentAsset) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 convert to a field validator unit test
+ *
  * @given pair of users with all required permissions
  * @when execute tx with TransferAsset command with negative amount
  * @then the tx hasn't passed stateless validation
@@ -180,6 +198,8 @@ TEST_F(TransferAsset, NegativeAmount) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 remove, covered by field validator test
+ *
  * @given pair of users with all required permissions
  * @when execute tx with TransferAsset command with zero amount
  * @then the tx hasn't passed stateless validation
@@ -195,6 +215,8 @@ TEST_F(TransferAsset, ZeroAmount) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 remove, covered by field validator test
+ *
  * @given pair of users with all required permissions
  * @when execute tx with TransferAsset command with empty-str description
  * @then it passed to the proposal
@@ -211,6 +233,8 @@ TEST_F(TransferAsset, EmptyDesc) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 remove, covered by field validator test
+ *
  * @given pair of users with all required permissions
  * @when execute tx with TransferAsset command with very long description
  * @then the tx hasn't passed stateless validation
@@ -229,6 +253,9 @@ TEST_F(TransferAsset, LongDesc) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 remove, covered by
+ * postgres_executor_test TransferAccountAssetTest.Overdraft
+ *
  * @given pair of users with all required permissions
  * @when execute tx with TransferAsset command with amount more, than user has
  * @then there is an empty verified proposal
@@ -247,6 +274,9 @@ TEST_F(TransferAsset, MoreThanHas) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 remove, covered by
+ * postgres_executor_test TransferAccountAssetTest.OverflowDestination
+ *
  * @given pair of users with all required permissions, and tx sender's balance
  * is replenished if required
  * @when execute two txes with TransferAsset command with amount more than a
@@ -276,6 +306,8 @@ TEST_F(TransferAsset, Uint256DestOverflow) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 convert to a TransactionValidator unit test
+ *
  * @given some user with all required permissions
  * @when execute tx with TransferAsset command where the source and destination
  * accounts are the same
@@ -293,6 +325,9 @@ TEST_F(TransferAsset, SourceIsDest) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 convert to a SFV integration test
+ * (not covered by postgres_executor_test)
+ *
  * @given some user with all required permission
  * @when execute tx with TransferAsset command where the destination user's
  * domain differ from the source user one
@@ -326,6 +361,8 @@ TEST_F(TransferAsset, InterDomain) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 remove, covered by field validator test
+ *
  * @given a pair of users with all required permissions
  *        AND asset with big precision
  * @when asset is added and then TransferAsset is called

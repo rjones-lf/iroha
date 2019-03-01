@@ -111,24 +111,6 @@ function(compile_proto_to_grpc_cpp PROTO)
   compile_proto_only_grpc_to_cpp(${PROTO} "${ARGN}")
 endfunction()
 
-function(compile_proto_to_python PROTO)
-  string(REGEX REPLACE "\\.proto$" "_pb2.py" PY_PB ${PROTO})
-  if (MSVC)
-    set(GEN_COMMAND "${Protobuf_PROTOC_EXECUTABLE}")
-    set(GEN_ARGS ${Protobuf_INCLUDE_DIR})
-  else()
-    set(GEN_COMMAND ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=${protobuf_LIBRARY_DIR}:$ENV{LD_LIBRARY_PATH} "${protoc_EXECUTABLE}")
-    set(GEN_ARGS ${protobuf_INCLUDE_DIR})
-  endif()
-  add_custom_command(
-      OUTPUT ${SWIG_BUILD_DIR}/${PY_PB}
-      COMMAND ${GEN_COMMAND}
-      ARGS -I${GEN_ARGS} -I${SM_SCHEMA_DIR} --python_out=${SWIG_BUILD_DIR} ${PROTO}
-      DEPENDS protoc ${SM_SCHEMA_DIR}/${PROTO}
-      WORKING_DIRECTORY ${IROHA_SCHEMA_DIR}
-      )
-endfunction()
-
 
 macro(set_target_description target description url commit)
   set_package_properties(${target}

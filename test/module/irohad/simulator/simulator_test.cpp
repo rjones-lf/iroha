@@ -118,8 +118,9 @@ auto makeProposal(int height) {
                       .createdTime(iroha::time::now())
                       .transactions(txs)
                       .build();
-  return std::shared_ptr<shared_model::interface::Proposal>(
-      std::make_shared<shared_model::proto::Proposal>(std::move(proposal)));
+  return std::shared_ptr<const shared_model::interface::Proposal>(
+      std::make_shared<const shared_model::proto::Proposal>(
+          std::move(proposal)));
 }
 
 auto makeTx() {

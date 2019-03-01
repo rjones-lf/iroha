@@ -103,7 +103,7 @@ class YacGateTest : public ::testing::Test {
   Signed expected_signed{"expected_signed"};
   Hash prev_hash{"prev hash"};
   YacHash expected_hash;
-  std::shared_ptr<shared_model::interface::Proposal> expected_proposal;
+  std::shared_ptr<const shared_model::interface::Proposal> expected_proposal;
   std::shared_ptr<shared_model::interface::Block> expected_block;
   VoteMessage message;
   CommitMessage commit_message;

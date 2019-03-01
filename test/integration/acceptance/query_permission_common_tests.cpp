@@ -20,6 +20,8 @@ using QueryPermissionTestingTypes =
 TYPED_TEST_CASE(QueryPermissionFixture, QueryPermissionTestingTypes);
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-219 remove, covered by field validator test
+ *
  * Get data from a non-existing account
  * @given a user with permission to read all accounts
  * @when tries to retrieve data from a non-existing
@@ -39,6 +41,8 @@ TYPED_TEST(QueryPermissionFixture,
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-219 remove, covered by field validator test
+ *
  * Pass an empty account id
  * @given a user with permission to read all accounts
  * @when the user tries to retrieve data from an account with empty id
@@ -56,6 +60,8 @@ TYPED_TEST(QueryPermissionFixture, ReadEmptyAccountHavingPermissionForAll) {
 }
 
 /*
+ * TODO mboldyrev 18.01.2019 IR-219 convert to a SFV integration test
+ *
  * Below are test cases that check different combinations of permission modes
  * (1 - no permissions,   2 - can_get_my_*,
  *  3 - can_get_domain_*, 4 - can_get_all_*)
