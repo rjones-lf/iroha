@@ -67,7 +67,7 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveOneVote) {
  * Test provide scenario
  * when yac cold started and achieve supermajority of  votes
  */
-TEST_F(YacTest, YacWhenColdStartAndAchieveSupermajorityOfVotes) {
+TEST_F(YacTest, DISABLED_YacWhenColdStartAndAchieveSupermajorityOfVotes) {
   cout << "----------|Start => receive supermajority of votes"
           "|----------"
        << endl;
@@ -130,7 +130,7 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveCommitMessage) {
  * @when receive supermajority of votes for a hash
  * @then commit is sent to the network before notifying subscribers
  */
-TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyVote) {
+TEST_F(YacTest, DISABLED_PropagateCommitBeforeNotifyingSubscribersApplyVote) {
   EXPECT_CALL(*crypto, verify(_))
       .Times(default_peers.size())
       .WillRepeatedly(Return(true));
