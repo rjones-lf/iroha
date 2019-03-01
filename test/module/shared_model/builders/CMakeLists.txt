@@ -4,5 +4,4 @@
 #
 
 add_subdirectory(protobuf)
-add_subdirectory(common_objects)
 add_subdirectory(transaction_responses)

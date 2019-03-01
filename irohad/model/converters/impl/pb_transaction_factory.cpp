@@ -29,8 +29,8 @@ namespace iroha {
 
         for (const auto &sig_obj : tx.signatures) {
           auto proto_signature = pbtx.add_signatures();
-          proto_signature->set_public_key(sig_obj.pubkey.to_string());
-          proto_signature->set_signature(sig_obj.signature.to_string());
+          proto_signature->set_public_key(sig_obj.pubkey.to_hexstring());
+          proto_signature->set_signature(sig_obj.signature.to_hexstring());
         }
         return pbtx;
       }
@@ -47,8 +47,8 @@ namespace iroha {
 
         for (const auto &pb_sig : pb_tx.signatures()) {
           model::Signature sig{};
-          sig.pubkey = pubkey_t::from_string(pb_sig.public_key());
-          sig.signature = sig_t::from_string(pb_sig.signature());
+          sig.pubkey = pubkey_t::from_hexstring(pb_sig.public_key());
+          sig.signature = sig_t::from_hexstring(pb_sig.signature());
           tx.signatures.push_back(sig);
         }
 

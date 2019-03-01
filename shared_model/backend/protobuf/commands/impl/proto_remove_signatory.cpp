@@ -4,6 +4,7 @@
  */
 
 #include "backend/protobuf/commands/proto_remove_signatory.hpp"
+#include "cryptography/hash.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -12,7 +13,7 @@ namespace shared_model {
     RemoveSignatory::RemoveSignatory(CommandType &&command)
         : CopyableProto(std::forward<CommandType>(command)),
           remove_signatory_{proto_->remove_signatory()},
-          pubkey_{remove_signatory_.public_key()} {}
+          pubkey_{crypto::Hash::fromHexString(remove_signatory_.public_key())} {}
 
     template RemoveSignatory::RemoveSignatory(RemoveSignatory::TransportType &);
     template RemoveSignatory::RemoveSignatory(

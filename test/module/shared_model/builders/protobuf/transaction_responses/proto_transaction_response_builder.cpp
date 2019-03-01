@@ -60,11 +60,13 @@ TYPED_TEST(ProtoTransactionStatusBuilderTest, TestStatusType) {
   auto expected_status = TypeParam::status;
   auto expected_hash = std::string(32, '1');
 
-  auto response = (TransactionStatusBuilder().*TypeParam::member)()
-                      .txHash(shared_model::crypto::Hash(expected_hash))
-                      .build();
+  auto response =
+      (TransactionStatusBuilder().*TypeParam::member)()
+          .txHash(shared_model::crypto::Hash::fromHexString(expected_hash))
+          .build();
 
-  ASSERT_NO_THROW(boost::get<const StatusType &>(response.get()));
+  ASSERT_NO_THROW(boost::get<const StatusType&>(
+      response.get()));
 
   auto proto_status = response.getTransport();
   ASSERT_EQ(proto_status.tx_status(), expected_status);
@@ -81,7 +83,7 @@ TEST(ProtoTransactionStatusBuilderTest, SeveralObjectsFromOneBuilder) {
   auto expected_hash = std::string(32, '1');
 
   auto state = TransactionStatusBuilder().notReceived().txHash(
-      shared_model::crypto::Hash(expected_hash));
+      shared_model::crypto::Hash::fromHexString(expected_hash));
 
   auto response1 = state.build();
   auto response2 = state.build();

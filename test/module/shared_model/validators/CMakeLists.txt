@@ -24,6 +24,7 @@ addtest(proto_query_validator_test
     )
 target_link_libraries(proto_query_validator_test
     shared_model_proto_backend
+    shared_model_stateless_validation
     )
 
 addtest(field_validator_test
@@ -63,5 +64,14 @@ addtest(proto_block_validator_test
     )
 target_link_libraries(proto_block_validator_test
     shared_model_proto_backend
+    shared_model_stateless_validation
+    )
+
+addtest(proposal_validator_test
+    proposal_validator_test.cpp
+    )
+target_link_libraries(proposal_validator_test
+    shared_model_proto_backend
+    shared_model_interfaces_factories
     shared_model_stateless_validation
     )

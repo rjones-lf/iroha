@@ -32,5 +32,5 @@ boost::optional<types::HashType> TxPaginationMeta::firstTxHash() const {
       == TransportType::OptFirstTxHashCase::OPT_FIRST_TX_HASH_NOT_SET) {
     return boost::none;
   }
-  return types::HashType(proto_->first_tx_hash());
+  return types::HashType::fromHexString(proto_->first_tx_hash());
 }

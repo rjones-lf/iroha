@@ -3,7 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "parser.hpp"
+#include "parser/parser.hpp"
+
+#include <cctype>
+#include <ciso646>
 
 namespace parser {
 

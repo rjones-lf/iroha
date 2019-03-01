@@ -5,10 +5,11 @@
 
 #include <algorithm>
 #include <iterator>
-#include <boost/optional.hpp>
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include <boost/optional.hpp>
 
 #ifndef IROHA_PARSER_HPP
 #define IROHA_PARSER_HPP

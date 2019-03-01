@@ -43,6 +43,9 @@ import hashlib
 import operator
 import sys
 
+if sys.version_info < (3, 6):
+    import sha3
+
 __version__ = "1.0.dev0"
 
 # Useful for very coarse version differentiation.
@@ -56,10 +59,8 @@ else:
     int2byte = chr
     range = xrange
 
-
     def indexbytes(buf, i):
         return ord(buf[i])
-
 
     def intlist2bytes(l):
         return b"".join(chr(c) for c in l)

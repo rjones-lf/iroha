@@ -14,11 +14,13 @@
 #include "cryptography/hash.hpp"
 #include "datetime/time.hpp"
 #include "framework/test_subscriber.hpp"
-#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
-#include "module/shared_model/builders/common_objects/peer_builder.hpp"
-#include "module/shared_model/builders/protobuf/common_objects/proto_peer_builder.hpp"
+#include "module/irohad/ametsuchi/mock_block_query.hpp"
+#include "module/irohad/ametsuchi/mock_block_query_factory.hpp"
+#include "module/irohad/ametsuchi/mock_peer_query.hpp"
+#include "module/irohad/ametsuchi/mock_peer_query_factory.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 #include "network/impl/block_loader_impl.hpp"
 #include "network/impl/block_loader_service.hpp"
 #include "validators/default_validator.hpp"
@@ -68,18 +70,8 @@ class BlockLoaderTest : public testing::Test {
     builder.RegisterService(service.get());
     server = builder.BuildAndStart();
 
-    shared_model::builder::PeerBuilder<
-        shared_model::proto::PeerBuilder,
-        shared_model::validation::FieldValidator>()
-        .address("0.0.0.0:" + std::to_string(port))
-        .pubkey(peer_key)
-        .build()
-        .match(
-            [&](iroha::expected::Value<
-                std::shared_ptr<shared_model::interface::Peer>> &v) {
-              peer = std::move(v.value);
-            },
-            [](iroha::expected::Error<std::shared_ptr<std::string>>) {});
+    address = "0.0.0.0:" + std::to_string(port);
+    peer = makePeer(address, peer_key);
 
     ASSERT_TRUE(server);
     ASSERT_NE(port, 0);
@@ -130,7 +122,8 @@ class BlockLoaderTest : public testing::Test {
   const Hash kPrevHash =
       Hash(std::string(DefaultCryptoAlgorithmType::kHashLength, '0'));
 
-  std::shared_ptr<shared_model::interface::Peer> peer;
+  std::shared_ptr<MockPeer> peer;
+  std::string address;
   PublicKey peer_key =
       DefaultCryptoAlgorithmType::generateKeypair().publicKey();
   Keypair key = DefaultCryptoAlgorithmType::generateKeypair();

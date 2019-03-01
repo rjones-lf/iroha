@@ -8,9 +8,9 @@
 #include <grpc++/grpc++.h>
 #include <memory>
 
-#include "consensus/yac/messages.hpp"
 #include "consensus/yac/storage/yac_common.hpp"
 #include "consensus/yac/transport/yac_pb_converters.hpp"
+#include "consensus/yac/vote_message.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "logger/logger.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
@@ -68,7 +68,11 @@ namespace iroha {
         async_call_->log_->info(
             "Receive votes[size={}] from {}", state.size(), context->peer());
 
-        handler_.lock()->onState(state);
+        if (auto notifications = handler_.lock()) {
+          notifications->onState(std::move(state));
+        } else {
+          async_call_->log_->error("Unable to lock the subscriber");
+        }
         return grpc::Status::OK;
       }
 

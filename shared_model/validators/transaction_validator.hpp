@@ -36,11 +36,17 @@ namespace shared_model {
     /**
      * Visitor used by transaction validator to validate each command
      * @tparam FieldValidator - field validator type
+     * @note this class is not thread safe and never going to be
+     * so copy constructor and assignment operator are disabled explicitly
      */
     template <typename FieldValidator>
     class CommandValidatorVisitor
         : public boost::static_visitor<ReasonsGroupType> {
      public:
+      CommandValidatorVisitor(const CommandValidatorVisitor &) = delete;
+      CommandValidatorVisitor &operator=(const CommandValidatorVisitor &) =
+          delete;
+
       CommandValidatorVisitor(
           const FieldValidator &validator = FieldValidator())
           : validator_(validator) {}
@@ -266,7 +272,7 @@ namespace shared_model {
         }
 
         for (const auto &command : tx.commands()) {
-          auto reason = boost::apply_visitor(command_validator_, command.get());
+          auto reason = boost::apply_visitor(CommandValidator(), command.get());
           if (not reason.second.empty()) {
             answer.addReason(std::move(reason));
           }
@@ -277,10 +283,8 @@ namespace shared_model {
 
      public:
       explicit TransactionValidator(
-          const FieldValidator &field_validator = FieldValidator(),
-          const CommandValidator &command_validator = CommandValidator())
-          : field_validator_(field_validator),
-            command_validator_(command_validator) {}
+          const FieldValidator &field_validator = FieldValidator())
+          : field_validator_(field_validator) {}
 
       /**
        * Applies validation to given transaction
@@ -308,7 +312,6 @@ namespace shared_model {
 
      protected:
       FieldValidator field_validator_;
-      CommandValidator command_validator_;
     };
 
   }  // namespace validation

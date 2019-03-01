@@ -19,6 +19,7 @@
 #include "backend/protobuf/proto_permission_to_string.hpp"
 #include "common/files.hpp"
 #include "framework/config_helper.hpp"
+#include "framework/sql_query.hpp"
 #include "logger/logger.hpp"
 #include "validators/field_validator.hpp"
 
@@ -29,16 +30,13 @@ namespace iroha {
      */
     class AmetsuchiTest : public ::testing::Test {
      public:
-      AmetsuchiTest()
-          : pgopt_("dbname=" + dbname_ + " "
-                   + integration_framework::getPostgresCredsOrDefault()) {}
-
-     protected:
-      virtual void disconnect() {
-        sql->close();
-      }
-
-      virtual void connect() {
+      static void SetUpTestCase() {
+        ASSERT_FALSE(boost::filesystem::exists(block_store_path))
+            << "Temporary block store " << block_store_path
+            << " directory already exists";
+        factory =
+            std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
+                shared_model::validation::FieldValidator>>();
         perm_converter_ =
             std::make_shared<shared_model::proto::ProtoPermissionToString>();
         auto converter =
@@ -56,46 +54,41 @@ namespace iroha {
                    [](iroha::expected::Error<std::string> &error) {
                      FAIL() << "StorageImpl: " << error.error;
                    });
-
-        sql = std::make_shared<soci::session>(soci::postgresql, pgopt_);
+        sql = std::make_shared<soci::session>(*soci::factory_postgresql(),
+                                              pgopt_);
+        sql_query =
+            std::make_unique<framework::ametsuchi::SqlQuery>(*sql, factory);
       }
 
-      void SetUp() override {
-        ASSERT_FALSE(boost::filesystem::exists(block_store_path))
-            << "Temporary block store " << block_store_path
-            << " directory already exists";
-        connect();
-      }
-
-      void TearDown() override {
+      static void TearDownTestCase() {
         sql->close();
         storage->dropStorage();
         boost::filesystem::remove_all(block_store_path);
       }
 
-      std::shared_ptr<soci::session> sql;
+      void TearDown() override {
+        storage->reset();
+      }
 
-      std::shared_ptr<shared_model::proto::ProtoCommonObjectsFactory<
+     protected:
+      static std::shared_ptr<soci::session> sql;
+
+      static std::shared_ptr<shared_model::proto::ProtoCommonObjectsFactory<
           shared_model::validation::FieldValidator>>
-          factory =
-              std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
-                  shared_model::validation::FieldValidator>>();
+          factory;
 
-      std::shared_ptr<StorageImpl> storage;
+      static std::shared_ptr<StorageImpl> storage;
+      static std::unique_ptr<framework::ametsuchi::SqlQuery> sql_query;
 
-      std::shared_ptr<shared_model::interface::PermissionToString>
+      static std::shared_ptr<shared_model::interface::PermissionToString>
           perm_converter_;
 
       // generate random valid dbname
-      std::string dbname_ = "d"
-          + boost::uuids::to_string(boost::uuids::random_generator()())
-                .substr(0, 8);
+      static std::string dbname_;
 
-      std::string pgopt_;
+      static std::string pgopt_;
 
-      std::string block_store_path = (boost::filesystem::temp_directory_path()
-                                      / boost::filesystem::unique_path())
-                                         .string();
+      static std::string block_store_path;
 
       // TODO(warchant): IR-1019 hide SQLs under some interface
 
@@ -188,6 +181,27 @@ CREATE TABLE IF NOT EXISTS index_by_id_height_asset (
 );
 )";
     };
+
+    std::shared_ptr<shared_model::proto::ProtoCommonObjectsFactory<
+        shared_model::validation::FieldValidator>>
+        AmetsuchiTest::factory = nullptr;
+    std::string AmetsuchiTest::block_store_path =
+        (boost::filesystem::temp_directory_path()
+         / boost::filesystem::unique_path())
+            .string();
+    std::string AmetsuchiTest::dbname_ = "d"
+        + boost::uuids::to_string(boost::uuids::random_generator()())
+              .substr(0, 8);
+    std::string AmetsuchiTest::pgopt_ = "dbname=" + AmetsuchiTest::dbname_ + " "
+        + integration_framework::getPostgresCredsOrDefault();
+
+    std::shared_ptr<shared_model::interface::PermissionToString>
+        AmetsuchiTest::perm_converter_ = nullptr;
+
+    std::shared_ptr<soci::session> AmetsuchiTest::sql = nullptr;
+    std::shared_ptr<StorageImpl> AmetsuchiTest::storage = nullptr;
+    std::unique_ptr<framework::ametsuchi::SqlQuery> AmetsuchiTest::sql_query =
+        nullptr;
   }  // namespace ametsuchi
 }  // namespace iroha
 

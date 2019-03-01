@@ -71,6 +71,71 @@ Response Structure
     "Quorum", "number of signatories needed to sign the transaction to make it valid", "0 < quorum ≤ 128", "5"
     "JSON data", "key-value account information", "JSON", "{ genesis: {name: alex} }"
 
+Possible Stateful Validation Errors
+-----------------------------------
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not get account", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Query's creator does not have any of the permissions to get account", "Grant the necessary permission: individual, global or domain one"
+    "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
+
+Get Block
+^^^^^^^^^
+
+Purpose
+-------
+
+Purpose of get block query is to get a specific block, using its height as an identifier
+
+Request Schema
+--------------
+
+.. code-block:: proto
+
+    message GetBlock {
+      uint64 height = 1;
+    }
+
+
+Request Structure
+-----------------
+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+    "Height", "height of the block to be retrieved", "0 < height < 2^64", "42"
+
+Response Schema
+---------------
+
+.. code-block:: proto
+
+    message BlockResponse {
+      Block block = 1;
+    }
+
+Response Structure
+------------------
+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+    "Block", "the retrieved block", "block structure", "block"
+
+Possible Stateful Validation Errors
+-----------------------------------
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not get block", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Query's creator does not have a permission to get block", "Grant the necessary permission"
+    "3", "Invalid height", "Supplied height is not uint_64 or greater than the ledger's height", "Check the height and try again"
+
 Get Signatories
 ^^^^^^^^^^^^^^^
 
@@ -114,6 +179,16 @@ Response Structure
     :widths: 15, 30, 20, 15
 
     "Keys", "an array of public keys", "`ed25519 <https://ed25519.cr.yp.to>`_", "292a8714694095edce6be799398ed5d6244cd7be37eb813106b217d850d261f2"
+
+Possible Stateful Validation Errors
+-----------------------------------
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not get signatories", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Query's creator does not have any of the permissions to get signatories", "Grant the necessary permission: individual, global or domain one"
+    "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
 
 Get Transactions
 ^^^^^^^^^^^^^^^^
@@ -160,6 +235,17 @@ Response Structure
 
     "Transactions", "an array of transactions", "Committed transactions", "{tx1, tx2…}"
 
+Possible Stateful Validation Errors
+-----------------------------------
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not get transactions", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Query's creator does not have any of the permissions to get transactions", "Grant the necessary permission: individual, global or domain one"
+    "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
+    "4", "Invalid hash", "At least one of the supplied hashes either does not exist in user's transaction list or creator of the query does not have permissions to see it", "Check the supplied hashes and try again"
+
 Get Pending Transactions
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -197,6 +283,15 @@ The response contains a list of `pending transactions <../core_concepts/glossary
 
         "Transactions", "an array of pending transactions", "Pending transactions", "{tx1, tx2…}"
 
+Possible Stateful Validation Errors
+-----------------------------------
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not get pending transactions", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Query's creator does not have any of the permissions to get pending transactions", "Grant the necessary permission: individual, global or domain one"
+    "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
 
 Get Account Transactions
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -205,7 +300,8 @@ Purpose
 -------
 
 In a case when a list of transactions per account is needed, `GetAccountTransactions` query can be formed.
-.. note:: This query uses pagination for query responses.
+
+.. note:: This query uses pagination for quicker and more convenient query responses.
 
 Request Schema
 --------------
@@ -248,6 +344,18 @@ Response Schema
         }
     }
 
+Possible Stateful Validation Errors
+-----------------------------------
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not get account transactions", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Query's creator does not have any of the permissions to get account transactions", "Grant the necessary permission: individual, global or domain one"
+    "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
+    "4", "Invalid pagination hash", "Supplied hash does not appear in any of the user's transactions", "Make sure hash is correct and try again"
+    "5", "Invalid account id", "User with such account id does not exist", "Make sure account id is correct"
+
 Response Structure
 ------------------
 
@@ -266,6 +374,7 @@ Purpose
 -------
 
 `GetAccountAssetTransactions` query returns all transactions associated with given account and asset.
+
 .. note:: This query uses pagination for query responses.
 
 Request Schema
@@ -322,6 +431,19 @@ Response Structure
     "All transactions size", "total number of transactions for given account and asset", "", "100"
     "Next transaction hash", "hash pointing to the next transaction after the last transaction in the page. Empty if a page contains the last transaction for given account and asset", "bddd58404d1315e0eb27902c5d7c8eb0602c16238f005773df406bc191308929"
 
+Possible Stateful Validation Errors
+-----------------------------------
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not get account asset transactions", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Query's creator does not have any of the permissions to get account asset transactions", "Grant the necessary permission: individual, global or domain one"
+    "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
+    "4", "Invalid pagination hash", "Supplied hash does not appear in any of the user's transactions", "Make sure hash is correct and try again"
+    "5", "Invalid account id", "User with such account id does not exist", "Make sure account id is correct"
+    "6", "Invalid asset id", "Asset with such asset id does not exist", "Make sure asset id is correct"
+
 Get Account Assets
 ^^^^^^^^^^^^^^^^^^
 
@@ -359,7 +481,7 @@ Response Schema
     message AccountAsset {
         string asset_id = 1;
         string account_id = 2;
-        Amount balance = 3;
+        string balance = 3;
     }
 
 Response Structure
@@ -371,7 +493,17 @@ Response Structure
 
     "Asset ID", "identifier of asset used for checking the balance", "<asset_name>#<domain_id>", "jpy#japan"
     "Account ID", "account which has this balance", "<account_name>@<domain_id>", "makoto@soramitsu"
-    "Balance", "balance of the asset", "Not less than 0", "200.20"
+    "Balance", "balance of the asset", "No less than 0", "200.20"
+
+Possible Stateful Validation Errors
+-----------------------------------
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not get account assets", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Query's creator does not have any of the permissions to get account assets", "Grant the necessary permission: individual, global or domain one"
+    "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
 
 Get Account Detail
 ^^^^^^^^^^^^^^^^^^
@@ -379,7 +511,7 @@ Get Account Detail
 Purpose
 -------
 
-To get details of the account, `GetAccountDetail` query can be used. Account details are key-value pairs, splitted into writers categories. Writers are accounts, which added the corresponding account detail. Example of such structure is:
+To get details of the account, `GetAccountDetail` query can be used. Account details are key-value pairs, splitted into writers categories. Writers are accounts, that added the corresponding account detail. Example of such structure is:
 
 .. code-block:: json
 
@@ -445,10 +577,20 @@ Response Structure
 
         "Detail", "key-value pairs with account details", "JSON", "see below"
 
+Possible Stateful Validation Errors
+-----------------------------------
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not get account detail", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Query's creator does not have any of the permissions to get account detail", "Grant the necessary permission: individual, global or domain one"
+    "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
+
 Usage Examples
 --------------
 
-Let's again consider the example of details from the beginning and see, how different variants of `GetAccountDetail` queries will change the resulting response.
+Again, let's consider the example of details from the beginning and see how different variants of `GetAccountDetail` queries will change the resulting response.
 
 .. code-block:: json
 
@@ -514,7 +656,7 @@ Now, the response will contain all details about this account, added by one spec
 
 **account_id, key and writer are set**
 
-Lastly, if all three field are set, result will contain details, added the specific writer and under the specific key, for example, if we asked for key "age" and writer "account@a_domain", we would get:
+Finally, if all three field are set, result will contain details, added the specific writer and under the specific key, for example, if we asked for key "age" and writer "account@a_domain", we would get:
 
 .. code-block:: json
 
@@ -530,7 +672,7 @@ Get Asset Info
 Purpose
 -------
 
-In order to know precision for given asset, and other related info in the future, such as a description of the asset, etc. user can send `GetAssetInfo` query.
+In order to get information on the given asset (as for now - its precision), user can send `GetAssetInfo` query.
 
 Request Schema
 --------------
@@ -566,14 +708,24 @@ Response Schema
     Please note that due to a known issue you would not get any exception if you pass invalid precision value.
     Valid range is: 0 <= precision <= 255
 
+Possible Stateful Validation Errors
+-----------------------------------
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not get asset info", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Query's creator does not have any of the permissions to get asset info", "Grant the necessary permission: individual, global or domain one"
+    "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
+
 Response Structure
-^^^^^^^^^^^^^^^^^^
+------------------
 
 .. csv-table::
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Asset ID", "identifier of asset used for checking the balance", "<asset_name>#<domain_id>", "jpy"
+    "Asset ID", "identifier of asset used for checking the balance", "<asset_name>#<domain_id>", "jpy#japan"
     "Domain ID", "domain related to this asset", "RFC1035 [#f1]_, RFC1123 [#f2]_", "japan"
     "Precision", "number of digits after comma", "0 <= precision <= 255", "2"
 
@@ -610,6 +762,16 @@ Response Structure
     :widths: 15, 30, 20, 15
 
     "Roles", "array of created roles in the network", "set of roles in the system", "{MoneyCreator, User, Admin, …}"
+
+Possible Stateful Validation Errors
+-----------------------------------
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not get roles", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Query's creator does not have any of the permissions to get roles", "Grant the necessary permission: individual, global or domain one"
+    "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
 
 Get Role Permissions
 ^^^^^^^^^^^^^^^^^^^^
@@ -654,6 +816,16 @@ Response Structure
     :widths: 15, 30, 20, 15
 
     "Permissions", "array of permissions related to the role", "string of permissions related to the role", "{can_add_asset_qty, …}"
+
+Possible Stateful Validation Errors
+-----------------------------------
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not get role permissions", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Query's creator does not have any of the permissions to get role permissions", "Grant the necessary permission: individual, global or domain one"
+    "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
 
 .. [#f1] https://www.ietf.org/rfc/rfc1035.txt
 .. [#f2] https://www.ietf.org/rfc/rfc1123.txt

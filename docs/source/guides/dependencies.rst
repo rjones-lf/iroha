@@ -184,37 +184,6 @@ Installation on macOS
 
     brew install boost
 
-SWIG
-----
-
-Installation on Ubuntu
-^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: shell
-
-    sudo apt install libpcre3-dev
-    wget http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
-    tar -xvf swig-3.0.12.tar.gz
-    cd swig-3.0.12
-    ./configure
-    make
-    make install
-    (cd ../; rm -rf swig-3.0.12);
-
-Installation on macOS
-^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: shell
-
-    brew install pcre
-    wget http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
-    tar -xvf swig-3.0.12.tar.gz
-    cd swig-3.0.12
-    ./configure
-    make
-    make install
-    (cd ../; rm -rf swig-3.0.12);
-
 
 Protobuf
 --------

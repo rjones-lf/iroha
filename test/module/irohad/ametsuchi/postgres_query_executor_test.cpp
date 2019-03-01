@@ -16,6 +16,7 @@
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
+#include "ametsuchi/mutable_storage.hpp"
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "datetime/time.hpp"
 #include "framework/result_fixture.hpp"
@@ -25,13 +26,13 @@
 #include "interfaces/query_responses/account_detail_response.hpp"
 #include "interfaces/query_responses/account_response.hpp"
 #include "interfaces/query_responses/asset_response.hpp"
+#include "interfaces/query_responses/block_response.hpp"
 #include "interfaces/query_responses/role_permissions.hpp"
 #include "interfaces/query_responses/roles_response.hpp"
 #include "interfaces/query_responses/signatories_response.hpp"
 #include "interfaces/query_responses/transactions_page_response.hpp"
 #include "interfaces/query_responses/transactions_response.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
-#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/pending_txs_storage/pending_txs_storage_mock.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
@@ -54,7 +55,7 @@ namespace {
   constexpr types::PrecisionType kAssetPrecision(1);
   // TODO mboldyrev 05.12.2018 IR-57 unify the common constants.
   constexpr size_t kHashLength = 32;
-  const std::string zero_string{kHashLength, '0'};
+  const std::string zero_string(kHashLength, '0');
   const std::string asset_id = "coin#domain";
   const std::string role = "role";
   const shared_model::interface::types::DomainIdType domain_id = "domain";
@@ -130,7 +131,8 @@ namespace iroha {
 
       void SetUp() override {
         AmetsuchiTest::SetUp();
-        sql = std::make_unique<soci::session>(soci::postgresql, pgopt_);
+        sql = std::make_unique<soci::session>(*soci::factory_postgresql(),
+                                              pgopt_);
 
         auto factory =
             std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
@@ -167,7 +169,7 @@ namespace iroha {
         return query_executor->createQueryExecutor(pending_txs_storage,
                                                    query_response_factory)
             | [&query](const auto &executor) {
-                return executor->validateAndExecute(query);
+                return executor->validateAndExecute(query, false);
               };
       }
 
@@ -213,6 +215,12 @@ namespace iroha {
           ErrorCodeType kNoPermissions = 2;
       static constexpr shared_model::interface::ErrorQueryResponse::
           ErrorCodeType kInvalidPagination = 4;
+      static constexpr shared_model::interface::ErrorQueryResponse::
+          ErrorCodeType kInvalidAccountId = 5;
+      static constexpr shared_model::interface::ErrorQueryResponse::
+          ErrorCodeType kInvalidAssetId = 6;
+      static constexpr shared_model::interface::ErrorQueryResponse::
+          ErrorCodeType kInvalidHeight = 3;
 
       void createDefaultAccount() {
         execute(*mock_command_factory->constructCreateAccount(
@@ -269,7 +277,7 @@ namespace iroha {
       ASSERT_TRUE(query_executor->createQueryExecutor(pending_txs_storage,
                                                       query_response_factory)
                   | [&blocks_query](const auto &executor) {
-                      return executor->validate(blocks_query);
+                      return executor->validate(blocks_query, false);
                     });
     }
 
@@ -284,7 +292,7 @@ namespace iroha {
       ASSERT_FALSE(query_executor->createQueryExecutor(pending_txs_storage,
                                                        query_response_factory)
                    | [&blocks_query](const auto &executor) {
-                       return executor->validate(blocks_query);
+                       return executor->validate(blocks_query, false);
                      });
     }
 
@@ -768,6 +776,106 @@ namespace iroha {
             ASSERT_EQ(cast_resp.detail(),
                       R"({"id@domain" : {"key" : "value"}})");
           });
+    }
+
+    class GetBlockExecutorTest : public QueryExecutorTest {
+     public:
+      // TODO [IR-257] Akvinikym 30.01.19: remove the method and use mocks
+      /**
+       * Commit some number of blocks to the storage
+       * @param blocks_amount - number of blocks to be committed
+       */
+      void commitBlocks(shared_model::interface::types::HeightType
+                            number_of_blocks = kLedgerHeight) {
+        std::unique_ptr<MutableStorage> ms;
+        auto storageResult = storage->createMutableStorage();
+        storageResult.match(
+            [&ms](iroha::expected::Value<std::unique_ptr<MutableStorage>>
+                      &storage) { ms = std::move(storage.value); },
+            [](iroha::expected::Error<std::string> &error) {
+              FAIL() << "MutableStorage: " << error.error;
+            });
+
+        auto prev_hash = shared_model::crypto::Hash(zero_string);
+        for (decltype(number_of_blocks) i = 1; i < number_of_blocks; ++i) {
+          auto block =
+              TestBlockBuilder()
+                  .transactions(std::vector<shared_model::proto::Transaction>{
+                      TestTransactionBuilder()
+                          .creatorAccountId(account_id)
+                          .createAsset(std::to_string(i), domain_id, 1)
+                          .build()})
+                  .height(i)
+                  .prevHash(prev_hash)
+                  .build();
+          prev_hash = block.hash();
+
+          if (not ms->apply(block)) {
+            FAIL() << "could not apply block to the storage";
+          }
+        }
+        storage->commit(std::move(ms));
+      }
+
+      static constexpr shared_model::interface::types::HeightType
+          kLedgerHeight = 3;
+    };
+
+    /**
+     * @given initialized storage @and permission to get block
+     * @when get block of valid height
+     * @then return block
+     */
+    TEST_F(GetBlockExecutorTest, Valid) {
+      const shared_model::interface::types::HeightType valid_height = 2;
+
+      addPerms({shared_model::interface::permissions::Role::kGetBlocks});
+      commitBlocks();
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account_id)
+                       .getBlock(valid_height)
+                       .build();
+      auto result = executeQuery(query);
+      checkSuccessfulResult<shared_model::interface::BlockResponse>(
+          std::move(result), [valid_height](const auto &cast_resp) {
+            ASSERT_EQ(cast_resp.block().height(), valid_height);
+          });
+    }
+
+    /**
+     * @given initialized storage @and permission to get block
+     * @when get block of height, greater than supposed ledger's one
+     * @then return error
+     */
+    TEST_F(GetBlockExecutorTest, InvalidHeight) {
+      const shared_model::interface::types::HeightType invalid_height = 123;
+
+      commitBlocks();
+      addPerms({shared_model::interface::permissions::Role::kGetBlocks});
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account_id)
+                       .getBlock(invalid_height)
+                       .build();
+      auto result = executeQuery(query);
+      checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
+          std::move(result), kInvalidHeight);
+    }
+
+    /**
+     * @given initialized storage @and no permission to get block
+     * @when get block
+     * @then return error
+     */
+    TEST_F(GetBlockExecutorTest, NoPermission) {
+      const shared_model::interface::types::HeightType height = 123;
+
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account_id)
+                       .getBlock(height)
+                       .build();
+      auto result = executeQuery(query);
+      checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
+          std::move(result), kNoPermissions);
     }
 
     class GetRolesExecutorTest : public QueryExecutorTest {
@@ -1312,12 +1420,12 @@ namespace iroha {
     }
 
     /**
-     * @given initialized storage, permission
+     * @given initialized storage, all permissions
      * @when get account transactions of non existing account
-     * @then Return empty account transactions
+     * @then return error
      */
-    TEST_F(GetAccountTransactionsExecutorTest, DISABLED_InvalidNoAccount) {
-      addPerms({shared_model::interface::permissions::Role::kGetAllAccTxs});
+    TEST_F(GetAccountTransactionsExecutorTest, InvalidNoAccount) {
+      addAllPerms();
 
       auto query = TestQueryBuilder()
                        .creatorAccountId(account_id)
@@ -1325,7 +1433,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
-          std::move(result), kNoStatefulError);
+          std::move(result), kInvalidAccountId);
     }
 
     // ------------------------/ tx pagination tests \----------------------- //
@@ -1580,11 +1688,48 @@ namespace iroha {
 
       auto query = TestQueryBuilder()
                        .creatorAccountId(account_id)
-                       .getAccountTransactions(another_account_id, kTxPageSize)
+                       .getAccountAssetTransactions(
+                           another_account_id, asset_id, kTxPageSize)
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
           std::move(result), kNoPermissions);
+    }
+
+    /**
+     * @given initialized storage, all permissions
+     * @when get account asset transactions of non-existing user
+     * @then corresponding error is returned
+     */
+    TEST_F(GetAccountAssetTransactionsExecutorTest, InvalidAccountId) {
+      addAllPerms();
+
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account_id)
+                       .getAccountAssetTransactions(
+                           "doge@noaccount", asset_id, kTxPageSize)
+                       .build();
+      auto result = executeQuery(query);
+      checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
+          std::move(result), kInvalidAccountId);
+    }
+
+    /**
+     * @given initialized storage, all permissions
+     * @when get account asset transactions of non-existing asset
+     * @then corresponding error is returned
+     */
+    TEST_F(GetAccountAssetTransactionsExecutorTest, InvalidAssetId) {
+      addAllPerms();
+
+      auto query =
+          TestQueryBuilder()
+              .creatorAccountId(account_id)
+              .getAccountAssetTransactions(account_id, "doge#coin", kTxPageSize)
+              .build();
+      auto result = executeQuery(query);
+      checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
+          std::move(result), kInvalidAssetId);
     }
 
     /**

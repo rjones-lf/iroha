@@ -7,12 +7,14 @@
 #define IROHA_CLI_INTERACTIVE_COMMON_CLI_HPP
 
 #include <algorithm>
-#include <boost/optional.hpp>
+#include <ciso646>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include <boost/optional.hpp>
 
 namespace parser {
   boost::optional<std::string> parseFirstCommand(std::string line);

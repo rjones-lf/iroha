@@ -8,10 +8,29 @@
 #include <string>
 
 #include <gtest/gtest.h>
-#include "bindings/model_crypto.hpp"
 #include "common/byteutils.hpp"
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "cryptography/keypair.hpp"
+#include "cryptography/seed.hpp"
 
 using namespace boost::process;
+
+namespace {
+  shared_model::crypto::Keypair fromPrivateKey(const std::string &private_key) {
+    if (private_key.size()
+        != shared_model::crypto::DefaultCryptoAlgorithmType::
+               kPrivateKeyLength) {
+      throw std::invalid_argument("input string has incorrect length "
+                                  + std::to_string(private_key.length()));
+    }
+    auto byte_string = iroha::hexstringToBytestring(private_key);
+    if (not byte_string) {
+      throw std::invalid_argument("invalid seed");
+    }
+    return shared_model::crypto::CryptoProviderEd25519Sha3::generateKeypair(
+        shared_model::crypto::Seed(*byte_string));
+  }
+}  // namespace
 
 namespace binary_test {
 
@@ -46,8 +65,7 @@ namespace binary_test {
         switch (binary_type) {
           case 'K': {
             if (not admin_key) {
-              admin_key = shared_model::bindings::ModelCrypto().fromPrivateKey(
-                  raw_payload);
+              admin_key = fromPrivateKey(raw_payload);
             }
             break;
           }

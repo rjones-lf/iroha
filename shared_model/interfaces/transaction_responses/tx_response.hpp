@@ -18,7 +18,7 @@ namespace shared_model {
     class StatelessValidTxResponse;
     class StatefulFailedTxResponse;
     class StatefulValidTxResponse;
-    class RejectTxResponse;
+    class RejectedTxResponse;
     class CommittedTxResponse;
     class MstExpiredResponse;
     class NotReceivedTxResponse;
@@ -47,7 +47,7 @@ namespace shared_model {
                                        StatelessValidTxResponse,
                                        StatefulFailedTxResponse,
                                        StatefulValidTxResponse,
-                                       RejectTxResponse,
+                                       RejectedTxResponse,
                                        CommittedTxResponse,
                                        MstExpiredResponse,
                                        NotReceivedTxResponse,

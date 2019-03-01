@@ -13,6 +13,9 @@ using namespace shared_model::interface::permissions;
 using namespace common_constants;
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-216 remove, covered by
+ * postgres_executor_test GrantPermissions.NoAccount
+ *
  * C256 Grant permission to a non-existing account
  * @given an account with rights to grant rights to other accounts
  * @when the account grants rights to non-existing account
@@ -38,6 +41,10 @@ TEST_F(GrantablePermissionsFixture, GrantToInexistingAccount) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-216 transform to command executor storage
+ * integration test
+ * the part with queries is covered by permission SFV integration tests
+ *
  * C257 Grant add signatory permission
  * @given an account with rights to grant rights to other accounts
  * AND the account grants add signatory rights to an existing account
@@ -74,6 +81,10 @@ TEST_F(GrantablePermissionsFixture, GrantAddSignatoryPermission) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-216 transform to command executor storage
+ * integration test
+ * the part with queries is covered by permission SFV integration tests
+ *
  * C258 Grant remove signatory permission
  * @given an account with rights to grant rights to other accounts
  * AND the account grants add and remove signatory rights to an existing account
@@ -128,6 +139,10 @@ TEST_F(GrantablePermissionsFixture, GrantRemoveSignatoryPermission) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-216 remove, covered by
+ * postgres_executor_test GrantPermissions.Valid
+ * and permission tests
+ *
  * C259 Grant set quorum permission
  * @given an account with rights to grant rights to other accounts
  * AND the account grants add signatory rights
@@ -177,6 +192,10 @@ TEST_F(GrantablePermissionsFixture, GrantSetQuorumPermission) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-216 transform to command executor storage
+ * integration test
+ * the part with queries is covered by permission SFV integration tests
+ *
  * C260 Grant set account detail permission
  * @given an account with rights to grant rights to other accounts
  * AND the account grants set account detail permission to a permittee
@@ -211,6 +230,10 @@ TEST_F(GrantablePermissionsFixture, GrantSetAccountDetailPermission) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-216 transform to command executor storage
+ * integration test
+ * the part with queries is covered by permission SFV integration tests
+ *
  * C261 Grant transfer permission
  * @given an account with rights to grant transfer of his/her assets
  * AND the account can receive assets
@@ -253,6 +276,10 @@ TEST_F(GrantablePermissionsFixture, GrantTransferPermission) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-216 remove, covered by
+ * postgres_executor_test GrantPermissions.NoPerms
+ * the part with queries is covered by permission SFV integration tests
+ *
  * C262 GrantPermission without such permissions
  * @given an account !without! rights to grant rights to other accounts
  * @when the account grants rights to an existing account
@@ -274,6 +301,9 @@ TEST_F(GrantablePermissionsFixture, GrantWithoutGrantPermissions) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-216 transform to command executor storage
+ * integration test
+ *
  * C263 GrantPermission more than once
  * @given an account with rights to grant rights to other accounts
  * AND an account that have already granted a permission to a permittee

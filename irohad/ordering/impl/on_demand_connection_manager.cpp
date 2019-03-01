@@ -9,6 +9,7 @@
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "ordering/impl/on_demand_common.hpp"
 
+using namespace iroha;
 using namespace iroha::ordering;
 
 OnDemandConnectionManager::OnDemandConnectionManager(
@@ -70,7 +71,7 @@ void OnDemandConnectionManager::onBatches(consensus::Round round,
             {round.block_round + 2, kNextCommitRoundConsumer});
 }
 
-boost::optional<OnDemandConnectionManager::ProposalType>
+boost::optional<std::shared_ptr<const OnDemandConnectionManager::ProposalType>>
 OnDemandConnectionManager::onRequestProposal(consensus::Round round) {
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
 

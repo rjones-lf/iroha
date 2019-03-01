@@ -2,6 +2,9 @@
  * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
+
+#include <ciso646>
+
 #include "common/instanceof.hpp"
 #include "model/block.hpp"
 #include "model/commands/add_asset_quantity.hpp"

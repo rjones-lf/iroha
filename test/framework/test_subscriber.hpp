@@ -98,7 +98,7 @@ namespace framework {
           std::function<void(std::exception_ptr)> error =
               [](std::exception_ptr) {},
           std::function<void()> completed = []() {}) {
-        unwrapped_.subscribe(
+        subscription_ = unwrapped_.subscribe(
             [this, subscriber](T val) {
               // verify before invariant
               this->strategy_->on_next_before(val);
@@ -133,9 +133,14 @@ namespace framework {
         return strategy_->validate();
       }
 
+      void unsubscribe() {
+        subscription_.unsubscribe();
+      }
+
      private:
       rxcpp::observable<T> unwrapped_;
       std::unique_ptr<VerificationStrategy<T>> strategy_;
+      rxcpp::composite_subscription subscription_;
     };
 
     /**
@@ -155,7 +160,8 @@ namespace framework {
      *   auto sub = make_test_subscriber<CallExact>(o, 1);
      */
     template <template <typename K> class S,
-              template <typename V, typename SO> class O,
+              template <typename V, typename SO>
+              class O,
               typename T,
               typename SourceOperator,
               typename... Args>

@@ -61,7 +61,7 @@ class StorageInitTest : public ::testing::Test {
   }
 
   void TearDown() override {
-    soci::session sql(soci::postgresql, pg_opt_without_dbname_);
+    soci::session sql(*soci::factory_postgresql(), pg_opt_without_dbname_);
     std::string query = "DROP DATABASE IF EXISTS " + dbname_;
     sql << query;
     boost::filesystem::remove_all(block_store_path);
@@ -87,7 +87,7 @@ TEST_F(StorageInitTest, CreateStorageWithDatabase) {
             SUCCEED();
           },
           [](const Error<std::string> &error) { FAIL() << error.error; });
-  soci::session sql(soci::postgresql, pg_opt_without_dbname_);
+  soci::session sql(*soci::factory_postgresql(), pg_opt_without_dbname_);
   int size;
   sql << "SELECT COUNT(datname) FROM pg_catalog.pg_database WHERE datname = "
          ":dbname",

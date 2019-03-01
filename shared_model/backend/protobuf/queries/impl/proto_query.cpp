@@ -12,6 +12,7 @@
 #include "backend/protobuf/queries/proto_get_account_detail.hpp"
 #include "backend/protobuf/queries/proto_get_account_transactions.hpp"
 #include "backend/protobuf/queries/proto_get_asset_info.hpp"
+#include "backend/protobuf/queries/proto_get_block.hpp"
 #include "backend/protobuf/queries/proto_get_pending_transactions.hpp"
 #include "backend/protobuf/queries/proto_get_role_permissions.hpp"
 #include "backend/protobuf/queries/proto_get_roles.hpp"
@@ -33,7 +34,8 @@ namespace {
                      shared_model::proto::GetRoles,
                      shared_model::proto::GetRolePermissions,
                      shared_model::proto::GetAssetInfo,
-                     shared_model::proto::GetPendingTransactions>;
+                     shared_model::proto::GetPendingTransactions,
+                     shared_model::proto::GetBlock>;
 
   /// list of types in proto variant
   using ProtoQueryListType = ProtoQueryVariantType::types;
@@ -117,12 +119,11 @@ namespace shared_model {
       }
 
       auto sig = impl_->proto_.mutable_signature();
-      sig->set_signature(crypto::toBinaryString(signed_blob));
-      sig->set_public_key(crypto::toBinaryString(public_key));
+      sig->set_signature(signed_blob.hex());
+      sig->set_public_key(public_key.hex());
 
       impl_->signatures_ =
           SignatureSetType<proto::Signature>{proto::Signature{*sig}};
-
       return true;
     }
 

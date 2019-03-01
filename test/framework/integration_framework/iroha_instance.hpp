@@ -70,8 +70,11 @@ namespace integration_framework {
     const size_t internal_port_;
     const std::chrono::milliseconds proposal_delay_;
     const std::chrono::milliseconds vote_delay_;
+    const std::chrono::minutes mst_expiration_time_;
     boost::optional<iroha::GossipPropagationStrategyParams>
         opt_mst_gossip_params_;
+    const std::chrono::milliseconds max_rounds_delay_;
+    const size_t stale_stream_max_rounds_;
 
    private:
     std::shared_ptr<TestIrohad> instance_;

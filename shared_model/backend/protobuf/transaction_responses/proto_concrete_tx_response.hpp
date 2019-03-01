@@ -40,7 +40,7 @@ namespace shared_model {
 
     using CommittedTxResponse = TrivialProto<interface::CommittedTxResponse,
                                              iroha::protocol::ToriiResponse>;
-    using RejectedTxResponse = TrivialProto<interface::RejectTxResponse,
+    using RejectedTxResponse = TrivialProto<interface::RejectedTxResponse,
                                             iroha::protocol::ToriiResponse>;
 
     // ---------------------------| Rest statuses |-----------------------------

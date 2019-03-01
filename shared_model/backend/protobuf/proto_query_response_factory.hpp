@@ -31,6 +31,10 @@ namespace shared_model {
           std::vector<std::string> roles,
           const crypto::Hash &query_hash) const override;
 
+      std::unique_ptr<interface::QueryResponse> createBlockResponse(
+          std::unique_ptr<interface::Block> block,
+          const crypto::Hash &query_hash) const override;
+
       std::unique_ptr<interface::QueryResponse> createErrorQueryResponse(
           ErrorQueryType error_type,
           interface::ErrorQueryResponse::ErrorMessageType error_msg,
@@ -55,7 +59,7 @@ namespace shared_model {
 
       std::unique_ptr<interface::QueryResponse> createTransactionsPageResponse(
           std::vector<std::unique_ptr<shared_model::interface::Transaction>>
-          transactions,
+              transactions,
           interface::types::TransactionsNumberType all_transactions_size,
           const crypto::Hash &query_hash) const override;
 

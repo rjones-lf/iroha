@@ -7,6 +7,7 @@
 
 #include <unordered_set>
 
+#include <boost/optional.hpp>
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/indirected.hpp>
 #include <boost/range/adaptor/transformed.hpp>
@@ -20,7 +21,9 @@
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/transaction.hpp"
 
+using namespace iroha;
 using namespace iroha::ordering;
+using TransactionBatchType = transport::OdOsNotification::TransactionBatchType;
 
 OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(
     size_t transaction_limit,
@@ -76,8 +79,11 @@ void OnDemandOrderingServiceImpl::onBatches(consensus::Round round,
                        return request_reject_round == reject_round
                            or (request_reject_round >= 2 and reject_round >= 2);
                      });
-    BOOST_ASSERT_MSG(it != current_proposals_.end(),
-                     "No place to store the batches!");
+    if (it == current_proposals_.end()) {
+      log_->critical("No place to store the batches!");
+      assert(false);  // terminate if in debug build
+      return;
+    }
     log_->debug("onBatches => collection will be inserted to {}", it->first);
   }
   std::for_each(unprocessed_batches.begin(),
@@ -86,7 +92,8 @@ void OnDemandOrderingServiceImpl::onBatches(consensus::Round round,
   log_->debug("onBatches => collection is inserted");
 }
 
-boost::optional<OnDemandOrderingServiceImpl::ProposalType>
+boost::optional<
+    std::shared_ptr<const OnDemandOrderingServiceImpl::ProposalType>>
 OnDemandOrderingServiceImpl::onRequestProposal(consensus::Round round) {
   // read lock
   std::shared_lock<std::shared_timed_mutex> guard(lock_);
@@ -97,13 +104,50 @@ OnDemandOrderingServiceImpl::onRequestProposal(consensus::Round round) {
               round,
               (proposal == proposal_map_.end()) ? "NOT " : "");
   if (proposal != proposal_map_.end()) {
-    return clone(*proposal->second);
+    return proposal->second;
   } else {
     return boost::none;
   }
 }
 
 // ---------------------------------| Private |---------------------------------
+
+/**
+ * Get transactions from the given batches queue. Does not break batches -
+ * continues getting all the transactions from the ongoing batch until the
+ * required amount is collected.
+ * @param requested_tx_amount - amount of transactions to get
+ * @param tx_batches_queue - the queue to get transactions from
+ * @param discarded_txs_amount - the amount of discarded txs
+
+ * @return transactions
+ */
+static std::vector<std::shared_ptr<shared_model::interface::Transaction>>
+getTransactions(size_t requested_tx_amount,
+                tbb::concurrent_queue<TransactionBatchType> &tx_batches_queue,
+                boost::optional<size_t &> discarded_txs_amount) {
+  TransactionBatchType batch;
+  std::vector<std::shared_ptr<shared_model::interface::Transaction>> collection;
+  std::unordered_set<std::string> inserted;
+
+  while (collection.size() < requested_tx_amount
+         and tx_batches_queue.try_pop(batch)
+         and inserted.insert(batch->reducedHash().hex()).second) {
+    collection.insert(
+        std::end(collection),
+        std::make_move_iterator(std::begin(batch->transactions())),
+        std::make_move_iterator(std::end(batch->transactions())));
+  }
+
+  if (discarded_txs_amount) {
+    *discarded_txs_amount = 0;
+    while (tx_batches_queue.try_pop(batch)) {
+      *discarded_txs_amount += boost::size(batch->transactions());
+    }
+  }
+
+  return collection;
+}
 
 void OnDemandOrderingServiceImpl::packNextProposals(
     const consensus::Round &round) {
@@ -114,9 +158,23 @@ void OnDemandOrderingServiceImpl::packNextProposals(
     if (it != current_proposals_.end()) {
       log_->debug("proposal found");
       if (not it->second.empty()) {
-        proposal_map_.emplace(round, emitProposal(round));
-        log_->debug("packNextProposal: data has been fetched for {}", round);
-        round_queue_.push(round);
+        log_->debug("Mutable proposal generation for round {}", round);
+        size_t discarded_txs_amount;
+        auto txs = getTransactions(transaction_limit_, it->second, discarded_txs_amount);
+        if (not txs.empty()) {
+          log_->debug("Number of transactions in proposal = {}", txs.size());
+          auto proposal = proposal_factory_->unsafeCreateProposal(
+              round.block_round,
+              iroha::time::now(),
+              std::move(txs) | boost::adaptors::indirected);
+          proposal_map_.emplace(round, std::move(proposal));
+          log_->debug(
+              "packNextProposal: data has been fetched for {}. "
+              "Discarded {} transactions.",
+              round,
+              discarded_txs_amount);
+          round_queue_.push(round);
+        }
       }
       current_proposals_.erase(it);
     }
@@ -177,37 +235,8 @@ void OnDemandOrderingServiceImpl::packNextProposals(
       {round.block_round, currentRejectRoundConsumer(round.reject_round)});
 }
 
-OnDemandOrderingServiceImpl::ProposalType
-OnDemandOrderingServiceImpl::emitProposal(const consensus::Round &round) {
-  log_->debug("Mutable proposal generation, {}", round);
-
-  TransactionBatchType batch;
-  std::vector<std::shared_ptr<shared_model::interface::Transaction>> collection;
-  std::unordered_set<std::string> inserted;
-
-  // outer method should guarantee availability of at least one transaction in
-  // queue, also, code shouldn't fetch all transactions from queue. The rest
-  // will be lost.
-  auto &current_proposal = current_proposals_[round];
-  while (current_proposal.try_pop(batch)
-         and collection.size() < transaction_limit_
-         and inserted.insert(batch->reducedHash().hex()).second) {
-    collection.insert(
-        std::end(collection),
-        std::make_move_iterator(std::begin(batch->transactions())),
-        std::make_move_iterator(std::end(batch->transactions())));
-  }
-  log_->debug("Number of transactions in proposal = {}", collection.size());
-  log_->debug("Number of lost transactions = {}",
-              current_proposal.unsafe_size());
-
-  auto txs = collection | boost::adaptors::indirected;
-  return proposal_factory_->unsafeCreateProposal(
-      round.block_round, iroha::time::now(), txs);
-}
-
 void OnDemandOrderingServiceImpl::tryErase() {
-  if (round_queue_.size() >= number_of_proposals_) {
+  while (round_queue_.size() > number_of_proposals_) {
     auto &round = round_queue_.front();
     proposal_map_.erase(round);
     log_->info("tryErase: erased {}", round);

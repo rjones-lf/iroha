@@ -127,14 +127,14 @@ TEST_F(JsonCommandTest, add_peer) {
   auto orig_addPeer = std::make_shared<AddPeer>();
   orig_addPeer->peer.address = "10.90.129.23";
   auto proto_add_peer = factory.serializeAddPeer(orig_addPeer);
-  auto serial_addPeer = factory.deserializeAddPeer(proto_add_peer);
+  auto deserialized_addPeer = factory.deserializeAddPeer(proto_add_peer);
 
-  ASSERT_TRUE(serial_addPeer);
-  ASSERT_EQ(*orig_addPeer, **serial_addPeer);
+  ASSERT_TRUE(deserialized_addPeer);
+  ASSERT_EQ(*orig_addPeer, **deserialized_addPeer);
   command_converter_test(orig_addPeer);
 
   orig_addPeer->peer.address = "134";
-  ASSERT_NE(**serial_addPeer, *orig_addPeer);
+  ASSERT_NE(**deserialized_addPeer, *orig_addPeer);
 }
 
 TEST_F(JsonCommandTest, add_signatory) {

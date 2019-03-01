@@ -9,11 +9,10 @@
 #include <utility>
 #include <vector>
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
+
 #include "framework/test_subscriber.hpp"
-#include "yac_mocks.hpp"
+#include "module/irohad/consensus/yac/yac_fixture.hpp"
 
 using ::testing::_;
 using ::testing::An;
@@ -119,7 +118,7 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveCommitMessage) {
   auto committed_peer = default_peers.at(0);
   auto msg = CommitMessage(std::vector<VoteMessage>{});
   for (size_t i = 0; i < default_peers.size(); ++i) {
-    msg.votes.push_back(create_vote(propagated_hash, std::to_string(i)));
+    msg.votes.push_back(createVote(propagated_hash, std::to_string(i)));
   }
   network->notification->onState(msg.votes);
 
@@ -148,7 +147,9 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyVote) {
   });
 
   for (size_t i = 0; i < default_peers.size(); ++i) {
-    yac->onState({create_vote(YacHash{}, std::to_string(i))});
+    yac->onState({createVote(
+        YacHash(iroha::consensus::Round(1, 0), "proposal_hash", "block_hash"),
+        std::to_string(i))});
   }
 
   // verify that on_commit subscribers are notified
@@ -179,18 +180,21 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyReject) {
 
   std::vector<VoteMessage> commit;
 
+  auto yac_hash =
+      YacHash(iroha::consensus::Round(1, 0), "proposal_hash", "block_hash");
+
   auto f = (default_peers.size() - 1) / 3;
   for (size_t i = 0; i < 2 * f; ++i) {
-    auto vote = create_vote(YacHash{}, std::to_string(i));
+    auto vote = createVote(yac_hash, std::to_string(i));
     yac->onState({vote});
     commit.push_back(vote);
   }
 
-  auto vote = create_vote(YacHash{}, std::to_string(2 * f + 1));
+  auto vote = createVote(yac_hash, std::to_string(2 * f + 1));
   RejectMessage reject(
       {vote,
-       create_vote(YacHash(iroha::consensus::Round{1, 1}, "", "my_block"),
-                   std::to_string(2 * f + 2))});
+       createVote(YacHash(iroha::consensus::Round{1, 1}, "", "my_block"),
+                  std::to_string(2 * f + 2))});
   commit.push_back(vote);
 
   yac->onState(reject.votes);

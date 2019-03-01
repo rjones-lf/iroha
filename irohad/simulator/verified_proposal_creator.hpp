@@ -28,11 +28,11 @@ namespace iroha {
     class VerifiedProposalCreator {
      public:
       /**
-       * Execute stateful validation for given proposal and round
+       * Execute stateful validation for given proposal
        */
-      virtual void processProposal(
-          const shared_model::interface::Proposal &proposal,
-          const consensus::Round &round) = 0;
+      virtual boost::optional<
+          std::shared_ptr<validation::VerifiedProposalAndErrors>>
+      processProposal(const shared_model::interface::Proposal &proposal) = 0;
 
       /**
        * Emit proposals which were verified by stateful validator

@@ -4,8 +4,9 @@
  */
 
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
+
 #include "framework/test_subscriber.hpp"
-#include "yac_mocks.hpp"
+#include "module/irohad/consensus/yac/yac_fixture.hpp"
 
 using ::testing::_;
 using ::testing::An;
@@ -68,7 +69,7 @@ TEST_F(YacTest, UnknownVoteAfterCommit) {
   std::vector<VoteMessage> votes;
 
   for (auto i = 0; i < 3; ++i) {
-    votes.push_back(create_vote(my_hash, std::to_string(i)));
+    votes.push_back(createVote(my_hash, std::to_string(i)));
   };
   yac->onState(votes);
 

@@ -11,8 +11,6 @@ using namespace integration_framework;
 using namespace shared_model;
 using namespace common_constants;
 
-#define check(i) [](auto &block) { ASSERT_EQ(block->transactions().size(), i); }
-
 class QuorumFixture : public AcceptanceFixture {
  public:
   QuorumFixture() : itf(1) {}
@@ -21,13 +19,18 @@ class QuorumFixture : public AcceptanceFixture {
     auto add_public_key_tx = complete(
         baseTx(kAdminId).addSignatory(kAdminId, kUserKeypair.publicKey()),
         kAdminKeypair);
-    itf.setInitialState(kAdminKeypair).sendTxAwait(add_public_key_tx, check(1));
+    itf.setInitialState(kAdminKeypair)
+        .sendTxAwait(add_public_key_tx, CHECK_TXS_QUANTITY(1));
   }
 
   IntegrationTestFramework itf;
 };
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-228 "Basic" tests should be replaced with a
+ * common acceptance test
+ * also covered by postgres_executor_test SetQuorum.Valid
+ *
  * @given a user with two signatories linked
  * @when the user tries to set own quorum equal two
  * @then the transaction is committed
@@ -36,10 +39,13 @@ TEST_F(QuorumFixture, CanRaiseQuorum) {
   const auto new_quorum = 2;
   auto raise_quorum_tx = complete(
       baseTx(kAdminId).setAccountQuorum(kAdminId, new_quorum), kAdminKeypair);
-  itf.sendTxAwait(raise_quorum_tx, check(1));
+  itf.sendTxAwait(raise_quorum_tx, CHECK_TXS_QUANTITY(1));
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-224 remove, covered by
+ * postgres_executor_test SetQuorum.LessSignatoriesThanNewQuorum
+ *
  * @given a user with two signatories linked
  * @when the user tries to set own quorum more (3) than amount of signatories
  * (2)
@@ -49,11 +55,13 @@ TEST_F(QuorumFixture, CannotRaiseQuorumMoreThanSignatures) {
   const auto new_quorum = 3;
   auto raise_quorum_tx = complete(
       baseTx(kAdminId).setAccountQuorum(kAdminId, new_quorum), kAdminKeypair);
-  itf.sendTxAwait(raise_quorum_tx, check(0))
-      .getTxStatus(raise_quorum_tx.hash(), CHECK_STATEFUL_INVALID);
+  itf.sendTxAwait(raise_quorum_tx, CHECK_TXS_QUANTITY(0));
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-224 remove, covered by
+ * postgres_executor_test SetQuorum.Valid
+ *
  * @given a user with two signatories linked
  * @when the user tries to increase quorum and then to lower again
  * @then all the transactions are committed
@@ -70,11 +78,13 @@ TEST_F(QuorumFixture, CanLowerQuorum) {
                              .signAndAddSignature(kAdminKeypair)
                              .signAndAddSignature(kUserKeypair)
                              .finish();
-  itf.sendTxAwait(raise_quorum_tx, check(1));
-  itf.sendTxAwait(lower_quorum_tx, check(1));
+  itf.sendTxAwait(raise_quorum_tx, CHECK_TXS_QUANTITY(1));
+  itf.sendTxAwait(lower_quorum_tx, CHECK_TXS_QUANTITY(1));
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-224 convert to a field validator unit test
+ *
  * @given a user with two signatories linked
  * @when the user tries to set zero quorum
  * @then the transaction did not pass stateless validation

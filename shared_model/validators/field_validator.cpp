@@ -237,7 +237,8 @@ namespace shared_model {
         ReasonsGroupType &reason,
         const interface::permissions::Grantable &permission) const {
       if (not isValid(permission)) {
-        reason.second.emplace_back("Provided grantable permission does not exist");
+        reason.second.emplace_back(
+            "Provided grantable permission does not exist");
       }
     }
 

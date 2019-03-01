@@ -5,10 +5,11 @@
 
 #include "consensus/round.hpp"
 
-#include <boost/functional/hash.hpp>
+#include <ciso646>
 #include <tuple>
 #include <utility>
 
+#include <boost/functional/hash.hpp>
 #include "utils/string_builder.hpp"
 
 namespace iroha {

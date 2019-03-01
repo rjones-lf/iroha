@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_YAC_VOTE_STORAGE_HPP
@@ -23,15 +11,16 @@
 #include <vector>
 
 #include <boost/optional.hpp>
-#include "consensus/yac/messages.hpp"  // because messages passed by value
+#include "consensus/yac/outcome_messages.hpp"  // because messages passed by value
+#include "consensus/yac/storage/cleanup_strategy.hpp"
 #include "consensus/yac/storage/storage_result.hpp"  // for Answer
 #include "consensus/yac/storage/yac_common.hpp"      // for ProposalHash
+#include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "consensus/yac/yac_types.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
-      class YacProposalStorage;
 
       /**
        * Proposal outcome states for multicast propagation strategy
@@ -87,11 +76,22 @@ namespace iroha {
          * This parameter used on creation of proposal storage
          * @return - iter for required proposal storage
          */
-        auto findProposalStorage(const VoteMessage &msg,
-                                 PeersNumberType peers_in_round);
+        boost::optional<std::vector<YacProposalStorage>::iterator>
+        findProposalStorage(const VoteMessage &msg,
+                            PeersNumberType peers_in_round);
+
+        /**
+         * Remove proposal storage by round
+         */
+        void remove(const Round &round);
 
        public:
         // --------| public api |--------
+
+        /**
+         * @param cleanup_strategy - strategy for removing elements from storage
+         */
+        YacVoteStorage(std::shared_ptr<CleanupStrategy> cleanup_strategy);
 
         /**
          * Insert votes in storage
@@ -131,6 +131,9 @@ namespace iroha {
        private:
         // --------| fields |--------
 
+        // TODO: 2019-02-28 @muratovv refactor proposal_storages_ &
+        // processing_state_ with separate entity IR-360
+
         /**
          * Active proposal storages
          */
@@ -143,6 +146,12 @@ namespace iroha {
          */
         std::unordered_map<Round, ProposalState, RoundTypeHasher>
             processing_state_;
+
+        /**
+         * Provides strategy managing rounds (adding and removing) for the
+         * storage
+         */
+        std::shared_ptr<CleanupStrategy> strategy_;
       };
 
     }  // namespace yac

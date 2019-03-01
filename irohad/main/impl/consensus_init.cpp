@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "main/impl/consensus_init.hpp"
@@ -21,6 +9,7 @@
 #include "consensus/yac/impl/yac_crypto_provider_impl.hpp"
 #include "consensus/yac/impl/yac_gate_impl.hpp"
 #include "consensus/yac/impl/yac_hash_provider_impl.hpp"
+#include "consensus/yac/storage/buffered_cleanup_strategy.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
 
@@ -52,7 +41,7 @@ namespace iroha {
       }
 
       auto YacInit::createTimer(std::chrono::milliseconds delay_milliseconds) {
-        return std::make_shared<TimerImpl>([delay_milliseconds] {
+        return std::make_shared<TimerImpl>([delay_milliseconds, this] {
           // static factory with a single thread
           //
           // observe_on_new_thread -- coordination which creates new thread with
@@ -63,21 +52,8 @@ namespace iroha {
           // scheduler is also a factory for workers in that timeline.
           //
           // coordination is a factory for coordinators and has a scheduler.
-          //
-          // coordinator has a worker, and is a factory for coordinated
-          // observables, subscribers and schedulable functions.
-          //
-          // A new thread scheduler is created
-          // by calling .create_coordinator().get_scheduler()
-          //
-          // static allows to reuse the same thread in subsequent calls to this
-          // lambda
-          static rxcpp::observe_on_one_worker coordination(
-              rxcpp::observe_on_new_thread()
-                  .create_coordinator()
-                  .get_scheduler());
           return rxcpp::observable<>::timer(
-              std::chrono::milliseconds(delay_milliseconds), coordination);
+              std::chrono::milliseconds(delay_milliseconds), coordination_);
         });
       }
 
@@ -94,8 +70,11 @@ namespace iroha {
               async_call,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               common_objects_factory) {
+        std::shared_ptr<iroha::consensus::yac::CleanupStrategy>
+            cleanup_strategy = std::make_shared<
+                iroha::consensus::yac::BufferedCleanupStrategy>();
         return Yac::create(
-            YacVoteStorage(),
+            YacVoteStorage(cleanup_strategy),
             createNetwork(std::move(async_call)),
             createCryptoProvider(keypair, std::move(common_objects_factory)),
             createTimer(delay_milliseconds),

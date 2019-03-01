@@ -6,41 +6,38 @@
 #include <gtest/gtest.h>
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+#include "interfaces/permissions.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
 using namespace common_constants;
-
-#define check(i) [](auto &block) { ASSERT_EQ(block->transactions().size(), i); }
+using namespace shared_model::interface::permissions;
 
 class ReplayFixture : public AcceptanceFixture {
  public:
-  ReplayFixture() : itf(1) {}
+  ReplayFixture() : itf(1), kReceiverRole("receiver") {}
 
   void SetUp() override {
     auto create_user_tx =
         complete(baseTx(kAdminId)
                      .createAccount(kUser, kDomain, kUserKeypair.publicKey())
+                     .createRole(kReceiverRole, {Role::kReceive})
+                     .appendRole(kUserId, kReceiverRole)
                      .addAssetQuantity(kAssetId, "10000.0"),
                  kAdminKeypair);
-    itf.setInitialState(kAdminKeypair).sendTxAwait(create_user_tx, check(1));
+    itf.setInitialState(kAdminKeypair)
+        .sendTxAwait(create_user_tx, CHECK_TXS_QUANTITY(1));
   }
 
   IntegrationTestFramework itf;
+  const interface::types::RoleIdType kReceiverRole;
 };
 
-// TODO igor-egorov, 07 Nov 2018, enable the test, IR-1773 & IR-1838
 /**
- * Basic case of transaction replay attack
- * @given an initialized ITF and a transaction
- * @when the transaction is sent to ITF twice
- * @then the second submission should be rejected
+ * @given ITF with hacked OS that provides the same proposal twice
+ * @when YAC accepts the proposal twice
+ * @then a transaction from proposal would not be committed twice
  */
-TEST_F(ReplayFixture, DISABLED_BasicTxReplay) {
-  auto transfer_tx = complete(
-      baseTx(kAdminId).transferAsset(kAdminId, kUserId, kAssetId, "", "1.0"),
-      kAdminKeypair);
-
-  itf.sendTxAwait(transfer_tx, check(1));  // should be committed
-  itf.sendTxAwait(transfer_tx, check(0));  // should not
+TEST_F(ReplayFixture, DISABLED_ConsensusReplay) {
+  // TODO 2019-01-09 igor-egorov IR-153
 }

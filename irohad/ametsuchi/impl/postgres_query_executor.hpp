@@ -65,8 +65,21 @@ namespace iroha {
 
       void setQueryHash(const shared_model::crypto::Hash &query_hash);
 
+      /**
+       * Check that account has a specific role permission
+       * @param permission to be in that account
+       * @param account_id of account to be checked
+       * @return true, if account has that permission, false otherwise
+       */
+      bool hasAccountRolePermission(
+          shared_model::interface::permissions::Role permission,
+          const std::string &account_id) const;
+
       QueryExecutorResult operator()(
           const shared_model::interface::GetAccount &q);
+
+      QueryExecutorResult operator()(
+          const shared_model::interface::GetBlock &q);
 
       QueryExecutorResult operator()(
           const shared_model::interface::GetSignatories &q);
@@ -149,6 +162,8 @@ namespace iroha {
        * Execute query which returns list of transactions
        * uses pagination
        * @param query - query object
+       * @param qry_checker - fallback checker of the query, needed if paging
+       * hash is not specified and 0 transaction are returned as a query result
        * @param related_txs - SQL query which returns transaction relevant
        * to this query
        * @param applier - function which accepts SQL
@@ -156,12 +171,58 @@ namespace iroha {
        * @param perms - permissions, necessary to execute the query
        * @return Result of a query execution
        */
-      template <typename Query, typename QueryApplier, typename... Permissions>
+      template <typename Query,
+                typename QueryChecker,
+                typename QueryApplier,
+                typename... Permissions>
       QueryExecutorResult executeTransactionsQuery(
           const Query &query,
+          QueryChecker &&qry_checker,
           const std::string &related_txs,
           QueryApplier applier,
           Permissions... perms);
+
+      /**
+       * Check if entry with such key exists in the database
+       * @tparam ReturnValueType - type of the value to be returned in the
+       * underlying query
+       * @param table_name - name of the table to be checked
+       * @param key_name - name of the table attribute, against which the search
+       * is performed
+       * @param value_name - name of the value, which is to be returned
+       * from the search (attribute with such name is to exist)
+       * @param value - actual value of the key attribute
+       * @return true, if entry with such value of the key attribute exists,
+       * false otherwise
+       *
+       * @throws if check query finishes with an exception
+       */
+      template <typename ReturnValueType>
+      bool existsInDb(const std::string &table_name,
+                      const std::string &key_name,
+                      const std::string &value_name,
+                      const std::string &value) const;
+
+      struct QueryFallbackCheckResult {
+        QueryFallbackCheckResult() = default;
+        QueryFallbackCheckResult(
+            shared_model::interface::ErrorQueryResponse::ErrorCodeType
+                error_code,
+            shared_model::interface::ErrorQueryResponse::ErrorMessageType
+                &&error_message)
+            : contains_error{true},
+              error_code{error_code},
+              error_message{std::move(error_message)} {}
+
+        explicit operator bool() const {
+          return contains_error;
+        }
+        bool contains_error = false;
+        shared_model::interface::ErrorQueryResponse::ErrorCodeType error_code =
+            0;
+        shared_model::interface::ErrorQueryResponse::ErrorMessageType
+            error_message = "";
+      };
 
       soci::session &sql_;
       KeyValueStorage &block_store_;
@@ -191,11 +252,16 @@ namespace iroha {
           logger::Logger log = logger::log("PostgresQueryExecutor"));
 
       QueryExecutorResult validateAndExecute(
-          const shared_model::interface::Query &query) override;
+          const shared_model::interface::Query &query,
+          const bool validate_signatories) override;
 
-      bool validate(const shared_model::interface::BlocksQuery &query) override;
+      bool validate(const shared_model::interface::BlocksQuery &query,
+                    const bool validate_signatories) override;
 
      private:
+      template <class Q>
+      bool validateSignatures(const Q &query);
+
       std::unique_ptr<soci::session> sql_;
       KeyValueStorage &block_store_;
       std::shared_ptr<PendingTransactionStorage> pending_txs_storage_;

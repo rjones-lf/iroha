@@ -3,18 +3,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef IROHA_GRPC_MOCKS_HPP
-#define IROHA_GRPC_MOCKS_HPP
+#ifndef VENDOR_GRPC_MOCKS_HPP
+#define VENDOR_GRPC_MOCKS_HPP
 
-namespace testing {
-  class MockServerWriter
-      : public grpc::ServerWriterInterface<iroha::protocol::Block> {
-    MOCK_METHOD1(Write, void(iroha::protocol::Block));
-    MOCK_METHOD2(Write,
-                 bool(const iroha::protocol::Block &, grpc::WriteOptions));
+#include <gmock/gmock.h>
+#include <grpc++/grpc++.h>
+
+namespace iroha {
+  template <typename T>
+  class MockServerWriter : public grpc::ServerWriterInterface<T> {
+   public:
+    MOCK_METHOD1_T(Write, void(T));
+    MOCK_METHOD2_T(Write, bool(const T &, grpc::WriteOptions));
     MOCK_METHOD0(SendInitialMetadata, void());
     MOCK_METHOD1(NextMessageSize, bool(uint32_t *));
   };
-}  // namespace testing
+}  // namespace iroha
 
-#endif  // IROHA_GRPC_MOCKS_HPP
+#endif  // VENDOR_GRPC_MOCKS_HPP

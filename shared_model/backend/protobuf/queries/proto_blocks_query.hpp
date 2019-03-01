@@ -7,13 +7,13 @@
 #define IROHA_SHARED_MODEL_PROTO_BLOCKS_QUERY_HPP
 
 #include "backend/protobuf/common_objects/signature.hpp"
+#include "backend/protobuf/util.hpp"
 #include "interfaces/queries/blocks_query.hpp"
 #include "queries.pb.h"
-#include "backend/protobuf/util.hpp"
 
 namespace shared_model {
   namespace proto {
-    class BlocksQuery FINAL : public CopyableProto<interface::BlocksQuery,
+    class BlocksQuery final : public CopyableProto<interface::BlocksQuery,
                                                    iroha::protocol::BlocksQuery,
                                                    BlocksQuery> {
      public:

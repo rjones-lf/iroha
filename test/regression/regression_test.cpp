@@ -33,10 +33,9 @@ TEST(RegressionTest, SequentialInitialization) {
                         generateKeypair())
                 .finish();
 
-  auto check_enough_signatures_collected_status = [](auto &status) {
+  auto check_stateless_valid_status = [](auto &status) {
     ASSERT_NO_THROW(
-        boost::get<
-            const shared_model::interface::EnoughSignaturesCollectedResponse &>(
+        boost::get<const shared_model::interface::StatelessValidTxResponse &>(
             status.get()));
   };
   auto checkProposal = [](auto &proposal) {
@@ -53,7 +52,7 @@ TEST(RegressionTest, SequentialInitialization) {
     integration_framework::IntegrationTestFramework(
         1, dbname, false, false, path)
         .setInitialState(kAdminKeypair)
-        .sendTx(tx, check_enough_signatures_collected_status)
+        .sendTx(tx, check_stateless_valid_status)
         .skipProposal()
         .checkVerifiedProposal([](auto &proposal) {
           ASSERT_EQ(proposal->transactions().size(), 0);
@@ -65,7 +64,7 @@ TEST(RegressionTest, SequentialInitialization) {
     integration_framework::IntegrationTestFramework(
         1, dbname, true, false, path)
         .setInitialState(kAdminKeypair)
-        .sendTx(tx, check_enough_signatures_collected_status)
+        .sendTx(tx, check_stateless_valid_status)
         .checkProposal(checkProposal)
         .checkVerifiedProposal([](auto &proposal) {
           ASSERT_EQ(proposal->transactions().size(), 0);

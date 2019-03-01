@@ -14,12 +14,12 @@ namespace shared_model {
         : CopyableProto(std::forward<QueryType>(query)),
           get_transactions_{proto_->payload().get_transactions()},
           transaction_hashes_{
-              boost::accumulate(get_transactions_.tx_hashes(),
-                                TransactionHashesType{},
-                                [](auto &&acc, const auto &hash) {
-                                  acc.emplace_back(hash);
-                                  return std::forward<decltype(acc)>(acc);
-                                })} {}
+             boost::accumulate(get_transactions_.tx_hashes(),
+                                     TransactionHashesType{},
+                                     [](auto &&acc, const auto &hash) {
+                                       acc.push_back(crypto::Hash::fromHexString(hash));
+                                       return std::forward<decltype(acc)>(acc);
+                                     })} {}
 
     template GetTransactions::GetTransactions(GetTransactions::TransportType &);
     template GetTransactions::GetTransactions(

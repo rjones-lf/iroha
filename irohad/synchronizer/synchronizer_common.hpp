@@ -10,6 +10,7 @@
 
 #include <rxcpp/rx.hpp>
 
+#include "ametsuchi/ledger_state.hpp"
 #include "consensus/round.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 
@@ -40,6 +41,7 @@ namespace iroha {
       Chain synced_blocks;
       SynchronizationOutcomeType sync_outcome;
       consensus::Round round;
+      std::shared_ptr<iroha::LedgerState> ledger_state;
     };
 
   }  // namespace synchronizer

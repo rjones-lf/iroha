@@ -76,6 +76,16 @@ namespace shared_model {
           const crypto::Hash &query_hash) const = 0;
 
       /**
+       * Create response for get block query
+       * @param block to be inserted into the response
+       * @param query_hash - hash of the query, for which response is created
+       * @return block response
+       */
+      virtual std::unique_ptr<QueryResponse> createBlockResponse(
+          std::unique_ptr<Block> block,
+          const crypto::Hash &query_hash) const = 0;
+
+      /**
        * Describes type of error to be placed inside the error query response
        */
       enum class ErrorQueryType {

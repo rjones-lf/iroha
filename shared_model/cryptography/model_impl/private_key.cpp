@@ -5,8 +5,6 @@
 
 #include "cryptography/private_key.hpp"
 
-#include "utils/string_builder.hpp"
-
 namespace shared_model {
   namespace crypto {
 

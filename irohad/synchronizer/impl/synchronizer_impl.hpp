@@ -9,6 +9,7 @@
 #include "synchronizer/synchronizer.hpp"
 
 #include "ametsuchi/mutable_factory.hpp"
+#include "ametsuchi/peer_query_factory.hpp"
 #include "logger/logger.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
@@ -47,7 +48,7 @@ namespace iroha {
        * @param height - the top block height of a peer that needs to be
        * synchronized
        */
-      SynchronizationEvent downloadMissingBlocks(
+      boost::optional<SynchronizationEvent> downloadMissingBlocks(
           const consensus::VoteOther &msg,
           std::unique_ptr<ametsuchi::MutableStorage> storage,
           const shared_model::interface::types::HeightType height);

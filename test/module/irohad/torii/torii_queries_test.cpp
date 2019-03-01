@@ -5,7 +5,10 @@
 
 #include <boost/variant.hpp>
 #include "crypto/keypair.hpp"
-#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/ametsuchi/mock_block_query.hpp"
+#include "module/irohad/ametsuchi/mock_query_executor.hpp"
+#include "module/irohad/ametsuchi/mock_storage.hpp"
+#include "module/irohad/ametsuchi/mock_wsv_query.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/pending_txs_storage/pending_txs_storage_mock.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
@@ -74,7 +77,7 @@ class ToriiQueriesTest : public testing::Test {
 
     //----------- Server run ----------------
     initQueryFactory();
-    runner->append(std::make_unique<torii::QueryService>(qpi, query_factory))
+    runner->append(std::make_unique<QueryService>(qpi, query_factory))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {
@@ -115,7 +118,7 @@ class ToriiQueriesTest : public testing::Test {
   std::shared_ptr<iroha::MockPendingTransactionStorage> pending_txs_storage;
   std::shared_ptr<shared_model::interface::QueryResponseFactory>
       query_response_factory;
-  std::shared_ptr<torii::QueryService::QueryFactoryType> query_factory;
+  std::shared_ptr<QueryService::QueryFactoryType> query_factory;
 
   const std::string ip = "127.0.0.1";
   int port;
@@ -464,8 +467,8 @@ TEST_F(ToriiQueriesTest, FindSignatoriesHasRolePermissions) {
   iroha::pubkey_t pubkey;
   std::fill(pubkey.begin(), pubkey.end(), 0x1);
   std::vector<shared_model::interface::types::PubkeyType> keys;
-  keys.push_back(
-      shared_model::interface::types::PubkeyType(pubkey.to_string()));
+  keys.emplace_back(shared_model::interface::types::PubkeyType::fromHexString(
+      pubkey.to_hexstring()));
 
   EXPECT_CALL(*wsv_query, getSignatories(creator))
       .WillRepeatedly(Return(signatories));
@@ -503,7 +506,7 @@ TEST_F(ToriiQueriesTest, FindSignatoriesHasRolePermissions) {
     /// valid
     ASSERT_FALSE(response.has_error_response());
     // check if fields in response are valid
-    ASSERT_EQ(resp_pubkey, signatories.back());
+    ASSERT_EQ(resp_pubkey.toString(), signatories.back().toString());
     ASSERT_EQ(model_query.hash(), shared_response.queryHash());
   });
 }

@@ -27,7 +27,8 @@ namespace iroha {
         non_visited({}),
         emit_worker(emit_worker),
         emitent(rxcpp::observable<>::interval(steady_clock::now(),
-                                              params.emission_period)
+                                              params.emission_period,
+                                              emit_worker)
                     .map([this, params](int) {
                       PropagationData vec;
                       auto range = boost::irange(0u, params.amount_per_once);
@@ -40,8 +41,7 @@ namespace iroha {
                             };
                           });
                       return vec;
-                    })
-                    .subscribe_on(emit_worker)) {}
+                    })) {}
 
   rxcpp::observable<PropagationData> GossipPropagationStrategy::emitter() {
     return emitent;

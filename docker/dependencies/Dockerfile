@@ -31,8 +31,6 @@ RUN set -e; \
         git ssh tar gzip ca-certificates gnupg \
         # Pythons
         python-pip python3-pip python3-setuptools python-dev \
-        # SWIG dependencies
-        libpcre3-dev autoconf bison  \
         # other
         curl file gdb gdbserver ccache \
         gcovr cppcheck doxygen rsync graphviz graphviz-dev unzip vim zip; \
@@ -261,15 +259,6 @@ RUN set -e; \
     apt-get -y install oracle-java8-installer; \
     java -version
 
-# Build SWIG
-RUN set -e; \
-    curl -L -o /tmp/swig-3.0.12.tar.gz https://github.com/swig/swig/archive/rel-3.0.12.tar.gz; \
-    tar -C /tmp -zxf /tmp/swig-3.0.12.tar.gz; \
-    cd /tmp/swig-rel-3.0.12; \
-    ./autogen.sh && ./configure && make -j${PARALLELISM}; \
-    make install; \
-    rm -rf /tmp/swig-rel-3.0.12
-
 RUN set -e; \
     add-apt-repository -y ppa:jonathonf/python-3.6; \
     apt-get update; \
@@ -277,8 +266,8 @@ RUN set -e; \
 
 # python bindings dependencies
 RUN set -e; \
-    pip install grpcio_tools; \
-    pip3 install grpcio_tools
+    pip install grpcio_tools pysha3; \
+    pip3 install grpcio_tools pysha3
 
 # install lcov
 RUN set -e; \

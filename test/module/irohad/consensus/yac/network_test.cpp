@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
+#include "consensus/yac/transport/impl/network_impl.hpp"
 
 #include <grpc++/grpc++.h>
 
-#include "consensus/yac/transport/impl/network_impl.hpp"
+#include "module/irohad/consensus/yac/mock_yac_crypto_provider.hpp"
+#include "module/irohad/consensus/yac/mock_yac_network.hpp"
+#include "module/irohad/consensus/yac/yac_test_util.hpp"
 
 using ::testing::_;
 using ::testing::DoAll;
@@ -19,8 +21,8 @@ namespace iroha {
     namespace yac {
       class YacNetworkTest : public ::testing::Test {
        public:
-        static constexpr auto default_ip = "0.0.0.0";
-        static constexpr auto default_address = "0.0.0.0:0";
+        static constexpr auto default_ip = "127.0.0.1";
+        static constexpr auto default_address = "127.0.0.1:0";
         void SetUp() override {
           notifications = std::make_shared<MockYacNetworkNotifications>();
           async_call = std::make_shared<
@@ -45,7 +47,7 @@ namespace iroha {
           ASSERT_TRUE(server);
           ASSERT_NE(port, 0);
 
-          peer = mk_peer(std::string(default_ip) + ":" + std::to_string(port));
+          peer = makePeer(std::string(default_ip) + ":" + std::to_string(port));
         }
 
         void TearDown() override {
@@ -61,6 +63,8 @@ namespace iroha {
         std::unique_ptr<grpc::Server> server;
         std::mutex mtx;
         std::condition_variable cv;
+        shared_model::crypto::PublicKey pubkey =
+            shared_model::crypto::PublicKey{""};
       };
 
       /**
@@ -84,7 +88,8 @@ namespace iroha {
 
         // wait for response reader thread
         std::unique_lock<std::mutex> lk(mtx);
-        cv.wait(lk, [&] { return processed; });
+        ASSERT_TRUE(cv.wait_for(
+            lk, std::chrono::seconds(5), [&] { return processed; }));
 
         ASSERT_EQ(1, state.size());
         ASSERT_EQ(message, state.front());

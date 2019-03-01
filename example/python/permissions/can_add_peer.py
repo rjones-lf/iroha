@@ -3,38 +3,32 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-import iroha
+import irohalib
 import commons
+import primitive_pb2
 
 admin = commons.new_user('admin@test')
 alice = commons.new_user('alice@test')
+iroha = irohalib.Iroha(admin['id'])
 
 
 @commons.hex
 def genesis_tx():
-    test_permissions = iroha.RolePermissionSet([iroha.Role_kAddPeer])
-    tx = iroha.ModelTransactionBuilder() \
-        .createdTime(commons.now()) \
-        .creatorAccountId(admin['id']) \
-        .addPeer('0.0.0.0:50541', admin['key'].publicKey()) \
-        .createRole('admin_role', commons.all_permissions()) \
-        .createRole('test_role', test_permissions) \
-        .createDomain('test', 'test_role') \
-        .createAccount('admin', 'test', admin['key'].publicKey()) \
-        .createAccount('alice', 'test', alice['key'].publicKey()) \
-        .appendRole(admin['id'], 'admin_role') \
-        .build()
-    return iroha.ModelProtoTransaction(tx) \
-        .signAndAddSignature(admin['key']).finish()
+    test_permissions = [primitive_pb2.can_add_peer]
+    genesis_commands = commons.genesis_block(admin, alice, test_permissions)
+    tx = iroha.transaction(genesis_commands)
+    irohalib.IrohaCrypto.sign_transaction(tx, admin['key'])
+    return tx
 
 
 @commons.hex
 def add_peer_tx():
-    peer_key = iroha.ModelCrypto().generateKeypair()
-    tx = iroha.ModelTransactionBuilder() \
-        .createdTime(commons.now()) \
-        .creatorAccountId(alice['id']) \
-        .addPeer('192.168.10.10:50541', peer_key.publicKey()) \
-        .build()
-    return iroha.ModelProtoTransaction(tx) \
-        .signAndAddSignature(alice['key']).finish()
+    peer_key = irohalib.IrohaCrypto.private_key()
+    peer = primitive_pb2.Peer()
+    peer.address = '192.168.10.10:50541'
+    peer.peer_key = irohalib.IrohaCrypto.derive_public_key(peer_key)
+    tx = iroha.transaction([
+        iroha.command('AddPeer', peer=peer)
+    ], creator_account=alice['id'])
+    irohalib.IrohaCrypto.sign_transaction(tx, alice['key'])
+    return tx

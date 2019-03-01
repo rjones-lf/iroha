@@ -30,7 +30,7 @@ namespace shared_model {
     template <int S = 0,
               typename SV = validation::DefaultUnsignedQueryValidator,
               typename BT = UnsignedWrapper<Query>>
-    class DEPRECATED TemplateQueryBuilder {
+    class [[deprecated]] TemplateQueryBuilder {
      private:
       template <int, typename, typename>
       friend class TemplateQueryBuilder;
@@ -87,7 +87,7 @@ namespace shared_model {
               boost::none) {
         page_meta_payload->set_page_size(page_size);
         if (first_hash) {
-          page_meta_payload->set_first_tx_hash(toBinaryString(*first_hash));
+          page_meta_payload->set_first_tx_hash(first_hash->hex());
         }
       }
 
@@ -185,6 +185,13 @@ namespace shared_model {
         });
       }
 
+      auto getBlock(interface::types::HeightType height) const {
+        return queryField([&](auto proto_query) {
+          auto query = proto_query->mutable_get_block();
+          query->set_height(height);
+        });
+      }
+
       auto getRoles() const {
         return queryField(
             [&](auto proto_query) { proto_query->mutable_get_roles(); });
@@ -210,7 +217,7 @@ namespace shared_model {
         return queryField([&](auto proto_query) {
           auto query = proto_query->mutable_get_transactions();
           boost::for_each(hashes, [&query](const auto &hash) {
-            query->add_tx_hashes(toBinaryString(hash));
+            query->add_tx_hashes(hash.hex());
           });
         });
       }

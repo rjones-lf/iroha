@@ -42,7 +42,7 @@ namespace shared_model {
       TransportType proto_;
 
       const ProtoResponseVariantType variant_{[this] {
-        const auto &ar = proto_;
+        auto &ar = proto_;
 
         unsigned which = ar.GetDescriptor()
                              ->FindFieldByName("tx_status")
@@ -54,13 +54,13 @@ namespace shared_model {
 
         return shared_model::detail::variant_impl<ProtoResponseListType>::
             template load<ProtoResponseVariantType>(
-                std::forward<decltype(ar)>(ar), which > last ? last : which);
+                ar, which > last ? last : which);
       }()};
 
       const ResponseVariantType ivariant_{variant_};
 
       // stub hash
-      const crypto::Hash hash_{proto_.tx_hash()};
+      const crypto::Hash hash_ = crypto::Hash::fromHexString(proto_.tx_hash());
     };
 
     TransactionResponse::TransactionResponse(const TransactionResponse &r)

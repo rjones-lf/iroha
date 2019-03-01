@@ -16,9 +16,11 @@ namespace shared_model {
   namespace proto {
 
     struct Transaction::Impl {
+      explicit Impl(const TransportType &ref) : proto_{ref} {}
+
       explicit Impl(TransportType &&ref) : proto_{std::move(ref)} {}
 
-      explicit Impl(const TransportType &ref) : proto_{ref} {}
+      explicit Impl(TransportType &ref) : proto_{ref} {}
 
       detail::ReferenceHolder<TransportType> proto_;
 
@@ -47,17 +49,16 @@ namespace shared_model {
           [this]() -> boost::optional<std::shared_ptr<interface::BatchMeta>> {
             if (payload_.has_batch()) {
               std::shared_ptr<interface::BatchMeta> b =
-                  std::make_shared<proto::BatchMeta>(payload_.batch());
+                  std::make_shared<proto::BatchMeta>(*payload_.mutable_batch());
               return b;
             }
             return boost::none;
           }()};
 
       SignatureSetType<proto::Signature> signatures_{[this] {
-        auto signatures = proto_->signatures()
-            | boost::adaptors::transformed([](const auto &x) {
-                            return proto::Signature(x);
-                          });
+        auto signatures = *proto_->mutable_signatures()
+            | boost::adaptors::transformed(
+                  [](auto &x) { return proto::Signature(x); });
         return SignatureSetType<proto::Signature>(signatures.begin(),
                                                   signatures.end());
       }()};
@@ -71,10 +72,15 @@ namespace shared_model {
       impl_ = std::make_unique<Transaction::Impl>(std::move(transaction));
     }
 
+    Transaction::Transaction(TransportType &transaction) {
+      impl_ = std::make_unique<Transaction::Impl>(transaction);
+    }
+
     // TODO [IR-1866] Akvinikym 13.11.18: remove the copy ctor and fix fallen
     // tests
     Transaction::Transaction(const Transaction &transaction)
-        : Transaction(*transaction.impl_->proto_) {}
+        : Transaction(
+              static_cast<const TransportType &>(*transaction.impl_->proto_)) {}
 
     Transaction::Transaction(Transaction &&transaction) noexcept = default;
 
@@ -122,14 +128,13 @@ namespace shared_model {
       }
 
       auto sig = impl_->proto_->add_signatures();
-      sig->set_signature(crypto::toBinaryString(signed_blob));
-      sig->set_public_key(crypto::toBinaryString(public_key));
+      sig->set_signature(signed_blob.hex());
+      sig->set_public_key(public_key.hex());
 
       impl_->signatures_ = [this] {
-        auto signatures = impl_->proto_->signatures()
-            | boost::adaptors::transformed([](const auto &x) {
-                            return proto::Signature(x);
-                          });
+        auto signatures = *impl_->proto_->mutable_signatures()
+            | boost::adaptors::transformed(
+                  [](auto &x) { return proto::Signature(x); });
         return SignatureSetType<proto::Signature>(signatures.begin(),
                                                   signatures.end());
       }();
@@ -155,7 +160,7 @@ namespace shared_model {
     }
 
     Transaction::ModelType *Transaction::clone() const {
-      return new Transaction(*impl_->proto_);
+      return new Transaction(TransportType(*impl_->proto_));
     }
 
   }  // namespace proto

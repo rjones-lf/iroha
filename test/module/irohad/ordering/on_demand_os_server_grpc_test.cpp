@@ -11,7 +11,7 @@
 #include "backend/protobuf/transaction.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
-#include "module/irohad/ordering/ordering_mocks.hpp"
+#include "module/irohad/ordering/mock_on_demand_os_notification.hpp"
 #include "module/shared_model/interface/mock_transaction_batch_factory.hpp"
 #include "module/shared_model/validators/validators.hpp"
 
@@ -125,8 +125,8 @@ TEST_F(OnDemandOsServerGrpcTest, RequestProposal) {
       ->mutable_reduced_payload()
       ->set_creator_account_id(creator);
 
-  std::unique_ptr<shared_model::interface::Proposal> iproposal(
-      std::make_unique<shared_model::proto::Proposal>(proposal));
+  std::shared_ptr<const shared_model::interface::Proposal> iproposal(
+      std::make_shared<const shared_model::proto::Proposal>(proposal));
   EXPECT_CALL(*notification, onRequestProposal(round))
       .WillOnce(Return(ByMove(std::move(iproposal))));
 

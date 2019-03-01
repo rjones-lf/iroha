@@ -27,14 +27,14 @@ enum TxStatus {
 
 message ToriiResponse {
   TxStatus tx_status = 1;
-  bytes tx_hash = 2;
+  string tx_hash = 2;
   string err_or_cmd_name = 3;
   uint64 failed_cmd_index = 4;
   uint32 error_code = 5;
 }
 
 message TxStatusRequest {
-  bytes tx_hash = 1;
+  string tx_hash = 1;
 }
 
 message TxList {

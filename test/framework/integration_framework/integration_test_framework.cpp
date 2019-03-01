@@ -10,6 +10,7 @@
 
 #include <boost/assert.hpp>
 #include <boost/thread/barrier.hpp>
+#include "ametsuchi/storage.hpp"
 #include "backend/protobuf/block.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
@@ -37,9 +38,12 @@
 #include "module/shared_model/builders/protobuf/block.hpp"
 #include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/validators/always_valid_validators.hpp"
+#include "multi_sig_transactions/mst_processor.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "network/impl/async_grpc_client.hpp"
+#include "network/impl/grpc_channel_builder.hpp"
 #include "synchronizer/synchronizer_common.hpp"
+#include "torii/status_bus.hpp"
 
 using namespace shared_model::crypto;
 using namespace std::literals::string_literals;
@@ -89,7 +93,9 @@ namespace integration_framework {
                                                         torii_port_,
                                                         internal_port_,
                                                         dbname)),
-        command_client_(kLocalHost, torii_port_),
+        command_client_(
+            iroha::network::createClient<iroha::protocol::CommandService_v1>(
+                kLocalHost + ":" + std::to_string(torii_port_))),
         query_client_(kLocalHost, torii_port_),
         async_call_(std::make_shared<AsyncCall>()),
         proposal_waiting(proposal_waiting),
@@ -307,7 +313,8 @@ namespace integration_framework {
     iroha_instance_->getIrohaInstance()->getStatusBus()->statuses().subscribe(
         [this](auto response) {
           responses_queues_[response->transactionHash().hex()].push(response);
-          log_->info("response");
+          log_->info("response added to status queue: {}",
+                     response->toString());
           queue_cond.notify_all();
         });
 
@@ -364,7 +371,7 @@ namespace integration_framework {
       std::function<void(const shared_model::proto::TransactionResponse &)>
           validation) {
     iroha::protocol::TxStatusRequest request;
-    request.set_tx_hash(shared_model::crypto::toBinaryString(hash));
+    request.set_tx_hash(hash.hex());
     iroha::protocol::ToriiResponse response;
     command_client_.Status(request, response);
     validation(shared_model::proto::TransactionResponse(std::move(response)));

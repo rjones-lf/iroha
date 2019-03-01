@@ -5,12 +5,12 @@
 
 #include <gtest/gtest.h>
 #include <boost/variant.hpp>
-#include "acceptance_fixture.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
+#include "integration/acceptance/acceptance_fixture.hpp"
 #include "interfaces/query_responses/account_asset_response.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
@@ -71,9 +71,11 @@ class TransferAsset : public AcceptanceFixture {
       crypto::DefaultCryptoAlgorithmType::generateKeypair();
 };
 
-#define check(i) [](auto &block) { ASSERT_EQ(block->transactions().size(), i); }
-
 /**
+ * TODO mboldyrev 18.01.2019 IR-228 "Basic" tests should be replaced with a
+ * common acceptance test
+ * also covered by postgres_executor_test TransferAccountAssetTest.Valid
+ *
  * @given pair of users with all required permissions
  * @when execute tx with TransferAsset command
  * @then there is the tx in proposal
@@ -81,13 +83,16 @@ class TransferAsset : public AcceptanceFixture {
 TEST_F(TransferAsset, Basic) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), check(1))
-      .sendTxAwait(makeSecondUser(), check(1))
-      .sendTxAwait(addAssets(), check(1))
-      .sendTxAwait(makeTransfer(), check(1));
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(addAssets(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeTransfer(), CHECK_TXS_QUANTITY(1));
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 remove, covered by
+ * postgres_executor_test TransferAccountAssetTest.NoPerms
+ *
  * @given pair of users
  *        AND the first user without can_transfer permission
  * @when execute tx with TransferAsset command
@@ -96,17 +101,20 @@ TEST_F(TransferAsset, Basic) {
 TEST_F(TransferAsset, WithoutCanTransfer) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser({}), check(1))
-      .sendTxAwait(makeSecondUser(), check(1))
-      .sendTxAwait(addAssets(), check(1))
+      .sendTxAwait(makeFirstUser({}), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(addAssets(), CHECK_TXS_QUANTITY(1))
       .sendTx(makeTransfer())
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .checkBlock(check(0));
+      .checkBlock(CHECK_TXS_QUANTITY(0));
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 convert to a SFV integration test
+ * (not covered by postgres_executor_test)
+ *
  * @given pair of users
  *        AND the second user without can_receive permission
  * @when execute tx with TransferAsset command
@@ -115,19 +123,22 @@ TEST_F(TransferAsset, WithoutCanTransfer) {
 TEST_F(TransferAsset, WithoutCanReceive) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), check(1))
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
       // TODO(@l4l) 23/06/18: remove permission with IR-1367
       .sendTxAwait(makeSecondUser({interface::permissions::Role::kAddPeer}),
-                   check(1))
-      .sendTxAwait(addAssets(), check(1))
+                   CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(addAssets(), CHECK_TXS_QUANTITY(1))
       .sendTx(makeTransfer())
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .checkBlock(check(0));
+      .checkBlock(CHECK_TXS_QUANTITY(0));
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 remove, covered by
+ * postgres_executor_test TransferAccountAssetTest.NoAccount
+ *
  * @given some user with all required permissions
  * @when execute tx with TransferAsset command to nonexistent destination
  * @then there is an empty verified proposal
@@ -136,17 +147,20 @@ TEST_F(TransferAsset, NonexistentDest) {
   std::string nonexistent = "inexist@test";
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), check(1))
-      .sendTxAwait(addAssets(), check(1))
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(addAssets(), CHECK_TXS_QUANTITY(1))
       .sendTx(complete(baseTx().transferAsset(
           kUserId, nonexistent, kAssetId, kDesc, kAmount)))
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .checkBlock(check(0));
+      .checkBlock(CHECK_TXS_QUANTITY(0));
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 remove, covered by
+ * postgres_executor_test TransferAccountAssetTest.NoAsset
+ *
  * @given pair of users with all required permissions
  * @when execute tx with TransferAsset command with nonexistent asset
  * @then there is an empty verified proposal
@@ -155,18 +169,20 @@ TEST_F(TransferAsset, NonexistentAsset) {
   std::string nonexistent = "inexist#test";
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), check(1))
-      .sendTxAwait(makeSecondUser(), check(1))
-      .sendTxAwait(addAssets(), check(1))
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(addAssets(), CHECK_TXS_QUANTITY(1))
       .sendTx(complete(baseTx().transferAsset(
           kUserId, kUser2Id, nonexistent, kDesc, kAmount)))
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .checkBlock(check(0));
+      .checkBlock(CHECK_TXS_QUANTITY(0));
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 convert to a field validator unit test
+ *
  * @given pair of users with all required permissions
  * @when execute tx with TransferAsset command with negative amount
  * @then the tx hasn't passed stateless validation
@@ -175,13 +191,15 @@ TEST_F(TransferAsset, NonexistentAsset) {
 TEST_F(TransferAsset, NegativeAmount) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), check(1))
-      .sendTxAwait(makeSecondUser(), check(1))
-      .sendTxAwait(addAssets(), check(1))
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(addAssets(), CHECK_TXS_QUANTITY(1))
       .sendTx(makeTransfer("-1.0"), CHECK_STATELESS_INVALID);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 remove, covered by field validator test
+ *
  * @given pair of users with all required permissions
  * @when execute tx with TransferAsset command with zero amount
  * @then the tx hasn't passed stateless validation
@@ -190,13 +208,15 @@ TEST_F(TransferAsset, NegativeAmount) {
 TEST_F(TransferAsset, ZeroAmount) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), check(1))
-      .sendTxAwait(makeSecondUser(), check(1))
-      .sendTxAwait(addAssets(), check(1))
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(addAssets(), CHECK_TXS_QUANTITY(1))
       .sendTx(makeTransfer("0.0"), CHECK_STATELESS_INVALID);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 remove, covered by field validator test
+ *
  * @given pair of users with all required permissions
  * @when execute tx with TransferAsset command with empty-str description
  * @then it passed to the proposal
@@ -204,15 +224,17 @@ TEST_F(TransferAsset, ZeroAmount) {
 TEST_F(TransferAsset, EmptyDesc) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), check(1))
-      .sendTxAwait(makeSecondUser(), check(1))
-      .sendTxAwait(addAssets(), check(1))
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(addAssets(), CHECK_TXS_QUANTITY(1))
       .sendTxAwait(complete(baseTx().transferAsset(
                        kUserId, kUser2Id, kAssetId, "", kAmount)),
-                   check(1));
+                   CHECK_TXS_QUANTITY(1));
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 remove, covered by field validator test
+ *
  * @given pair of users with all required permissions
  * @when execute tx with TransferAsset command with very long description
  * @then the tx hasn't passed stateless validation
@@ -221,9 +243,9 @@ TEST_F(TransferAsset, EmptyDesc) {
 TEST_F(TransferAsset, LongDesc) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), check(1))
-      .sendTxAwait(makeSecondUser(), check(1))
-      .sendTxAwait(addAssets(), check(1))
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(addAssets(), CHECK_TXS_QUANTITY(1))
       .sendTx(
           complete(baseTx().transferAsset(
               kUserId, kUser2Id, kAssetId, std::string(100000, 'a'), kAmount)),
@@ -231,6 +253,9 @@ TEST_F(TransferAsset, LongDesc) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 remove, covered by
+ * postgres_executor_test TransferAccountAssetTest.Overdraft
+ *
  * @given pair of users with all required permissions
  * @when execute tx with TransferAsset command with amount more, than user has
  * @then there is an empty verified proposal
@@ -238,17 +263,20 @@ TEST_F(TransferAsset, LongDesc) {
 TEST_F(TransferAsset, MoreThanHas) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), check(1))
-      .sendTxAwait(makeSecondUser(), check(1))
-      .sendTxAwait(addAssets("50.0"), check(1))
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(addAssets("50.0"), CHECK_TXS_QUANTITY(1))
       .sendTx(makeTransfer("100.0"))
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .checkBlock(check(0));
+      .checkBlock(CHECK_TXS_QUANTITY(0));
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 remove, covered by
+ * postgres_executor_test TransferAccountAssetTest.OverflowDestination
+ *
  * @given pair of users with all required permissions, and tx sender's balance
  * is replenished if required
  * @when execute two txes with TransferAsset command with amount more than a
@@ -262,22 +290,24 @@ TEST_F(TransferAsset, Uint256DestOverflow) {
       "19966.0";  // 2**255 - 2
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), check(1))
-      .sendTxAwait(makeSecondUser(), check(1))
-      .sendTxAwait(addAssets(uint256_halfmax), check(1))
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(addAssets(uint256_halfmax), CHECK_TXS_QUANTITY(1))
       // Send first half of the maximum
-      .sendTxAwait(makeTransfer(uint256_halfmax), check(1))
+      .sendTxAwait(makeTransfer(uint256_halfmax), CHECK_TXS_QUANTITY(1))
       // Restore self balance
-      .sendTxAwait(addAssets(uint256_halfmax), check(1))
+      .sendTxAwait(addAssets(uint256_halfmax), CHECK_TXS_QUANTITY(1))
       // Send second half of the maximum
       .sendTx(makeTransfer(uint256_halfmax))
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .checkBlock(check(0));
+      .checkBlock(CHECK_TXS_QUANTITY(0));
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 convert to a TransactionValidator unit test
+ *
  * @given some user with all required permissions
  * @when execute tx with TransferAsset command where the source and destination
  * accounts are the same
@@ -287,14 +317,17 @@ TEST_F(TransferAsset, Uint256DestOverflow) {
 TEST_F(TransferAsset, SourceIsDest) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), check(1))
-      .sendTxAwait(addAssets(), check(1))
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(addAssets(), CHECK_TXS_QUANTITY(1))
       .sendTx(complete(baseTx().transferAsset(
                   kUserId, kUserId, kAssetId, kDesc, kAmount)),
               CHECK_STATELESS_INVALID);
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 convert to a SFV integration test
+ * (not covered by postgres_executor_test)
+ *
  * @given some user with all required permission
  * @when execute tx with TransferAsset command where the destination user's
  * domain differ from the source user one
@@ -321,13 +354,15 @@ TEST_F(TransferAsset, InterDomain) {
 
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), check(1))
-      .sendTxAwait(make_second_user, check(1))
-      .sendTxAwait(add_assets, check(1))
-      .sendTxAwait(make_transfer, check(1));
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(make_second_user, CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(add_assets, CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(make_transfer, CHECK_TXS_QUANTITY(1));
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-226 remove, covered by field validator test
+ *
  * @given a pair of users with all required permissions
  *        AND asset with big precision
  * @when asset is added and then TransferAsset is called
@@ -375,11 +410,11 @@ TEST_F(TransferAsset, BigPrecision) {
 
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), check(1))
-      .sendTxAwait(makeSecondUser(), check(1))
-      .sendTxAwait(create_asset, check(1))
-      .sendTxAwait(add_assets, check(1))
-      .sendTxAwait(make_transfer, check(1))
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(create_asset, CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(add_assets, CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(make_transfer, CHECK_TXS_QUANTITY(1))
       .sendQuery(make_query(kUserId), check_balance(kUserId, kLeft))
       .sendQuery(make_query(kUser2Id), check_balance(kUser2Id, kForTransfer));
 }

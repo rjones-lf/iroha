@@ -44,3 +44,61 @@ TEST_F(ProtoQueryValidatorTest, SetQuery) {
   auto answer = validator.validate(qry);
   ASSERT_FALSE(answer.hasErrors());
 }
+
+iroha::protocol::Query generateGetAccountAssetTransactionsQuery(
+    const std::string &first_tx_hash) {
+  iroha::protocol::Query result;
+  result.mutable_payload()
+      ->mutable_get_account_asset_transactions()
+      ->mutable_pagination_meta()
+      ->set_first_tx_hash(first_tx_hash);
+  return result;
+}
+
+iroha::protocol::Query generateGetAccountTransactionsQuery(
+    const std::string &first_tx_hash) {
+  iroha::protocol::Query result;
+  result.mutable_payload()
+      ->mutable_get_account_transactions()
+      ->mutable_pagination_meta()
+      ->set_first_tx_hash(first_tx_hash);
+  return result;
+}
+
+static std::string valid_tx_hash("123abc");
+static std::string invalid_tx_hash("not_hex");
+
+// valid pagination query tests
+
+class ValidProtoPaginationQueryValidatorTest
+    : public ProtoQueryValidatorTest,
+      public ::testing::WithParamInterface<iroha::protocol::Query> {};
+
+TEST_P(ValidProtoPaginationQueryValidatorTest, ValidPaginationQuery) {
+  auto answer = validator.validate(GetParam());
+  ASSERT_FALSE(answer.hasErrors()) << GetParam().DebugString() << std::endl
+                                   << answer.reason();
+}
+
+INSTANTIATE_TEST_CASE_P(
+    ProtoPaginationQueryTest,
+    ValidProtoPaginationQueryValidatorTest,
+    ::testing::Values(generateGetAccountAssetTransactionsQuery(valid_tx_hash),
+                      generateGetAccountTransactionsQuery(valid_tx_hash)), );
+
+// invalid pagination query tests
+
+class InvalidProtoPaginationQueryTest
+    : public ProtoQueryValidatorTest,
+      public ::testing::WithParamInterface<iroha::protocol::Query> {};
+
+TEST_P(InvalidProtoPaginationQueryTest, InvalidPaginationQuery) {
+  auto answer = validator.validate(GetParam());
+  ASSERT_TRUE(answer.hasErrors()) << GetParam().DebugString();
+}
+
+INSTANTIATE_TEST_CASE_P(
+    InvalidProtoPaginationQueryTest,
+    InvalidProtoPaginationQueryTest,
+    ::testing::Values(generateGetAccountAssetTransactionsQuery(invalid_tx_hash),
+                      generateGetAccountTransactionsQuery(invalid_tx_hash)), );

@@ -7,8 +7,6 @@
 #define IROHA_BYTEUTILS_H
 
 #include <algorithm>
-#include <iomanip>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -16,6 +14,7 @@
 
 #include "common/bind.hpp"
 #include "common/blob.hpp"
+#include "common/hexutils.hpp"
 
 namespace iroha {
   /**
@@ -50,46 +49,6 @@ namespace iroha {
     blob_t<size> array;
     std::copy(string.begin(), string.end(), array.begin());
     return array;
-  }
-
-  /**
-   * Convert string of raw bytes to printable hex string
-   * @param str - raw bytes string to convert
-   * @return - converted hex string
-   */
-  inline std::string bytestringToHexstring(const std::string &str) {
-    std::stringstream ss;
-    ss << std::hex << std::setfill('0');
-    for (const auto &c : str) {
-      ss << std::setw(2) << (static_cast<int>(c) & 0xff);
-    }
-    return ss.str();
-  }
-
-  /**
-   * Convert printable hex string to string of raw bytes
-   * @param str - hex string to convert
-   * @return - raw bytes converted string or boost::noneif provided string
-   * was not a correct hex string
-   */
-  inline boost::optional<std::string> hexstringToBytestring(
-      const std::string &str) {
-    if (str.empty() or str.size() % 2 != 0) {
-      return boost::none;
-    }
-    std::string result(str.size() / 2, 0);
-    for (size_t i = 0; i < result.length(); ++i) {
-      std::string byte = str.substr(i * 2, 2);
-      try {
-        result.at(i) =
-            static_cast<std::string::value_type>(std::stoul(byte, nullptr, 16));
-      } catch (const std::invalid_argument &) {
-        return boost::none;
-      } catch (const std::out_of_range &) {
-        return boost::none;
-      }
-    }
-    return result;
   }
 
   /**

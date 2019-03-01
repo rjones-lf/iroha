@@ -12,7 +12,7 @@
 #include "builders/default_builders.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "main/server_runner.hpp"
-#include "module/irohad/torii/torii_mocks.hpp"
+#include "module/irohad/torii/processor/mock_query_processor.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "torii/query_client.hpp"
 #include "torii/query_service.hpp"
@@ -39,8 +39,8 @@ class ToriiQueryServiceTest : public ::testing::Test {
     //----------- Server run ----------------
     initQueryFactory();
     runner
-        ->append(std::make_unique<torii::QueryService>(query_processor,
-                                                       query_factory))
+        ->append(std::make_unique<iroha::torii::QueryService>(query_processor,
+                                                              query_factory))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {
@@ -70,7 +70,7 @@ class ToriiQueryServiceTest : public ::testing::Test {
 
   std::unique_ptr<ServerRunner> runner;
   std::shared_ptr<iroha::torii::MockQueryProcessor> query_processor;
-  std::shared_ptr<torii::QueryService::QueryFactoryType> query_factory;
+  std::shared_ptr<iroha::torii::QueryService::QueryFactoryType> query_factory;
 
   iroha::protocol::Block block;
 

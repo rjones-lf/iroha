@@ -8,6 +8,7 @@
 
 #include <boost/range/numeric.hpp>
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "cryptography/hash.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/batch_meta.hpp"
 #include "transaction.pb.h"
@@ -30,13 +31,13 @@ namespace shared_model {
                                    ->index();
               return static_cast<interface::types::BatchType>(which);
             }()},
-            reduced_hashes_{
-                boost::accumulate(proto_->reduced_hashes(),
-                                  ReducedHashesType{},
-                                  [](auto &&acc, const auto &hash) {
-                                    acc.emplace_back(hash);
-                                    return std::forward<decltype(acc)>(acc);
-                                  })} {}
+            reduced_hashes_{boost::accumulate(
+                proto_->reduced_hashes(),
+                ReducedHashesType{},
+                [](auto &&acc, const auto &hash) {
+                  acc.emplace_back(crypto::Hash::fromHexString(hash));
+                  return std::forward<decltype(acc)>(acc);
+                })} {}
 
       BatchMeta(const BatchMeta &o) : BatchMeta(o.proto_) {}
 

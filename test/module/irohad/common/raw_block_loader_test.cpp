@@ -24,7 +24,7 @@ TEST(BlockLoaderTest, BlockLoaderJsonParsing) {
   "payload": {
     "transactions": [],
     "height": 1,
-    "prev_block_hash": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=",
+    "prev_block_hash": "0101010101010101010101010101010101010101010101010101010101010101",
     "created_time": 0
     },
   "signatures": []

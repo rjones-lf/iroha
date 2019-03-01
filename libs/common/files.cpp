@@ -5,8 +5,9 @@
 
 #include "common/files.hpp"
 
-#include <boost/filesystem.hpp>
+#include <ciso646>
 
+#include <boost/filesystem.hpp>
 #include "logger/logger.hpp"
 
 void iroha::remove_dir_contents(const std::string &dump_dir) {

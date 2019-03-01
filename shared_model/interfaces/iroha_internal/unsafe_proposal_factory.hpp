@@ -10,6 +10,7 @@
 
 #include <boost/range/any_range.hpp>
 #include "interfaces/common_objects/types.hpp"
+#include "interfaces/iroha_internal/proposal.hpp"
 
 namespace shared_model {
   namespace interface {

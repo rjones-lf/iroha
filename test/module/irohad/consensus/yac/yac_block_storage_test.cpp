@@ -6,11 +6,11 @@
 #include "consensus/yac/storage/yac_block_storage.hpp"
 
 #include <gtest/gtest.h>
-#include <boost/optional.hpp>
+
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
-#include "consensus/yac/storage/yac_vote_storage.hpp"
 #include "logger/logger.hpp"
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
+
+#include "module/irohad/consensus/yac/yac_test_util.hpp"
 
 using namespace iroha::consensus::yac;
 
@@ -28,10 +28,10 @@ class YacBlockStorageTest : public ::testing::Test {
     hash = YacHash(iroha::consensus::Round{1, 1}, "proposal", "commit");
     number_of_peers = 4;
     storage = YacBlockStorage(hash, number_of_peers);
-    valid_votes = {create_vote(hash, "one"),
-                   create_vote(hash, "two"),
-                   create_vote(hash, "three"),
-                   create_vote(hash, "four")};
+    valid_votes = {createVote(hash, "one"),
+                   createVote(hash, "two"),
+                   createVote(hash, "three"),
+                   createVote(hash, "four")};
   }
 };
 

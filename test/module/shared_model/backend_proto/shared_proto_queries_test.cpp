@@ -59,9 +59,8 @@ TEST(ProtoQueryBuilder, Builder) {
       keypair);
 
   auto sig = proto_query.mutable_signature();
-  sig->set_public_key(
-      shared_model::crypto::toBinaryString(keypair.publicKey()));
-  sig->set_signature(shared_model::crypto::toBinaryString(signedProto));
+  sig->set_public_key(keypair.publicKey().hex());
+  sig->set_signature(signedProto.hex());
 
   auto query = shared_model::proto::QueryBuilder()
                    .createdTime(created_time)
@@ -96,9 +95,8 @@ TEST(ProtoQueryBuilder, BlocksQueryBuilder) {
       keypair);
 
   auto sig = proto_query.mutable_signature();
-  sig->set_public_key(
-      shared_model::crypto::toBinaryString(keypair.publicKey()));
-  sig->set_signature(shared_model::crypto::toBinaryString(signedProto));
+  sig->set_public_key(keypair.publicKey().hex());
+  sig->set_signature(signedProto.hex());
 
   auto query = shared_model::proto::BlocksQueryBuilder()
                    .createdTime(created_time)

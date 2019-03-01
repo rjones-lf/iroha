@@ -44,9 +44,11 @@ namespace iroha {
     auto OnDemandOrderingInit::createNotificationFactory(
         std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
             async_call,
+        std::shared_ptr<TransportFactoryType> proposal_transport_factory,
         std::chrono::milliseconds delay) {
       return std::make_shared<ordering::transport::OnDemandOsClientGrpcFactory>(
           std::move(async_call),
+          std::move(proposal_transport_factory),
           [] { return std::chrono::system_clock::now(); },
           delay);
     }
@@ -55,6 +57,7 @@ namespace iroha {
         std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
         std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
             async_call,
+        std::shared_ptr<TransportFactoryType> proposal_transport_factory,
         std::chrono::milliseconds delay,
         std::vector<shared_model::interface::types::HashType> initial_hashes) {
       // since top block will be the first in notifier observable, hashes of
@@ -174,7 +177,10 @@ namespace iroha {
                        .map(map_peers);
 
       return std::make_shared<ordering::OnDemandConnectionManager>(
-          createNotificationFactory(std::move(async_call), delay), peers);
+          createNotificationFactory(std::move(async_call),
+                                    std::move(proposal_transport_factory),
+                                    delay),
+          peers);
     }
 
     auto OnDemandOrderingInit::createGate(
@@ -184,34 +190,9 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
             proposal_factory,
         std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-        consensus::Round initial_round) {
-      // TODO andrei 06.12.18 IR-75 Make counter and generator parametrizable
-      const uint64_t kCounter = 0, kMaxLocalCounter = 2;
-      auto time_generator = [](auto reject_counter) {
-        return std::chrono::seconds(reject_counter);
-      };
-      // reject_counter and local_counter are local mutable variables of lambda
-      auto delay = [reject_counter = kCounter,
-                    local_counter = kCounter,
-                    &time_generator](const auto &commit) mutable {
-        using iroha::synchronizer::SynchronizationOutcomeType;
-        if (commit.sync_outcome == SynchronizationOutcomeType::kReject
-            or commit.sync_outcome == SynchronizationOutcomeType::kNothing) {
-          // Increment reject_counter each local_counter calls of function
-          ++local_counter;
-          if (local_counter == kMaxLocalCounter) {
-            local_counter = 0;
-            if (reject_counter
-                < std::numeric_limits<decltype(reject_counter)>::max()) {
-              reject_counter++;
-            }
-          }
-        } else {
-          reject_counter = 0;
-        }
-        return time_generator(reject_counter);
-      };
-
+        consensus::Round initial_round,
+        std::function<std::chrono::milliseconds(
+            const synchronizer::SynchronizationEvent &)> delay_func) {
       auto map = [](auto commit) {
         return matchEvent(
             commit,
@@ -249,7 +230,7 @@ namespace iroha {
           notifier.get_observable()
               .lift<iroha::synchronizer::SynchronizationEvent>(
                   iroha::makeDelay<iroha::synchronizer::SynchronizationEvent>(
-                      delay, rxcpp::identity_current_thread()))
+                      delay_func, rxcpp::identity_current_thread()))
               .map(map),
           std::move(cache),
           std::move(proposal_factory),
@@ -287,8 +268,11 @@ namespace iroha {
             async_call,
         std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
             proposal_factory,
+        std::shared_ptr<TransportFactoryType> proposal_transport_factory,
         std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-        consensus::Round initial_round) {
+        consensus::Round initial_round,
+        std::function<std::chrono::milliseconds(
+            const synchronizer::SynchronizationEvent &)> delay_func) {
       auto ordering_service =
           createService(max_size, proposal_factory, tx_cache);
       service = std::make_shared<ordering::transport::OnDemandOsServerGrpc>(
@@ -296,15 +280,18 @@ namespace iroha {
           std::move(transaction_factory),
           std::move(batch_parser),
           std::move(transaction_batch_factory));
-      return createGate(ordering_service,
-                        createConnectionManager(std::move(peer_query_factory),
-                                                std::move(async_call),
-                                                delay,
-                                                std::move(initial_hashes)),
-                        std::make_shared<ordering::cache::OnDemandCache>(),
-                        std::move(proposal_factory),
-                        std::move(tx_cache),
-                        initial_round);
+      return createGate(
+          ordering_service,
+          createConnectionManager(std::move(peer_query_factory),
+                                  std::move(async_call),
+                                  std::move(proposal_transport_factory),
+                                  delay,
+                                  std::move(initial_hashes)),
+          std::make_shared<ordering::cache::OnDemandCache>(),
+          std::move(proposal_factory),
+          std::move(tx_cache),
+          initial_round,
+          std::move(delay_func));
     }
 
   }  // namespace network

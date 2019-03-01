@@ -71,9 +71,6 @@ namespace iroha {
       boost::optional<std::shared_ptr<BlockQuery>> createBlockQuery()
           const override;
 
-      boost::optional<std::shared_ptr<OrderingServicePersistentState>>
-      createOsPersistentState() const override;
-
       boost::optional<std::shared_ptr<QueryExecutor>> createQueryExecutor(
           std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
           std::shared_ptr<shared_model::interface::QueryResponseFactory>
@@ -101,9 +98,11 @@ namespace iroha {
 
       void freeConnections() override;
 
-      void commit(std::unique_ptr<MutableStorage> mutable_storage) override;
+      boost::optional<std::unique_ptr<LedgerState>> commit(
+          std::unique_ptr<MutableStorage> mutable_storage) override;
 
-      bool commitPrepared(const shared_model::interface::Block &block) override;
+      boost::optional<std::unique_ptr<LedgerState>> commitPrepared(
+          const shared_model::interface::Block &block) override;
 
       std::shared_ptr<WsvQuery> getWsvQuery() const override;
 

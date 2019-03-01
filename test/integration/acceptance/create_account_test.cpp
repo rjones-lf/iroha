@@ -24,6 +24,9 @@ class CreateAccount : public AcceptanceFixture {
 };
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-228 "Basic" tests should be replaced with a
+ * common acceptance test
+ *
  * @given some user with can_create_account permission
  * @when execute tx with CreateAccount command
  * @then there is the tx in proposal
@@ -41,6 +44,9 @@ TEST_F(CreateAccount, Basic) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-205 remove, covered by
+ * postgres_executor_test CreateAccount.NoPerms
+ *
  * @given some user without can_create_account permission
  * @when execute tx with CreateAccount command
  * @then verified proposal is empty
@@ -62,6 +68,9 @@ TEST_F(CreateAccount, NoPermissions) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-205 remove, covered by
+ * postgres_executor_test CreateAccount.NoDomain
+ *
  * @given some user with can_create_account permission
  * @when execute tx with CreateAccount command with nonexistent domain
  * @then verified proposal is empty
@@ -84,6 +93,9 @@ TEST_F(CreateAccount, NoDomain) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-205 remove, covered by
+ * postgres_executor_test CreateAccount.NameExists
+ *
  * @given some user with can_create_account permission
  * @when execute tx with CreateAccount command with already existing username
  * @then verified proposal is empty
@@ -106,6 +118,9 @@ TEST_F(CreateAccount, ExistingName) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-205 seems can be removed (covered by field
+ * validator test)
+ *
  * @given some user with can_create_account permission
  * @when execute tx with CreateAccount command with maximum available length
  * @then there is the tx in proposal
@@ -123,8 +138,11 @@ TEST_F(CreateAccount, MaxLenName) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-205 seems can be removed (covered by field
+ * validator test)
+ *
  * @given some user with can_create_account permission
- * @when execute tx with CreateAccount command with too long length
+ * @when execute tx with CreateAccount command with too long account length
  * @then the tx hasn't passed stateless validation
  *       (aka skipProposal throws)
  */
@@ -140,6 +158,9 @@ TEST_F(CreateAccount, TooLongName) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-205 seems can be removed (covered by field
+ * validator test and the above test)
+ *
  * @given some user with can_create_account permission
  * @when execute tx with CreateAccount command with empty user name
  * @then the tx hasn't passed stateless validation
@@ -155,4 +176,35 @@ TEST_F(CreateAccount, EmptyName) {
       .sendTx(complete(baseTx().createAccount(
                   empty_name, kDomain, kNewUserKeypair.publicKey())),
               CHECK_STATELESS_INVALID);
+}
+
+/**
+ * Checks that there is no privelege elevation issue via CreateAccount
+ *
+ * @given two domains: the first domain has default role that contain
+ * can_create_account permission, the second domain has default role that
+ * contains more permissions than default role of the first domain
+ * @when the user of an account from the first domain tries to create an account
+ * in the second domain
+ * @then transaction should fail stateful validation
+ */
+TEST_F(CreateAccount, PrivelegeElevation) {
+  auto second_domain_tx = complete(
+      baseTx(kAdminId).createDomain(kSecondDomain, kAdminRole), kAdminKeypair);
+  auto create_elevated_user = complete(baseTx().createAccount(
+      kNewUser, kSecondDomain, kNewUserKeypair.publicKey()));
+  auto rejected_hash = create_elevated_user.hash();
+
+  IntegrationTestFramework(1)
+      .setInitialState(kAdminKeypair)
+      .sendTxAwait(second_domain_tx, CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeUserWithPerms(), CHECK_TXS_QUANTITY(1))
+      .sendTx(create_elevated_user)
+      .skipProposal()
+      .checkVerifiedProposal(CHECK_TXS_QUANTITY(0))
+      .checkBlock([&rejected_hash](const auto &block) {
+        const auto rejected_hashes = block->rejected_transactions_hashes();
+        ASSERT_THAT(rejected_hashes, ::testing::Contains(rejected_hash));
+        ASSERT_EQ(boost::size(rejected_hashes), 1);
+      });
 }

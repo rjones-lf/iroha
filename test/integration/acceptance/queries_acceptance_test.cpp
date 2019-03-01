@@ -62,6 +62,9 @@ class QueriesAcceptanceTest : public AcceptanceFixture {
 };
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-218 convert to a SFV integration test
+ * (possibly including torii query processor)
+ *
  * @given query with a non-existent creator_account_id
  * @when execute any correct query with kGetRoles permissions
  * @then the query should not pass stateful validation
@@ -74,6 +77,8 @@ TEST_F(QueriesAcceptanceTest, NonExistentCreatorId) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-218 remove, covered by field validator test
+ *
  * @given query with an 1 hour old UNIX time
  * @when execute any correct query with kGetRoles permissions
  * @then the query returns list of roles
@@ -88,6 +93,8 @@ TEST_F(QueriesAcceptanceTest, OneHourOldTime) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-218 remove, covered by field validator test
+ *
  * @given query with more than 24 hour old UNIX time
  * @when execute any correct query with kGetRoles permissions
  * @then the query should not pass stateless validation
@@ -105,6 +112,8 @@ TEST_F(QueriesAcceptanceTest, More24HourOldTime) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-218 remove, covered by field validator test
+ *
  * @given query with less than 24 hour old UNIX time
  * @when execute any correct query with kGetRoles permissions
  * @then the query returns list of roles
@@ -120,6 +129,8 @@ TEST_F(QueriesAcceptanceTest, Less24HourOldTime) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-218 remove, covered by field validator test
+ *
  * @given query with less than 5 minutes from future UNIX time
  * @when execute any correct query with kGetRoles permissions
  * @then the query returns list of roles
@@ -135,6 +146,8 @@ TEST_F(QueriesAcceptanceTest, LessFiveMinutesFromFuture) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-218 remove, covered by field validator test
+ *
  * @given query with 5 minutes from future UNIX time
  * @when execute any correct query with kGetRoles permissions
  * @then the query returns list of roles
@@ -149,6 +162,8 @@ TEST_F(QueriesAcceptanceTest, FiveMinutesFromFuture) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-218 remove, covered by field validator test
+ *
  * @given query with more than 5 minutes from future UNIX time
  * @when execute any correct query with kGetRoles permissions
  * @then the query should not pass stateless validation
@@ -166,6 +181,8 @@ TEST_F(QueriesAcceptanceTest, MoreFiveMinutesFromFuture) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-218 remove, covered by field validator test
+ *
  * @given query with 10 minutes from future UNIX time
  * @when execute any correct query with kGetRoles permissions
  * @then the query should not pass stateless validation
@@ -182,6 +199,9 @@ TEST_F(QueriesAcceptanceTest, TenMinutesFromFuture) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-218 convert to a crypto provider unit test
+ * Note a similar test: AcceptanceTest.TransactionInvalidPublicKey
+ *
  * @given query with Keypair which contains invalid signature but valid public
  * key
  * @when execute any correct query with kGetRoles permissions
@@ -200,6 +220,8 @@ TEST_F(QueriesAcceptanceTest, InvalidSignValidPubKeypair) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-218 convert to a crypto provider unit test
+ *
  * @given query with Keypair which contains valid signature but invalid public
  * key
  * @when execute any correct query with kGetRoles permissions
@@ -218,6 +240,8 @@ TEST_F(QueriesAcceptanceTest, ValidSignInvalidPubKeypair) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-218 convert to a SFV integration test
+ *
  * @given query with Keypair which contains invalid signature and invalid public
  * key
  * @when execute any correct query with kGetRoles permissions
@@ -236,6 +260,9 @@ TEST_F(QueriesAcceptanceTest, FullyInvalidKeypair) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-218 convert to a crypto provider unit test
+ * Note a similar test: AcceptanceTest.EmptySignatures
+ *
  * @given query with Keypair which contains empty signature and valid public key
  * @when execute any correct query with kGetRoles permissions
  * @then the query should not pass stateless validation
@@ -252,6 +279,8 @@ TEST_F(QueriesAcceptanceTest, EmptySignValidPubKeypair) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-218 remove, covered by field validator test
+ *
  * @given query with Keypair which contains valid signature and empty public key
  * @when execute any correct query with kGetRoles permissions
  * @then the query should not pass stateless validation
@@ -268,6 +297,8 @@ TEST_F(QueriesAcceptanceTest, ValidSignEmptyPubKeypair) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-218 convert to a crypto provider unit test
+ *
  * @given query with Keypair which contains empty signature and empty public key
  * @when execute any correct query with kGetRoles permissions
  * @then the query should not pass stateless validation
@@ -285,6 +316,8 @@ TEST_F(QueriesAcceptanceTest, FullyEmptyPubKeypair) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-218 convert to a crypto provider unit test
+ *
  * @given query with Keypair which contains invalid signature and empty public
  * key
  * @when execute any correct query with kGetRoles permissions
@@ -307,6 +340,12 @@ TEST_F(QueriesAcceptanceTest, InvalidSignEmptyPubKeypair) {
 }
 
 /**
+ * TODO mboldyrev 18.01.2019 IR-218 convert to a SFV integration test
+ * including SignableModelValidator or even whole torii::QueryService
+ * and the crypto provider, that verifies that a transaction failing the
+ * crypto provider check is rejected.
+ *
+ *
  * @given query with Keypair which contains empty signature and invalid public
  * key
  * @when execute any correct query with kGetRoles permissions

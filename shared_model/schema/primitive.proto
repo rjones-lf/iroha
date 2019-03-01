@@ -88,11 +88,11 @@ enum GrantablePermission {
 }
 
 message Signature {
-  bytes public_key = 1;
-  bytes signature  = 2;
+  string public_key = 1;
+  string signature  = 2;
 }
 
 message Peer {
   string address = 1;
-  bytes peer_key = 2;
+  string peer_key = 2; // hex string
 }

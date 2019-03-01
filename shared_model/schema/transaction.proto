@@ -17,7 +17,7 @@ message Transaction {
       }
       BatchType type = 1;
       // array of reduced hashes of all txs from the batch
-      repeated bytes reduced_hashes = 2;
+      repeated string reduced_hashes = 2;
     }
     message ReducedPayload{
       repeated Command commands = 1;
