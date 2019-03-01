@@ -23,21 +23,29 @@ using namespace std;
  * @then commit not emitted
  */
 TEST_F(YacTest, UnknownVoteBeforeCommit) {
+  auto my_order = ClusterOrdering::create(default_peers);
+  ASSERT_TRUE(my_order);
+  initYac(my_order.value());
+
   // verify that commit not emitted
   auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 0);
   wrapper.subscribe();
 
   EXPECT_CALL(*network, sendState(_, _)).Times(0);
 
-  EXPECT_CALL(*crypto, verify(_)).Times(1).WillRepeatedly(Return(true));
+  EXPECT_CALL(*crypto, verify(_))
+      .Times(testing::AnyNumber())
+      .WillRepeatedly(Return(true));
 
-  VoteMessage vote;
-  vote.hash = YacHash(iroha::consensus::Round{1, 1}, "my_proposal", "my_block");
-  std::string unknown = "unknown";
-  vote.signature = createSig(unknown);
+  YacHash my_hash{iroha::consensus::Round{1, 1}, "my_proposal", "my_block"};
 
-  // assume that our peer receive message
-  network->notification->onState({vote});
+  // send enough votes for next valid to make a commit
+  for (auto i = 0; i < 4; ++i) {
+    yac->onState({createVote(my_hash, std::to_string(i))});
+  }
+
+  // send a vote from unknown peer
+  yac->onState({createVote(my_hash, "unknown")});
 
   ASSERT_TRUE(wrapper.validate());
 }
