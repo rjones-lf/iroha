@@ -10,12 +10,14 @@
 #include <memory>
 #include <mutex>
 #include <rxcpp/rx.hpp>
+#include <vector>
 
 #include "consensus/yac/cluster_order.hpp"     //  for ClusterOrdering
 #include "consensus/yac/outcome_messages.hpp"  // because messages passed by value
 #include "consensus/yac/storage/yac_vote_storage.hpp"  // for VoteStorage
 #include "consensus/yac/transport/yac_network_interface.hpp"  // for YacNetworkNotifications
 #include "consensus/yac/yac_gate.hpp"                         // for HashGate
+#include "cryptography/public_key.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -37,6 +39,7 @@ namespace iroha {
             std::shared_ptr<YacCryptoProvider> crypto,
             std::shared_ptr<Timer> timer,
             ClusterOrdering order,
+            std::vector<std::shared_ptr<shared_model::interface::Peer>> peers,
             logger::Logger log = logger::log("YAC"));
 
         Yac(YacVoteStorage vote_storage,
@@ -44,6 +47,7 @@ namespace iroha {
             std::shared_ptr<YacCryptoProvider> crypto,
             std::shared_ptr<Timer> timer,
             ClusterOrdering order,
+            std::vector<std::shared_ptr<shared_model::interface::Peer>> peers,
             logger::Logger log = logger::log("YAC"));
 
         // ------|Hash gate|------
@@ -96,6 +100,7 @@ namespace iroha {
 
         // ------|One round|------
         ClusterOrdering cluster_order_;
+        std::vector<shared_model::crypto::PublicKey> peer_keys_;
 
         // ------|Logger|------
         logger::Logger log_;

@@ -49,6 +49,7 @@ namespace iroha {
 
         std::shared_ptr<consensus::yac::Yac> createYac(
             ClusterOrdering initial_order,
+            std::vector<std::shared_ptr<shared_model::interface::Peer>> peers,
             const shared_model::crypto::Keypair &keypair,
             std::chrono::milliseconds delay_milliseconds,
             std::shared_ptr<

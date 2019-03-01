@@ -57,15 +57,19 @@ namespace iroha {
           auto vote = *PbConverters::deserializeVote(pb_vote);
           state.push_back(vote);
         }
+        if (state.empty()) {
+          async_call_->log_->info(
+              "Received an empty votes collection");
+          return grpc::Status::CANCELLED;
+        }
         if (not sameKeys(state)) {
           async_call_->log_->info(
-              "Votes are stateless invalid: proposals are different, or empty "
-              "collection");
+              "Votes are statelessly invalid: proposal rounds are different");
           return grpc::Status::CANCELLED;
         }
 
         async_call_->log_->info(
-            "Receive votes[size={}] from {}", state.size(), context->peer());
+            "Received votes[size={}] from {}", state.size(), context->peer());
 
         if (auto notifications = handler_.lock()) {
           notifications->onState(std::move(state));

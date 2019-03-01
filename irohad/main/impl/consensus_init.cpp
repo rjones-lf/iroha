@@ -62,6 +62,7 @@ namespace iroha {
 
       std::shared_ptr<consensus::yac::Yac> YacInit::createYac(
           ClusterOrdering initial_order,
+          std::vector<std::shared_ptr<shared_model::interface::Peer>> peers,
           const shared_model::crypto::Keypair &keypair,
           std::chrono::milliseconds delay_milliseconds,
           std::shared_ptr<
@@ -74,7 +75,8 @@ namespace iroha {
             createNetwork(std::move(async_call)),
             createCryptoProvider(keypair, std::move(common_objects_factory)),
             createTimer(delay_milliseconds),
-            initial_order);
+            initial_order,
+            std::move(peers));
       }
 
       std::shared_ptr<YacGate> YacInit::initConsensusGate(
@@ -91,8 +93,13 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               common_objects_factory) {
         auto peer_orderer = createPeerOrderer(peer_query_factory);
+        auto peers = peer_query_factory->createPeerQuery()
+                         .value()
+                         ->getLedgerPeers()
+                         .value();
 
         auto yac = createYac(peer_orderer->getInitialOrdering().value(),
+                             std::move(peers),
                              keypair,
                              vote_delay_milliseconds,
                              std::move(async_call),
