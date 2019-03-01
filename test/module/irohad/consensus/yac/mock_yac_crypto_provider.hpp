@@ -27,7 +27,7 @@ namespace iroha {
         auto tmp =
             shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
                 .publicKey();
-        std::string key(tmp.blob().size(), 0);
+        std::string key(tmp.blob().size(), '0');
         std::copy(pub_key.begin(), pub_key.end(), key.begin());
         auto sig = std::make_shared<MockSignature>();
         EXPECT_CALL(*sig, publicKey())
