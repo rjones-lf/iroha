@@ -29,8 +29,8 @@
 using testing::Return;
 
 struct CommandFixture {
-  std::shared_ptr<torii::CommandService> service_;
-  std::shared_ptr<torii::CommandServiceTransportGrpc> service_transport_;
+  std::shared_ptr<iroha::torii::CommandService> service_;
+  std::shared_ptr<iroha::torii::CommandServiceTransportGrpc> service_transport_;
   std::shared_ptr<iroha::torii::TransactionProcessorImpl> tx_processor_;
   std::shared_ptr<iroha::network::MockPeerCommunicationService> pcs_;
   std::shared_ptr<iroha::MockMstProcessor> mst_processor_;
@@ -72,7 +72,8 @@ struct CommandFixture {
     tx_processor_ = std::make_shared<iroha::torii::TransactionProcessorImpl>(
         pcs_, mst_processor_, status_bus, status_factory);
     auto storage = std::make_shared<iroha::ametsuchi::MockStorage>();
-    service_ = std::make_shared<torii::CommandServiceImpl>(tx_processor_,
+    service_ =
+        std::make_shared<iroha::torii::CommandServiceImpl>(tx_processor_,
                                                            storage,
                                                            status_bus,
                                                            status_factory,
@@ -104,15 +105,16 @@ struct CommandFixture {
         transaction_batch_factory = std::make_shared<
             shared_model::interface::TransactionBatchFactoryImpl>();
 
-    service_transport_ = std::make_shared<torii::CommandServiceTransportGrpc>(
-        service_,
-        status_bus,
-        status_factory,
-        transaction_factory,
-        batch_parser,
-        transaction_batch_factory,
-        rxcpp::observable<>::iterate(consensus_gate_objects_),
-        2);
+    service_transport_ =
+        std::make_shared<iroha::torii::CommandServiceTransportGrpc>(
+            service_,
+            status_bus,
+            status_factory,
+            transaction_factory,
+            batch_parser,
+            transaction_batch_factory,
+            rxcpp::observable<>::iterate(consensus_gate_objects_),
+            2);
   }
 };
 

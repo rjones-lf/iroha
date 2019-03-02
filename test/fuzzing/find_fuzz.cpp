@@ -22,7 +22,7 @@ using testing::_;
 using testing::Return;
 
 struct QueryFixture {
-  std::shared_ptr<torii::QueryService> service_;
+  std::shared_ptr<iroha::torii::QueryService> service_;
   std::shared_ptr<iroha::torii::QueryProcessorImpl> qry_processor_;
   std::shared_ptr<iroha::ametsuchi::MockStorage> storage_;
   std::shared_ptr<iroha::MockPendingTransactionStorage> pending_transactions_;
@@ -55,8 +55,8 @@ struct QueryFixture {
             shared_model::interface::Query,
             shared_model::proto::Query>>(std::move(query_validator),
                                          std::move(proto_query_validator));
-    service_ =
-        std::make_shared<torii::QueryService>(qry_processor_, query_factory);
+    service_ = std::make_shared<iroha::torii::QueryService>(qry_processor_,
+                                                            query_factory);
   }
 };
 
