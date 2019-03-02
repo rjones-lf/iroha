@@ -35,8 +35,7 @@ struct CommandFixture {
   std::shared_ptr<iroha::torii::TransactionProcessorImpl> tx_processor_;
   std::shared_ptr<iroha::ametsuchi::MockStorage> storage_;
   std::shared_ptr<iroha::network::MockPeerCommunicationService> pcs_;
-  std::shared_ptr<iroha::MockMstProcessor> mst_processor_(
-      std::make_shared<iroha::MockMstProcessor>(logger::getDummyLoggerPtr()));
+  std::shared_ptr<iroha::MockMstProcessor> mst_processor_;
   std::shared_ptr<iroha::ametsuchi::MockBlockQuery> bq_;
   std::shared_ptr<iroha::network::MockConsensusGate> consensus_gate_;
 
@@ -59,6 +58,8 @@ struct CommandFixture {
     EXPECT_CALL(*pcs_, onVerifiedProposal())
         .WillRepeatedly(Return(vprop_notifier_.get_observable()));
 
+    mst_processor_ =
+        std::make_shared<iroha::MockMstProcessor>(logger::getDummyLoggerPtr());
     EXPECT_CALL(*mst_processor_, onStateUpdateImpl())
         .WillRepeatedly(Return(mst_state_notifier_.get_observable()));
     EXPECT_CALL(*mst_processor_, onPreparedBatchesImpl())
