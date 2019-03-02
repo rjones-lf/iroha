@@ -27,6 +27,8 @@ namespace config_members {
   const char *VoteDelay = "vote_delay";
   const char *MstSupport = "mst_enable";
   const char *MstExpirationTime = "mst_expiration_time";
+  const char *MaxRoundsDelay = "max_rounds_delay";
+  const char *StaleStreamMaxRounds = "stale_stream_max_rounds";
 }  // namespace config_members
 
 static constexpr size_t kBadJsonPrintLength = 15;
@@ -63,6 +65,7 @@ inline rapidjson::Document parse_iroha_config(const std::string &conf_path) {
   const std::string kUintType = "uint";
   const std::string kBoolType = "bool";
   doc.ParseStream(isw);
+  auto &allocator = doc.GetAllocator();
   ac::assert_fatal(not doc.HasParseError(),
                    reportJsonParsingError(doc, conf_path, ifs_iroha));
 
@@ -104,8 +107,38 @@ inline rapidjson::Document parse_iroha_config(const std::string &conf_path) {
                    ac::no_member_error(mbr::MstSupport));
   ac::assert_fatal(doc[mbr::MstSupport].IsBool(),
                    ac::type_error(mbr::MstSupport, kBoolType));
-  ac::assert_fatal(doc[mbr::MstExpirationTime].IsUint(),
-                   ac::type_error(mbr::MstExpirationTime, kUintType));
+
+  // This way of initialization of unspecified config parameters is going to
+  // be substituted very soon with completely different approach introduced by
+  // pr https://github.com/hyperledger/iroha/pull/2126
+  const auto kMaxRoundsDelayDefault = 3000u;
+  const auto kStaleStreamMaxRoundsDefault = 2u;
+  const auto kMstExpirationTimeDefault = 1440u;
+
+  if (not doc.HasMember(mbr::MstExpirationTime)) {
+    rapidjson::Value key(mbr::MstExpirationTime, allocator);
+    doc.AddMember(key, kMstExpirationTimeDefault, allocator);
+  } else {
+    ac::assert_fatal(doc[mbr::MstExpirationTime].IsUint(),
+                     ac::type_error(mbr::MstExpirationTime, kUintType));
+  }
+
+  if (not doc.HasMember(mbr::MaxRoundsDelay)) {
+    rapidjson::Value key(mbr::MaxRoundsDelay, allocator);
+    doc.AddMember(key, kMaxRoundsDelayDefault, allocator);
+  } else {
+    ac::assert_fatal(doc[mbr::MaxRoundsDelay].IsUint(),
+                     ac::type_error(mbr::MaxRoundsDelay, kUintType));
+  }
+
+  if (not doc.HasMember(mbr::StaleStreamMaxRounds)) {
+    rapidjson::Value key(mbr::StaleStreamMaxRounds, allocator);
+    doc.AddMember(key, kStaleStreamMaxRoundsDefault, allocator);
+  } else {
+    ac::assert_fatal(doc[mbr::StaleStreamMaxRounds].IsUint(),
+                     ac::type_error(mbr::StaleStreamMaxRounds, kUintType));
+  }
+
   return doc;
 }
 

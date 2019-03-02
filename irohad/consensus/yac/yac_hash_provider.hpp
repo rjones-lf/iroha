@@ -29,6 +29,8 @@ namespace iroha {
 
       class YacHash {
        public:
+        // TODO: 2019-02-08 @muratovv IR-288 refactor YacHash: default ctor,
+        // block signature param, code in the header.
         YacHash(Round round, ProposalHash proposal, BlockHash block)
             : vote_round{round},
               vote_hashes{std::move(proposal), std::move(block)} {}

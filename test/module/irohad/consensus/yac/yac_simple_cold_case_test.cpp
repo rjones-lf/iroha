@@ -147,7 +147,9 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyVote) {
   });
 
   for (size_t i = 0; i < default_peers.size(); ++i) {
-    yac->onState({createVote(YacHash{}, std::to_string(i))});
+    yac->onState({createVote(
+        YacHash(iroha::consensus::Round(1, 0), "proposal_hash", "block_hash"),
+        std::to_string(i))});
   }
 
   // verify that on_commit subscribers are notified
@@ -178,14 +180,17 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyReject) {
 
   std::vector<VoteMessage> commit;
 
+  auto yac_hash =
+      YacHash(iroha::consensus::Round(1, 0), "proposal_hash", "block_hash");
+
   auto f = (default_peers.size() - 1) / 3;
   for (size_t i = 0; i < 2 * f; ++i) {
-    auto vote = createVote(YacHash{}, std::to_string(i));
+    auto vote = createVote(yac_hash, std::to_string(i));
     yac->onState({vote});
     commit.push_back(vote);
   }
 
-  auto vote = createVote(YacHash{}, std::to_string(2 * f + 1));
+  auto vote = createVote(yac_hash, std::to_string(2 * f + 1));
   RejectMessage reject(
       {vote,
        createVote(YacHash(iroha::consensus::Round{1, 1}, "", "my_block"),
