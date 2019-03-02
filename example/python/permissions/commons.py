@@ -77,7 +77,7 @@ def genesis_block(admin, alice, test_permissions, multidomain=False):
     """
     peer = primitive_pb2.Peer()
     peer.address = '0.0.0.0:50541'
-    peer.peer_key = ed25519.publickey_unsafe(binascii.unhexlify(admin['key']))
+    peer.peer_key = binascii.hexlify(ed25519.publickey_unsafe(binascii.unhexlify(admin['key'])))
     commands = [
         command('AddPeer', peer=peer),
         command('CreateRole', role_name='admin_role', permissions=all_permissions()),
