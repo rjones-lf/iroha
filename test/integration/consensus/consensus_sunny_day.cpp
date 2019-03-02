@@ -72,7 +72,9 @@ class ConsensusSunnyDayTest : public ::testing::Test {
 
   static const size_t port = 50541;
 
-  ConsensusSunnyDayTest() : my_peer(mk_local_peer(port + my_num)) {
+  ConsensusSunnyDayTest()
+      : my_peer(mk_local_peer(port + my_num)),
+        my_pub_key(shared_model::crypto::toBinaryString(my_peer->pubkey())) {
     for (decltype(num_peers) i = 0; i < num_peers; ++i) {
       default_peers.push_back(mk_local_peer(port + i));
     }
@@ -91,7 +93,7 @@ class ConsensusSunnyDayTest : public ::testing::Test {
     auto async_call = std::make_shared<
         iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
     network = std::make_shared<NetworkImpl>(async_call);
-    crypto = std::make_shared<FixedCryptoProvider>(std::to_string(my_num));
+    crypto = std::make_shared<FixedCryptoProvider>(my_pub_key);
     timer = std::make_shared<TimerImpl>([this] {
       // static factory with a single thread
       // see YacInit::createTimer in consensus_init.cpp
@@ -127,6 +129,7 @@ class ConsensusSunnyDayTest : public ::testing::Test {
 
   uint64_t delay_before, delay_after;
   std::shared_ptr<shared_model::interface::Peer> my_peer;
+  const std::string my_pub_key;
   std::vector<std::shared_ptr<shared_model::interface::Peer>> default_peers;
 };
 
@@ -149,7 +152,7 @@ TEST_F(ConsensusSunnyDayTest, SunnyDayTest) {
   std::this_thread::sleep_for(std::chrono::milliseconds(delay_before));
 
   YacHash my_hash(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
-  my_hash.block_signature = createSig("");
+  my_hash.block_signature = createSig(my_pub_key);
   auto order = ClusterOrdering::create(default_peers);
   ASSERT_TRUE(order);
 
