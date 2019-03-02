@@ -13,6 +13,7 @@
 #include <unordered_map>
 
 #include "consensus/yac/outcome_messages.hpp"
+#include "consensus/yac/vote_message.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "logger/logger_fwd.hpp"
@@ -21,10 +22,6 @@
 namespace iroha {
   namespace consensus {
     namespace yac {
-
-      struct CommitMessage;
-      struct RejectMessage;
-      struct VoteMessage;
 
       /**
        * Class which provides implementation of transport for consensus based on

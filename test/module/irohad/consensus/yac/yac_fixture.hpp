@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 
 #include "consensus/yac/cluster_order.hpp"
+#include "consensus/yac/storage/buffered_cleanup_strategy.hpp"
 #include "consensus/yac/yac.hpp"
 
 #include "framework/test_logger.hpp"
@@ -55,13 +56,16 @@ namespace iroha {
         }
 
         void initYac(ClusterOrdering ordering) {
-          yac = Yac::create(YacVoteStorage(getTestLoggerManager()->getChild(
-                                "YacVoteStorage")),
-                            network,
-                            crypto,
-                            timer,
-                            ordering,
-                            getTestLogger("Yac"));
+          yac = Yac::create(
+              YacVoteStorage(
+                  std::make_shared<
+                      iroha::consensus::yac::BufferedCleanupStrategy>(),
+                  getTestLoggerManager()->getChild("YacVoteStorage")),
+              network,
+              crypto,
+              timer,
+              ordering,
+              getTestLogger("Yac"));
           network->subscribe(yac);
         }
       };
