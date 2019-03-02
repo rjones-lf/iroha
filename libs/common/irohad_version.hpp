@@ -8,8 +8,8 @@
 
 namespace iroha {
 
+  /// A string describing current git repository version in a human-readable way
   extern const char *kGitPrettyVersion;
-  extern const char *kGitHeadCommitHash;
 
 }  // namespace iroha
 
