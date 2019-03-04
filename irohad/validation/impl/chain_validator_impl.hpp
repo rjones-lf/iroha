@@ -44,6 +44,10 @@ namespace iroha {
               blocks,
           ametsuchi::MutableStorage &storage) const override;
 
+      bool validateAndApply(
+          std::shared_ptr<shared_model::interface::Block> block,
+          ametsuchi::MutableStorage &storage) const override;
+
      private:
       /// Verifies whether previous hash of block matches top_hash
       bool validatePreviousHash(

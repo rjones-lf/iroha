@@ -34,6 +34,13 @@ namespace iroha {
 
       bool apply(const shared_model::interface::Block &block) override;
 
+      /**
+       * Verifies whether the block is applicable using predicate, and applies
+       * the block
+       */
+      bool apply(const shared_model::interface::Block &block,
+                 MutableStoragePredicate predicate);
+
       bool apply(rxcpp::observable<
                      std::shared_ptr<shared_model::interface::Block>> blocks,
                  MutableStoragePredicate predicate) override;
@@ -48,13 +55,6 @@ namespace iroha {
        */
       template <typename Function>
       bool withSavepoint(Function &&function);
-
-      /**
-       * Verifies whether the block is applicable using predicate, and applies
-       * the block
-       */
-      bool apply(const shared_model::interface::Block &block,
-                 MutableStoragePredicate predicate);
 
       shared_model::interface::types::HashType top_hash_;
       // ordered collection is used to enforce block insertion order in

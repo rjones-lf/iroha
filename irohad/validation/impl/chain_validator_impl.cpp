@@ -34,6 +34,18 @@ namespace iroha {
           });
     }
 
+    bool ChainValidatorImpl::validateAndApply(
+        std::shared_ptr<shared_model::interface::Block> block,
+        ametsuchi::MutableStorage &storage) const {
+      log_->info("validate block...");
+
+      return storage.apply(
+          *block,
+          [this](const auto &block, auto &queries, const auto &top_hash) {
+            return this->validateBlock(block, queries, top_hash);
+          });
+    }
+
     bool ChainValidatorImpl::validatePreviousHash(
         const shared_model::interface::Block &block,
         const shared_model::interface::types::HashType &top_hash) const {

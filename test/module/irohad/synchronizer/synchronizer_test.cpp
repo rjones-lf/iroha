@@ -28,6 +28,7 @@ using namespace iroha::network;
 using namespace framework::test_subscriber;
 
 using ::testing::_;
+using ::testing::An;
 using ::testing::ByMove;
 using ::testing::DefaultValue;
 using ::testing::Return;
@@ -133,7 +134,7 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
           }));
   EXPECT_CALL(*mutable_factory, commit_(_))
       .WillOnce(Return(ByMove(std::make_unique<LedgerState>(ledger_peers))));
-  EXPECT_CALL(*chain_validator, validateAndApply(_, _)).Times(0);
+  EXPECT_CALL(*chain_validator, validateAndApply(An<Chain>(), _)).Times(0);
   EXPECT_CALL(*block_loader, retrieveBlocks(_, _)).Times(0);
 
   auto wrapper =
@@ -167,7 +168,7 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
   EXPECT_CALL(*mutable_factory, createMutableStorage())
       .WillOnce(Return(ByMove(expected::makeError("Connection was closed"))));
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(0);
-  EXPECT_CALL(*chain_validator, validateAndApply(_, _)).Times(0);
+  EXPECT_CALL(*chain_validator, validateAndApply(An<Chain>(), _)).Times(0);
   EXPECT_CALL(*block_loader, retrieveBlocks(_, _)).Times(0);
 
   auto wrapper =
@@ -193,7 +194,8 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
 
   EXPECT_CALL(*mutable_factory, commit_(_))
       .WillOnce(Return(ByMove(std::make_unique<LedgerState>(ledger_peers))));
-  EXPECT_CALL(*chain_validator, validateAndApply(_, _)).WillOnce(Return(true));
+  EXPECT_CALL(*chain_validator, validateAndApply(An<Chain>(), _))
+      .WillOnce(Return(true));
   EXPECT_CALL(*block_loader, retrieveBlocks(_, _))
       .WillOnce(Return(rxcpp::observable<>::just(commit_message)));
 
@@ -229,7 +231,7 @@ TEST_F(SynchronizerTest, ExactlyThreeRetrievals) {
   EXPECT_CALL(*mutable_factory, commit_(_))
       .WillOnce(Return(ByMove(boost::optional<std::unique_ptr<LedgerState>>(
           std::make_unique<LedgerState>(ledger_peers)))));
-  EXPECT_CALL(*chain_validator, validateAndApply(_, _))
+  EXPECT_CALL(*chain_validator, validateAndApply(An<Chain>(), _))
       .WillOnce(Return(false))
       .WillOnce(testing::Invoke([](auto chain, auto &) {
         // emulate chain check
@@ -268,7 +270,7 @@ TEST_F(SynchronizerTest, RetrieveBlockTwoFailures) {
       .WillRepeatedly(Return(rxcpp::observable<>::just(commit_message)));
 
   // fail the chain validation two times so that synchronizer will try more
-  EXPECT_CALL(*chain_validator, validateAndApply(_, _))
+  EXPECT_CALL(*chain_validator, validateAndApply(An<Chain>(), _))
       .WillOnce(Return(false))
       .WillOnce(Return(false))
       .WillOnce(Return(false))
@@ -407,7 +409,8 @@ TEST_F(SynchronizerTest, VotedForOtherCommitPrepared) {
   EXPECT_CALL(*block_loader, retrieveBlocks(_, _))
       .WillRepeatedly(Return(rxcpp::observable<>::just(commit_message)));
 
-  EXPECT_CALL(*chain_validator, validateAndApply(_, _)).WillOnce(Return(true));
+  EXPECT_CALL(*chain_validator, validateAndApply(An<Chain>(), _))
+      .WillOnce(Return(true));
 
   auto wrapper =
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
@@ -485,7 +488,7 @@ TEST_F(SynchronizerTest, CommitFailureVoteSameBlock) {
           }));
   EXPECT_CALL(*mutable_factory, commit_(_))
       .WillOnce(Return(ByMove(boost::none)));
-  EXPECT_CALL(*chain_validator, validateAndApply(_, _)).Times(0);
+  EXPECT_CALL(*chain_validator, validateAndApply(An<Chain>(), _)).Times(0);
   EXPECT_CALL(*block_loader, retrieveBlocks(_, _)).Times(0);
 
   auto wrapper =
@@ -510,7 +513,8 @@ TEST_F(SynchronizerTest, CommitFailureVoteOther) {
 
   EXPECT_CALL(*mutable_factory, commit_(_))
       .WillOnce(Return(ByMove(boost::none)));
-  EXPECT_CALL(*chain_validator, validateAndApply(_, _)).WillOnce(Return(true));
+  EXPECT_CALL(*chain_validator, validateAndApply(An<Chain>(), _))
+      .WillOnce(Return(true));
   EXPECT_CALL(*block_loader, retrieveBlocks(_, _))
       .WillOnce(Return(rxcpp::observable<>::just(commit_message)));
 

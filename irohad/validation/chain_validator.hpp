@@ -44,6 +44,20 @@ namespace iroha {
           rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
               blocks,
           ametsuchi::MutableStorage &storage) const = 0;
+
+      /**
+       * Try to apply the block to the storage.
+       *
+       * While applying the block it will validate its signature and related
+       * meta information such as previous hash, height and other
+       * @param block - the block to be applied
+       * @param storage - storage to which the block is to be applied
+       * @return true if commit is valid and successfully applied, false
+       * otherwise
+       */
+      virtual bool validateAndApply(
+          std::shared_ptr<shared_model::interface::Block> block,
+          ametsuchi::MutableStorage &storage) const = 0;
     };
   }  // namespace validation
 }  // namespace iroha

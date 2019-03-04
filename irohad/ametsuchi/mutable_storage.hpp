@@ -60,6 +60,17 @@ namespace iroha {
               blocks,
           MutableStoragePredicate predicate) = 0;
 
+      /**
+       * Verifies whether the block is applicable using predicate, and applies
+       * the block
+       * @param block Block to be applied
+       * @param predicate Checks whether block is applicable prior to applying
+       * transactions
+       * @return True if block was successfully applied, false otherwise.
+       */
+      virtual bool apply(const shared_model::interface::Block &block,
+                         MutableStoragePredicate predicate) = 0;
+
       virtual ~MutableStorage() = default;
     };
 
