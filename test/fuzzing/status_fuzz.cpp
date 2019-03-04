@@ -114,12 +114,6 @@ struct CommandFixture {
                                                            status_factory,
                                                            cache_,
                                                            tx_presence_cache_);
-    service_transport_ = std::make_shared<torii::CommandServiceTransportGrpc>(
-        service_,
-        status_bus,
-        status_factory,
-        cache_,
-        tx_presence_cache_, );
     service_transport_ =
         std::make_shared<iroha::torii::CommandServiceTransportGrpc>(
             service_,
