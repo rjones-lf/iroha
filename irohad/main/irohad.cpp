@@ -10,11 +10,14 @@
 #include <gflags/gflags.h>
 #include <grpc++/grpc++.h>
 #include "ametsuchi/storage.hpp"
+#include "common/bind.hpp"
 #include "common/result.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "main/application.hpp"
 #include "main/iroha_conf_loader.hpp"
 #include "main/raw_block_loader.hpp"
+#include "main/server_runner.hpp"
+#include "util/utility.hpp"
 
 static const std::string kListenIp = "0.0.0.0";
 
@@ -84,6 +87,34 @@ DEFINE_int32(verbosity, spdlog::level::info, "Log verbosity");
 DEFINE_validator(verbosity, validateVerbosity);
 
 std::promise<void> exit_requested;
+std::shared_ptr<iroha::service::UtilityService> utility_service;
+std::unique_ptr<ServerRunner> utility_server;
+
+void initShutdownService(const rapidjson::Document &config) {
+  namespace mbr = config_members;
+  using iroha::operator|;
+  using RunResult = iroha::expected::Result<void, std::string>;
+  auto log_ = logger::log("IrohaUtilityServer");
+
+  utility_service = std::make_shared<iroha::service::UtilityService>(
+      config[mbr::ShutdownSecretKey].GetString(), exit_requested);
+  utility_server = std::make_unique<ServerRunner>(
+      kListenIp + ":"
+          + std::to_string(config[mbr::UtilityServicePort].GetUint()),
+      false,
+      log_);
+  utility_server->append(utility_service)
+      .run()
+      .match(
+          [&](const auto &port) -> RunResult {
+            log_->info("Utility server bound on port {}", port.value);
+            return {};
+          },
+          [&](const iroha::expected::Error<std::string> &e) -> RunResult {
+            log_->error(e.error);
+            return e;
+          });
+}
 
 int main(int argc, char *argv[]) {
   // Parsing command line arguments
@@ -117,6 +148,8 @@ int main(int argc, char *argv[]) {
     log->error("Failed to load keypair");
     return EXIT_FAILURE;
   }
+
+  initShutdownService(config);
 
   // Configuring iroha daemon
   Irohad irohad(

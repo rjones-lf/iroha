@@ -29,6 +29,8 @@ namespace config_members {
   const char *MstExpirationTime = "mst_expiration_time";
   const char *MaxRoundsDelay = "max_rounds_delay";
   const char *StaleStreamMaxRounds = "stale_stream_max_rounds";
+  const char *UtilityServicePort = "utility_service_port";
+  const char *ShutdownSecretKey = "shutdown_secret_key";
 }  // namespace config_members
 
 static constexpr size_t kBadJsonPrintLength = 15;
@@ -114,6 +116,8 @@ inline rapidjson::Document parse_iroha_config(const std::string &conf_path) {
   const auto kMaxRoundsDelayDefault = 3000u;
   const auto kStaleStreamMaxRoundsDefault = 2u;
   const auto kMstExpirationTimeDefault = 1440u;
+  const auto kUtilityServicePortDefault = 60001u;
+  const auto kShutdownSecretKeyDefault = "stopbombing";
 
   if (not doc.HasMember(mbr::MstExpirationTime)) {
     rapidjson::Value key(mbr::MstExpirationTime, allocator);
@@ -137,6 +141,23 @@ inline rapidjson::Document parse_iroha_config(const std::string &conf_path) {
   } else {
     ac::assert_fatal(doc[mbr::StaleStreamMaxRounds].IsUint(),
                      ac::type_error(mbr::StaleStreamMaxRounds, kUintType));
+  }
+
+  if (not doc.HasMember(mbr::UtilityServicePort)) {
+    rapidjson::Value key(mbr::UtilityServicePort, allocator);
+    doc.AddMember(key, kUtilityServicePortDefault, allocator);
+  } else {
+    ac::assert_fatal(doc[mbr::UtilityServicePort].IsUint(),
+                     ac::type_error(mbr::UtilityServicePort, kUintType));
+  }
+
+  if (not doc.HasMember(mbr::ShutdownSecretKey)) {
+    rapidjson::Value key(mbr::ShutdownSecretKey, allocator);
+    rapidjson::Value value(kShutdownSecretKeyDefault, allocator);
+    doc.AddMember(key, value, allocator);
+  } else {
+    ac::assert_fatal(doc[mbr::ShutdownSecretKey].IsString(),
+                     ac::type_error(mbr::ShutdownSecretKey, kStrType));
   }
 
   return doc;

@@ -9,6 +9,8 @@
   "mst_enable" : false,
   "mst_expiration_time" : 1440,
   "max_rounds_delay": 3000,
-  "stale_stream_max_rounds": 2
+  "stale_stream_max_rounds": 2,
+  "utility_service_port": 60001,
+  "shutdown_secret_key": "stopbombing"
 }
 
