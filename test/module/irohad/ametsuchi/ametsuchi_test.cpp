@@ -667,3 +667,21 @@ TEST_F(PreparedBlockTest, CommitPreparedFailsAfterCommit) {
   shared_model::interface::Amount resultingBalance{"15.00"};
   validateAccountAsset(sql_query, "admin@test", "coin#test", resultingBalance);
 }
+
+/**
+ * @given Storage with prepared state
+ * @when another temporary wsv is created and transaction is applied
+ * @then previous state is dropped and new transaction is applied successfully
+ */
+TEST_F(PreparedBlockTest, TemporaryWsvUnlocks) {
+  auto result = temp_wsv->apply(*initial_tx);
+  ASSERT_TRUE(framework::expected::val(result));
+  storage->prepareBlock(std::move(temp_wsv));
+
+  using framework::expected::val;
+  temp_wsv = std::move(val(storage->createTemporaryWsv())->value);
+
+  result = temp_wsv->apply(*initial_tx);
+  ASSERT_TRUE(framework::expected::val(result));
+  storage->prepareBlock(std::move(temp_wsv));
+}
