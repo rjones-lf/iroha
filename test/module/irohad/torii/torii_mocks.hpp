@@ -15,6 +15,7 @@
 #include "interfaces/query_responses/query_response.hpp"
 #include "torii/command_service.hpp"
 #include "torii/processor/query_processor.hpp"
+#include "torii/processor/transaction_processor.hpp"
 #include "torii/status_bus.hpp"
 
 namespace iroha {
@@ -40,6 +41,14 @@ namespace iroha {
           rxcpp::observable<
               std::shared_ptr<shared_model::interface::TransactionResponse>>(
               const shared_model::crypto::Hash &));
+    };
+
+    class MockTransactionProcessor : public TransactionProcessor {
+     public:
+      MOCK_CONST_METHOD1(
+          batchHandle,
+          void(std::shared_ptr<shared_model::interface::TransactionBatch>
+                   transaction_batch));
     };
 
   }  // namespace torii

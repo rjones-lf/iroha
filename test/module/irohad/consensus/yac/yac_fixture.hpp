@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 
 #include "consensus/yac/cluster_order.hpp"
+#include "consensus/yac/storage/buffered_cleanup_strategy.hpp"
 #include "consensus/yac/yac.hpp"
 
 #include "module/irohad/consensus/yac/mock_yac_crypto_provider.hpp"
@@ -58,7 +59,10 @@ namespace iroha {
 
         void initYac(ClusterOrdering ordering) {
           yac = Yac::create(
-              YacVoteStorage(getSupermajorityChecker(kConsistencyModel)),
+              YacVoteStorage(
+                  std::make_shared<
+                      iroha::consensus::yac::BufferedCleanupStrategy>(),
+                  getSupermajorityChecker(kConsistencyModel)),
               network,
               crypto,
               timer,

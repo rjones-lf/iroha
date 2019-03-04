@@ -78,6 +78,8 @@ Irohad::Irohad(const std::string &block_store_dir,
                std::chrono::milliseconds vote_delay,
                std::chrono::minutes mst_expiration_time,
                const shared_model::crypto::Keypair &keypair,
+               std::chrono::milliseconds max_rounds_delay,
+               size_t stale_stream_max_rounds,
                const boost::optional<GossipPropagationStrategyParams>
                    &opt_mst_gossip_params)
     : block_store_dir_(block_store_dir),
@@ -90,6 +92,8 @@ Irohad::Irohad(const std::string &block_store_dir,
       vote_delay_(vote_delay),
       is_mst_supported_(opt_mst_gossip_params),
       mst_expiration_time_(mst_expiration_time),
+      max_rounds_delay_(max_rounds_delay),
+      stale_stream_max_rounds_(stale_stream_max_rounds),
       opt_mst_gossip_params_(opt_mst_gossip_params),
       keypair(keypair) {
   log_ = logger::log("IROHAD");
@@ -309,12 +313,14 @@ void Irohad::initOrderingGate() {
       shared_model::validation::DefaultProposalValidator>>();
 
   const uint64_t kCounter = 0, kMaxLocalCounter = 2;
-  // reject_counter and local_counter are local mutable variables of lambda
-  const uint64_t kMaxDelaySeconds = 5;
-  auto delay = [reject_counter = kCounter,
+  // reject_delay and local_counter are local mutable variables of lambda
+  const auto kMaxDelay(max_rounds_delay_);
+  const auto kMaxDelayIncrement(std::chrono::milliseconds(1000));
+  auto delay = [reject_delay = std::chrono::milliseconds(0),
                 local_counter = kCounter,
                 // MSVC requires const variables to be captured
-                kMaxDelaySeconds,
+                kMaxDelay,
+                kMaxDelayIncrement,
                 kMaxLocalCounter](const auto &commit) mutable {
     using iroha::synchronizer::SynchronizationOutcomeType;
     if (commit.sync_outcome == SynchronizationOutcomeType::kReject
@@ -323,14 +329,14 @@ void Irohad::initOrderingGate() {
       ++local_counter;
       if (local_counter == kMaxLocalCounter) {
         local_counter = 0;
-        if (reject_counter < kMaxDelaySeconds) {
-          reject_counter++;
+        if (reject_delay < kMaxDelay) {
+          reject_delay += std::min(kMaxDelay, kMaxDelayIncrement);
         }
       }
     } else {
-      reject_counter = 0;
+      reject_delay = std::chrono::milliseconds(0);
     }
-    return std::chrono::seconds(reject_counter);
+    return reject_delay;
   };
 
   ordering_gate = ordering_init.initOrderingGate(max_proposal_size_,
@@ -502,8 +508,14 @@ void Irohad::initTransactionCommandService() {
       std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
   auto tx_processor = std::make_shared<TransactionProcessorImpl>(
       pcs, mst_processor, status_bus_, status_factory);
-  command_service = std::make_shared<::torii::CommandServiceImpl>(
-      tx_processor, storage, status_bus_, status_factory);
+  auto cs_cache = std::make_shared<::torii::CommandServiceImpl::CacheType>();
+  command_service =
+      std::make_shared<::torii::CommandServiceImpl>(tx_processor,
+                                                    storage,
+                                                    status_bus_,
+                                                    status_factory,
+                                                    cs_cache,
+                                                    persistent_cache);
   command_service_transport =
       std::make_shared<::torii::CommandServiceTransportGrpc>(
           command_service,
@@ -515,7 +527,7 @@ void Irohad::initTransactionCommandService() {
           consensus_gate_objects.get_observable().map([](const auto &) {
             return ::torii::CommandServiceTransportGrpc::ConsensusGateEvent{};
           }),
-          2);  // TODO 18.01.2019 igor-egorov, make it configurable IR-230
+          stale_stream_max_rounds_);
 
   log_->info("[Init] => command service");
 }
@@ -590,12 +602,13 @@ Irohad::RunResult Irohad::run() {
                 std::shared_ptr<shared_model::interface::Block>>>(&block_var)
                              ->value;
 
-            pcs->on_commit()
-                .start_with(synchronizer::SynchronizationEvent{
+            pcs->on_commit().subscribe(ordering_init.notifier.get_subscriber());
+
+            ordering_init.notifier.get_subscriber().on_next(
+                synchronizer::SynchronizationEvent{
                     rxcpp::observable<>::just(block),
                     SynchronizationOutcomeType::kCommit,
-                    {block->height(), ordering::kFirstRejectRound}})
-                .subscribe(ordering_init.notifier.get_subscriber());
+                    {block->height(), ordering::kFirstRejectRound}});
             return {};
           },
           [&](const expected::Error<std::string> &e) -> RunResult {

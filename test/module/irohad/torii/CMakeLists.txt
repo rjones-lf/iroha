@@ -43,3 +43,10 @@ target_link_libraries(command_sync_client_test
     server_runner
     endpoint
     )
+
+addtest(command_service_replay_test
+    command_service_replay_test.cpp
+    )
+target_link_libraries(command_service_replay_test
+    torii_service
+    )

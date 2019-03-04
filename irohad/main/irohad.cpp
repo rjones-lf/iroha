@@ -119,19 +119,22 @@ int main(int argc, char *argv[]) {
   }
 
   // Configuring iroha daemon
-  Irohad irohad(config[mbr::BlockStorePath].GetString(),
-                config[mbr::PgOpt].GetString(),
-                kListenIp,  // TODO(mboldyrev) 17/10/2018: add a parameter in
-                            // config file and/or command-line arguments?
-                config[mbr::ToriiPort].GetUint(),
-                config[mbr::InternalPort].GetUint(),
-                config[mbr::MaxProposalSize].GetUint(),
-                std::chrono::milliseconds(config[mbr::ProposalDelay].GetUint()),
-                std::chrono::milliseconds(config[mbr::VoteDelay].GetUint()),
-                std::chrono::minutes(config[mbr::MstExpirationTime].GetUint()),
-                *keypair,
-                boost::make_optional(config[mbr::MstSupport].GetBool(),
-                                     iroha::GossipPropagationStrategyParams{}));
+  Irohad irohad(
+      config[mbr::BlockStorePath].GetString(),
+      config[mbr::PgOpt].GetString(),
+      kListenIp,  // TODO(mboldyrev) 17/10/2018: add a parameter in
+                  // config file and/or command-line arguments?
+      config[mbr::ToriiPort].GetUint(),
+      config[mbr::InternalPort].GetUint(),
+      config[mbr::MaxProposalSize].GetUint(),
+      std::chrono::milliseconds(config[mbr::ProposalDelay].GetUint()),
+      std::chrono::milliseconds(config[mbr::VoteDelay].GetUint()),
+      std::chrono::minutes(config[mbr::MstExpirationTime].GetUint()),
+      *keypair,
+      std::chrono::milliseconds(config[mbr::MaxRoundsDelay].GetUint()),
+      config[mbr::StaleStreamMaxRounds].GetUint(),
+      boost::make_optional(config[mbr::MstSupport].GetBool(),
+                           iroha::GossipPropagationStrategyParams{}));
 
   // Check if iroha daemon storage was successfully initialized
   if (not irohad.storage) {

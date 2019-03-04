@@ -184,8 +184,6 @@ Main Parameters
 | BENCHMARKING |                 | OFF     | Enables or disables build of the Google Benchmarks library             |
 +--------------+                 +---------+------------------------------------------------------------------------+
 | COVERAGE     |                 | OFF     | Enables or disables lcov setting for code coverage generation          |
-+--------------+                 +---------+------------------------------------------------------------------------+
-| SWIG_JAVA    |                 | OFF     | Enables of disables the library building and Java bindings             |
 +--------------+-----------------+---------+------------------------------------------------------------------------+
 
 Packaging Specific Parameters

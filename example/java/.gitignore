@@ -1,8 +1,0 @@
-*
-!.gitignore
-!build.gradle
-!settings.gradle
-!TransactionExample.java
-!prepare.sh
-!build_library.sh
-!README.md

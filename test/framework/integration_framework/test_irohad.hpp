@@ -26,6 +26,8 @@ namespace integration_framework {
                std::chrono::milliseconds vote_delay,
                std::chrono::minutes mst_expiration_time,
                const shared_model::crypto::Keypair &keypair,
+               std::chrono::milliseconds max_rounds_delay,
+               size_t stale_stream_max_rounds,
                const boost::optional<iroha::GossipPropagationStrategyParams>
                    &opt_mst_gossip_params = boost::none)
         : Irohad(block_store_dir,
@@ -38,6 +40,8 @@ namespace integration_framework {
                  vote_delay,
                  mst_expiration_time,
                  keypair,
+                 max_rounds_delay,
+                 stale_stream_max_rounds,
                  opt_mst_gossip_params) {}
 
     auto &getCommandService() {

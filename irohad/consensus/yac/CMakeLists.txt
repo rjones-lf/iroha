@@ -24,6 +24,7 @@ add_library(yac
     storage/impl/yac_block_storage.cpp
     storage/impl/yac_proposal_storage.cpp
     storage/impl/yac_vote_storage.cpp
+    storage/impl/buffered_cleanup_strategy.cpp
     )
 target_link_libraries(yac
     supermajority_checker
