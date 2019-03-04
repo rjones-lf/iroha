@@ -57,11 +57,12 @@ namespace iroha {
         }
 
         void initYac(ClusterOrdering ordering) {
-          yac = Yac::create(YacVoteStorage(kConsistencyModel),
-                            network,
-                            crypto,
-                            timer,
-                            ordering);
+          yac = Yac::create(
+              YacVoteStorage(getSupermajorityChecker(kConsistencyModel)),
+              network,
+              crypto,
+              timer,
+              ordering);
           network->subscribe(yac);
         }
       };

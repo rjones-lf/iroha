@@ -84,7 +84,8 @@ namespace iroha {
         // --------| public api |--------
 
         /// @param consistency_model - consensus consistency model (CFT, BFT).
-        YacVoteStorage(ConsistencyModel consistency_model);
+        YacVoteStorage(
+            std::unique_ptr<SupermajorityChecker> supermajority_checker);
 
         /**
          * Insert votes in storage

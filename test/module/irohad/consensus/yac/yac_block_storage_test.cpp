@@ -33,7 +33,7 @@ class YacBlockStorageTest : public ::testing::Test {
   YacBlockStorage storage =
       YacBlockStorage(hash,
                       number_of_peers,
-                      // todo mboldyrev 13.12.2018 IR- use mock super checker
+                      // todo mboldyrev 13.12.2018 IR-324 use mock super checker
                       getSupermajorityChecker(kConsistencyModel));
   std::vector<VoteMessage> valid_votes;
 

@@ -39,9 +39,9 @@ namespace iroha {
 
       // --------| public api |--------
 
-      YacVoteStorage::YacVoteStorage(ConsistencyModel consistency_model)
-          : supermajority_checker_(getSupermajorityChecker(consistency_model)) {
-      }
+      YacVoteStorage::YacVoteStorage(
+          std::unique_ptr<SupermajorityChecker> supermajority_checker)
+          : supermajority_checker_(std::move(supermajority_checker)) {}
 
       boost::optional<Answer> YacVoteStorage::store(
           std::vector<VoteMessage> state, PeersNumberType peers_in_round) {

@@ -20,8 +20,6 @@ namespace iroha {
       /// An implementation of CFT supermajority checker.
       class SupermajorityCheckerCft : public SupermajorityChecker {
        public:
-        virtual ~SupermajorityCheckerCft() = default;
-
         bool hasSupermajority(PeersNumberType current,
                               PeersNumberType all) const override;
 

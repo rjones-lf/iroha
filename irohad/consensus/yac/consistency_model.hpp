@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef IROHA_CONSENSUS_COSISTENCY_MODEL_HPP
-#define IROHA_CONSENSUS_COSISTENCY_MODEL_HPP
+#ifndef IROHA_CONSENSUS_CONSISTENCY_MODEL_HPP
+#define IROHA_CONSENSUS_CONSISTENCY_MODEL_HPP
 
 namespace iroha {
   namespace consensus {
@@ -19,4 +19,4 @@ namespace iroha {
   }    // namespace consensus
 }  // namespace iroha
 
-#endif  // IROHA_CONSENSUS_COSISTENCY_MODEL_HPP
+#endif  // IROHA_CONSENSUS_CONSISTENCY_MODEL_HPP

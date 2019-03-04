@@ -45,7 +45,7 @@ namespace {
           common_objects_factory,
       ConsistencyModel consistency_model) {
     return Yac::create(
-        YacVoteStorage(consistency_model),
+        YacVoteStorage(getSupermajorityChecker(consistency_model)),
         std::move(network),
         createCryptoProvider(keypair, std::move(common_objects_factory)),
         std::move(timer),
