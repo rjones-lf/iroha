@@ -9,6 +9,7 @@
 
 #include "ametsuchi/block_query_factory.hpp"
 #include "ametsuchi/mutable_storage.hpp"
+#include "backend/protobuf/block.hpp"
 #include "common/visitor.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 
@@ -74,41 +75,68 @@ namespace iroha {
     SynchronizerImpl::downloadMissingBlocks(
         const consensus::VoteOther &msg,
         std::unique_ptr<ametsuchi::MutableStorage> storage,
-        const shared_model::interface::types::HeightType height) {
-      auto expected_height = msg.round.block_round;
+        const shared_model::interface::types::HeightType start_height) {
+      const auto target_height = msg.round.block_round;
+      std::vector<std::shared_ptr<shared_model::interface::Block>> blocks;
+      auto my_height = [&] { return start_height + blocks.size(); };
+      auto expected_height = [&] { return my_height() + 1; };
+      auto get_hash =
+          [](const std::shared_ptr<shared_model::interface::Block> &block) {
+            return std::static_pointer_cast<shared_model::proto::Block>(block)
+                ->hash();
+          };
 
-      // while blocks are not loaded and not committed
-      while (true) {
-        // TODO andrei 17.10.18 IR-1763 Add delay strategy for loading blocks
-        for (const auto &public_key : msg.public_keys) {
-          auto network_chain =
-              block_loader_->retrieveBlocks(height, public_key);
+      // TODO andrei 17.10.18 IR-1763 Add delay strategy for loading blocks
+      for (const auto &public_key : msg.public_keys) {
+        const auto peer_start_height = my_height();
+        auto network_chain =
+            block_loader_->retrieveBlocks(expected_height(), public_key);
 
-          std::vector<std::shared_ptr<shared_model::interface::Block>> blocks;
-          network_chain.as_blocking().subscribe(
-              [&blocks](auto block) { blocks.push_back(block); });
-          if (blocks.empty()) {
-            log_->info("Downloaded an empty chain");
-            continue;
+        auto subscription = rxcpp::composite_subscription();
+        auto subscriber = rxcpp::make_subscriber<
+            std::shared_ptr<shared_model::interface::Block>>(
+            subscription,
+            [&, this](std::shared_ptr<shared_model::interface::Block> block) {
+              log_->debug("Received block with height {}", block->height());
+              if (block->height() != expected_height()) {
+                subscription.unsubscribe();
+                log_->info("Received block with height {}, while expected {}",
+                           block->height(),
+                           expected_height());
+              } else if (not blocks.empty()
+                         and get_hash(blocks.back()) != block->prevHash()) {
+                subscription.unsubscribe();
+                log_->info(
+                    "Previous hash {} of block does not match top block hash "
+                    "{}. Will retry downloading from other peers.",
+                    block->prevHash().hex(),
+                    get_hash(blocks.back()));
+                blocks.clear();
+              } else {
+                log_->debug("Downloaded block with height {}", block->height());
+                blocks.push_back(block);
+              }
+            },
+            [&, this]() {
+              log_->info("Applied {} blocks from peer {}",
+                         my_height() - peer_start_height);
+            });
+        network_chain.as_blocking().subscribe(subscriber);
+
+        auto chain =
+            rxcpp::observable<>::iterate(blocks, rxcpp::identity_immediate());
+
+        if (my_height() >= target_height
+            and validator_->validateAndApply(chain, *storage)) {
+          auto ledger_state = mutable_factory_->commit(std::move(storage));
+
+          if (ledger_state) {
+            return SynchronizationEvent{chain,
+                                        SynchronizationOutcomeType::kCommit,
+                                        msg.round,
+                                        std::move(*ledger_state)};
           } else {
-            log_->info("Successfully downloaded {} blocks", blocks.size());
-          }
-
-          auto chain =
-              rxcpp::observable<>::iterate(blocks, rxcpp::identity_immediate());
-
-          if (blocks.back()->height() >= expected_height
-              and validator_->validateAndApply(chain, *storage)) {
-            auto ledger_state = mutable_factory_->commit(std::move(storage));
-
-            if (ledger_state) {
-              return SynchronizationEvent{chain,
-                                          SynchronizationOutcomeType::kCommit,
-                                          msg.round,
-                                          std::move(*ledger_state)};
-            } else {
-              return boost::none;
-            }
+            return boost::none;
           }
         }
       }
