@@ -553,6 +553,7 @@ DROP TABLE IF EXISTS signatory;
 DROP TABLE IF EXISTS peer;
 DROP TABLE IF EXISTS role;
 DROP TABLE IF EXISTS height_by_hash;
+DROP INDEX IF EXISTS tx_status_by_hash_hash_index;
 DROP TABLE IF EXISTS tx_status_by_hash;
 DROP TABLE IF EXISTS height_by_account_set;
 DROP TABLE IF EXISTS index_by_creator_height;
@@ -654,6 +655,7 @@ CREATE TABLE IF NOT EXISTS tx_status_by_hash (
     hash varchar,
     status boolean
 );
+CREATE INDEX IF NOT EXISTS tx_status_by_hash_hash_index ON tx_status_by_hash USING hash (hash);
 
 CREATE TABLE IF NOT EXISTS height_by_account_set (
     account_id text,
