@@ -55,6 +55,14 @@ class SynchronizerTest : public ::testing::Test {
     consensus_gate = std::make_shared<MockConsensusGate>();
     block_query = std::make_shared<::testing::NiceMock<MockBlockQuery>>();
 
+    ledger_peers = std::make_shared<PeerList>();
+    for (int i = 0; i < 10; ++i) {
+      ledger_peer_keys.emplace_back(
+          shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair());
+      ledger_peers->emplace_back(
+          makePeer(std::to_string(i), ledger_peer_keys.back().publicKey()));
+    }
+
     commit_message = makeCommit();
     public_keys = boost::copy_range<
         shared_model::interface::types::PublicKeyCollectionType>(
@@ -77,22 +85,17 @@ class SynchronizerTest : public ::testing::Test {
                                                       mutable_factory,
                                                       block_query_factory,
                                                       block_loader);
-
-    peer = makePeer("127.0.0.1", shared_model::crypto::PublicKey("111"));
-    ledger_peers = std::make_shared<PeerList>(PeerList{peer});
   }
 
   std::shared_ptr<shared_model::interface::Block> makeCommit(
       size_t time = iroha::time::now()) const {
-    auto block = TestUnsignedBlockBuilder()
-                     .height(kHeight)
-                     .createdTime(time)
-                     .build()
-                     .signAndAddSignature(
-                         shared_model::crypto::DefaultCryptoAlgorithmType::
-                             generateKeypair())
-                     .finish();
-    return std::make_shared<shared_model::proto::Block>(std::move(block));
+    shared_model::proto::UnsignedWrapper<shared_model::proto::Block> block{
+        TestUnsignedBlockBuilder().height(kHeight).createdTime(time).build()};
+    for (const auto &key  : ledger_peer_keys) {
+      block.signAndAddSignature(key);
+    }
+    return std::make_shared<shared_model::proto::Block>(
+        std::move(block).finish());
   }
 
   const shared_model::interface::types::HeightType kHeight{5};
@@ -107,8 +110,8 @@ class SynchronizerTest : public ::testing::Test {
   std::shared_ptr<shared_model::interface::Block> commit_message;
   shared_model::interface::types::PublicKeyCollectionType public_keys;
   shared_model::interface::types::HashType hash;
-  std::shared_ptr<shared_model::interface::Peer> peer;
   std::shared_ptr<PeerList> ledger_peers;
+  std::vector<shared_model::crypto::Keypair> ledger_peer_keys;
 
   rxcpp::subjects::subject<ConsensusGate::GateObject> gate_outcome;
 
@@ -134,7 +137,10 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
           }));
   EXPECT_CALL(*mutable_factory, commit_(_))
       .WillOnce(Return(ByMove(std::make_unique<LedgerState>(ledger_peers))));
-  EXPECT_CALL(*chain_validator, validateAndApply(An<Chain>(), _)).Times(0);
+  EXPECT_CALL(*chain_validator,
+              validateAndApply(
+                  An<std::shared_ptr<shared_model::interface::Block>>(), _))
+      .Times(0);
   EXPECT_CALL(*block_loader, retrieveBlocks(_, _)).Times(0);
 
   auto wrapper =
@@ -168,7 +174,10 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
   EXPECT_CALL(*mutable_factory, createMutableStorage())
       .WillOnce(Return(ByMove(expected::makeError("Connection was closed"))));
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(0);
-  EXPECT_CALL(*chain_validator, validateAndApply(An<Chain>(), _)).Times(0);
+  EXPECT_CALL(*chain_validator,
+              validateAndApply(
+                  An<std::shared_ptr<shared_model::interface::Block>>(), _))
+      .Times(0);
   EXPECT_CALL(*block_loader, retrieveBlocks(_, _)).Times(0);
 
   auto wrapper =
@@ -194,7 +203,9 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
 
   EXPECT_CALL(*mutable_factory, commit_(_))
       .WillOnce(Return(ByMove(std::make_unique<LedgerState>(ledger_peers))));
-  EXPECT_CALL(*chain_validator, validateAndApply(An<Chain>(), _))
+  EXPECT_CALL(*chain_validator,
+              validateAndApply(
+                  An<std::shared_ptr<shared_model::interface::Block>>(), _))
       .WillOnce(Return(true));
   EXPECT_CALL(*block_loader, retrieveBlocks(_, _))
       .WillOnce(Return(rxcpp::observable<>::just(commit_message)));
@@ -227,17 +238,15 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
 TEST_F(SynchronizerTest, ExactlyThreeRetrievals) {
   DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
       SetFactory(&createMockMutableStorage);
-  EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
+  EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(2);
   EXPECT_CALL(*mutable_factory, commit_(_))
       .WillOnce(Return(ByMove(boost::optional<std::unique_ptr<LedgerState>>(
           std::make_unique<LedgerState>(ledger_peers)))));
-  EXPECT_CALL(*chain_validator, validateAndApply(An<Chain>(), _))
+  EXPECT_CALL(*chain_validator,
+              validateAndApply(
+                  An<std::shared_ptr<shared_model::interface::Block>>(), _))
       .WillOnce(Return(false))
-      .WillOnce(testing::Invoke([](auto chain, auto &) {
-        // emulate chain check
-        chain.as_blocking().subscribe([](auto) {});
-        return true;
-      }));
+      .WillOnce(Return(true));
   EXPECT_CALL(*block_loader, retrieveBlocks(_, _))
       .WillOnce(Return(rxcpp::observable<>::empty<
                        std::shared_ptr<shared_model::interface::Block>>()))
@@ -262,7 +271,7 @@ TEST_F(SynchronizerTest, ExactlyThreeRetrievals) {
 TEST_F(SynchronizerTest, RetrieveBlockTwoFailures) {
   DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
       SetFactory(&createMockMutableStorage);
-  EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
+  EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(4);
   EXPECT_CALL(*mutable_factory, commit_(_))
       .WillOnce(Return(ByMove(boost::optional<std::unique_ptr<LedgerState>>(
           std::make_unique<LedgerState>(ledger_peers)))));
@@ -270,7 +279,9 @@ TEST_F(SynchronizerTest, RetrieveBlockTwoFailures) {
       .WillRepeatedly(Return(rxcpp::observable<>::just(commit_message)));
 
   // fail the chain validation two times so that synchronizer will try more
-  EXPECT_CALL(*chain_validator, validateAndApply(An<Chain>(), _))
+  EXPECT_CALL(*chain_validator,
+              validateAndApply(
+                  An<std::shared_ptr<shared_model::interface::Block>>(), _))
       .WillOnce(Return(false))
       .WillOnce(Return(false))
       .WillOnce(Return(false))
@@ -409,7 +420,9 @@ TEST_F(SynchronizerTest, VotedForOtherCommitPrepared) {
   EXPECT_CALL(*block_loader, retrieveBlocks(_, _))
       .WillRepeatedly(Return(rxcpp::observable<>::just(commit_message)));
 
-  EXPECT_CALL(*chain_validator, validateAndApply(An<Chain>(), _))
+  EXPECT_CALL(*chain_validator,
+              validateAndApply(
+                  An<std::shared_ptr<shared_model::interface::Block>>(), _))
       .WillOnce(Return(true));
 
   auto wrapper =
@@ -488,7 +501,10 @@ TEST_F(SynchronizerTest, CommitFailureVoteSameBlock) {
           }));
   EXPECT_CALL(*mutable_factory, commit_(_))
       .WillOnce(Return(ByMove(boost::none)));
-  EXPECT_CALL(*chain_validator, validateAndApply(An<Chain>(), _)).Times(0);
+  EXPECT_CALL(*chain_validator,
+              validateAndApply(
+                  An<std::shared_ptr<shared_model::interface::Block>>(), _))
+      .Times(0);
   EXPECT_CALL(*block_loader, retrieveBlocks(_, _)).Times(0);
 
   auto wrapper =
@@ -513,7 +529,9 @@ TEST_F(SynchronizerTest, CommitFailureVoteOther) {
 
   EXPECT_CALL(*mutable_factory, commit_(_))
       .WillOnce(Return(ByMove(boost::none)));
-  EXPECT_CALL(*chain_validator, validateAndApply(An<Chain>(), _))
+  EXPECT_CALL(*chain_validator,
+              validateAndApply(
+                  An<std::shared_ptr<shared_model::interface::Block>>(), _))
       .WillOnce(Return(true));
   EXPECT_CALL(*block_loader, retrieveBlocks(_, _))
       .WillOnce(Return(rxcpp::observable<>::just(commit_message)));
