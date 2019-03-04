@@ -50,7 +50,6 @@ namespace iroha {
        */
       boost::optional<SynchronizationEvent> downloadMissingBlocks(
           const consensus::VoteOther &msg,
-          std::unique_ptr<ametsuchi::MutableStorage> storage,
           const shared_model::interface::types::HeightType height);
 
       void processNext(const consensus::PairValid &msg);

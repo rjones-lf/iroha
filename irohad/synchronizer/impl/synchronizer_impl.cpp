@@ -74,20 +74,21 @@ namespace iroha {
     boost::optional<SynchronizationEvent>
     SynchronizerImpl::downloadMissingBlocks(
         const consensus::VoteOther &msg,
-        std::unique_ptr<ametsuchi::MutableStorage> storage,
         const shared_model::interface::types::HeightType start_height) {
       const auto target_height = msg.round.block_round;
       std::vector<std::shared_ptr<shared_model::interface::Block>> blocks;
       auto my_height = [&] { return start_height + blocks.size(); };
       auto expected_height = [&] { return my_height() + 1; };
-      auto get_hash =
-          [](const std::shared_ptr<shared_model::interface::Block> &block) {
-            return std::static_pointer_cast<shared_model::proto::Block>(block)
-                ->hash();
-          };
+      std::unique_ptr<ametsuchi::MutableStorage> storage;
 
       // TODO andrei 17.10.18 IR-1763 Add delay strategy for loading blocks
       for (const auto &public_key : msg.public_keys) {
+        if (not storage) {
+          storage = getStorage().value_or(nullptr);
+          if (not storage) {
+            return boost::none;
+          }
+        }
         const auto peer_start_height = my_height();
         auto network_chain =
             block_loader_->retrieveBlocks(expected_height(), public_key);
@@ -103,31 +104,32 @@ namespace iroha {
                 log_->info("Received block with height {}, while expected {}",
                            block->height(),
                            expected_height());
-              } else if (not blocks.empty()
-                         and get_hash(blocks.back()) != block->prevHash()) {
+              } else if (not validator_->validateAndApply(block, *storage)) {
                 subscription.unsubscribe();
                 log_->info(
-                    "Previous hash {} of block does not match top block hash "
+                    "Could not apply block with height {} received from peer "
                     "{}. Will retry downloading from other peers.",
-                    block->prevHash().hex(),
-                    get_hash(blocks.back()));
+                    block->height(),
+                    public_key);
                 blocks.clear();
+                storage.reset();
               } else {
-                log_->debug("Downloaded block with height {}", block->height());
+                log_->debug("Successfully applied block with height {}",
+                            block->height());
                 blocks.push_back(block);
               }
             },
             [&, this]() {
               log_->info("Applied {} blocks from peer {}",
-                         my_height() - peer_start_height);
+                         my_height() - peer_start_height,
+                         public_key);
             });
         network_chain.as_blocking().subscribe(subscriber);
 
         auto chain =
             rxcpp::observable<>::iterate(blocks, rxcpp::identity_immediate());
 
-        if (my_height() >= target_height
-            and validator_->validateAndApply(chain, *storage)) {
+        if (my_height() >= target_height) {
           auto ledger_state = mutable_factory_->commit(std::move(storage));
 
           if (ledger_state) {
@@ -209,14 +211,7 @@ namespace iroha {
         return;
       }
 
-      auto opt_storage = getStorage();
-      if (opt_storage == boost::none) {
-        return;
-      }
-      std::unique_ptr<ametsuchi::MutableStorage> storage =
-          std::move(opt_storage.value());
-      auto result =
-          downloadMissingBlocks(msg, std::move(storage), top_block_height);
+      auto result = downloadMissingBlocks(msg, top_block_height);
       if (result) {
         notifier_.get_subscriber().on_next(*result);
       }
