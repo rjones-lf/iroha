@@ -43,7 +43,6 @@ if (NOT pq_FOUND)
       CONFIGURE_COMMAND
                       ./configure --without-readline
                       CC=${CMAKE_C_COMPILER}
-                      CXX=${CMAKE_CXX_COMPILER}
 
       BUILD_IN_SOURCE 1
       BUILD_COMMAND ${MAKE} COPT=${CMAKE_C_FLAGS} -C ./src/bin/pg_config &&

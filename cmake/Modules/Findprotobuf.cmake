@@ -29,10 +29,7 @@ if (NOT protobuf_FOUND)
       CONFIGURE_COMMAND ${CMAKE_COMMAND}
                       -G${CMAKE_GENERATOR}
                       -H${EP_PREFIX}/src/google_protobuf/cmake -B${EP_PREFIX}/src/google_protobuf-build
-                      -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-                      -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-                      -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
-                      -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+                      ${DEPS_CMAKE_ARGS}
                       -Dprotobuf_BUILD_TESTS=OFF
                       -Dprotobuf_BUILD_SHARED_LIBS=ON
       BUILD_BYPRODUCTS ${EP_PREFIX}/src/google_protobuf-build/protoc
