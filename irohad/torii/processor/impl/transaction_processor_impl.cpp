@@ -48,6 +48,8 @@ namespace iroha {
         std::shared_ptr<iroha::torii::StatusBus> status_bus,
         std::shared_ptr<shared_model::interface::TxStatusFactory>
             status_factory,
+        rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+            commits,
         logger::Logger log)
         : pcs_(std::move(pcs)),
           mst_processor_(std::move(mst_processor)),
@@ -82,33 +84,19 @@ namespace iroha {
           });
 
       // commit transactions
-      pcs_->on_commit().subscribe(
-          [this](synchronizer::SynchronizationEvent sync_event) {
-            bool has_at_least_one_committed = false;
-            sync_event.synced_blocks.subscribe(
-                // on next
-                [this, &has_at_least_one_committed](auto model_block) {
-                  for (const auto &tx : model_block->transactions()) {
-                    const auto &hash = tx.hash();
-                    log_->info("SynchronizationEvent Committed: {}",
-                               hash.hex());
-                    this->publishStatus(TxStatusType::kCommitted, hash);
-                    has_at_least_one_committed = true;
-                  }
-                  for (const auto &rejected_tx_hash :
-                       model_block->rejected_transactions_hashes()) {
-                    log_->info("SynchronizationEvent Rejected: {}",
-                               rejected_tx_hash.hex());
-                    this->publishStatus(TxStatusType::kRejected,
-                                        rejected_tx_hash);
-                  }
-                },
-                // on complete
-                [this, &has_at_least_one_committed] {
-                  if (not has_at_least_one_committed) {
-                    log_->info("there are no transactions to be committed");
-                  }
-                });
+      commits.subscribe(
+          // on next
+          [this](auto model_block) {
+            for (const auto &tx : model_block->transactions()) {
+              const auto &hash = tx.hash();
+              log_->debug("Committed transaction: {}", hash.hex());
+              this->publishStatus(TxStatusType::kCommitted, hash);
+            }
+            for (const auto &rejected_tx_hash :
+                 model_block->rejected_transactions_hashes()) {
+              log_->debug("Rejected transaction: {}", rejected_tx_hash.hex());
+              this->publishStatus(TxStatusType::kRejected, rejected_tx_hash);
+            }
           });
 
       mst_processor_->onStateUpdate().subscribe([this](auto &&state) {
