@@ -43,18 +43,20 @@ struct CommandFixture {
   rxcpp::subjects::subject<iroha::simulator::VerifiedProposalCreatorEvent>
       vprop_notifier_;
   rxcpp::subjects::subject<iroha::synchronizer::SynchronizationEvent>
-      commit_notifier_;
+      sync_event_notifier_;
   rxcpp::subjects::subject<iroha::DataType> mst_notifier_;
   rxcpp::subjects::subject<std::shared_ptr<iroha::MstState>>
       mst_state_notifier_;
   rxcpp::subjects::subject<iroha::consensus::GateObject> consensus_notifier_;
+  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
+      commit_notifier_;
 
   CommandFixture() {
     pcs_ = std::make_shared<iroha::network::MockPeerCommunicationService>();
     EXPECT_CALL(*pcs_, onProposal())
         .WillRepeatedly(Return(prop_notifier_.get_observable()));
     EXPECT_CALL(*pcs_, on_commit())
-        .WillRepeatedly(Return(commit_notifier_.get_observable()));
+        .WillRepeatedly(Return(sync_event_notifier_.get_observable()));
     EXPECT_CALL(*pcs_, onVerifiedProposal())
         .WillRepeatedly(Return(vprop_notifier_.get_observable()));
 
@@ -70,7 +72,11 @@ struct CommandFixture {
     auto status_factory =
         std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
     tx_processor_ = std::make_shared<iroha::torii::TransactionProcessorImpl>(
-        pcs_, mst_processor_, status_bus, status_factory);
+        pcs_,
+        mst_processor_,
+        status_bus,
+        status_factory,
+        commit_notifier_.get_observable());
     auto storage = std::make_shared<iroha::ametsuchi::MockStorage>();
     service_ =
         std::make_shared<iroha::torii::CommandServiceImpl>(tx_processor_,
