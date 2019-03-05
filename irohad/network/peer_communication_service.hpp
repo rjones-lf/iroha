@@ -56,8 +56,8 @@ namespace iroha {
        * on peer startup - peer will get all actual blocks.
        * Also, it can provide no blocks at all, if commit was empty
        */
-      virtual rxcpp::observable<synchronizer::SynchronizationEvent> on_commit()
-          const = 0;
+      virtual rxcpp::observable<synchronizer::SynchronizationEvent>
+      onSynchronization() const = 0;
 
       virtual ~PeerCommunicationService() = default;
     };

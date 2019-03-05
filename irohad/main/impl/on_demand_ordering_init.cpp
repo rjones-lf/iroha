@@ -68,16 +68,13 @@ namespace iroha {
         std::chrono::milliseconds delay,
         std::vector<shared_model::interface::types::HashType> initial_hashes,
         const logger::LoggerManagerTreePtr &ordering_log_manager) {
-      // since top block will be the first in notifier observable, hashes of
-      // two previous blocks are prepended
+      // since top block will be the first in commit_notifier observable,
+      // hashes of two previous blocks are prepended
       const size_t kBeforePreviousTop = 0, kPreviousTop = 1;
 
       // flat map hashes from committed blocks
-      auto all_hashes = notifier.get_observable()
-                            .flat_map([](auto commit) {
-                              return commit.synced_blocks.map(
-                                  [](auto block) { return block->hash(); });
-                            })
+      auto all_hashes = commit_notifier.get_observable()
+                            .map([](auto block) { return block->hash(); })
                             // prepend hashes for the first two rounds
                             .start_with(initial_hashes.at(kBeforePreviousTop),
                                         initial_hashes.at(kPreviousTop));
@@ -100,7 +97,7 @@ namespace iroha {
         auto on_blocks = [this,
                           peer_query_factory,
                           current_hashes,
-                          &current_round](const auto &commit) {
+                          &current_round](const auto & /*commit*/) {
           current_round = ordering::nextCommitRound(current_round);
 
           // retrieve peer list from database
@@ -180,7 +177,7 @@ namespace iroha {
         return peers;
       };
 
-      auto peers = notifier.get_observable()
+      auto peers = sync_event_notifier.get_observable()
                        .with_latest_from(latest_hashes)
                        .map(map_peers);
 
@@ -238,7 +235,7 @@ namespace iroha {
       return std::make_shared<ordering::OnDemandOrderingGate>(
           std::move(ordering_service),
           std::move(network_client),
-          notifier.get_observable()
+          sync_event_notifier.get_observable()
               .lift<iroha::synchronizer::SynchronizationEvent>(
                   iroha::makeDelay<iroha::synchronizer::SynchronizationEvent>(
                       delay_func, rxcpp::identity_current_thread()))
@@ -264,7 +261,8 @@ namespace iroha {
     }
 
     OnDemandOrderingInit::~OnDemandOrderingInit() {
-      notifier.get_subscriber().unsubscribe();
+      sync_event_notifier.get_subscriber().unsubscribe();
+      commit_notifier.get_subscriber().unsubscribe();
     }
 
     std::shared_ptr<iroha::network::OrderingGate>

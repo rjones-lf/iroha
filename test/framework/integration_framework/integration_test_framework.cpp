@@ -321,7 +321,7 @@ namespace integration_framework {
 
     iroha_instance_->getIrohaInstance()
         ->getPeerCommunicationService()
-        ->on_commit()
+        ->onSynchronization()
         .zip(proposals)
         .flat_map(proposal_flat_map)
         .subscribe([this](auto commit_event) {
