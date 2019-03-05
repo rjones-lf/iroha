@@ -5,8 +5,11 @@
 
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 
+#include <boost/range/adaptor/transformed.hpp>
 #include "logger/logger.hpp"
 #include "logger/logger_manager.hpp"
+
+using namespace logger;
 
 namespace iroha {
   namespace consensus {
@@ -33,8 +36,8 @@ namespace iroha {
                     store_hash.vote_hashes.proposal_hash,
                     store_hash.vote_hashes.block_hash),
             peers_in_round_,
-            log_manager_->getChild("BlockStorage")->getLogger(),
-            supermajority_checker_);
+            supermajority_checker_,
+            log_manager_->getChild("BlockStorage")->getLogger());
       }
 
       // --------| public api |--------
@@ -42,8 +45,8 @@ namespace iroha {
       YacProposalStorage::YacProposalStorage(
           Round store_round,
           PeersNumberType peers_in_round,
-          logger::LoggerManagerTreePtr log_manager,
-          std::shared_ptr<SupermajorityChecker> supermajority_checker)
+          std::shared_ptr<SupermajorityChecker> supermajority_checker,
+          logger::LoggerManagerTreePtr log_manager)
           : current_state_(boost::none),
             storage_key_(store_round),
             peers_in_round_(peers_in_round),
@@ -119,28 +122,15 @@ namespace iroha {
       }
 
       boost::optional<Answer> YacProposalStorage::findRejectProof() {
-        auto max_vote = std::max_element(block_storages_.begin(),
-                                         block_storages_.end(),
-                                         [](auto &left, auto &right) {
-                                           return left.getNumberOfVotes()
-                                               < right.getNumberOfVotes();
-                                         })
-                            ->getNumberOfVotes();
-
-        auto all_votes =
-            std::accumulate(block_storages_.begin(),
-                            block_storages_.end(),
-                            0ull,
-                            [](auto &acc, auto &storage) {
-                              return acc + storage.getNumberOfVotes();
-                            });
-
-        auto is_reject = supermajority_checker_->hasReject(
-            max_vote, all_votes, peers_in_round_);
+        auto is_reject = not supermajority_checker_->canHaveSupermajority(
+            block_storages_
+                | boost::adaptors::transformed([](const auto &storage) {
+                    return storage.getNumberOfVotes();
+                  }),
+            peers_in_round_);
 
         if (is_reject) {
           std::vector<VoteMessage> result;
-          result.reserve(all_votes);
           std::for_each(block_storages_.begin(),
                         block_storages_.end(),
                         [&result](auto &storage) {

@@ -17,6 +17,7 @@
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "logger/dummy_logger.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/ametsuchi/mock_tx_presence_cache.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "synchronizer/synchronizer_common.hpp"
@@ -37,7 +38,10 @@ struct CommandFixture {
   std::shared_ptr<iroha::network::MockPeerCommunicationService> pcs_;
   std::shared_ptr<iroha::MockMstProcessor> mst_processor_;
   std::shared_ptr<iroha::ametsuchi::MockBlockQuery> bq_;
-  std::shared_ptr<iroha::network::MockConsensusGate> consensus_gate_;
+  std::vector<iroha::torii::CommandServiceTransportGrpc::ConsensusGateEvent>
+      consensus_gate_objects_{2};
+  std::shared_ptr<iroha::torii::CommandServiceImpl::CacheType> cache_;
+  std::shared_ptr<iroha::ametsuchi::MockTxPresenceCache> tx_presence_cache_;
 
   rxcpp::subjects::subject<iroha::network::OrderingEvent> prop_notifier_;
   rxcpp::subjects::subject<iroha::simulator::VerifiedProposalCreatorEvent>
@@ -102,18 +106,19 @@ struct CommandFixture {
         transaction_batch_factory = std::make_shared<
             shared_model::interface::TransactionBatchFactoryImpl>();
 
-    consensus_gate_ = std::make_shared<iroha::network::MockConsensusGate>();
-    ON_CALL(*consensus_gate_, onOutcome())
-        .WillByDefault(Return(consensus_notifier_.get_observable()));
-
     storage_ = std::make_shared<iroha::ametsuchi::MockStorage>();
     bq_ = std::make_shared<iroha::ametsuchi::MockBlockQuery>();
     EXPECT_CALL(*storage_, getBlockQuery()).WillRepeatedly(Return(bq_));
+    tx_presence_cache_ =
+        std::make_shared<iroha::ametsuchi::MockTxPresenceCache>();
+    cache_ = std::make_shared<iroha::torii::CommandServiceImpl::CacheType>();
     service_ = std::make_shared<iroha::torii::CommandServiceImpl>(
         tx_processor_,
         storage_,
         status_bus,
         status_factory,
+        cache_,
+        tx_presence_cache_,
         logger::getDummyLoggerPtr());
     service_transport_ =
         std::make_shared<iroha::torii::CommandServiceTransportGrpc>(
@@ -123,7 +128,7 @@ struct CommandFixture {
             transaction_factory,
             batch_parser,
             transaction_batch_factory,
-            consensus_gate_,
+            rxcpp::observable<>::iterate(consensus_gate_objects_),
             2,
             logger::getDummyLoggerPtr());
   }

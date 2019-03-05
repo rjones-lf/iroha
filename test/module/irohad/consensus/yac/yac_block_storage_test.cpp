@@ -7,6 +7,7 @@
 
 #include <gtest/gtest.h>
 
+#include "consensus/yac/impl/supermajority_checker_bft.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "logger/logger.hpp"
 
@@ -15,41 +16,56 @@
 
 using namespace iroha::consensus::yac;
 
+// TODO mboldyrev 14.02.2019 IR-324 Use supermajority checker mock
+static const iroha::consensus::yac::ConsistencyModel kConsistencyModel =
+    iroha::consensus::yac::ConsistencyModel::kBft;
+
 static logger::LoggerPtr log_ = getTestLogger("YacBlockStorage");
 
 class YacBlockStorageTest : public ::testing::Test {
  public:
-  YacHash hash{iroha::consensus::Round{1, 1}, "proposal", "commit"};
-  PeersNumberType number_of_peers{4};
+  const PeersNumberType number_of_peers = 4;
+  const PeersNumberType supermajority = number_of_peers
+      - (number_of_peers - 1)
+          / detail::kSupermajorityCheckerKfPlus1Bft;  // `kf+1' consistency
+                                                      // model
+  const YacHash hash =
+      YacHash(iroha::consensus::Round{1, 1}, "proposal", "commit");
   YacBlockStorage storage =
-      YacBlockStorage(hash, number_of_peers, getTestLogger("YacBlockStorage"));
+      YacBlockStorage(hash,
+                      number_of_peers,
+                      // todo mboldyrev 13.12.2018 IR-324 use mock super checker
+                      getSupermajorityChecker(kConsistencyModel),
+                      getTestLogger("YacBlockStorage"));
   std::vector<VoteMessage> valid_votes;
 
   void SetUp() override {
     valid_votes.reserve(number_of_peers);
     std::generate_n(std::back_inserter(valid_votes), number_of_peers, [this] {
-      static size_t counter = 0;
-      return createVote(this->hash, std::to_string(counter++));
+      return createVote(this->hash, std::to_string(this->valid_votes.size()));
     });
   }
 };
 
 TEST_F(YacBlockStorageTest, YacBlockStorageWhenNormalDataInput) {
-  log_->info("-----------| Sequentially insertion of votes |-----------");
+  log_->info("------------| Sequential insertion of votes |------------");
 
-  auto insert_1 = storage.insert(valid_votes.at(0));
-  ASSERT_EQ(boost::none, insert_1);
-
-  auto insert_2 = storage.insert(valid_votes.at(1));
-  ASSERT_EQ(boost::none, insert_2);
-
-  auto insert_3 = storage.insert(valid_votes.at(2));
-  ASSERT_NE(boost::none, insert_3);
-  ASSERT_EQ(3, boost::get<CommitMessage>(*insert_3).votes.size());
-
-  auto insert_4 = storage.insert(valid_votes.at(3));
-  ASSERT_NE(boost::none, insert_4);
-  ASSERT_EQ(4, boost::get<CommitMessage>(*insert_4).votes.size());
+  for (size_t num_inserted = 0; num_inserted < number_of_peers;) {
+    auto insert_result = storage.insert(valid_votes.at(num_inserted++));
+    if (num_inserted < supermajority) {
+      EXPECT_EQ(boost::none, insert_result)
+          << "Got an Answer after inserting " << num_inserted
+          << " votes, before the supermajority reached at " << supermajority;
+    } else {
+      // after supermajority reached we have a CommitMessage
+      ASSERT_NE(boost::none, insert_result)
+          << "Did not get an Answer after inserting " << num_inserted
+          << " votes and the supermajority reached at " << supermajority;
+      ASSERT_EQ(num_inserted,
+                boost::get<CommitMessage>(*insert_result).votes.size())
+          << " The commit message must have all the previously inserted votes.";
+    }
+  }
 }
 
 TEST_F(YacBlockStorageTest, YacBlockStorageWhenNotCommittedAndCommitAcheive) {

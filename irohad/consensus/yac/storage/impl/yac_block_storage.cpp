@@ -16,8 +16,8 @@ namespace iroha {
       YacBlockStorage::YacBlockStorage(
           YacHash hash,
           PeersNumberType peers_in_round,
-          logger::LoggerPtr log,
-          std::shared_ptr<SupermajorityChecker> supermajority_checker)
+          std::shared_ptr<SupermajorityChecker> supermajority_checker,
+          logger::LoggerPtr log)
           : storage_key_(std::move(hash)),
             peers_in_round_(peers_in_round),
             supermajority_checker_(std::move(supermajority_checker)),
@@ -56,8 +56,8 @@ namespace iroha {
       }
 
       boost::optional<Answer> YacBlockStorage::getState() {
-        auto supermajority =
-            supermajority_checker_->checkSize(votes_.size(), peers_in_round_);
+        auto supermajority = supermajority_checker_->hasSupermajority(
+            votes_.size(), peers_in_round_);
         if (supermajority) {
           return Answer(CommitMessage(votes_));
         }

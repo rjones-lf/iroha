@@ -23,6 +23,7 @@ using namespace iroha::network;
 
 namespace fuzzing {
   struct MstFixture {
+    std::shared_ptr<iroha::TestCompleter> completer_;
     std::shared_ptr<MstTransportGrpc> mst_transport_grpc_;
 
     MstFixture() {
@@ -53,12 +54,14 @@ namespace fuzzing {
           std::make_shared<NiceMock<iroha::ametsuchi::MockStorage>>();
       auto cache =
           std::make_shared<iroha::ametsuchi::TxPresenceCacheImpl>(storage);
+      completer_ = std::make_shared<iroha::TestCompleter>();
       mst_transport_grpc_ = std::make_shared<MstTransportGrpc>(
           async_call_,
           std::move(tx_factory),
           std::move(parser),
           std::move(batch_factory),
           std::move(cache),
+          completer_,
           shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
               .publicKey(),
           logger::getDummyLoggerPtr(),
