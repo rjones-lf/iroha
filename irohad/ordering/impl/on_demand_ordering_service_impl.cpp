@@ -161,7 +161,8 @@ void OnDemandOrderingServiceImpl::packNextProposals(
       if (not it->second.empty()) {
         log_->debug("Mutable proposal generation for round {}", round);
         size_t discarded_txs_amount;
-        auto txs = getTransactions(transaction_limit_, it->second, discarded_txs_amount);
+        auto txs = getTransactions(
+            transaction_limit_, it->second, discarded_txs_amount);
         if (not txs.empty()) {
           log_->debug("Number of transactions in proposal = {}", txs.size());
           auto proposal = proposal_factory_->unsafeCreateProposal(
@@ -174,7 +175,6 @@ void OnDemandOrderingServiceImpl::packNextProposals(
               "Discarded {} transactions.",
               round,
               discarded_txs_amount);
-          round_queue_.push(round);
         }
       }
       current_proposals_.erase(it);
@@ -234,6 +234,14 @@ void OnDemandOrderingServiceImpl::packNextProposals(
   // new reject round
   open_round(
       {round.block_round, currentRejectRoundConsumer(round.reject_round)});
+
+  std::queue<consensus::Round>{}.swap(round_queue_);
+  for (auto &item : proposal_map_) {
+    if (item.first < round) {
+      round_queue_.push(item.first);
+      log_->debug("push item {} into queue", item.first);
+    }
+  }
 }
 
 void OnDemandOrderingServiceImpl::tryErase() {

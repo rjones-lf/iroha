@@ -8,6 +8,7 @@
 
 #include "ordering/on_demand_ordering_service.hpp"
 
+#include <map>
 #include <queue>
 #include <shared_mutex>
 #include <unordered_map>
@@ -94,9 +95,7 @@ namespace iroha {
       /**
        * Map of available proposals
        */
-      std::unordered_map<consensus::Round,
-                         std::shared_ptr<const ProposalType>,
-                         consensus::RoundTypeHasher>
+      std::map<consensus::Round, std::shared_ptr<const ProposalType>>
           proposal_map_;
 
       /**
