@@ -7,6 +7,7 @@
 
 #include <gtest/gtest.h>
 #include <boost/range/adaptor/indirected.hpp>
+#include "framework/test_logger.hpp"
 #include "framework/test_subscriber.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "module/irohad/ametsuchi/mock_tx_presence_cache.hpp"
@@ -52,7 +53,8 @@ class OnDemandOrderingGateTest : public ::testing::Test {
                                                cache,
                                                std::move(ufactory),
                                                tx_cache,
-                                               initial_round);
+                                               initial_round,
+                                               getTestLogger("OrderingGate"));
   }
 
   rxcpp::subjects::subject<OnDemandOrderingGate::BlockRoundEventType> rounds;

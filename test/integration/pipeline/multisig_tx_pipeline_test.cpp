@@ -151,16 +151,8 @@ TEST_F(MstPipelineTest, OnePeerSendsTest) {
   auto &mst_itf = prepareMstItf();
   mst_itf.sendTx(complete(tx, kUserKeypair))
       .sendTx(complete(tx, signatories[0]))
-      .sendTx(complete(tx, signatories[1]))
-      .checkStatus(hash, CHECK_MST_PENDING)
-      .checkStatus(hash, CHECK_STATELESS_VALID)
-      .checkStatus(hash, CHECK_MST_PENDING)
-      .checkStatus(hash, CHECK_STATELESS_VALID)
-      .checkStatus(hash, CHECK_ENOUGH_SIGNATURES)
-      .skipProposal()
-      .skipVerifiedProposal()
-      .checkBlock([](auto &proposal) {
-        ASSERT_EQ(proposal->transactions().size(), 1);
+      .sendTxAwait(complete(tx, signatories[1]), [](auto &block) {
+        ASSERT_EQ(block->transactions().size(), 1);
       });
 }
 

@@ -14,7 +14,7 @@
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
 #include "interfaces/iroha_internal/tx_status_factory.hpp"
 #include "interfaces/transaction_responses/tx_response.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 #include "multi_sig_transactions/mst_processor.hpp"
 #include "network/peer_communication_service.hpp"
 #include "torii/status_bus.hpp"
@@ -36,7 +36,7 @@ namespace iroha {
           std::shared_ptr<iroha::torii::StatusBus> status_bus,
           std::shared_ptr<shared_model::interface::TxStatusFactory>
               status_factory,
-          logger::Logger log = logger::log("TxProcessor"));
+          logger::LoggerPtr log);
 
       void batchHandle(
           std::shared_ptr<shared_model::interface::TransactionBatch>
@@ -62,7 +62,7 @@ namespace iroha {
       // creates transaction status
       std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory_;
 
-      logger::Logger log_;
+      logger::LoggerPtr log_;
 
       // TODO: [IR-1665] Akvinikym 29.08.18: Refactor method publishStatus(..)
       /**

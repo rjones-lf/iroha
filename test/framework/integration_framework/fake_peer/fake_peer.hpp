@@ -12,7 +12,8 @@
 #include <boost/core/noncopyable.hpp>
 #include "framework/integration_framework/fake_peer/yac_network_notifier.hpp"
 #include "interfaces/iroha_internal/abstract_transport_factory.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
+#include "logger/logger_manager_fwd.hpp"
 #include "network/impl/async_grpc_client.hpp"
 
 namespace shared_model {
@@ -72,6 +73,7 @@ namespace integration_framework {
      * @param transaction_factory - transaction_factory
      * @param batch_parser - batch_parser
      * @param transaction_batch_factory - transaction_batch_factory
+     * @param log_manager - log manager
      * @param gree_all_proposals - whether this peer should agree all proposals
      */
     FakePeer(
@@ -87,6 +89,7 @@ namespace integration_framework {
         std::shared_ptr<shared_model::interface::TransactionBatchFactory>
             transaction_batch_factory,
         std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache,
+        logger::LoggerManagerTreePtr log_manager,
         bool agree_all_proposals = true);
 
     /// Start the fake peer.
@@ -146,6 +149,11 @@ namespace integration_framework {
     using YacTransport = iroha::consensus::yac::NetworkImpl;
     using AsyncCall = iroha::network::AsyncGrpcClient<google::protobuf::Empty>;
 
+    logger::LoggerPtr log_;
+    logger::LoggerManagerTreePtr log_manager_;
+    logger::LoggerManagerTreePtr consensus_log_manager_;
+    logger::LoggerManagerTreePtr mst_log_manager_;
+
     std::shared_ptr<shared_model::interface::CommonObjectsFactory>
         common_objects_factory_;
 
@@ -169,8 +177,6 @@ namespace integration_framework {
     std::shared_ptr<iroha::consensus::yac::YacCryptoProvider> yac_crypto_;
 
     rxcpp::subscription proposal_agreer_subscription_;
-
-    logger::Logger log_;
   };
 
 }  // namespace integration_framework

@@ -12,6 +12,7 @@
 #include "common/set.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/transaction.hpp"
+#include "logger/logger.hpp"
 
 namespace iroha {
 
@@ -44,22 +45,23 @@ namespace iroha {
 
   // ------------------------------| public api |-------------------------------
 
-  MstState MstState::empty(const CompleterType &completer) {
-    return MstState(completer);
+  MstState MstState::empty(logger::LoggerPtr log,
+                           const CompleterType &completer) {
+    return MstState(completer, std::move(log));
   }
 
   StateUpdateResult MstState::operator+=(const DataType &rhs) {
     auto state_update = StateUpdateResult{
-        std::make_shared<MstState>(MstState::empty(completer_)),
-        std::make_shared<MstState>(MstState::empty(completer_))};
+        std::make_shared<MstState>(MstState::empty(log_, completer_)),
+        std::make_shared<MstState>(MstState::empty(log_, completer_))};
     insertOne(state_update, rhs);
     return state_update;
   }
 
   StateUpdateResult MstState::operator+=(const MstState &rhs) {
     auto state_update = StateUpdateResult{
-        std::make_shared<MstState>(MstState::empty(completer_)),
-        std::make_shared<MstState>(MstState::empty(completer_))};
+        std::make_shared<MstState>(MstState::empty(log_, completer_)),
+        std::make_shared<MstState>(MstState::empty(log_, completer_))};
     for (auto &&rhs_tx : rhs.internal_state_) {
       insertOne(state_update, rhs_tx);
     }
@@ -68,7 +70,8 @@ namespace iroha {
 
   MstState MstState::operator-(const MstState &rhs) const {
     return MstState(this->completer_,
-                    set_difference(this->internal_state_, rhs.internal_state_));
+                    set_difference(this->internal_state_, rhs.internal_state_),
+                    log_);
   }
 
   bool MstState::operator==(const MstState &rhs) const {
@@ -90,7 +93,7 @@ namespace iroha {
   }
 
   MstState MstState::eraseByTime(const TimeType &time) {
-    MstState out = MstState::empty(completer_);
+    MstState out = MstState::empty(log_, completer_);
     while (not index_.empty() and (*completer_)(index_.top(), time)) {
       auto iter = internal_state_.find(index_.top());
 
@@ -134,12 +137,12 @@ namespace iroha {
     return inserted_new_signatures;
   }
 
-  MstState::MstState(const CompleterType &completer, logger::Logger log)
+  MstState::MstState(const CompleterType &completer, logger::LoggerPtr log)
       : MstState(completer, InternalStateType{}, std::move(log)) {}
 
   MstState::MstState(const CompleterType &completer,
                      const InternalStateType &transactions,
-                     logger::Logger log)
+                     logger::LoggerPtr log)
       : completer_(completer),
         internal_state_(transactions.begin(), transactions.end()),
         index_(transactions.begin(), transactions.end()),

@@ -1,6 +1,4 @@
-# Contributing guidelines
-
-:star::tada: First off, thanks for taking the time to contribute! :tada::star:
+First off, thanks for taking the time to contribute!
 
 The following is a short set of guidelines for contributing to Iroha.
 

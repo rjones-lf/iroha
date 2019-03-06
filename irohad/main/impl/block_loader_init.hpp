@@ -8,6 +8,8 @@
 
 #include "ametsuchi/block_query_factory.hpp"
 #include "consensus/consensus_block_cache.hpp"
+#include "logger/logger_fwd.hpp"
+#include "logger/logger_manager_fwd.hpp"
 #include "network/impl/block_loader_impl.hpp"
 #include "network/impl/block_loader_service.hpp"
 
@@ -22,20 +24,24 @@ namespace iroha {
        * Create block loader service with given storage
        * @param block_query_factory - factory to block query component
        * @param block_cache used to retrieve last block put by consensus
+       * @param loader_log - the log of the loader subsystem
        * @return initialized service
        */
       auto createService(
           std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
-          std::shared_ptr<consensus::ConsensusResultCache> block_cache);
+          std::shared_ptr<consensus::ConsensusResultCache> block_cache,
+          const logger::LoggerManagerTreePtr &loader_log_manager);
 
       /**
        * Create block loader for loading blocks from given peer factory by top
        * block
        * @param peer_query_factory - factory for peer query component creation
+       * @param loader_log - the log of the loader subsystem
        * @return initialized loader
        */
       auto createLoader(
-          std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory);
+          std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
+          logger::LoggerPtr loader_log);
 
      public:
       /**
@@ -43,12 +49,14 @@ namespace iroha {
        * @param peer_query_factory - factory to peer query component
        * @param block_query_factory - factory to block query component
        * @param block_cache used to retrieve last block put by consensus
+       * @param loader_log - the log of the loader subsystem
        * @return initialized service
        */
       std::shared_ptr<BlockLoader> initBlockLoader(
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
-          std::shared_ptr<consensus::ConsensusResultCache> block_cache);
+          std::shared_ptr<consensus::ConsensusResultCache> block_cache,
+          const logger::LoggerManagerTreePtr &loader_log_manager);
 
       std::shared_ptr<BlockLoaderImpl> loader;
       std::shared_ptr<BlockLoaderService> service;

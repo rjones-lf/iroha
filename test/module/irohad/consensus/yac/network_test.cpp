@@ -7,6 +7,7 @@
 
 #include <grpc++/grpc++.h>
 
+#include "framework/test_logger.hpp"
 #include "module/irohad/consensus/yac/mock_yac_crypto_provider.hpp"
 #include "module/irohad/consensus/yac/mock_yac_network.hpp"
 #include "module/irohad/consensus/yac/yac_test_util.hpp"
@@ -26,8 +27,10 @@ namespace iroha {
         void SetUp() override {
           notifications = std::make_shared<MockYacNetworkNotifications>();
           async_call = std::make_shared<
-              network::AsyncGrpcClient<google::protobuf::Empty>>();
-          network = std::make_shared<NetworkImpl>(async_call);
+              network::AsyncGrpcClient<google::protobuf::Empty>>(
+              getTestLogger("AsyncCall"));
+          network = std::make_shared<NetworkImpl>(async_call,
+                                                  getTestLogger("YacNetwork"));
 
           message.hash.vote_hashes.proposal_hash = "proposal";
           message.hash.vote_hashes.block_hash = "block";

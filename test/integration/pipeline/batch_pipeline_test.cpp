@@ -264,10 +264,10 @@ TEST_F(BatchPipelineTest, InvalidAtomicBatch) {
                                  StatelessValidTxResponse &>(status.get()));
             }
           })
-      .checkStatus(batch_transactions[0]->hash(), CHECK_ENOUGH_SIGNATURES)
       .checkStatus(batch_transactions[0]->hash(), CHECK_STATELESS_VALID)
-      .checkStatus(batch_transactions[1]->hash(), CHECK_ENOUGH_SIGNATURES)
+      .checkStatus(batch_transactions[0]->hash(), CHECK_ENOUGH_SIGNATURES)
       .checkStatus(batch_transactions[1]->hash(), CHECK_STATELESS_VALID)
+      .checkStatus(batch_transactions[1]->hash(), CHECK_ENOUGH_SIGNATURES)
       .checkStatus(batch_transactions[1]->hash(), CHECK_STATEFUL_INVALID)
       .checkProposal([&transaction_sequence](const auto proposal) {
         ASSERT_THAT(

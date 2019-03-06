@@ -11,7 +11,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 #include "cryptography/keypair.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 
 namespace iroha {
 
@@ -26,15 +26,14 @@ namespace iroha {
      */
     KeysManagerImpl(const std::string &account_id,
                     const boost::filesystem::path &path_to_keypair,
-                    logger::Logger log = logger::log("KeysManagerImpl"));
+                    logger::LoggerPtr log);
 
     /**
      * Initialize key manager for a specific account
      * @param account_id - fully qualified account id, e.g. admin@test
      * @param log to print progress
      */
-    KeysManagerImpl(const std::string account_id,
-                    logger::Logger log = logger::log("KeysManagerImpl"));
+    KeysManagerImpl(const std::string account_id, logger::LoggerPtr log);
 
     bool createKeys() override;
 
@@ -74,7 +73,7 @@ namespace iroha {
 
     boost::filesystem::path path_to_keypair_;
     std::string account_id_;
-    logger::Logger log_;
+    logger::LoggerPtr log_;
   };
 }  // namespace iroha
 #endif  // IROHA_KEYS_MANAGER_IMPL_HPP

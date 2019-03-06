@@ -16,6 +16,7 @@
 #include "cryptography/public_key.hpp"
 #include "cryptography/signed.hpp"
 #include "interfaces/common_objects/peer.hpp"
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -42,7 +43,7 @@ namespace iroha {
           std::shared_ptr<YacCryptoProvider> crypto,
           std::shared_ptr<Timer> timer,
           ClusterOrdering order,
-          logger::Logger log) {
+          logger::LoggerPtr log) {
         return std::make_shared<Yac>(
             vote_storage, network, crypto, timer, order, std::move(log));
       }
@@ -52,7 +53,7 @@ namespace iroha {
                std::shared_ptr<YacCryptoProvider> crypto,
                std::shared_ptr<Timer> timer,
                ClusterOrdering order,
-               logger::Logger log)
+               logger::LoggerPtr log)
           : vote_storage_(std::move(vote_storage)),
             network_(std::move(network)),
             crypto_(std::move(crypto)),
@@ -85,7 +86,7 @@ namespace iroha {
         if (crypto_->verify(state)) {
           applyState(state);
         } else {
-          log_->warn(cryptoError(state));
+          log_->warn("{}", cryptoError(state));
         }
       }
 
