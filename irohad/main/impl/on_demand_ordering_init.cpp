@@ -203,6 +203,7 @@ namespace iroha {
         consensus::Round initial_round,
         std::function<std::chrono::milliseconds(
             const synchronizer::SynchronizationEvent &)> delay_func,
+        size_t max_number_of_transactions,
         const logger::LoggerManagerTreePtr &ordering_log_manager) {
       auto map = [](auto commit) {
         return matchEvent(
@@ -247,6 +248,7 @@ namespace iroha {
           std::move(proposal_factory),
           std::move(tx_cache),
           initial_round,
+          max_number_of_transactions,
           ordering_log_manager->getChild("Gate")->getLogger());
     }
 
@@ -311,6 +313,7 @@ namespace iroha {
           std::move(tx_cache),
           initial_round,
           std::move(delay_func),
+          max_size,
           ordering_log_manager);
     }
 

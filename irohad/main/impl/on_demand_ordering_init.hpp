@@ -75,6 +75,7 @@ namespace iroha {
           consensus::Round initial_round,
           std::function<std::chrono::milliseconds(
               const synchronizer::SynchronizationEvent &)> delay_func,
+          size_t max_number_of_transactions,
           const logger::LoggerManagerTreePtr &ordering_log_manager);
 
       /**
@@ -89,7 +90,6 @@ namespace iroha {
           const logger::LoggerManagerTreePtr &ordering_log_manager);
 
      public:
-
       /// Constructor.
       /// @param log - the logger to use for internal messages.
       OnDemandOrderingInit(logger::LoggerPtr log);

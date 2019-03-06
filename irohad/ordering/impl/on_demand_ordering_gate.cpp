@@ -5,6 +5,8 @@
 
 #include "ordering/impl/on_demand_ordering_gate.hpp"
 
+#include <iterator>
+
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/adaptor/transformed.hpp>
@@ -26,8 +28,10 @@ OnDemandOrderingGate::OnDemandOrderingGate(
     std::shared_ptr<shared_model::interface::UnsafeProposalFactory> factory,
     std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
     consensus::Round initial_round,
+    size_t transaction_limit,
     logger::LoggerPtr log)
     : log_(std::move(log)),
+      transaction_limit_(transaction_limit),
       ordering_service_(std::move(ordering_service)),
       network_client_(std::move(network_client)),
       events_subscription_(events.subscribe([this](auto event) {
@@ -50,24 +54,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         // notify our ordering service about new round
         ordering_service_->onCollaborationOutcome(current_round_);
 
-        visit_in_place(event,
-                       [this](const BlockEvent &block_event) {
-                         // block committed, remove transactions from cache
-                         cache_->remove(block_event.hashes);
-                       },
-                       [this](const EmptyEvent &) {
-                         // no blocks committed, no transactions to remove
-                       });
-
-        auto batches = cache_->pop();
-        cache_->addToBack(batches);
-
-        if (not batches.empty()) {
-          network_client_->onBatches(
-              current_round_,
-              transport::OdOsNotification::CollectionType{batches.begin(),
-                                                          batches.end()});
-        }
+        sendTransactionsOS(event);
 
         // request proposal for the current round
         auto proposal = this->processProposalRequest(
@@ -112,6 +99,35 @@ OnDemandOrderingGate::processProposalRequest(
     return boost::none;
   }
   return proposal_without_replays;
+}
+
+void OnDemandOrderingGate::sendTransactionsOS(
+    const BlockRoundEventType &event) {
+  visit_in_place(event,
+                 [this](const BlockEvent &block_event) {
+                   // block committed, remove transactions from cache
+                   cache_->remove(block_event.hashes);
+                 },
+                 [](const EmptyEvent &) {
+                   // no blocks committed, no transactions to remove
+                 });
+
+  auto batches = cache_->pop();
+  cache_->addToBack(batches);
+
+  // get only transactions which fit to next proposal
+  auto end_iterator = batches.begin();
+  if (batches.size() > transaction_limit_) {
+    std::advance(end_iterator, transaction_limit_);
+  } else {
+    end_iterator = batches.end();
+  }
+
+  if (not batches.empty()) {
+    network_client_->onBatches(current_round_,
+                               transport::OdOsNotification::CollectionType{
+                                   batches.begin(), end_iterator});
+  }
 }
 
 std::shared_ptr<const shared_model::interface::Proposal>
