@@ -54,7 +54,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         // notify our ordering service about new round
         ordering_service_->onCollaborationOutcome(current_round_);
 
-        sendTransactionsOS(event);
+        this->sendTransactionsOS(event);
 
         // request proposal for the current round
         auto proposal = this->processProposalRequest(

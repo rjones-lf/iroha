@@ -54,6 +54,7 @@ class OnDemandOrderingGateTest : public ::testing::Test {
                                                std::move(ufactory),
                                                tx_cache,
                                                initial_round,
+                                               1000,
                                                getTestLogger("OrderingGate"));
   }
 
