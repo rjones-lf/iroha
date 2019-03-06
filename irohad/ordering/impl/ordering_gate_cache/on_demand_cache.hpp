@@ -31,7 +31,7 @@ namespace iroha {
        private:
         mutable std::shared_timed_mutex mutex_;
         using BatchesQueueType = boost::circular_buffer<BatchesSetType>;
-        BatchesQueueType circ_buffer{2, BatchesSetType{}};
+        BatchesQueueType circ_buffer{3, BatchesSetType{}};
       };
 
     }  // namespace cache
