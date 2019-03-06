@@ -13,32 +13,22 @@
 #include <boost/range/empty.hpp>
 #include "ametsuchi/tx_presence_cache.hpp"
 #include "common/visitor.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "logger/logger.hpp"
 #include "ordering/impl/on_demand_common.hpp"
+#include "synchronizer/synchronizer_common.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
 
-std::string OnDemandOrderingGate::BlockEvent::toString() const {
-  return shared_model::detail::PrettyStringBuilder()
-      .init("BlockEvent")
-      .append(round.toString())
-      .finalize();
-}
-
-std::string OnDemandOrderingGate::EmptyEvent::toString() const {
-  return shared_model::detail::PrettyStringBuilder()
-      .init("EmptyEvent")
-      .append(round.toString())
-      .finalize();
-}
-
 OnDemandOrderingGate::OnDemandOrderingGate(
     std::shared_ptr<OnDemandOrderingService> ordering_service,
     std::shared_ptr<transport::OdOsNotification> network_client,
-    rxcpp::observable<BlockRoundEventType> events,
+    rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+        block_events,
+    rxcpp::observable<iroha::synchronizer::SynchronizationEvent> sync_events,
     std::shared_ptr<cache::OrderingGateCache> cache,
     std::shared_ptr<shared_model::interface::UnsafeProposalFactory> factory,
     std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
@@ -48,17 +38,48 @@ OnDemandOrderingGate::OnDemandOrderingGate(
       transaction_limit_(transaction_limit),
       ordering_service_(std::move(ordering_service)),
       network_client_(std::move(network_client)),
-      events_subscription_(events.subscribe([this](auto event) {
-        consensus::Round current_round =
-            visit_in_place(event, [this, &current_round](const auto &event) {
-              log_->debug("{}", event);
-              return event.round;
-            });
+      block_events_subscription_(block_events.subscribe([this](auto block) {
+        // block committed, remove transactions from cache
+        log_->debug("Committed block handle: height {}.", block->height());
+        ordering::cache::OrderingGateCache::HashesSetType hashes;
+        const auto &committed = block->transactions();
+        std::transform(
+            committed.begin(),
+            committed.end(),
+            std::inserter(hashes, hashes.end()),
+            [](const auto &transaction) { return transaction.hash(); });
+        const auto &rejected = block->rejected_transactions_hashes();
+        std::copy(rejected.begin(),
+                  rejected.end(),
+                  std::inserter(hashes, hashes.end()));
+        log_->debug("Asking to remove {} transactions from cache.",
+                    hashes.size());
+        cache_->remove(hashes);
+      })),
+      sync_events_subscription_(sync_events.subscribe([this](auto event) {
+        consensus::Round current_round;
+        switch (event.sync_outcome) {
+          case iroha::synchronizer::SynchronizationOutcomeType::kCommit:
+            log_->debug("Sync commit: reject.");
+            current_round = ordering::nextCommitRound(event.round);
+            break;
+          case iroha::synchronizer::SynchronizationOutcomeType::kReject:
+            log_->debug("Sync enent: reject.");
+            current_round = ordering::nextRejectRound(event.round);
+            break;
+          case iroha::synchronizer::SynchronizationOutcomeType::kNothing:
+            log_->debug("Sync enent: nothing.");
+            current_round = ordering::nextRejectRound(event.round);
+            break;
+          default:
+            throw std::runtime_error("unknown SynchronizationOutcomeType");
+        }
+        log_->debug("Current: {}", current_round);
 
         // notify our ordering service about new round
         ordering_service_->onCollaborationOutcome(current_round);
 
-        this->sendCachedTransactions(event);
+        this->sendCachedTransactions();
 
         // request proposal for the current round
         auto proposal = this->processProposalRequest(
@@ -72,7 +93,8 @@ OnDemandOrderingGate::OnDemandOrderingGate(
       tx_cache_(std::move(tx_cache)) {}
 
 OnDemandOrderingGate::~OnDemandOrderingGate() {
-  events_subscription_.unsubscribe();
+  block_events_subscription_.unsubscribe();
+  sync_events_subscription_.unsubscribe();
 }
 
 void OnDemandOrderingGate::propagateBatch(
@@ -103,17 +125,8 @@ OnDemandOrderingGate::processProposalRequest(
   return proposal_without_replays;
 }
 
-void OnDemandOrderingGate::sendCachedTransactions(
-    const BlockRoundEventType &event) {
-  visit_in_place(event,
-                 [this](const BlockEvent &block_event) {
-                   // block committed, remove transactions from cache
-                   cache_->remove(block_event.hashes);
-                 },
-                 [](const EmptyEvent &) {
-                   // no blocks committed, no transactions to remove
-                 });
-
+void OnDemandOrderingGate::sendCachedTransactions() {
+  // TODO make cache_->getBatchesForRound(current_round) thet respects sync
   auto batches = cache_->pop();
   cache_->addToBack(batches);
 

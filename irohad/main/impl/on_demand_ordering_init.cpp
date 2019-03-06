@@ -201,45 +201,14 @@ namespace iroha {
             const synchronizer::SynchronizationEvent &)> delay_func,
         size_t max_number_of_transactions,
         const logger::LoggerManagerTreePtr &ordering_log_manager) {
-      auto map = [](auto commit) {
-        return matchEvent(
-            commit,
-            [](const auto &commit)
-                -> ordering::OnDemandOrderingGate::BlockRoundEventType {
-              ordering::cache::OrderingGateCache::HashesSetType hashes;
-              commit.synced_blocks.as_blocking().subscribe(
-                  [&hashes](const auto &block) {
-                    const auto &committed = block->transactions();
-                    std::transform(committed.begin(),
-                                   committed.end(),
-                                   std::inserter(hashes, hashes.end()),
-                                   [](const auto &transaction) {
-                                     return transaction.hash();
-                                   });
-                    const auto &rejected =
-                        block->rejected_transactions_hashes();
-                    std::copy(rejected.begin(),
-                              rejected.end(),
-                              std::inserter(hashes, hashes.end()));
-                  });
-              return ordering::OnDemandOrderingGate::BlockEvent{
-                  ordering::nextCommitRound(commit.round), hashes};
-            },
-            [](const auto &nothing)
-                -> ordering::OnDemandOrderingGate::BlockRoundEventType {
-              return ordering::OnDemandOrderingGate::EmptyEvent{
-                  ordering::nextRejectRound(nothing.round)};
-            });
-      };
-
       return std::make_shared<ordering::OnDemandOrderingGate>(
           std::move(ordering_service),
           std::move(network_client),
+          commit_notifier.get_observable(),
           sync_event_notifier.get_observable()
               .lift<iroha::synchronizer::SynchronizationEvent>(
                   iroha::makeDelay<iroha::synchronizer::SynchronizationEvent>(
-                      delay_func, rxcpp::identity_current_thread()))
-              .map(map),
+                      delay_func, rxcpp::identity_current_thread())),
           std::move(cache),
           std::move(proposal_factory),
           std::move(tx_cache),

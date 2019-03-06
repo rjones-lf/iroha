@@ -19,9 +19,18 @@
 #include "ordering/impl/ordering_gate_cache/ordering_gate_cache.hpp"
 #include "ordering/on_demand_ordering_service.hpp"
 
+namespace shared_model {
+  namespace interface {
+    class Block;
+  }
+}
+
 namespace iroha {
   namespace ametsuchi {
     class TxPresenceCache;
+  }
+  namespace synchronizer {
+    struct SynchronizationEvent;
   }
 
   namespace ordering {
@@ -32,34 +41,13 @@ namespace iroha {
      */
     class OnDemandOrderingGate : public network::OrderingGate {
      public:
-      /**
-       * Represents storage modification. Proposal round increment
-       */
-      struct BlockEvent {
-        /// next round number
-        consensus::Round round;
-        /// hashes of processed transactions
-        cache::OrderingGateCache::HashesSetType hashes;
-
-        std::string toString() const;
-      };
-
-      /**
-       * Represents no storage modification. Reject round increment
-       */
-      struct EmptyEvent {
-        /// next round number
-        consensus::Round round;
-
-        std::string toString() const;
-      };
-
-      using BlockRoundEventType = boost::variant<BlockEvent, EmptyEvent>;
-
       OnDemandOrderingGate(
           std::shared_ptr<OnDemandOrderingService> ordering_service,
           std::shared_ptr<transport::OdOsNotification> network_client,
-          rxcpp::observable<BlockRoundEventType> events,
+          rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+              block_events,
+          rxcpp::observable<iroha::synchronizer::SynchronizationEvent>
+              sync_events,
           std::shared_ptr<cache::OrderingGateCache>
               cache,  // TODO: IR-1863 12.11.18 kamilsa change cache to
                       // unique_ptr
@@ -87,7 +75,7 @@ namespace iroha {
               std::shared_ptr<const OnDemandOrderingService::ProposalType>>
               proposal) const;
 
-      void sendCachedTransactions(const BlockRoundEventType &event);
+      void sendCachedTransactions();
 
       /**
        * remove already processed transactions from proposal
@@ -101,7 +89,8 @@ namespace iroha {
       logger::LoggerPtr log_;
       std::shared_ptr<OnDemandOrderingService> ordering_service_;
       std::shared_ptr<transport::OdOsNotification> network_client_;
-      rxcpp::composite_subscription events_subscription_;
+      rxcpp::composite_subscription block_events_subscription_;
+      rxcpp::composite_subscription sync_events_subscription_;
       std::shared_ptr<cache::OrderingGateCache> cache_;
       std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
           proposal_factory_;
