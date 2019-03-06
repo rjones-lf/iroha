@@ -89,7 +89,7 @@ void OnDemandOrderingServiceImpl::onBatches(consensus::Round round,
   }
   std::for_each(unprocessed_batches.begin(),
                 unprocessed_batches.end(),
-                [&it](auto &obj) { it->second.push(std::move(obj)); });
+                [&it](auto &obj) { it->second.insert(std::move(obj)); });
   log_->debug("onBatches => collection is inserted");
 }
 
@@ -124,28 +124,21 @@ OnDemandOrderingServiceImpl::onRequestProposal(consensus::Round round) {
  * @return transactions
  */
 static std::vector<std::shared_ptr<shared_model::interface::Transaction>>
-getTransactions(size_t requested_tx_amount,
-                tbb::concurrent_queue<TransactionBatchType> &tx_batches_queue,
-                boost::optional<size_t &> discarded_txs_amount) {
-  TransactionBatchType batch;
+getTransactions(
+    size_t requested_tx_amount,
+    detail::BatchSetType &tx_batches_queue,
+    boost::optional<size_t &> discarded_txs_amount) {
   std::vector<std::shared_ptr<shared_model::interface::Transaction>> collection;
-  std::unordered_set<std::string> inserted;
 
-  while (collection.size() < requested_tx_amount
-         and tx_batches_queue.try_pop(batch)
-         and inserted.insert(batch->reducedHash().hex()).second) {
+  for (auto it = tx_batches_queue.begin();
+       it != tx_batches_queue.end() and collection.size() < requested_tx_amount;
+       ++it) {
     collection.insert(
         std::end(collection),
-        std::make_move_iterator(std::begin(batch->transactions())),
-        std::make_move_iterator(std::end(batch->transactions())));
+        std::make_move_iterator(std::begin((*it)->transactions())),
+        std::make_move_iterator(std::end((*it)->transactions())));
   }
-
-  if (discarded_txs_amount) {
-    *discarded_txs_amount = 0;
-    while (tx_batches_queue.try_pop(batch)) {
-      *discarded_txs_amount += boost::size(batch->transactions());
-    }
-  }
+  tx_batches_queue.clear();
 
   return collection;
 }
