@@ -8,6 +8,8 @@
 
 #include <string>
 
+#include "logger/logger_fwd.hpp"
+
 /**
  * This source file contains common methods related to files
  */
@@ -16,8 +18,10 @@ namespace iroha {
   /**
    * Remove all files and directories inside a folder.
    * Keeps the target folder.
-   * @param dump_dir - target folder
+   * @param dir - target folder
+   * @param log - a log for local messages
    */
-  void remove_dir_contents(const std::string &dump_dir);
+  void remove_dir_contents(const std::string &dir,
+                           const logger::LoggerPtr &log);
 }  // namespace iroha
 #endif  // IROHA_FILES_HPP

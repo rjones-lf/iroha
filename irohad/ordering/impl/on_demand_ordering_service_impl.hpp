@@ -14,7 +14,7 @@
 
 #include <tbb/concurrent_queue.h>
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 #include "ordering/impl/on_demand_common.hpp"
 
 namespace iroha {
@@ -30,20 +30,20 @@ namespace iroha {
        * proposal
        * @param proposal_factory - used to generate proposals
        * @param tx_cache - cache of transactions
+       * @param log to print progress
        * @param number_of_proposals - number of stored proposals, older will be
        * removed. Default value is 3
        * @param initial_round - first round of agreement.
        * Default value is {2, kFirstRejectRound} since genesis block height is 1
-       * @param log to print progress
        */
       OnDemandOrderingServiceImpl(
           size_t transaction_limit,
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               proposal_factory,
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
+          logger::LoggerPtr log,
           size_t number_of_proposals = 3,
-          const consensus::Round &initial_round = {2, kFirstRejectRound},
-          logger::Logger log = logger::log("OnDemandOrderingServiceImpl"));
+          const consensus::Round &initial_round = {2, kFirstRejectRound});
 
       // --------------------- | OnDemandOrderingService |_---------------------
 
@@ -123,7 +123,7 @@ namespace iroha {
       /**
        * Logger instance
        */
-      logger::Logger log_;
+      logger::LoggerPtr log_;
     };
   }  // namespace ordering
 }  // namespace iroha

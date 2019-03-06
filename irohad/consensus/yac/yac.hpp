@@ -18,7 +18,7 @@
 #include "consensus/yac/transport/yac_network_interface.hpp"  // for YacNetworkNotifications
 #include "consensus/yac/yac_gate.hpp"                         // for HashGate
 #include "cryptography/public_key.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -40,7 +40,7 @@ namespace iroha {
             std::shared_ptr<Timer> timer,
             ClusterOrdering order,
             std::vector<std::shared_ptr<shared_model::interface::Peer>> peers,
-            logger::Logger log = logger::log("YAC"));
+            logger::LoggerPtr log);
 
         Yac(YacVoteStorage vote_storage,
             std::shared_ptr<YacNetwork> network,
@@ -48,7 +48,7 @@ namespace iroha {
             std::shared_ptr<Timer> timer,
             ClusterOrdering order,
             std::vector<std::shared_ptr<shared_model::interface::Peer>> peers,
-            logger::Logger log = logger::log("YAC"));
+            logger::LoggerPtr log);
 
         // ------|Hash gate|------
 
@@ -103,7 +103,7 @@ namespace iroha {
         std::vector<shared_model::crypto::PublicKey> peer_keys_;
 
         // ------|Logger|------
-        logger::Logger log_;
+        logger::LoggerPtr log_;
       };
     }  // namespace yac
   }    // namespace consensus

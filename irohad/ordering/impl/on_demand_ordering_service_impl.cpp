@@ -20,6 +20,7 @@
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/transaction.hpp"
+#include "logger/logger.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
@@ -30,9 +31,9 @@ OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(
     std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
         proposal_factory,
     std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
+    logger::LoggerPtr log,
     size_t number_of_proposals,
-    const consensus::Round &initial_round,
-    logger::Logger log)
+    const consensus::Round &initial_round)
     : transaction_limit_(transaction_limit),
       number_of_proposals_(number_of_proposals),
       proposal_factory_(std::move(proposal_factory)),

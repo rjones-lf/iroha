@@ -11,6 +11,7 @@
 #include "ametsuchi/mutable_storage.hpp"
 #include "common/visitor.hpp"
 #include "interfaces/iroha_internal/block.hpp"
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace synchronizer {
@@ -21,7 +22,7 @@ namespace iroha {
         std::shared_ptr<ametsuchi::MutableFactory> mutable_factory,
         std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
         std::shared_ptr<network::BlockLoader> block_loader,
-        logger::Logger log)
+        logger::LoggerPtr log)
         : validator_(std::move(validator)),
           mutable_factory_(std::move(mutable_factory)),
           block_query_factory_(std::move(block_query_factory)),

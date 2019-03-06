@@ -13,6 +13,7 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/test_subscriber.hpp"
 
+#include "framework/test_logger.hpp"
 #include "module/irohad/consensus/yac/mock_yac_hash_gate.hpp"
 #include "module/irohad/consensus/yac/mock_yac_hash_provider.hpp"
 #include "module/irohad/consensus/yac/mock_yac_peer_orderer.hpp"
@@ -90,7 +91,8 @@ class YacGateTest : public ::testing::Test {
                                          std::move(peer_orderer_ptr),
                                          hash_provider,
                                          block_creator,
-                                         block_cache);
+                                         block_cache,
+                                         getTestLogger("YacGateImpl"));
   }
 
   iroha::consensus::Round round{1, 1};

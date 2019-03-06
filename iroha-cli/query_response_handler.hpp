@@ -11,7 +11,7 @@
 #include <typeindex>
 #include <unordered_map>
 
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 #include "qry_responses.pb.h"
 
 namespace iroha_cli {
@@ -30,8 +30,7 @@ namespace iroha_cli {
 
   class QueryResponseHandler {
    public:
-    explicit QueryResponseHandler(std::shared_ptr<spdlog::logger> log =
-                                      logger::log("QueryResponseHandler"));
+    explicit QueryResponseHandler(logger::LoggerPtr log);
 
     /**
      * Handle query response
@@ -64,7 +63,7 @@ namespace iroha_cli {
     std::unordered_map<ErrorResponseCode, std::string, EnumTypeHash>
         error_handler_map_;
 
-    std::shared_ptr<spdlog::logger> log_;
+    logger::LoggerPtr log_;
   };
 
 }  // namespace iroha_cli

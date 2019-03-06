@@ -14,6 +14,7 @@
 #include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/algorithm/find_if.hpp>
 #include "common/files.hpp"
+#include "logger/logger.hpp"
 
 using namespace iroha::ametsuchi;
 using Identifier = FlatFile::Identifier;
@@ -27,18 +28,17 @@ std::string FlatFile::id_to_name(Identifier id) {
 }
 
 boost::optional<std::unique_ptr<FlatFile>> FlatFile::create(
-    const std::string &path) {
-  auto log_ = logger::log("FlatFile::create()");
-
+    const std::string &path,
+    logger::LoggerPtr log) {
   boost::system::error_code err;
   if (not boost::filesystem::is_directory(path, err)
       and not boost::filesystem::create_directory(path, err)) {
-    log_->error("Cannot create storage dir: {}\n{}", path, err.message());
+    log->error("Cannot create storage dir: {}\n{}", path, err.message());
     return boost::none;
   }
 
-  auto res = FlatFile::check_consistency(path);
-  return std::make_unique<FlatFile>(*res, path, private_tag{});
+  auto res = FlatFile::check_consistency(path, log);
+  return std::make_unique<FlatFile>(*res, path, private_tag{}, std::move(log));
 }
 
 bool FlatFile::add(Identifier id, const Bytes &block) {
@@ -104,8 +104,8 @@ Identifier FlatFile::last_id() const {
 }
 
 void FlatFile::dropAll() {
-  iroha::remove_dir_contents(dump_dir_);
-  auto res = FlatFile::check_consistency(dump_dir_);
+  iroha::remove_dir_contents(dump_dir_, log_);
+  auto res = FlatFile::check_consistency(dump_dir_, log_);
   current_id_.store(*res);
 }
 
@@ -114,15 +114,13 @@ void FlatFile::dropAll() {
 FlatFile::FlatFile(Identifier current_id,
                    const std::string &path,
                    FlatFile::private_tag,
-                   logger::Logger log)
+                   logger::LoggerPtr log)
     : dump_dir_(path), log_{std::move(log)} {
   current_id_.store(current_id);
 }
 
 boost::optional<Identifier> FlatFile::check_consistency(
-    const std::string &dump_dir) {
-  auto log = logger::log("FLAT_FILE");
-
+    const std::string &dump_dir, logger::LoggerPtr log) {
   if (dump_dir.empty()) {
     log->error("check_consistency({}), not directory", dump_dir);
     return boost::none;

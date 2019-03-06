@@ -9,6 +9,7 @@
 #include "backend/protobuf/proposal.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/transaction.hpp"
+#include "framework/test_logger.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "module/irohad/ordering/mock_on_demand_os_notification.hpp"
@@ -50,7 +51,8 @@ struct OnDemandOsServerGrpcTest : public ::testing::Test {
         std::make_shared<OnDemandOsServerGrpc>(notification,
                                                std::move(transaction_factory),
                                                std::move(batch_parser),
-                                               batch_factory);
+                                               batch_factory,
+                                               getTestLogger("OdOsServerGrpc"));
   }
 
   std::shared_ptr<MockOdOsNotification> notification;

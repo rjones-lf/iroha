@@ -88,7 +88,7 @@ namespace iroha {
         }
 
         static boost::optional<VoteMessage> deserializeVote(
-            const proto::Vote &pb_vote) {
+            const proto::Vote &pb_vote, logger::LoggerPtr log) {
           static shared_model::proto::ProtoCommonObjectsFactory<
               shared_model::validation::FieldValidator>
               factory_;
@@ -105,8 +105,7 @@ namespace iroha {
                             std::unique_ptr<shared_model::interface::Signature>>
                                 &sig) { val = std::move(sig.value); },
                         [&](iroha::expected::Error<std::string> &reason) {
-                          logger::log("YacPbConverter::deserializeVote")
-                              ->error(msg, reason.error);
+                          log->error(msg, reason.error);
                         });
               };
 

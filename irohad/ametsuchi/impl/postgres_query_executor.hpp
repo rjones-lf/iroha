@@ -33,7 +33,8 @@
 #include "interfaces/queries/blocks_query.hpp"
 #include "interfaces/queries/query.hpp"
 #include "interfaces/query_responses/query_response.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
+#include "logger/logger_manager_fwd.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -58,7 +59,7 @@ namespace iroha {
               response_factory,
           std::shared_ptr<shared_model::interface::PermissionToString>
               perm_converter,
-          logger::Logger log = logger::log("PostgresQueryExecutorVisitor"));
+          logger::LoggerPtr log);
 
       void setCreatorId(
           const shared_model::interface::types::AccountIdType &creator_id);
@@ -234,7 +235,7 @@ namespace iroha {
           query_response_factory_;
       std::shared_ptr<shared_model::interface::PermissionToString>
           perm_converter_;
-      logger::Logger log_;
+      logger::LoggerPtr log_;
     };
 
     class PostgresQueryExecutor : public QueryExecutor {
@@ -249,7 +250,7 @@ namespace iroha {
               response_factory,
           std::shared_ptr<shared_model::interface::PermissionToString>
               perm_converter,
-          logger::Logger log = logger::log("PostgresQueryExecutor"));
+          logger::LoggerManagerTreePtr log_manager);
 
       QueryExecutorResult validateAndExecute(
           const shared_model::interface::Query &query,
@@ -268,7 +269,7 @@ namespace iroha {
       PostgresQueryExecutorVisitor visitor_;
       std::shared_ptr<shared_model::interface::QueryResponseFactory>
           query_response_factory_;
-      logger::Logger log_;
+      logger::LoggerPtr log_;
     };
 
   }  // namespace ametsuchi

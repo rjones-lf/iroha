@@ -5,6 +5,7 @@
 
 #include <utility>
 
+#include "logger/logger.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
 
 namespace iroha {
@@ -13,14 +14,16 @@ namespace iroha {
       std::shared_ptr<iroha::network::MstTransport> transport,
       std::shared_ptr<MstStorage> storage,
       std::shared_ptr<PropagationStrategy> strategy,
-      std::shared_ptr<MstTimeProvider> time_provider)
-      : MstProcessor(logger::log("FairMstProcessor")),
+      std::shared_ptr<MstTimeProvider> time_provider,
+      logger::LoggerPtr log)
+      : MstProcessor(log),  // use the same logger in base class
         transport_(std::move(transport)),
         storage_(std::move(storage)),
         strategy_(std::move(strategy)),
         time_provider_(std::move(time_provider)),
         propagation_subscriber_(strategy_->emitter().subscribe(
-            [this](auto data) { this->onPropagate(data); })) {}
+            [this](auto data) { this->onPropagate(data); })),
+        log_(std::move(log)) {}
 
   FairMstProcessor::~FairMstProcessor() {
     propagation_subscriber_.unsubscribe();

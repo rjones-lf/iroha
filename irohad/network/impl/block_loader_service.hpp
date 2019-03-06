@@ -9,7 +9,7 @@
 #include "ametsuchi/block_query_factory.hpp"
 #include "consensus/consensus_block_cache.hpp"
 #include "loader.grpc.pb.h"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 
 namespace iroha {
   namespace network {
@@ -19,7 +19,7 @@ namespace iroha {
           std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
           std::shared_ptr<iroha::consensus::ConsensusResultCache>
               consensus_result_cache,
-          logger::Logger log = logger::log("BlockLoaderService"));
+          logger::LoggerPtr log);
 
       grpc::Status retrieveBlocks(
           ::grpc::ServerContext *context,
@@ -34,7 +34,7 @@ namespace iroha {
       std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory_;
       std::shared_ptr<iroha::consensus::ConsensusResultCache>
           consensus_result_cache_;
-      logger::Logger log_;
+      logger::LoggerPtr log_;
     };
   }  // namespace network
 }  // namespace iroha
