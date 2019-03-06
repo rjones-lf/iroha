@@ -56,7 +56,7 @@ class ToriiQueriesTest : public testing::Test {
  public:
   virtual void SetUp() {
     runner = std::make_unique<ServerRunner>(ip + ":0",
-                                            getTestLogger("ServerRunner"  ));
+                                            getTestLogger("ServerRunner"));
     wsv_query = std::make_shared<MockWsvQuery>();
     block_query = std::make_shared<MockBlockQuery>();
     query_executor = std::make_shared<MockQueryExecutor>();
