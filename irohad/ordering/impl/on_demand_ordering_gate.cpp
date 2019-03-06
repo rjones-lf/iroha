@@ -98,12 +98,6 @@ rxcpp::observable<network::OrderingEvent> OnDemandOrderingGate::onProposal() {
   return proposal_notifier_.get_observable();
 }
 
-void OnDemandOrderingGate::setPcs(
-    const iroha::network::PeerCommunicationService &pcs) {
-  throw std::logic_error(
-      "Method is deprecated. PCS observable should be set in ctor");
-}
-
 boost::optional<std::shared_ptr<const shared_model::interface::Proposal>>
 OnDemandOrderingGate::processProposalRequest(
     boost::optional<

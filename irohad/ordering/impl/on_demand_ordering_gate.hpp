@@ -73,9 +73,6 @@ namespace iroha {
 
       rxcpp::observable<network::OrderingEvent> onProposal() override;
 
-      [[deprecated("Use ctor")]] void setPcs(
-          const iroha::network::PeerCommunicationService &pcs) override;
-
      private:
       /**
        * Handle an incoming proposal from ordering service
