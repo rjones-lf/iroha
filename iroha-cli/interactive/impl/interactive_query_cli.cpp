@@ -96,7 +96,7 @@ namespace iroha_cli {
         int default_port,
         uint64_t query_counter,
         const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider,
-        logger::LoggerManagerTreePtr responce_handler_log_manager,
+        logger::LoggerManagerTreePtr response_handler_log_manager,
         logger::LoggerPtr pb_qry_factory_log,
         logger::LoggerPtr json_qry_factory_log,
         logger::LoggerPtr log)
@@ -106,8 +106,8 @@ namespace iroha_cli {
           default_port_(default_port),
           counter_(query_counter),
           provider_(provider),
-          responce_handler_log_manager_(
-              std::move(responce_handler_log_manager)),
+          response_handler_log_manager_(
+              std::move(response_handler_log_manager)),
           pb_qry_factory_log_(std::move(pb_qry_factory_log)),
           json_qry_factory_log_(std::move(json_qry_factory_log)),
           log_(std::move(log)) {
@@ -275,7 +275,7 @@ namespace iroha_cli {
       auto query = shared_model::proto::Query(
           *iroha::model::converters::PbQueryFactory(pb_qry_factory_log_)
                .serialize(query_));
-      GrpcResponseHandler{responce_handler_log_manager_}.handle(
+      GrpcResponseHandler{response_handler_log_manager_}.handle(
           client.sendQuery(query));
       printEnd();
       // Stop parsing

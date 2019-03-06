@@ -12,7 +12,7 @@
 #include "logger/logger_manager.hpp"
 
 struct IrohadConfig {
-  std::string blok_store_path;
+  std::string block_store_path;
   uint16_t torii_port;
   uint16_t internal_port;
   std::string pg_opt;

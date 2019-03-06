@@ -32,7 +32,7 @@ namespace iroha_cli {
        * @param default_port of Iroha peer
        * @param query_counter counter associated with creator's account
        * @param provider for signing queries
-       * @param responce_handler_log_manager for ResponseHandler mesages
+       * @param response_handler_log_manager for ResponseHandler mesages
        * @param pb_qry_factory_log for PbQueryFactory mesages
        * @param json_qry_factory_log for JsonQueryFactory mesages
        * @param log for internal messages
@@ -43,7 +43,7 @@ namespace iroha_cli {
           int default_port,
           uint64_t query_counter,
           const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider,
-          logger::LoggerManagerTreePtr responce_handler_log_manager,
+          logger::LoggerManagerTreePtr response_handler_log_manager,
           logger::LoggerPtr pb_qry_factory_log,
           logger::LoggerPtr json_qry_factory_log,
           logger::LoggerPtr log);
@@ -162,7 +162,7 @@ namespace iroha_cli {
       std::shared_ptr<iroha::model::ModelCryptoProvider> provider_;
 
       /// Logger manager for GrpcResponseHandler
-      logger::LoggerManagerTreePtr responce_handler_log_manager_;
+      logger::LoggerManagerTreePtr response_handler_log_manager_;
 
       /// Logger for PbQueryFactory
       logger::LoggerPtr pb_qry_factory_log_;

@@ -210,7 +210,7 @@ void getVal<IrohadConfig>(const std::string &path,
   assert_fatal(src.IsObject(),
                path + " Irohad config top element must be an object.");
   const auto obj = src.GetObject();
-  getValByKey(path, dest.blok_store_path, obj, config_members::BlockStorePath);
+  getValByKey(path, dest.block_store_path, obj, config_members::BlockStorePath);
   getValByKey(path, dest.torii_port, obj, config_members::ToriiPort);
   getValByKey(path, dest.internal_port, obj, config_members::InternalPort);
   getValByKey(path, dest.pg_opt, obj, config_members::PgOpt);

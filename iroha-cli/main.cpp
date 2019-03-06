@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
                                               logger::getDefaultLogPatterns()})
                          ->getChild("CLI");
   const auto logger = log_manager->getChild("Main")->getLogger();
-  const auto responce_handler_log_manager =
+  const auto response_handler_log_manager =
       log_manager->getChild("ResponseHandler");
   const auto pb_qry_factory_log =
       log_manager->getChild("PbQueryFactory")->getLogger();
@@ -163,7 +163,7 @@ int main(int argc, char *argv[]) {
     iroha_cli::CliClient client(
         FLAGS_peer_ip, FLAGS_torii_port, pb_qry_factory_log);
     iroha_cli::GrpcResponseHandler response_handler(
-        responce_handler_log_manager);
+        response_handler_log_manager);
     if (not FLAGS_json_transaction.empty()) {
       logger->info(
           "Send transaction to {}:{} ", FLAGS_peer_ip, FLAGS_torii_port);
@@ -243,7 +243,7 @@ int main(int argc, char *argv[]) {
         0,
         std::make_shared<iroha::model::ModelCryptoProviderImpl>(
             *std::unique_ptr<iroha::keypair_t>(makeOldModel(*keypair))),
-        responce_handler_log_manager,
+        response_handler_log_manager,
         pb_qry_factory_log,
         json_qry_factory_log,
         log_manager->getChild("InteractiveCli"));

@@ -171,7 +171,7 @@ namespace iroha_cli {
         const std::string &default_peer_ip,
         int default_port,
         const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider,
-        logger::LoggerManagerTreePtr responce_handler_log_manager,
+        logger::LoggerManagerTreePtr response_handler_log_manager,
         logger::LoggerPtr pb_qry_factory_log,
         logger::LoggerPtr log)
         : current_context_(MAIN),
@@ -179,8 +179,8 @@ namespace iroha_cli {
           default_peer_ip_(default_peer_ip),
           default_port_(default_port),
           provider_(provider),
-          responce_handler_log_manager_(
-              std::move(responce_handler_log_manager)),
+          response_handler_log_manager_(
+              std::move(response_handler_log_manager)),
           pb_qry_factory_log_(std::move(pb_qry_factory_log)),
           log_(std::move(log)) {
       createCommandMenu();
@@ -453,7 +453,7 @@ namespace iroha_cli {
 
       provider_->sign(tx);
 
-      GrpcResponseHandler response_handler(responce_handler_log_manager_);
+      GrpcResponseHandler response_handler(response_handler_log_manager_);
       auto shared_tx = shared_model::proto::Transaction(
           iroha::model::converters::PbTransactionFactory().serialize(tx));
       response_handler.handle(CliClient(address.value().first,

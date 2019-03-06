@@ -23,7 +23,7 @@ namespace iroha_cli {
        * @param default_port default port of peer's Iroha Torii
        * @param qry_counter synchronized nonce for sending queries
        * @param provider crypto provider to make signatures
-       * @param responce_handler_log_manager for ResponseHandler messages
+       * @param response_handler_log_manager for ResponseHandler messages
        * @param pb_qry_factory_log for PbQueryFactory mesages
        * @param json_qry_factory_log for JsonQueryFactory mesages
        * @param log_manager log manager for interactive CLIs
@@ -34,7 +34,7 @@ namespace iroha_cli {
           int default_port,
           uint64_t qry_counter,
           const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider,
-          logger::LoggerManagerTreePtr responce_handler_log_manager,
+          logger::LoggerManagerTreePtr response_handler_log_manager,
           logger::LoggerPtr pb_qry_factory_log,
           logger::LoggerPtr json_qry_factory_log,
           logger::LoggerManagerTreePtr log_manager);

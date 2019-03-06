@@ -30,7 +30,7 @@ namespace iroha_cli {
        * @param default_peer_ip of Iroha peer
        * @param default_port of Iroha peer
        * @param provider for signing transactions
-       * @param responce_handler_log_manager for ResponseHandler messages
+       * @param response_handler_log_manager for ResponseHandler messages
        * @param pb_qry_factory_log for PbQueryFactory mesages
        * @param log for internal messages
        */
@@ -39,7 +39,7 @@ namespace iroha_cli {
           const std::string &default_peer_ip,
           int default_port,
           const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider,
-          logger::LoggerManagerTreePtr responce_handler_log_manager,
+          logger::LoggerManagerTreePtr response_handler_log_manager,
           logger::LoggerPtr pb_qry_factory_log,
           logger::LoggerPtr log);
       /**
@@ -186,7 +186,7 @@ namespace iroha_cli {
       iroha::model::generators::TransactionGenerator tx_generator_;
 
       /// Logger manager for ResponseHandler
-      logger::LoggerManagerTreePtr responce_handler_log_manager_;
+      logger::LoggerManagerTreePtr response_handler_log_manager_;
 
       /// Logger for PbQueryFactory
       logger::LoggerPtr pb_qry_factory_log_;
