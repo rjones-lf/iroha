@@ -102,10 +102,8 @@ namespace iroha {
       /**
        * Proposals for current rounds
        */
-      std::unordered_map<consensus::Round,
-                         tbb::concurrent_queue<TransactionBatchType>,
-                         consensus::RoundTypeHasher>
-          current_proposals_;
+      tbb::concurrent_queue<TransactionBatchType> current_round_batches_,
+          next_round_batches_;
 
       /**
        * Read write mutex for public methods
