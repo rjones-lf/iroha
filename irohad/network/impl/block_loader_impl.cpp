@@ -12,6 +12,7 @@
 #include "builders/protobuf/transport_builder.hpp"
 #include "common/bind.hpp"
 #include "interfaces/common_objects/peer.hpp"
+#include "logger/logger.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
 
 using namespace iroha::ametsuchi;
@@ -29,7 +30,7 @@ namespace {
 BlockLoaderImpl::BlockLoaderImpl(
     std::shared_ptr<PeerQueryFactory> peer_query_factory,
     shared_model::proto::ProtoBlockFactory factory,
-    logger::Logger log)
+    logger::LoggerPtr log)
     : peer_query_factory_(std::move(peer_query_factory)),
       block_factory_(std::move(factory)),
       log_(std::move(log)) {}

@@ -7,6 +7,7 @@
 #define IROHA_MST_MOCKS_HPP
 
 #include <gmock/gmock.h>
+#include "logger/logger_fwd.hpp"
 #include "multi_sig_transactions/mst_processor.hpp"
 #include "multi_sig_transactions/mst_propagation_strategy.hpp"
 #include "multi_sig_transactions/mst_time_provider.hpp"
@@ -52,6 +53,7 @@ namespace iroha {
   };
 
   struct MockMstProcessor : public MstProcessor {
+    MockMstProcessor(logger::LoggerPtr log) : MstProcessor(std::move(log)) {}
     MOCK_METHOD1(propagateBatchImpl, void(const DataType &));
     MOCK_CONST_METHOD0(onStateUpdateImpl,
                        rxcpp::observable<std::shared_ptr<MstState>>());

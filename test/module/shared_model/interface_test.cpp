@@ -7,6 +7,7 @@
 #include "logger/logger.hpp"
 
 #include "builders/protobuf/transaction.hpp"
+#include "framework/test_logger.hpp"
 
 class TransactionFixture : public ::testing::Test {
  public:
@@ -18,7 +19,7 @@ class TransactionFixture : public ::testing::Test {
   shared_model::crypto::Keypair keypair;
   shared_model::interface::types::TimestampType time;
 
-  logger::Logger log = logger::log("TransactionFixture");
+  logger::LoggerPtr log = getTestLogger("TransactionFixture");
 
   auto makeTx() {
     log->info("keypair = {}, timestemp = {}", keypair, time);

@@ -25,6 +25,7 @@
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 #include "logger/logger.hpp"
+#include "logger/logger_manager_fwd.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/mst_transport.hpp"
@@ -65,6 +66,9 @@ namespace integration_framework {
   class FakePeer;
   class PortGuard;
 
+  /// Get the default logger of ITF.
+  logger::LoggerManagerTreePtr getDefaultItfLogManager();
+
   class IntegrationTestFramework {
    private:
     using ProposalType =
@@ -86,6 +90,7 @@ namespace integration_framework {
      * @param block_store_path - specifies path where blocks will be stored
      * @param proposal_waiting - timeout for next proposal appearing
      * @param block_waiting - timeout for next committed block appearing
+     * @param log_manager - log manager
      */
     explicit IntegrationTestFramework(
         size_t maximum_proposal_size,
@@ -98,7 +103,8 @@ namespace integration_framework {
                 .string(),
         milliseconds proposal_waiting = milliseconds(20000),
         milliseconds block_waiting = milliseconds(20000),
-        milliseconds tx_response_waiting = milliseconds(10000));
+        milliseconds tx_response_waiting = milliseconds(10000),
+        logger::LoggerManagerTreePtr log_manager = getDefaultItfLogManager());
 
     ~IntegrationTestFramework();
 
@@ -383,6 +389,9 @@ namespace integration_framework {
     std::map<std::string, tbb::concurrent_queue<TxResponseType>>
         responses_queues_;
 
+    logger::LoggerPtr log_;
+    logger::LoggerManagerTreePtr log_manager_;
+
     std::unique_ptr<PortGuard> port_guard_;
     size_t torii_port_;
     size_t internal_port_;
@@ -428,7 +437,6 @@ namespace integration_framework {
    private:
     void makeFakePeers();
 
-    logger::Logger log_ = logger::log("IntegrationTestFramework");
     std::mutex queue_mu;
     std::condition_variable queue_cond;
     bool cleanup_on_exit_;

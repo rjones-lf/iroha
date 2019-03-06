@@ -31,9 +31,12 @@
 #include "framework/integration_framework/port_guard.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
 #include "framework/result_fixture.hpp"
+#include "framework/test_logger.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "interfaces/permissions.hpp"
+#include "logger/logger.hpp"
+#include "logger/logger_manager.hpp"
 #include "module/irohad/ametsuchi/tx_presence_cache_stub.hpp"
 #include "module/shared_model/builders/protobuf/block.hpp"
 #include "module/shared_model/builders/protobuf/proposal.hpp"
@@ -71,6 +74,14 @@ namespace {
   std::string kLocalHost = "127.0.0.1";
   constexpr size_t kDefaultToriiPort = 11501;
   constexpr size_t kDefaultInternalPort = 50541;
+
+  std::string format_address(std::string ip,
+                             integration_framework::PortGuard::PortType port) {
+    ip.append(":");
+    ip.append(std::to_string(port));
+    return ip;
+  }
+
 }  // namespace
 
 namespace integration_framework {
@@ -83,21 +94,29 @@ namespace integration_framework {
       const std::string &block_store_path,
       milliseconds proposal_waiting,
       milliseconds block_waiting,
-      milliseconds tx_response_waiting)
-      : port_guard_(std::make_unique<PortGuard>()),
+      milliseconds tx_response_waiting,
+      logger::LoggerManagerTreePtr log_manager)
+      : log_(log_manager->getLogger()),
+        log_manager_(std::move(log_manager)),
+        port_guard_(std::make_unique<PortGuard>()),
         torii_port_(port_guard_->getPort(kDefaultToriiPort)),
         internal_port_(port_guard_->getPort(kDefaultInternalPort)),
-        iroha_instance_(std::make_shared<IrohaInstance>(mst_support,
-                                                        block_store_path,
-                                                        kLocalHost,
-                                                        torii_port_,
-                                                        internal_port_,
-                                                        dbname)),
+        iroha_instance_(
+            std::make_shared<IrohaInstance>(mst_support,
+                                            block_store_path,
+                                            kLocalHost,
+                                            torii_port_,
+                                            internal_port_,
+                                            log_manager_->getChild("Irohad"),
+                                            log_,
+                                            dbname)),
         command_client_(
             iroha::network::createClient<iroha::protocol::CommandService_v1>(
-                kLocalHost + ":" + std::to_string(torii_port_))),
+                format_address(kLocalHost, torii_port_)),
+            log_manager_->getChild("CommandClient")->getLogger()),
         query_client_(kLocalHost, torii_port_),
-        async_call_(std::make_shared<AsyncCall>()),
+        async_call_(std::make_shared<AsyncCall>(
+            log_manager_->getChild("AsyncCall")->getLogger())),
         proposal_waiting(proposal_waiting),
         block_waiting(block_waiting),
         tx_response_waiting(tx_response_waiting),
@@ -113,8 +132,9 @@ namespace integration_framework {
             std::make_shared<
                 shared_model::interface::TransactionBatchFactoryImpl>()),
         tx_presence_cache_(std::make_shared<AlwaysMissingTxPresenceCache>()),
-        yac_transport_(
-            std::make_shared<iroha::consensus::yac::NetworkImpl>(async_call_)),
+        yac_transport_(std::make_shared<iroha::consensus::yac::NetworkImpl>(
+            async_call_,
+            log_manager_->getChild("ConsensusTransport")->getLogger())),
         cleanup_on_exit_(cleanup_on_exit) {}
 
   IntegrationTestFramework::~IntegrationTestFramework() {
@@ -144,16 +164,19 @@ namespace integration_framework {
     assert(this_peer_ && "this_peer_ is needed for fake peers initialization, "
         "but not set");
     for (auto &promise_and_key : fake_peers_promises_) {
-      auto fake_peer =
-          std::make_shared<FakePeer>(kLocalHost,
-                                     port_guard_->getPort(kDefaultInternalPort),
-                                     promise_and_key.second,
-                                     this_peer_,
-                                     common_objects_factory_,
-                                     transaction_factory_,
-                                     batch_parser_,
-                                     transaction_batch_factory_,
-                                     tx_presence_cache_);
+      const auto port = port_guard_->getPort(kDefaultInternalPort);
+      auto fake_peer = std::make_shared<FakePeer>(
+          kLocalHost,
+          port,
+          promise_and_key.second,
+          this_peer_,
+          common_objects_factory_,
+          transaction_factory_,
+          batch_parser_,
+          transaction_batch_factory_,
+          tx_presence_cache_,
+          log_manager_->getChild("FakePeer")
+              ->getChild("at " + format_address(kLocalHost, port)));
       fake_peers_.emplace_back(fake_peer);
       promise_and_key.first.set_value(fake_peer);
     }
@@ -170,7 +193,7 @@ namespace integration_framework {
         shared_model::proto::TransactionBuilder()
             .creatorAccountId(kAdminId)
             .createdTime(iroha::time::now())
-            .addPeer(kLocalHost + ":" + std::to_string(internal_port_),
+            .addPeer(format_address(kLocalHost, internal_port_),
                      key.publicKey())
             .createRole(kAdminRole, all_perms)
             .createRole(kDefaultRole, {})
@@ -240,7 +263,7 @@ namespace integration_framework {
     log_->info("init state");
     // peer initialization
     common_objects_factory_
-        ->createPeer(kLocalHost + ":" + std::to_string(internal_port_),
+        ->createPeer(format_address(kLocalHost, internal_port_),
                      keypair.publicKey())
         .match(
             [this](iroha::expected::Result<
@@ -635,4 +658,9 @@ namespace integration_framework {
       boost::filesystem::remove_all(iroha_instance_->block_store_dir_);
     }
   }
+
+  logger::LoggerManagerTreePtr getDefaultItfLogManager() {
+    return getTestLoggerManager()->getChild("IntegrationFramework");
+  }
+
 }  // namespace integration_framework

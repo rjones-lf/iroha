@@ -43,7 +43,7 @@ endif ()
 #############################
 #         speedlog          #
 #############################
-find_package(spdlog)
+find_package(spdlog 1.3.1 REQUIRED)
 
 ################################
 #           protobuf           #
@@ -201,6 +201,11 @@ endif()
 #          ed25519/sha3           #
 ###################################
 find_package(ed25519)
+
+###################################
+#              fmt                #
+###################################
+find_package(fmt 5.3.0 REQUIRED)
 
 if (USE_LIBIROHA)
   find_package(libiroha)

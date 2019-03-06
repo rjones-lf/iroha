@@ -11,6 +11,7 @@
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "logger/logger.hpp"
 
+#include "framework/test_logger.hpp"
 #include "module/irohad/consensus/yac/yac_test_util.hpp"
 
 using namespace iroha::consensus::yac;
@@ -19,7 +20,7 @@ using namespace iroha::consensus::yac;
 static const iroha::consensus::yac::ConsistencyModel kConsistencyModel =
     iroha::consensus::yac::ConsistencyModel::kBft;
 
-static logger::Logger log_ = logger::testLog("YacBlockStorage");
+static logger::LoggerPtr log_ = getTestLogger("YacBlockStorage");
 
 class YacBlockStorageTest : public ::testing::Test {
  public:
@@ -34,7 +35,8 @@ class YacBlockStorageTest : public ::testing::Test {
       YacBlockStorage(hash,
                       number_of_peers,
                       // todo mboldyrev 13.12.2018 IR-324 use mock super checker
-                      getSupermajorityChecker(kConsistencyModel));
+                      getSupermajorityChecker(kConsistencyModel),
+                      getTestLogger("YacBlockStorage"));
   std::vector<VoteMessage> valid_votes;
 
   void SetUp() override {
@@ -75,6 +77,7 @@ TEST_F(YacBlockStorageTest, YacBlockStorageWhenNotCommittedAndCommitAcheive) {
   decltype(YacBlockStorageTest::valid_votes) for_insert(valid_votes.begin() + 1,
                                                         valid_votes.end());
   auto insert_commit = storage.insert(for_insert);
+  ASSERT_TRUE(insert_commit) << "Must be a commit!";
   ASSERT_EQ(number_of_peers,
             boost::get<CommitMessage>(*insert_commit).votes.size());
 }

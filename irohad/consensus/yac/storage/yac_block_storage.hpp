@@ -14,7 +14,7 @@
 #include "consensus/yac/storage/storage_result.hpp"
 #include "consensus/yac/supermajority_checker.hpp"
 #include "consensus/yac/yac_types.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -35,7 +35,8 @@ namespace iroha {
         YacBlockStorage(
             YacHash hash,
             PeersNumberType peers_in_round,
-            std::shared_ptr<SupermajorityChecker> supermajority_checker);
+            std::shared_ptr<SupermajorityChecker> supermajority_checker,
+            logger::LoggerPtr log);
 
         /**
          * Try to insert vote to storage
@@ -117,7 +118,7 @@ namespace iroha {
         /**
          * Storage logger
          */
-        logger::Logger log_;
+        logger::LoggerPtr log_;
       };
 
     }  // namespace yac

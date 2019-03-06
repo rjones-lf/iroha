@@ -4,19 +4,18 @@
  */
 
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
+
 #include <gtest/gtest.h>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include "common/byteutils.hpp"
 #include "common/files.hpp"
-
+#include "framework/test_logger.hpp"
 #include "logger/logger.hpp"
 
 using namespace iroha::ametsuchi;
 namespace fs = boost::filesystem;
 using Identifier = FlatFile::Identifier;
-
-static logger::Logger log_ = logger::testLog("BlockStore");
 
 class BlStore_Test : public ::testing::Test {
  protected:
@@ -31,10 +30,12 @@ class BlStore_Test : public ::testing::Test {
       (fs::temp_directory_path() / fs::unique_path()).string();
 
   std::vector<uint8_t> block;
+  logger::LoggerPtr flat_file_log_ = getTestLogger("FlatFile");
+  logger::LoggerPtr log_ = getTestLogger("BlockStoreTest");
 };
 
 TEST_F(BlStore_Test, Read_Write_Test) {
-  auto store = FlatFile::create(block_store_path);
+  auto store = FlatFile::create(block_store_path, flat_file_log_);
   ASSERT_TRUE(store);
   auto bl_store = std::move(*store);
   auto id = 1u;
@@ -59,7 +60,7 @@ TEST_F(BlStore_Test, BlockStoreWhenRemoveBlock) {
         "----------| create blockstore and insert 3 elements "
         "|----------");
 
-    auto store = FlatFile::create(block_store_path);
+    auto store = FlatFile::create(block_store_path, flat_file_log_);
     ASSERT_TRUE(store);
     auto bl_store = std::move(*store);
 
@@ -74,7 +75,7 @@ TEST_F(BlStore_Test, BlockStoreWhenRemoveBlock) {
 
   log_->info("----------| remove second and init new storage |----------");
   fs::remove(fs::path(block_store_path) / "0000000000000002");
-  auto store = FlatFile::create(block_store_path);
+  auto store = FlatFile::create(block_store_path, flat_file_log_);
   ASSERT_TRUE(store);
   auto bl_store = std::move(*store);
   auto res = bl_store->last_id();
@@ -86,7 +87,7 @@ TEST_F(BlStore_Test, BlockStoreWhenAbsentFolder) {
       "----------| Check that folder is absent => create => "
       "make storage => remove storage |----------");
   fs::remove_all(block_store_path);
-  auto store = FlatFile::create(block_store_path);
+  auto store = FlatFile::create(block_store_path, flat_file_log_);
   ASSERT_TRUE(store);
   auto bl_store = std::move(*store);
   auto id = 1u;
@@ -102,7 +103,7 @@ TEST_F(BlStore_Test, BlockStoreWhenAbsentFolder) {
  * @then new block storage has all blocks from the folder
  */
 TEST_F(BlStore_Test, BlockStoreInitializationFromNonemptyFolder) {
-  auto store = FlatFile::create(block_store_path);
+  auto store = FlatFile::create(block_store_path, flat_file_log_);
   ASSERT_TRUE(store);
   auto bl_store1 = std::move(*store);
 
@@ -111,7 +112,7 @@ TEST_F(BlStore_Test, BlockStoreInitializationFromNonemptyFolder) {
   bl_store1->add(2u, std::vector<uint8_t>(1000, 5));
 
   // create second block storage from the same folder
-  auto store2 = FlatFile::create(block_store_path);
+  auto store2 = FlatFile::create(block_store_path, flat_file_log_);
   ASSERT_TRUE(store2);
   auto bl_store2 = std::move(*store2);
 
@@ -124,7 +125,7 @@ TEST_F(BlStore_Test, BlockStoreInitializationFromNonemptyFolder) {
  * @then check consistency fails
  */
 TEST_F(BlStore_Test, EmptyDumpDir) {
-  auto res = FlatFile::check_consistency("");
+  auto res = FlatFile::check_consistency("", flat_file_log_);
   ASSERT_FALSE(res);
 }
 
@@ -134,7 +135,7 @@ TEST_F(BlStore_Test, EmptyDumpDir) {
  * @then get() fails
  */
 TEST_F(BlStore_Test, GetNonExistingFile) {
-  auto store = FlatFile::create(block_store_path);
+  auto store = FlatFile::create(block_store_path, flat_file_log_);
   ASSERT_TRUE(store);
   auto bl_store = std::move(*store);
   Identifier id = 98759385;  // random number that does not exist
@@ -148,7 +149,7 @@ TEST_F(BlStore_Test, GetNonExistingFile) {
  * @then directory() returns bock store path
  */
 TEST_F(BlStore_Test, GetDirectory) {
-  auto store = FlatFile::create(block_store_path);
+  auto store = FlatFile::create(block_store_path, flat_file_log_);
   ASSERT_TRUE(store);
   auto bl_store = std::move(*store);
   ASSERT_EQ(bl_store->directory(), block_store_path);
@@ -160,7 +161,7 @@ TEST_F(BlStore_Test, GetDirectory) {
  * @then get() fails
  */
 TEST_F(BlStore_Test, GetDeniedBlock) {
-  auto store = FlatFile::create(block_store_path);
+  auto store = FlatFile::create(block_store_path, flat_file_log_);
   ASSERT_TRUE(store);
   auto bl_store = std::move(*store);
   auto id = 1u;
@@ -179,7 +180,7 @@ TEST_F(BlStore_Test, GetDeniedBlock) {
  * @then add() fails
  */
 TEST_F(BlStore_Test, AddExistingId) {
-  auto store = FlatFile::create(block_store_path);
+  auto store = FlatFile::create(block_store_path, flat_file_log_);
   ASSERT_TRUE(store);
   auto bl_store = std::move(*store);
   auto id = 1u;
@@ -197,7 +198,7 @@ TEST_F(BlStore_Test, AddExistingId) {
  * @then FlatFile creation fails
  */
 TEST_F(BlStore_Test, WriteEmptyFolder) {
-  auto bl_store = FlatFile::create("");
+  auto bl_store = FlatFile::create("", flat_file_log_);
   ASSERT_FALSE(bl_store);
 }
 
@@ -207,7 +208,7 @@ TEST_F(BlStore_Test, WriteEmptyFolder) {
  * @then add() fails
  */
 TEST_F(BlStore_Test, WriteDeniedFolder) {
-  auto store = FlatFile::create(block_store_path);
+  auto store = FlatFile::create(block_store_path, flat_file_log_);
   ASSERT_TRUE(store);
   auto bl_store = std::move(*store);
   auto id = 1u;

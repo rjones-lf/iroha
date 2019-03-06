@@ -5,7 +5,7 @@
 
 #include "consensus/yac/storage/yac_block_storage.hpp"
 
-using namespace logger;
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -16,12 +16,12 @@ namespace iroha {
       YacBlockStorage::YacBlockStorage(
           YacHash hash,
           PeersNumberType peers_in_round,
-          std::shared_ptr<SupermajorityChecker> supermajority_checker)
+          std::shared_ptr<SupermajorityChecker> supermajority_checker,
+          logger::LoggerPtr log)
           : storage_key_(std::move(hash)),
             peers_in_round_(peers_in_round),
-            supermajority_checker_(std::move(supermajority_checker)) {
-        log_ = log("YacBlockStorage");
-      }
+            supermajority_checker_(std::move(supermajority_checker)),
+            log_(std::move(log)) {}
 
       boost::optional<Answer> YacBlockStorage::insert(VoteMessage msg) {
         if (validScheme(msg) and uniqueVote(msg)) {

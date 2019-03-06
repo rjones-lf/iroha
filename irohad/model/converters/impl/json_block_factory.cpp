@@ -11,7 +11,7 @@ namespace iroha {
   namespace model {
     namespace converters {
 
-      JsonBlockFactory::JsonBlockFactory(logger::Logger log)
+      JsonBlockFactory::JsonBlockFactory(logger::LoggerPtr log)
           : log_{std::move(log)} {}
 
       Document JsonBlockFactory::serialize(const Block &block) {

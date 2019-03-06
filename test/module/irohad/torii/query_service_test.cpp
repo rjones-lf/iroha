@@ -8,6 +8,7 @@
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/protobuf/queries.hpp"
+#include "framework/test_logger.hpp"
 #include "module/irohad/torii/processor/mock_query_processor.hpp"
 #include "utils/query_error_response_visitor.hpp"
 #include "validators/protobuf/proto_query_validator.hpp"
@@ -54,8 +55,8 @@ class QueryServiceTest : public ::testing::Test {
   }
 
   void init() {
-    query_service =
-        std::make_shared<QueryService>(query_processor, query_factory);
+    query_service = std::make_shared<QueryService>(
+        query_processor, query_factory, getTestLogger("QueryService"));
   }
 
   std::unique_ptr<shared_model::interface::QueryResponse> getResponse() {

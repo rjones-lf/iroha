@@ -5,6 +5,7 @@
 
 #include <gtest/gtest.h>
 
+#include "framework/test_logger.hpp"
 #include "model/converters/pb_query_factory.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
 #include "model/generators/query_generator.hpp"
@@ -16,8 +17,10 @@ using namespace iroha::model::converters;
 using namespace iroha::model::generators;
 using namespace iroha::model;
 
+const auto pb_query_factory_logger = getTestLogger("PbQueryFactory");
+
 void runQueryTest(std::shared_ptr<Query> query) {
-  PbQueryFactory query_factory;
+  PbQueryFactory query_factory(pb_query_factory_logger);
   auto pb_query = query_factory.serialize(query);
   ASSERT_TRUE(pb_query);
   auto res_query = query_factory.deserialize(pb_query.value());
@@ -32,7 +35,7 @@ TEST(PbQueryFactoryTest, SerializeGetAccount) {
   auto creator_account_id = "creator";
   auto query_counter = 222u;
   auto account_id = "test";
-  PbQueryFactory query_factory;
+  PbQueryFactory query_factory(pb_query_factory_logger);
   QueryGenerator query_generator;
   auto query = query_generator.generateGetAccount(
       created_time, creator_account_id, query_counter, account_id);
@@ -58,7 +61,7 @@ TEST(PbQueryFactoryTest, SerializeGetAccount) {
 }
 
 TEST(PbQueryFactoryTest, SerializeGetAccountAssets) {
-  PbQueryFactory query_factory;
+  PbQueryFactory query_factory(pb_query_factory_logger);
   QueryGenerator query_generator;
   auto query =
       query_generator.generateGetAccountAssets(0, "123", 0, "test", "coin");
@@ -77,7 +80,7 @@ TEST(PbQueryFactoryTest, SerializeGetAccountAssets) {
  * @then Return Protobuf Data
  */
 TEST(PbQueryFactoryTest, SerializeGetAccountDetail) {
-  PbQueryFactory query_factory;
+  PbQueryFactory query_factory(pb_query_factory_logger);
   QueryGenerator query_generator;
   auto query =
       query_generator.generateGetAccountDetail(0, "123", 0, "test", "test2");
@@ -89,7 +92,7 @@ TEST(PbQueryFactoryTest, SerializeGetAccountDetail) {
 }
 
 TEST(PbQueryFactoryTest, SerializeGetAccountTransactions) {
-  PbQueryFactory query_factory;
+  PbQueryFactory query_factory(pb_query_factory_logger);
   QueryGenerator query_generator;
   auto query =
       query_generator.generateGetAccountTransactions(0, "123", 0, "test");
@@ -112,7 +115,7 @@ TEST(PbQueryFactoryTest, SerializeGetTransactions) {
 }
 
 TEST(PbQueryFactoryTest, SerializeGetSignatories) {
-  PbQueryFactory query_factory;
+  PbQueryFactory query_factory(pb_query_factory_logger);
   QueryGenerator query_generator;
   auto query = query_generator.generateGetSignatories(0, "123", 0, "test");
   auto pb_query = query_factory.serialize(query);

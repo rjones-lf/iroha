@@ -23,8 +23,9 @@ namespace iroha {
 
       NetworkImpl::NetworkImpl(
           std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
-              async_call)
-          : async_call_(async_call) {}
+              async_call,
+          logger::LoggerPtr log)
+          : async_call_(async_call), log_(std::move(log)) {}
 
       void NetworkImpl::subscribe(
           std::shared_ptr<YacNetworkNotifications> handler) {
@@ -45,7 +46,7 @@ namespace iroha {
           return peers_.at(to.address())->AsyncSendState(context, request, cq);
         });
 
-        async_call_->log_->info(
+        log_->info(
             "Send votes bundle[size={}] to {}", state.size(), to.address());
       }
 
@@ -55,23 +56,23 @@ namespace iroha {
           ::google::protobuf::Empty *response) {
         std::vector<VoteMessage> state;
         for (const auto &pb_vote : request->votes()) {
-          auto vote = *PbConverters::deserializeVote(pb_vote);
+          auto vote = *PbConverters::deserializeVote(pb_vote, log_);
           state.push_back(vote);
         }
         if (not sameKeys(state)) {
-          async_call_->log_->info(
+          log_->info(
               "Votes are stateless invalid: proposals are different, or empty "
               "collection");
           return grpc::Status::CANCELLED;
         }
 
-        async_call_->log_->info(
-            "Receive votes[size={}] from {}", state.size(), context->peer());
+        log_->info(
+            "Received votes[size={}] from {}", state.size(), context->peer());
 
         if (auto notifications = handler_.lock()) {
           notifications->onState(std::move(state));
         } else {
-          async_call_->log_->error("Unable to lock the subscriber");
+          log_->error("Unable to lock the subscriber");
         }
         return grpc::Status::OK;
       }

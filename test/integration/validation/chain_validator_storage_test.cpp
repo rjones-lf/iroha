@@ -12,6 +12,7 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/default_hash_provider.hpp"
 #include "cryptography/keypair.hpp"
+#include "framework/test_logger.hpp"
 #include "module/shared_model/builders/protobuf/block.hpp"
 
 // TODO mboldyrev 14.02.2019 IR-324 Use supermajority checker mock
@@ -25,7 +26,7 @@ namespace iroha {
     void SetUp() override {
       ametsuchi::AmetsuchiTest::SetUp();
       validator = std::make_shared<validation::ChainValidatorImpl>(
-          supermajority_checker);
+          supermajority_checker, getTestLogger("ChainValidator"));
 
       for (size_t i = 0; i < 5; ++i) {
         keys.push_back(shared_model::crypto::DefaultCryptoAlgorithmType::

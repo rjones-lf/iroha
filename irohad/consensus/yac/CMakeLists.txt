@@ -31,6 +31,7 @@ target_link_libraries(yac
     common
     rxcpp
     logger
+    logger_manager
     hash
     consensus_round
     gate_object

@@ -65,8 +65,6 @@ namespace shared_model {
       }()};
 
       CommandVariantType ivariant_{variant_};
-
-      logger::Logger log_{logger::log("ProtoCommand")};
     };
 
     Command::Command(Command &&o) noexcept = default;
@@ -82,12 +80,8 @@ namespace shared_model {
     }
 
     Command *Command::clone() const {
-      logError("tried to clone a proto command, which is uncloneable");
-      std::terminate();
-    }
-
-    void Command::logError(const std::string &message) const {
-      impl_->log_->error(message);
+      throw std::runtime_error(
+          "tried to clone a proto command, which is uncloneable");
     }
 
   }  // namespace proto
