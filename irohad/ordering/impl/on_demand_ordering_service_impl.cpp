@@ -161,7 +161,8 @@ void OnDemandOrderingServiceImpl::packNextProposals(
       if (not it->second.empty()) {
         log_->debug("Mutable proposal generation for round {}", round);
         size_t discarded_txs_amount;
-        auto txs = getTransactions(transaction_limit_, it->second, discarded_txs_amount);
+        auto txs = getTransactions(
+            transaction_limit_, it->second, discarded_txs_amount);
         if (not txs.empty()) {
           log_->debug("Number of transactions in proposal = {}", txs.size());
           auto proposal = proposal_factory_->unsafeCreateProposal(
