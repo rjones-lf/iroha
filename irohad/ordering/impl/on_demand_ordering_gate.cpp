@@ -47,6 +47,9 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         log_->debug("Current: {}", current_round_);
         lock.unlock();
 
+        // notify our ordering service about new round
+        ordering_service_->onCollaborationOutcome(current_round_);
+
         visit_in_place(event,
                        [this](const BlockEvent &block_event) {
                          // block committed, remove transactions from cache
@@ -57,17 +60,14 @@ OnDemandOrderingGate::OnDemandOrderingGate(
                        });
 
         auto batches = cache_->pop();
-
         cache_->addToBack(batches);
+
         if (not batches.empty()) {
           network_client_->onBatches(
               current_round_,
               transport::OdOsNotification::CollectionType{batches.begin(),
                                                           batches.end()});
         }
-
-        // notify our ordering service about new round
-        ordering_service_->onCollaborationOutcome(current_round_);
 
         // request proposal for the current round
         auto proposal = this->processProposalRequest(
