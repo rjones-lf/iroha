@@ -12,6 +12,8 @@
 #include "consensus/yac/storage/buffered_cleanup_strategy.hpp"
 #include "consensus/yac/yac.hpp"
 
+#include "framework/test_logger.hpp"
+#include "logger/logger_manager.hpp"
 #include "module/irohad/consensus/yac/mock_yac_crypto_provider.hpp"
 #include "module/irohad/consensus/yac/mock_yac_network.hpp"
 #include "module/irohad/consensus/yac/mock_yac_timer.hpp"
@@ -62,11 +64,13 @@ namespace iroha {
               YacVoteStorage(
                   std::make_shared<
                       iroha::consensus::yac::BufferedCleanupStrategy>(),
-                  getSupermajorityChecker(kConsistencyModel)),
+                  getSupermajorityChecker(kConsistencyModel),
+                  getTestLoggerManager()->getChild("YacVoteStorage")),
               network,
               crypto,
               timer,
-              ordering);
+              ordering,
+              getTestLogger("Yac"));
           network->subscribe(yac);
         }
       };

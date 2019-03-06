@@ -11,7 +11,7 @@
 #include "interfaces/iroha_internal/abstract_transport_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 #include "ordering.grpc.pb.h"
 
 namespace iroha {
@@ -35,7 +35,7 @@ namespace iroha {
                 batch_parser,
             std::shared_ptr<shared_model::interface::TransactionBatchFactory>
                 transaction_batch_factory,
-            logger::Logger log = logger::log("OnDemandOsServerGrpc"));
+            logger::LoggerPtr log);
 
         grpc::Status SendBatches(::grpc::ServerContext *context,
                                  const proto::BatchesRequest *request,
@@ -61,7 +61,7 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::TransactionBatchFactory>
             batch_factory_;
 
-        logger::Logger log_;
+        logger::LoggerPtr log_;
       };
 
     }  // namespace transport

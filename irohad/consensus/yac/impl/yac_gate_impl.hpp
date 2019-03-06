@@ -12,7 +12,7 @@
 
 #include "consensus/consensus_block_cache.hpp"
 #include "consensus/yac/yac_hash_provider.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 
 namespace iroha {
 
@@ -38,7 +38,7 @@ namespace iroha {
                     std::shared_ptr<simulator::BlockCreator> block_creator,
                     std::shared_ptr<consensus::ConsensusResultCache>
                         consensus_result_cache,
-                    logger::Logger log = logger::log("YacGate"));
+                    logger::LoggerPtr log);
         void vote(const simulator::BlockCreatorEvent &event) override;
 
         rxcpp::observable<GateObject> onOutcome() override;
@@ -61,7 +61,7 @@ namespace iroha {
         std::shared_ptr<consensus::ConsensusResultCache>
             consensus_result_cache_;
 
-        logger::Logger log_;
+        logger::LoggerPtr log_;
 
         boost::optional<std::shared_ptr<shared_model::interface::Block>>
             current_block_;

@@ -7,6 +7,7 @@
 
 #include <boost/range/combine.hpp>
 #include "interfaces/iroha_internal/proposal.hpp"
+#include "logger/logger.hpp"
 #include "ordering/impl/on_demand_common.hpp"
 
 using namespace iroha;
@@ -15,7 +16,7 @@ using namespace iroha::ordering;
 OnDemandConnectionManager::OnDemandConnectionManager(
     std::shared_ptr<transport::OdOsNotificationFactory> factory,
     rxcpp::observable<CurrentPeers> peers,
-    logger::Logger log)
+    logger::LoggerPtr log)
     : log_(std::move(log)),
       factory_(std::move(factory)),
       subscription_(peers.subscribe([this](const auto &peers) {
@@ -29,7 +30,7 @@ OnDemandConnectionManager::OnDemandConnectionManager(
     std::shared_ptr<transport::OdOsNotificationFactory> factory,
     rxcpp::observable<CurrentPeers> peers,
     CurrentPeers initial_peers,
-    logger::Logger log)
+    logger::LoggerPtr log)
     : OnDemandConnectionManager(std::move(factory), peers, std::move(log)) {
   // using start_with(initial_peers) results in deadlock
   initializeConnections(initial_peers);

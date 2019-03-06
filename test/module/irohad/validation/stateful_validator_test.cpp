@@ -11,6 +11,7 @@
 #include "backend/protobuf/proto_proposal_factory.hpp"
 #include "common/result.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "framework/test_logger.hpp"
 #include "interfaces/iroha_internal/batch_meta.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "interfaces/transaction.hpp"
@@ -102,8 +103,10 @@ class Validator : public testing::Test {
         shared_model::validation::DefaultProposalValidator>>();
     parser =
         std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
-    sfv = std::make_shared<StatefulValidatorImpl>(std::move(factory),
-                                                  std::move(parser));
+    sfv = std::make_shared<StatefulValidatorImpl>(
+        std::move(factory),
+        std::move(parser),
+        getTestLogger("StatefulValidator"));
     temp_wsv_mock = std::make_shared<iroha::ametsuchi::MockTemporaryWsv>();
   }
 

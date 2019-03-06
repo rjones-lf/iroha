@@ -11,6 +11,7 @@
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
+#include "logger/logger.hpp"
 #include "validation/stateful_validator_common.hpp"
 
 namespace iroha {
@@ -50,7 +51,7 @@ namespace iroha {
             status_factory,
         rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
             commits,
-        logger::Logger log)
+        logger::LoggerPtr log)
         : pcs_(std::move(pcs)),
           mst_processor_(std::move(mst_processor)),
           status_bus_(std::move(status_bus)),

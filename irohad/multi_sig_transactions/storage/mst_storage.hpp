@@ -9,7 +9,7 @@
 #include <mutex>
 
 #include "cryptography/public_key.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
 
@@ -83,7 +83,7 @@ namespace iroha {
     /**
      * Constructor provide initialization of protected fields, such as logger.
      */
-    explicit MstStorage(logger::Logger log = logger::log("MstStorage"));
+    explicit MstStorage(logger::LoggerPtr log);
 
    private:
     virtual auto applyImpl(
@@ -112,7 +112,7 @@ namespace iroha {
     mutable std::mutex mutex_;
 
    protected:
-    logger::Logger log_;
+    logger::LoggerPtr log_;
   };
 }  // namespace iroha
 #endif  // IROHA_MST_STORAGE_HPP

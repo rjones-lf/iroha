@@ -11,13 +11,15 @@
 #include "consensus/yac/storage/yac_common.hpp"
 #include "logger/logger.hpp"
 
+#include "framework/test_logger.hpp"
+#include "logger/logger_manager.hpp"
 #include "module/irohad/consensus/yac/mock_yac_supermajority_checker.hpp"
 #include "module/irohad/consensus/yac/yac_test_util.hpp"
 
 using namespace iroha::consensus::yac;
 using namespace ::testing;
 
-static logger::Logger log_ = logger::testLog("YacProposalStorage");
+static logger::LoggerPtr log_ = getTestLogger("YacProposalStorage");
 
 class YacProposalStorageTest : public ::testing::Test {
  public:
@@ -31,10 +33,14 @@ class YacProposalStorageTest : public ::testing::Test {
   const std::shared_ptr<MockSupermajorityChecker> supermajority_checker =
       std::make_shared<MockSupermajorityChecker>();
   YacProposalStorage storage = YacProposalStorage(
-      iroha::consensus::Round{1, 1}, number_of_peers, supermajority_checker);
+      iroha::consensus::Round{1, 1},
+      number_of_peers,
+      supermajority_checker,
+      getTestLoggerManager()->getChild("YacProposalStorage"));
   std::vector<VoteMessage> valid_votes;
 
   void SetUp() override {
+    valid_votes.reserve(number_of_peers);
     std::generate_n(std::back_inserter(valid_votes), number_of_peers, [this] {
       return createVote(this->hash, std::to_string(this->valid_votes.size()));
     });

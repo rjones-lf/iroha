@@ -12,6 +12,7 @@
 #include "builders/default_builders.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/batch_helper.hpp"
+#include "framework/test_logger.hpp"
 #include "framework/test_subscriber.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
@@ -40,7 +41,7 @@ class TransactionProcessorTest : public ::testing::Test {
  public:
   void SetUp() override {
     pcs = std::make_shared<MockPeerCommunicationService>();
-    mst = std::make_shared<MockMstProcessor>();
+    mst = std::make_shared<MockMstProcessor>(getTestLogger("MstProcessor"));
 
     EXPECT_CALL(*pcs, onVerifiedProposal())
         .WillRepeatedly(Return(verified_prop_notifier.get_observable()));
@@ -58,7 +59,8 @@ class TransactionProcessorTest : public ::testing::Test {
         mst,
         status_bus,
         std::make_shared<shared_model::proto::ProtoTxStatusFactory>(),
-        commit_notifier.get_observable());
+        commit_notifier.get_observable(),
+        getTestLogger("TransactionProcessor"));
   }
 
   auto base_tx() {

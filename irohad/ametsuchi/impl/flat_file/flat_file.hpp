@@ -11,7 +11,7 @@
 #include <atomic>
 #include <memory>
 
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -48,10 +48,11 @@ namespace iroha {
       /**
        * Create storage in paths
        * @param path - target path for creating
+       * @param log - logger
        * @return created storage
        */
       static boost::optional<std::unique_ptr<FlatFile>> create(
-          const std::string &path);
+          const std::string &path, logger::LoggerPtr log);
 
       bool add(Identifier id, const Bytes &blob) override;
 
@@ -66,10 +67,11 @@ namespace iroha {
        * If some block in the middle is missing all blocks following it are
        * deleted
        * @param dump_dir - folder of storage
+       * @param log - log for local messages
        * @return - last available identifier
        */
       static boost::optional<Identifier> check_consistency(
-          const std::string &dump_dir);
+          const std::string &dump_dir, logger::LoggerPtr log);
 
       void dropAll() override;
 
@@ -94,7 +96,7 @@ namespace iroha {
       FlatFile(Identifier last_id,
                const std::string &path,
                FlatFile::private_tag,
-               logger::Logger log = logger::log("FlatFile"));
+               logger::LoggerPtr log);
 
      private:
       // ----------| private fields |----------
@@ -109,7 +111,7 @@ namespace iroha {
        */
       const std::string dump_dir_;
 
-      logger::Logger log_;
+      logger::LoggerPtr log_;
 
      public:
       ~FlatFile() = default;

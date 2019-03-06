@@ -14,13 +14,14 @@
 #include "consensus/yac/supermajority_checker.hpp"
 #include "logger/logger.hpp"
 
+#include "framework/test_logger.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 
 using namespace iroha::consensus::yac;
 
 using ::testing::ReturnRefOfCopy;
 
-static logger::Logger log_ = logger::testLog("YacCommon");
+static logger::LoggerPtr log_ = getTestLogger("YacCommon");
 
 static const std::map<ConsistencyModel, unsigned int> kf1_param{
     {ConsistencyModel::kCft, detail::kSupermajorityCheckerKfPlus1Cft},

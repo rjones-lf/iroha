@@ -13,6 +13,7 @@
 #include "builders/default_builders.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/result_fixture.hpp"
+#include "framework/test_logger.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
@@ -390,7 +391,7 @@ shared_model::proto::Block getBlock() {
 }
 
 TEST_F(AmetsuchiTest, TestingStorageWhenInsertBlock) {
-  auto log = logger::testLog("TestStorage");
+  auto log = getTestLogger("TestStorage");
   log->info(
       "Test case: create storage "
       "=> insert block "

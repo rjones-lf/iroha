@@ -12,6 +12,7 @@
 #include "cryptography/keypair.hpp"
 #include "framework/config_helper.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
+#include "logger/logger.hpp"
 
 using namespace std::chrono_literals;
 
@@ -22,6 +23,8 @@ namespace integration_framework {
                                const std::string &listen_ip,
                                size_t torii_port,
                                size_t internal_port,
+                               logger::LoggerManagerTreePtr irohad_log_manager,
+                               logger::LoggerPtr log,
                                const boost::optional<std::string> &dbname)
       : block_store_dir_(block_store_path),
         pg_conn_(getPostgreCredsOrDefault(dbname)),
@@ -38,7 +41,9 @@ namespace integration_framework {
         max_rounds_delay_(0ms),
         stale_stream_max_rounds_(2),
         opt_mst_gossip_params_(boost::make_optional(
-            mst_support, iroha::GossipPropagationStrategyParams{})) {}
+            mst_support, iroha::GossipPropagationStrategyParams{})),
+        irohad_log_manager_(std::move(irohad_log_manager)),
+        log_(std::move(log)) {}
 
   void IrohaInstance::makeGenesis(const shared_model::interface::Block &block) {
     instance_->storage->reset();
@@ -77,6 +82,8 @@ namespace integration_framework {
                                              key_pair,
                                              max_rounds_delay_,
                                              stale_stream_max_rounds_,
+                                             irohad_log_manager_,
+                                             log_,
                                              opt_mst_gossip_params_);
   }
 

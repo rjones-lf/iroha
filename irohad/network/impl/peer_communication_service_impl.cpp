@@ -6,6 +6,7 @@
 #include "network/impl/peer_communication_service_impl.hpp"
 
 #include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "logger/logger.hpp"
 #include "network/ordering_gate.hpp"
 #include "simulator/verified_proposal_creator.hpp"
 #include "synchronizer/synchronizer.hpp"
@@ -17,7 +18,7 @@ namespace iroha {
         std::shared_ptr<synchronizer::Synchronizer> synchronizer,
         std::shared_ptr<iroha::simulator::VerifiedProposalCreator>
             proposal_creator,
-        logger::Logger log)
+        logger::LoggerPtr log)
         : ordering_gate_(std::move(ordering_gate)),
           synchronizer_(std::move(synchronizer)),
           proposal_creator_(std::move(proposal_creator)),

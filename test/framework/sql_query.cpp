@@ -55,7 +55,7 @@ namespace framework {
     SqlQuery::SqlQuery(
         soci::session &sql,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
-        logger::Logger log)
+        logger::LoggerPtr log)
         : sql_{sql}, factory_{std::move(factory)}, log_{std::move(log)} {}
 
     bool SqlQuery::hasAccountGrantablePermission(

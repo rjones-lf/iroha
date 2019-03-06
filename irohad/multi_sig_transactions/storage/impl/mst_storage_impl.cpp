@@ -12,17 +12,22 @@ namespace iroha {
       const shared_model::crypto::PublicKey &target_peer_key) {
     auto target_state_iter = peer_states_.find(target_peer_key);
     if (target_state_iter == peer_states_.end()) {
-      return peer_states_.insert({target_peer_key, MstState::empty(completer_)})
+      return peer_states_
+          .insert(
+              {target_peer_key, MstState::empty(mst_state_logger_, completer_)})
           .first;
     }
     return target_state_iter;
   }
   // -----------------------------| interface API |-----------------------------
 
-  MstStorageStateImpl::MstStorageStateImpl(const CompleterType &completer)
-      : MstStorage(),
+  MstStorageStateImpl::MstStorageStateImpl(const CompleterType &completer,
+                                           logger::LoggerPtr mst_state_logger,
+                                           logger::LoggerPtr log)
+      : MstStorage(log),
         completer_(completer),
-        own_state_(MstState::empty(completer_)) {}
+        own_state_(MstState::empty(mst_state_logger, completer_)),
+        mst_state_logger_(std::move(mst_state_logger)) {}
 
   auto MstStorageStateImpl::applyImpl(
       const shared_model::crypto::PublicKey &target_peer_key,
