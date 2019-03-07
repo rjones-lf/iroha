@@ -31,6 +31,7 @@ using ::testing::ReturnRefOfCopy;
 using ::testing::Truly;
 using ::testing::UnorderedElementsAre;
 using ::testing::UnorderedElementsAreArray;
+using ::iroha::synchronizer::SynchronizationOutcomeType;
 
 class OnDemandOrderingGateTest : public ::testing::Test {
  public:
@@ -49,7 +50,8 @@ class OnDemandOrderingGateTest : public ::testing::Test {
     ordering_gate =
         std::make_shared<OnDemandOrderingGate>(ordering_service,
                                                notification,
-                                               rounds.get_observable(),
+                                               blocks.get_observable(),
+                                               sync_events.get_observable(),
                                                cache,
                                                std::move(ufactory),
                                                tx_cache,
@@ -57,7 +59,8 @@ class OnDemandOrderingGateTest : public ::testing::Test {
                                                getTestLogger("OrderingGate"));
   }
 
-  rxcpp::subjects::subject<OnDemandOrderingGate::BlockRoundEventType> rounds;
+  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>> blocks;
+  rxcpp::subjects::subject<iroha::synchronizer::SynchronizationEvent> sync_events;
   std::shared_ptr<MockOnDemandOrderingService> ordering_service;
   std::shared_ptr<MockOdOsNotification> notification;
   NiceMock<MockUnsafeProposalFactory> *factory;
@@ -68,6 +71,14 @@ class OnDemandOrderingGateTest : public ::testing::Test {
 
   const consensus::Round round = {2, kFirstRejectRound};
 };
+
+static iroha::synchronizer::SynchronizationEvent makeSyncEvent(
+    SynchronizationOutcomeType outcome, iroha::consensus::Round round) {
+  iroha::synchronizer::SynchronizationEvent sync_event;
+  sync_event.sync_outcome = outcome;
+  sync_event.round = round;
+  return sync_event;
+}
 
 /**
  * @given initialized ordering gate
@@ -103,8 +114,11 @@ TEST_F(OnDemandOrderingGateTest, BlockEvent) {
   ON_CALL(*proposal, transactions())
       .WillByDefault(Return(txs | boost::adaptors::indirected));
 
-  EXPECT_CALL(*ordering_service, onCollaborationOutcome(round)).Times(1);
-  EXPECT_CALL(*notification, onRequestProposal(round))
+  EXPECT_CALL(*ordering_service,
+              onCollaborationOutcome(ordering::nextCommitRound(round)))
+      .Times(1);
+  EXPECT_CALL(*notification,
+              onRequestProposal(ordering::nextCommitRound(round)))
       .WillOnce(Return(ByMove(std::move(oproposal))));
 
   auto gate_wrapper =
@@ -112,7 +126,8 @@ TEST_F(OnDemandOrderingGateTest, BlockEvent) {
   gate_wrapper.subscribe(
       [&](auto val) { ASSERT_EQ(proposal, getProposalUnsafe(val).get()); });
 
-  rounds.get_subscriber().on_next(OnDemandOrderingGate::BlockEvent{round, {}});
+  sync_events.get_subscriber().on_next(
+      makeSyncEvent(SynchronizationOutcomeType::kCommit, round));
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -135,8 +150,11 @@ TEST_F(OnDemandOrderingGateTest, EmptyEvent) {
   ON_CALL(*proposal, transactions())
       .WillByDefault(Return(txs | boost::adaptors::indirected));
 
-  EXPECT_CALL(*ordering_service, onCollaborationOutcome(round)).Times(1);
-  EXPECT_CALL(*notification, onRequestProposal(round))
+  EXPECT_CALL(*ordering_service,
+              onCollaborationOutcome(ordering::nextRejectRound(round)))
+      .Times(1);
+  EXPECT_CALL(*notification,
+              onRequestProposal(ordering::nextRejectRound(round)))
       .WillOnce(Return(ByMove(std::move(oproposal))));
 
   auto gate_wrapper =
@@ -144,7 +162,8 @@ TEST_F(OnDemandOrderingGateTest, EmptyEvent) {
   gate_wrapper.subscribe(
       [&](auto val) { ASSERT_EQ(proposal, getProposalUnsafe(val).get()); });
 
-  rounds.get_subscriber().on_next(OnDemandOrderingGate::EmptyEvent{round});
+  sync_events.get_subscriber().on_next(
+      makeSyncEvent(SynchronizationOutcomeType::kNothing, round));
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -159,15 +178,19 @@ TEST_F(OnDemandOrderingGateTest, BlockEventNoProposal) {
   boost::optional<std::shared_ptr<const OdOsNotification::ProposalType>>
       proposal;
 
-  EXPECT_CALL(*ordering_service, onCollaborationOutcome(round)).Times(1);
-  EXPECT_CALL(*notification, onRequestProposal(round))
+  EXPECT_CALL(*ordering_service,
+              onCollaborationOutcome(ordering::nextCommitRound(round)))
+      .Times(1);
+  EXPECT_CALL(*notification,
+              onRequestProposal(ordering::nextCommitRound(round)))
       .WillOnce(Return(ByMove(std::move(proposal))));
 
   auto gate_wrapper =
       make_test_subscriber<CallExact>(ordering_gate->onProposal(), 1);
   gate_wrapper.subscribe([&](auto val) { ASSERT_FALSE(val.proposal); });
 
-  rounds.get_subscriber().on_next(OnDemandOrderingGate::BlockEvent{round, {}});
+  sync_events.get_subscriber().on_next(
+      makeSyncEvent(SynchronizationOutcomeType::kCommit, round));
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -182,15 +205,19 @@ TEST_F(OnDemandOrderingGateTest, EmptyEventNoProposal) {
   boost::optional<std::shared_ptr<const OdOsNotification::ProposalType>>
       proposal;
 
-  EXPECT_CALL(*ordering_service, onCollaborationOutcome(round)).Times(1);
-  EXPECT_CALL(*notification, onRequestProposal(round))
+  EXPECT_CALL(*ordering_service,
+              onCollaborationOutcome(ordering::nextRejectRound(round)))
+      .Times(1);
+  EXPECT_CALL(*notification,
+              onRequestProposal(ordering::nextRejectRound(round)))
       .WillOnce(Return(ByMove(std::move(proposal))));
 
   auto gate_wrapper =
       make_test_subscriber<CallExact>(ordering_gate->onProposal(), 1);
   gate_wrapper.subscribe([&](auto val) { ASSERT_FALSE(val.proposal); });
 
-  rounds.get_subscriber().on_next(OnDemandOrderingGate::EmptyEvent{round});
+  sync_events.get_subscriber().on_next(
+      makeSyncEvent(SynchronizationOutcomeType::kNothing, round));
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -202,8 +229,6 @@ TEST_F(OnDemandOrderingGateTest, EmptyEventNoProposal) {
  * this transaction
  */
 TEST_F(OnDemandOrderingGateTest, ReplayedTransactionInProposal) {
-  OnDemandOrderingGate::BlockEvent event = {round, {}};
-
   // initialize mock transaction
   auto tx1 = std::make_shared<NiceMock<MockTransaction>>();
   auto hash = shared_model::crypto::Hash("mock code is readable");
@@ -219,8 +244,11 @@ TEST_F(OnDemandOrderingGateTest, ReplayedTransactionInProposal) {
           std::move(proposal)));
 
   // set expectations for ordering service
-  EXPECT_CALL(*ordering_service, onCollaborationOutcome(round)).Times(1);
-  EXPECT_CALL(*notification, onRequestProposal(round))
+  EXPECT_CALL(*ordering_service,
+              onCollaborationOutcome(ordering::nextCommitRound(round)))
+      .Times(1);
+  EXPECT_CALL(*notification,
+              onRequestProposal(ordering::nextCommitRound(round)))
       .WillOnce(Return(ByMove(std::move(arriving_proposal))));
   EXPECT_CALL(*tx_cache,
               check(testing::Matcher<const shared_model::crypto::Hash &>(_)))
@@ -245,7 +273,8 @@ TEST_F(OnDemandOrderingGateTest, ReplayedTransactionInProposal) {
   auto gate_wrapper =
       make_test_subscriber<CallExact>(ordering_gate->onProposal(), 1);
   gate_wrapper.subscribe([&](auto proposal) {});
-  rounds.get_subscriber().on_next(event);
+  sync_events.get_subscriber().on_next(
+      makeSyncEvent(SynchronizationOutcomeType::kCommit, round));
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -277,7 +306,8 @@ TEST_F(OnDemandOrderingGateTest, PopNonEmptyBatchesFromTheCache) {
   EXPECT_CALL(*notification, onBatches(UnorderedElementsAreArray(collection)))
       .Times(1);
 
-  rounds.get_subscriber().on_next(OnDemandOrderingGate::BlockEvent{round, {}});
+  sync_events.get_subscriber().on_next(
+      makeSyncEvent(SynchronizationOutcomeType::kCommit, round));
 }
 
 /**
@@ -294,7 +324,8 @@ TEST_F(OnDemandOrderingGateTest, PopEmptyBatchesFromTheCache) {
       .Times(1);
   EXPECT_CALL(*notification, onBatches(_)).Times(0);
 
-  rounds.get_subscriber().on_next(OnDemandOrderingGate::BlockEvent{round, {}});
+  sync_events.get_subscriber().on_next(
+      makeSyncEvent(SynchronizationOutcomeType::kCommit, round));
 }
 
 /**
@@ -314,6 +345,16 @@ TEST_F(OnDemandOrderingGateTest, BatchesRemoveFromCache) {
   EXPECT_CALL(*cache, pop()).Times(1);
   EXPECT_CALL(*cache, remove(UnorderedElementsAre(hash1, hash2))).Times(1);
 
-  rounds.get_subscriber().on_next(
-      OnDemandOrderingGate::BlockEvent{round, {hash1, hash2}});
+  std::vector<std::shared_ptr<MockTransaction>> txs{
+      std::make_shared<MockTransaction>()};
+  ON_CALL(*txs[0], hash()).WillByDefault(ReturnRefOfCopy(hash1));
+  auto block = std::make_shared<MockBlock>();
+  ON_CALL(*block, transactions())
+      .WillByDefault(Return(txs | boost::adaptors::indirected));
+  ON_CALL(*block, rejected_transactions_hashes())
+      .WillByDefault(Return(
+          std::vector<shared_model::interface::types::HashType>{{hash2}}));
+  blocks.get_subscriber().on_next(block);
+  sync_events.get_subscriber().on_next(
+      makeSyncEvent(SynchronizationOutcomeType::kCommit, round));
 }
