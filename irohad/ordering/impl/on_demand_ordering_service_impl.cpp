@@ -118,27 +118,26 @@ OnDemandOrderingServiceImpl::onRequestProposal(consensus::Round round) {
  * continues getting all the transactions from the ongoing batch until the
  * required amount is collected.
  * @param requested_tx_amount - amount of transactions to get
- * @param tx_batches_queue - the queue to get transactions from
+ * @param batch_collection - the collection to get transactions from
  * @param discarded_txs_amount - the amount of discarded txs
 
  * @return transactions
  */
 static std::vector<std::shared_ptr<shared_model::interface::Transaction>>
-getTransactions(
-    size_t requested_tx_amount,
-    detail::BatchSetType &tx_batches_queue,
-    boost::optional<size_t &> discarded_txs_amount) {
+getTransactions(size_t requested_tx_amount,
+                detail::BatchSetType &batch_collection,
+                boost::optional<size_t &> discarded_txs_amount) {
   std::vector<std::shared_ptr<shared_model::interface::Transaction>> collection;
 
-  for (auto it = tx_batches_queue.begin();
-       it != tx_batches_queue.end() and collection.size() < requested_tx_amount;
+  for (auto it = batch_collection.begin();
+       it != batch_collection.end() and collection.size() < requested_tx_amount;
        ++it) {
     collection.insert(
         std::end(collection),
         std::make_move_iterator(std::begin((*it)->transactions())),
         std::make_move_iterator(std::end((*it)->transactions())));
   }
-  tx_batches_queue.clear();
+  batch_collection.clear();
 
   return collection;
 }
