@@ -7,6 +7,7 @@
 
 #include <gtest/gtest.h>
 #include <boost/range/combine.hpp>
+#include "framework/test_logger.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "module/irohad/ordering/ordering_mocks.hpp"
 #include "module/shared_model/interface_mocks.hpp"
@@ -45,7 +46,10 @@ struct OnDemandConnectionManagerTest : public ::testing::Test {
     }
 
     manager = std::make_shared<OnDemandConnectionManager>(
-        factory, peers.get_observable(), cpeers);
+        factory,
+        peers.get_observable(),
+        cpeers,
+        getTestLogger("OsConnectionManager"));
   }
 
   OnDemandConnectionManager::CurrentPeers cpeers;

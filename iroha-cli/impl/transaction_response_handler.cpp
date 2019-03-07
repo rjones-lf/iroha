@@ -20,8 +20,7 @@ namespace iroha_cli {
          */
     }
   }
-  TransactionResponseHandler::TransactionResponseHandler(
-      std::shared_ptr<spdlog::logger> log)
+  TransactionResponseHandler::TransactionResponseHandler(logger::LoggerPtr log)
       : log_(std::move(log)) {}
 
 }  // namespace iroha_cli

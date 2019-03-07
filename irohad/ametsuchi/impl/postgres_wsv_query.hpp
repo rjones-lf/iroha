@@ -10,7 +10,7 @@
 
 #include <soci/soci.h>
 #include "interfaces/common_objects/common_objects_factory.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -20,13 +20,13 @@ namespace iroha {
           soci::session &sql,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               factory,
-          logger::Logger log = logger::log("PostgresWsvQuery"));
+          logger::LoggerPtr log);
 
       PostgresWsvQuery(
           std::unique_ptr<soci::session> sql,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               factory,
-          logger::Logger log = logger::log("PostgresWsvQuery"));
+          logger::LoggerPtr log);
 
       boost::optional<std::vector<shared_model::interface::types::PubkeyType>>
       getSignatories(const shared_model::interface::types::AccountIdType
@@ -62,7 +62,7 @@ namespace iroha {
       std::unique_ptr<soci::session> psql_;
       soci::session &sql_;
       std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
-      logger::Logger log_;
+      logger::LoggerPtr log_;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

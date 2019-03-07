@@ -12,6 +12,7 @@
 #include "common/byteutils.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
 #include "framework/result_fixture.hpp"
+#include "framework/test_logger.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/irohad/ametsuchi/mock_key_value_storage.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
@@ -26,18 +27,20 @@ class BlockQueryTest : public AmetsuchiTest {
   void SetUp() override {
     AmetsuchiTest::SetUp();
 
-    auto tmp = FlatFile::create(block_store_path);
+    auto tmp = FlatFile::create(block_store_path, getTestLogger("FlatFile"));
     ASSERT_TRUE(tmp);
     file = std::move(*tmp);
     mock_file = std::make_shared<MockKeyValueStorage>();
     sql = std::make_unique<soci::session>(*soci::factory_postgresql(), pgopt_);
 
-    index = std::make_shared<PostgresBlockIndex>(*sql);
+    index =
+        std::make_shared<PostgresBlockIndex>(*sql, getTestLogger("BlockIndex"));
     auto converter =
         std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
-    blocks = std::make_shared<PostgresBlockQuery>(*sql, *file, converter);
+    blocks = std::make_shared<PostgresBlockQuery>(
+        *sql, *file, converter, getTestLogger("BlockQuery"));
     empty_blocks = std::make_shared<PostgresBlockQuery>(
-        *sql, *mock_file, converter, logger::log("PostgresBlockQueryEmpty"));
+        *sql, *mock_file, converter, getTestLogger("PostgresBlockQueryEmpty"));
 
     *sql << init_;
 

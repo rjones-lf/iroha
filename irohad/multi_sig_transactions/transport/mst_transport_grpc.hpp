@@ -14,7 +14,7 @@
 #include "interfaces/iroha_internal/abstract_transport_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
 #include "network/impl/async_grpc_client.hpp"
 
@@ -43,7 +43,9 @@ namespace iroha {
               transaction_batch_factory,
           std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache,
           std::shared_ptr<Completer> mst_completer,
-          shared_model::crypto::PublicKey my_key);
+          shared_model::crypto::PublicKey my_key,
+          logger::LoggerPtr mst_state_logger,
+          logger::LoggerPtr log);
 
       /**
        * Server part of grpc SendState method call
@@ -82,6 +84,10 @@ namespace iroha {
       /// source peer key for MST propogation messages
       std::shared_ptr<Completer> mst_completer_;
       const std::string my_key_;
+
+      logger::LoggerPtr mst_state_logger_;  ///< Logger for created MstState
+                                            ///< objects.
+      logger::LoggerPtr log_;               ///< Logger for local use.
     };
 
     void sendStateAsync(const shared_model::interface::Peer &to,

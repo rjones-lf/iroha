@@ -9,7 +9,7 @@
 #include <memory>
 #include <mutex>
 #include <rxcpp/rx.hpp>
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
 
@@ -56,9 +56,9 @@ namespace iroha {
     virtual ~MstProcessor() = default;
 
    protected:
-    explicit MstProcessor(logger::Logger log = logger::log("MstProcessor"));
+    explicit MstProcessor(logger::LoggerPtr log);
 
-    logger::Logger log_;
+    logger::LoggerPtr log_;
 
    private:
     // ------------------------| inheritance interface |------------------------

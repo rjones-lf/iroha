@@ -6,6 +6,7 @@
 #ifndef IROHA_TRANSACTION_GENERATOR_HPP
 #define IROHA_TRANSACTION_GENERATOR_HPP
 
+#include "logger/logger_fwd.hpp"
 #include "model/generators/command_generator.hpp"
 #include "model/generators/signature_generator.hpp"
 #include "model/transaction.hpp"
@@ -23,7 +24,9 @@ namespace iroha {
          * @return
          */
         Transaction generateGenesisTransaction(
-            ts64_t timestamp, std::vector<std::string> peers_address);
+            ts64_t timestamp,
+            std::vector<std::string> peers_address,
+            logger::LoggerPtr keys_manager_logger);
 
         /**
          * Generate transaction from give meta data and commands list

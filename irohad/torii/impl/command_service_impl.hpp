@@ -13,7 +13,7 @@
 #include "cache/cache.hpp"
 #include "cryptography/hash.hpp"
 #include "interfaces/iroha_internal/tx_status_factory.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 #include "torii/processor/transaction_processor.hpp"
 #include "torii/status_bus.hpp"
 
@@ -47,7 +47,7 @@ namespace iroha {
               status_factory,
           std::shared_ptr<iroha::torii::CommandServiceImpl::CacheType> cache,
           std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache,
-          logger::Logger log = logger::log("CommandServiceImpl"));
+          logger::LoggerPtr log);
 
       ~CommandServiceImpl() override;
 
@@ -105,7 +105,7 @@ namespace iroha {
 
       rxcpp::composite_subscription status_subscription_;
 
-      logger::Logger log_;
+      logger::LoggerPtr log_;
     };
 
   }  // namespace torii

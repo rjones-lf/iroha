@@ -14,7 +14,7 @@
 #include "ametsuchi/temporary_factory.hpp"
 #include "cryptography/crypto_provider/abstract_crypto_model_signer.hpp"
 #include "interfaces/iroha_internal/unsafe_block_factory.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 #include "network/ordering_gate.hpp"
 #include "validation/stateful_validator.hpp"
 
@@ -34,7 +34,7 @@ namespace iroha {
           std::shared_ptr<CryptoSignerType> crypto_signer,
           std::unique_ptr<shared_model::interface::UnsafeBlockFactory>
               block_factory,
-          logger::Logger log = logger::log("Simulator"));
+          logger::LoggerPtr log);
 
       ~Simulator() override;
 
@@ -67,7 +67,7 @@ namespace iroha {
       std::unique_ptr<shared_model::interface::UnsafeBlockFactory>
           block_factory_;
 
-      logger::Logger log_;
+      logger::LoggerPtr log_;
 
       // last block
       std::shared_ptr<shared_model::interface::Block> last_block;

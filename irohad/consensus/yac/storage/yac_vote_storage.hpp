@@ -11,12 +11,15 @@
 #include <vector>
 
 #include <boost/optional.hpp>
+#include "consensus/yac/consistency_model.hpp"
 #include "consensus/yac/outcome_messages.hpp"  // because messages passed by value
 #include "consensus/yac/storage/cleanup_strategy.hpp"
 #include "consensus/yac/storage/storage_result.hpp"  // for Answer
 #include "consensus/yac/storage/yac_common.hpp"      // for ProposalHash
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
+#include "consensus/yac/supermajority_checker.hpp"
 #include "consensus/yac/yac_types.hpp"
+#include "logger/logger_manager_fwd.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -90,8 +93,13 @@ namespace iroha {
 
         /**
          * @param cleanup_strategy - strategy for removing elements from storage
+         * @param consistency_model - consensus consistency model (CFT, BFT).
+         * @param log_manager - log manager to create component loggers
          */
-        YacVoteStorage(std::shared_ptr<CleanupStrategy> cleanup_strategy);
+        YacVoteStorage(
+            std::shared_ptr<CleanupStrategy> cleanup_strategy,
+            std::unique_ptr<SupermajorityChecker> supermajority_checker,
+            logger::LoggerManagerTreePtr log_manager);
 
         /**
          * Insert votes in storage
@@ -152,6 +160,10 @@ namespace iroha {
          * storage
          */
         std::shared_ptr<CleanupStrategy> strategy_;
+
+        std::shared_ptr<SupermajorityChecker> supermajority_checker_;
+
+        logger::LoggerManagerTreePtr log_manager_;
       };
 
     }  // namespace yac

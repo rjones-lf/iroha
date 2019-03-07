@@ -8,6 +8,7 @@
 #include <gmock/gmock.h>
 #include <boost/range/adaptor/transformed.hpp>
 #include "backend/protobuf/block.hpp"
+#include "framework/test_logger.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/mock_block_query.hpp"
 #include "module/irohad/ametsuchi/mock_block_query_factory.hpp"
@@ -71,11 +72,13 @@ class SynchronizerTest : public ::testing::Test {
     ON_CALL(*block_query, getTopBlockHeight())
         .WillByDefault(Return(kHeight - 1));
 
-    synchronizer = std::make_shared<SynchronizerImpl>(consensus_gate,
-                                                      chain_validator,
-                                                      mutable_factory,
-                                                      block_query_factory,
-                                                      block_loader);
+    synchronizer =
+        std::make_shared<SynchronizerImpl>(consensus_gate,
+                                           chain_validator,
+                                           mutable_factory,
+                                           block_query_factory,
+                                           block_loader,
+                                           getTestLogger("Synchronizer"));
 
     peer = makePeer("127.0.0.1", shared_model::crypto::PublicKey("111"));
     ledger_peers = std::make_shared<PeerList>(PeerList{peer});

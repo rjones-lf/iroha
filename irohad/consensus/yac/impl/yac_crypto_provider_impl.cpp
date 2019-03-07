@@ -52,8 +52,6 @@ namespace iroha {
                   vote.signature = std::move(sig.value);
                 },
                 [](iroha::expected::Error<std::string> &reason) {
-                  logger::log("YacCryptoProvider::getVote")
-                      ->error("Cannot build vote signature: {}", reason.error);
                 });
 
         return vote;

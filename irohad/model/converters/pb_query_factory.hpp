@@ -7,7 +7,7 @@
 
 #include <typeindex>
 #include <unordered_map>
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 #include "model/common.hpp"
 #include "model/query.hpp"
 #include "queries.pb.h"
@@ -37,8 +37,7 @@ namespace iroha {
         boost::optional<protocol::Query> serialize(
             std::shared_ptr<const model::Query> query) const;
 
-        explicit PbQueryFactory(
-            logger::Logger log = logger::log("PbQueryFactory"));
+        explicit PbQueryFactory(logger::LoggerPtr log);
 
        private:
         // Query serializer:
@@ -75,7 +74,7 @@ namespace iroha {
             std::shared_ptr<const Query>) const;
         std::unordered_map<std::type_index, Serializer> serializers_;
 
-        logger::Logger log_;
+        logger::LoggerPtr log_;
       };
 
     }  // namespace converters

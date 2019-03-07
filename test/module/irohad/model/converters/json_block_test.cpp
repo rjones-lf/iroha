@@ -3,8 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <gtest/gtest.h>
 #include "model/converters/json_block_factory.hpp"
+
+#include <gtest/gtest.h>
+
+#include "framework/test_logger.hpp"
 
 using namespace iroha;
 using namespace iroha::model;
@@ -12,7 +15,7 @@ using namespace iroha::model::converters;
 
 class JsonBlockTest : public ::testing::Test {
  public:
-  JsonBlockFactory factory;
+  JsonBlockFactory factory{getTestLogger("JsonBlockFactory")};
 };
 
 TEST_F(JsonBlockTest, ValidWhenWellFormed) {

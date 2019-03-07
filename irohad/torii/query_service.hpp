@@ -15,9 +15,8 @@
 #include "backend/protobuf/queries/proto_query.hpp"
 #include "builders/protobuf/transport_builder.hpp"
 #include "cache/cache.hpp"
+#include "logger/logger_fwd.hpp"
 #include "torii/processor/query_processor.hpp"
-
-#include "logger/logger.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -43,7 +42,7 @@ namespace iroha {
       QueryService(
           std::shared_ptr<iroha::torii::QueryProcessor> query_processor,
           std::shared_ptr<QueryFactoryType> query_factory,
-          logger::Logger log = logger::log("Query Service"));
+          logger::LoggerPtr log);
 
       QueryService(const QueryService &) = delete;
       QueryService &operator=(const QueryService &) = delete;
@@ -76,7 +75,7 @@ namespace iroha {
                           shared_model::crypto::Hash::Hasher>
           cache_;
 
-      logger::Logger log_;
+      logger::LoggerPtr log_;
     };
   }  // namespace torii
 }  // namespace iroha

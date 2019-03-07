@@ -11,14 +11,17 @@
 #include "cryptography/public_key.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/iroha_internal/block.hpp"
+#include "logger/logger.hpp"
+#include "validation/utils.hpp"
 
 namespace iroha {
   namespace validation {
     ChainValidatorImpl::ChainValidatorImpl(
         std::shared_ptr<consensus::yac::SupermajorityChecker>
             supermajority_checker,
-        logger::Logger log)
-        : supermajority_checker_(supermajority_checker), log_(std::move(log)) {}
+        logger::LoggerPtr log)
+        : supermajority_checker_(supermajority_checker),
+          log_(std::move(log)) {}
 
     bool ChainValidatorImpl::validateAndApply(
         rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
@@ -54,8 +57,9 @@ namespace iroha {
         const std::vector<std::shared_ptr<shared_model::interface::Peer>>
             &peers) const {
       const auto &signatures = block.signatures();
-      auto has_supermajority =
-          supermajority_checker_->hasSupermajority(signatures, peers);
+      auto has_supermajority = supermajority_checker_->hasSupermajority(
+                                   boost::size(signatures), peers.size())
+          and peersSubset(signatures, peers);
 
       if (not has_supermajority) {
         log_->info(

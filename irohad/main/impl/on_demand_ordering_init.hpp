@@ -11,7 +11,8 @@
 #include "ametsuchi/peer_query_factory.hpp"
 #include "ametsuchi/tx_presence_cache.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
+#include "logger/logger_manager_fwd.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_gate.hpp"
 #include "network/peer_communication_service.hpp"
@@ -43,7 +44,8 @@ namespace iroha {
           std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
               async_call,
           std::shared_ptr<TransportFactoryType> proposal_transport_factory,
-          std::chrono::milliseconds delay);
+          std::chrono::milliseconds delay,
+          const logger::LoggerManagerTreePtr &ordering_log_manager);
 
       /**
        * Creates connection manager which redirects requests to appropriate
@@ -56,7 +58,8 @@ namespace iroha {
               async_call,
           std::shared_ptr<TransportFactoryType> proposal_transport_factory,
           std::chrono::milliseconds delay,
-          std::vector<shared_model::interface::types::HashType> initial_hashes);
+          std::vector<shared_model::interface::types::HashType> initial_hashes,
+          const logger::LoggerManagerTreePtr &ordering_log_manager);
 
       /**
        * Creates on-demand ordering gate. \see initOrderingGate for parameters
@@ -71,7 +74,8 @@ namespace iroha {
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
           consensus::Round initial_round,
           std::function<std::chrono::milliseconds(
-              const synchronizer::SynchronizationEvent &)> delay_func);
+              const synchronizer::SynchronizationEvent &)> delay_func,
+          const logger::LoggerManagerTreePtr &ordering_log_manager);
 
       /**
        * Creates on-demand ordering service. \see initOrderingGate for
@@ -81,9 +85,15 @@ namespace iroha {
           size_t max_size,
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               proposal_factory,
-          std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache);
+          std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
+          const logger::LoggerManagerTreePtr &ordering_log_manager);
 
      public:
+
+      /// Constructor.
+      /// @param log - the logger to use for internal messages.
+      OnDemandOrderingInit(logger::LoggerPtr log);
+
       ~OnDemandOrderingInit();
 
       /**
@@ -129,7 +139,8 @@ namespace iroha {
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
           consensus::Round initial_round,
           std::function<std::chrono::milliseconds(
-              const synchronizer::SynchronizationEvent &)> delay_func);
+              const synchronizer::SynchronizationEvent &)> delay_func,
+          logger::LoggerManagerTreePtr ordering_log_manager);
 
       /// gRPC service for ordering service
       std::shared_ptr<ordering::proto::OnDemandOrdering::Service> service;
@@ -140,7 +151,7 @@ namespace iroha {
           notifier;
 
      private:
-      logger::Logger log_ = logger::log("OnDemandOrderingInit");
+      logger::LoggerPtr log_;
 
       std::vector<std::shared_ptr<shared_model::interface::Peer>>
           current_peers_;

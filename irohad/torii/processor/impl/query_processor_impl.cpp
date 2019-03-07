@@ -12,6 +12,7 @@
 #include "interfaces/query_responses/block_query_response.hpp"
 #include "interfaces/query_responses/block_response.hpp"
 #include "interfaces/query_responses/query_response.hpp"
+#include "logger/logger.hpp"
 #include "validation/utils.hpp"
 
 namespace iroha {
@@ -23,7 +24,7 @@ namespace iroha {
         std::shared_ptr<iroha::PendingTransactionStorage> pending_transactions,
         std::shared_ptr<shared_model::interface::QueryResponseFactory>
             response_factory,
-        logger::Logger log)
+        logger::LoggerPtr log)
         : storage_{std::move(storage)},
           qry_exec_{std::move(qry_exec)},
           pending_transactions_{std::move(pending_transactions)},
