@@ -11,6 +11,8 @@
 #include "interfaces/commands/command.hpp"
 #include "interfaces/permission_to_string.hpp"
 #include "interfaces/transaction.hpp"
+#include "logger/logger.hpp"
+#include "logger/logger_manager.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -19,11 +21,12 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
         std::shared_ptr<shared_model::interface::PermissionToString>
             perm_converter,
-        logger::Logger log)
+        logger::LoggerManagerTreePtr log_manager)
         : sql_(std::move(sql)),
           command_executor_(std::make_unique<PostgresCommandExecutor>(
               *sql_, std::move(perm_converter))),
-          log_(std::move(log)) {
+          log_manager_(std::move(log_manager)),
+          log_(log_manager_->getLogger()) {
       *sql_ << "BEGIN";
     }
 
@@ -126,7 +129,10 @@ namespace iroha {
     std::unique_ptr<TemporaryWsv::SavepointWrapper>
     TemporaryWsvImpl::createSavepoint(const std::string &name) {
       return std::make_unique<TemporaryWsvImpl::SavepointWrapperImpl>(
-          SavepointWrapperImpl(*this, name));
+          SavepointWrapperImpl(
+              *this,
+              name,
+              log_manager_->getChild("SavepointWrapper")->getLogger()));
     }
 
     TemporaryWsvImpl::~TemporaryWsvImpl() {
@@ -139,11 +145,12 @@ namespace iroha {
 
     TemporaryWsvImpl::SavepointWrapperImpl::SavepointWrapperImpl(
         const iroha::ametsuchi::TemporaryWsvImpl &wsv,
-        std::string savepoint_name)
+        std::string savepoint_name,
+        logger::LoggerPtr log)
         : sql_{*wsv.sql_},
           savepoint_name_{std::move(savepoint_name)},
           is_released_{false},
-          log_(logger::log("Temporary wsv's savepoint wrapper")) {
+          log_(std::move(log)) {
       sql_ << "SAVEPOINT " + savepoint_name_ + ";";
     }
 

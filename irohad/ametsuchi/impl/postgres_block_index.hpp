@@ -11,15 +11,13 @@
 #include "ametsuchi/impl/block_index.hpp"
 #include "ametsuchi/impl/soci_utils.hpp"
 #include "interfaces/transaction.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 
 namespace iroha {
   namespace ametsuchi {
     class PostgresBlockIndex : public BlockIndex {
      public:
-      PostgresBlockIndex(
-          soci::session &sql,
-          logger::Logger log = logger::log("PostgresBlockIndex"));
+      PostgresBlockIndex(soci::session &sql, logger::LoggerPtr log);
 
       /**
        * Create several indices for block. Namely:
@@ -38,7 +36,7 @@ namespace iroha {
 
      private:
       soci::session &sql_;
-      logger::Logger log_;
+      logger::LoggerPtr log_;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

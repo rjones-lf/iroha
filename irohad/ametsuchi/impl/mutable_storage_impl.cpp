@@ -14,6 +14,8 @@
 #include "interfaces/commands/command.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "interfaces/iroha_internal/block.hpp"
+#include "logger/logger.hpp"
+#include "logger/logger_manager.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -23,16 +25,20 @@ namespace iroha {
         std::unique_ptr<soci::session> sql,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
         std::shared_ptr<BlockStorage> block_storage,
-        logger::Logger log)
+        logger::LoggerManagerTreePtr log_manager)
         : top_hash_(top_hash),
           sql_(std::move(sql)),
-          peer_query_(std::make_unique<PeerQueryWsv>(
-              std::make_shared<PostgresWsvQuery>(*sql_, std::move(factory)))),
-          block_index_(std::make_unique<PostgresBlockIndex>(*sql_)),
+          peer_query_(
+              std::make_unique<PeerQueryWsv>(std::make_shared<PostgresWsvQuery>(
+                  *sql_,
+                  std::move(factory),
+                  log_manager->getChild("WsvQuery")->getLogger()))),
+          block_index_(std::make_unique<PostgresBlockIndex>(
+              *sql_, log_manager->getChild("PostgresBlockIndex")->getLogger())),
           command_executor_(std::move(cmd_executor)),
           block_storage_(std::move(block_storage)),
           committed(false),
-          log_(std::move(log)) {
+          log_(log_manager->getLogger()) {
       *sql_ << "BEGIN";
     }
 

@@ -13,6 +13,7 @@
 #include "common/visitor.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/transaction_responses/not_received_tx_response.hpp"
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace torii {
@@ -25,7 +26,7 @@ namespace iroha {
             status_factory,
         std::shared_ptr<iroha::torii::CommandServiceImpl::CacheType> cache,
         std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache,
-        logger::Logger log)
+        logger::LoggerPtr log)
         : tx_processor_(std::move(tx_processor)),
           storage_(std::move(storage)),
           status_bus_(std::move(status_bus)),

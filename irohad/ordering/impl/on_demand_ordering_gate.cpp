@@ -12,6 +12,7 @@
 #include "ametsuchi/tx_presence_cache.hpp"
 #include "common/visitor.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
+#include "logger/logger.hpp"
 #include "ordering/impl/on_demand_common.hpp"
 
 using namespace iroha;
@@ -25,7 +26,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
     std::shared_ptr<shared_model::interface::UnsafeProposalFactory> factory,
     std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
     consensus::Round initial_round,
-    logger::Logger log)
+    logger::LoggerPtr log)
     : log_(std::move(log)),
       ordering_service_(std::move(ordering_service)),
       network_client_(std::move(network_client)),

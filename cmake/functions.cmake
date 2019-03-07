@@ -125,7 +125,7 @@ endmacro()
 macro(add_install_step_for_bin target)
   install(TARGETS ${target}
       RUNTIME DESTINATION bin
-      CONFIGURATIONS Release
+      CONFIGURATIONS ${CMAKE_BUILD_TYPE}
       COMPONENT binaries)
 endmacro()
 
@@ -137,7 +137,7 @@ macro(add_install_step_for_lib libpath)
 
   install(FILES ${lib_major_minor_patch}
       DESTINATION lib
-      CONFIGURATIONS Release
+      CONFIGURATIONS ${CMAKE_BUILD_TYPE}
       COMPONENT libraries)
 endmacro()
 

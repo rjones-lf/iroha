@@ -4,8 +4,10 @@
  */
 
 #include "network/impl/block_loader_service.hpp"
+
 #include "backend/protobuf/block.hpp"
 #include "common/bind.hpp"
+#include "logger/logger.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -15,7 +17,7 @@ BlockLoaderService::BlockLoaderService(
     std::shared_ptr<BlockQueryFactory> block_query_factory,
     std::shared_ptr<iroha::consensus::ConsensusResultCache>
         consensus_result_cache,
-    logger::Logger log)
+    logger::LoggerPtr log)
     : block_query_factory_(std::move(block_query_factory)),
       consensus_result_cache_(std::move(consensus_result_cache)),
       log_(std::move(log)) {}

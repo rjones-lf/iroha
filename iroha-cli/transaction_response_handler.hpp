@@ -8,6 +8,8 @@
 
 #include "client.hpp"  // for CliClient::TxStatus (yuck!)
 
+#include "logger/logger_fwd.hpp"
+
 namespace spdlog {
   class logger;
 }
@@ -16,9 +18,7 @@ namespace iroha_cli {
 
   class TransactionResponseHandler {
    public:
-    explicit TransactionResponseHandler(
-        std::shared_ptr<spdlog::logger> log =
-            logger::log("TransactionResponseHandler"));
+    explicit TransactionResponseHandler(logger::LoggerPtr log);
     /**
      * Handle response from Iroha
      * @param status of transaction
@@ -26,7 +26,7 @@ namespace iroha_cli {
     void handle(const CliClient::TxStatus status) const;
 
    private:
-    std::shared_ptr<spdlog::logger> log_;
+    logger::LoggerPtr log_;
   };
 }  // namespace iroha_cli
 

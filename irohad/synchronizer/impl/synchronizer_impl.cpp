@@ -11,6 +11,7 @@
 #include "ametsuchi/mutable_storage.hpp"
 #include "common/visitor.hpp"
 #include "interfaces/iroha_internal/block.hpp"
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace synchronizer {
@@ -21,7 +22,7 @@ namespace iroha {
         std::shared_ptr<ametsuchi::MutableFactory> mutable_factory,
         std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
         std::shared_ptr<network::BlockLoader> block_loader,
-        logger::Logger log)
+        logger::LoggerPtr log)
         : validator_(std::move(validator)),
           mutable_factory_(std::move(mutable_factory)),
           block_query_factory_(std::move(block_query_factory)),
@@ -102,10 +103,14 @@ namespace iroha {
             auto ledger_state = mutable_factory_->commit(std::move(storage));
 
             if (ledger_state) {
-              return SynchronizationEvent{chain,
-                                          SynchronizationOutcomeType::kCommit,
-                                          msg.round,
-                                          std::move(*ledger_state)};
+              return SynchronizationEvent{
+                  chain,
+                  SynchronizationOutcomeType::kCommit,
+                  blocks.back()->height() > expected_height
+                      // TODO 07.03.19 andrei: IR-387 Remove reject round
+                      ? consensus::Round{blocks.back()->height(), 0}
+                      : msg.round,
+                  std::move(*ledger_state)};
             } else {
               return boost::none;
             }

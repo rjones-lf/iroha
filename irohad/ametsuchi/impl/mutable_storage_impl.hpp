@@ -12,7 +12,8 @@
 #include "ametsuchi/block_storage.hpp"
 #include "ametsuchi/command_executor.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
+#include "logger/logger_manager_fwd.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -30,7 +31,7 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               factory,
           std::shared_ptr<BlockStorage> block_storage,
-          logger::Logger log = logger::log("MutableStorage"));
+          logger::LoggerManagerTreePtr log_manager);
 
       bool apply(const shared_model::interface::Block &block) override;
 
@@ -66,7 +67,7 @@ namespace iroha {
 
       bool committed;
 
-      logger::Logger log_;
+      logger::LoggerPtr log_;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

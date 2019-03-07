@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "ametsuchi/impl/storage_impl.hpp"
+
 #include <gtest/gtest.h>
 #include <soci/postgresql/soci-postgresql.h>
 #include <soci/soci.h>
@@ -10,11 +12,12 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include "ametsuchi/impl/in_memory_block_storage_factory.hpp"
-#include "ametsuchi/impl/storage_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
 #include "backend/protobuf/proto_permission_to_string.hpp"
 #include "framework/config_helper.hpp"
+#include "framework/test_logger.hpp"
+#include "logger/logger_manager.hpp"
 #include "validators/field_validator.hpp"
 
 using namespace iroha::ametsuchi;
@@ -66,6 +69,9 @@ class StorageInitTest : public ::testing::Test {
     sql << query;
     boost::filesystem::remove_all(block_store_path);
   }
+
+  logger::LoggerManagerTreePtr storage_log_manager_{
+      getTestLoggerManager()->getChild("Storage")};
 };
 
 /**
@@ -80,7 +86,8 @@ TEST_F(StorageInitTest, CreateStorageWithDatabase) {
                       factory,
                       converter,
                       perm_converter_,
-                      block_storage_factory_)
+                      block_storage_factory_,
+                      storage_log_manager_)
       .match(
           [&storage](const Value<std::shared_ptr<StorageImpl>> &value) {
             storage = value.value;
@@ -109,7 +116,8 @@ TEST_F(StorageInitTest, CreateStorageWithInvalidPgOpt) {
                       factory,
                       converter,
                       perm_converter_,
-                      block_storage_factory_)
+                      block_storage_factory_,
+                      storage_log_manager_)
       .match(
           [](const Value<std::shared_ptr<StorageImpl>> &) {
             FAIL() << "storage created, but should not";

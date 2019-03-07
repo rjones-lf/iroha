@@ -38,10 +38,6 @@ namespace fuzzing {
         transaction_batch_factory_;
 
     OrderingServiceFixture() {
-      // fuzzing target is intended to run many times (~millions) so any
-      // additional output slows it down significantly
-      spdlog::set_level(spdlog::level::err);
-
       std::unique_ptr<shared_model::validation::AbstractValidator<
           shared_model::interface::Transaction>>
           interface_transaction_validator =

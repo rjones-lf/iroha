@@ -20,6 +20,8 @@
 #include "common/bind.hpp"
 #include "common/byteutils.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
+#include "logger/logger.hpp"
+#include "logger/logger_manager.hpp"
 
 namespace {
   void prepareStatements(soci::connection_pool &connections, size_t pool_size) {
@@ -66,7 +68,7 @@ namespace iroha {
         std::shared_ptr<BlockStorageFactory> block_storage_factory,
         size_t pool_size,
         bool enable_prepared_blocks,
-        logger::Logger log)
+        logger::LoggerManagerTreePtr log_manager)
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
           block_store_(std::move(block_store)),
@@ -75,7 +77,8 @@ namespace iroha {
           converter_(std::move(converter)),
           perm_converter_(std::move(perm_converter)),
           block_storage_factory_(std::move(block_storage_factory)),
-          log_(std::move(log)),
+          log_manager_(std::move(log_manager)),
+          log_(log_manager_->getLogger()),
           pool_size_(pool_size),
           prepared_blocks_enabled_(enable_prepared_blocks),
           block_is_prepared(false) {
@@ -102,10 +105,19 @@ namespace iroha {
         return expected::makeError("Connection was closed");
       }
       auto sql = std::make_unique<soci::session>(*connection_);
+      // if we create temporary storage, then we intend to validate a new
+      // proposal. this means that any state prepared before that moment is not
+      // needed and must be removed to prevent locking
+      if (block_is_prepared) {
+        rollbackPrepared(*sql);
+      }
 
       return expected::makeValue<std::unique_ptr<TemporaryWsv>>(
           std::make_unique<TemporaryWsvImpl>(
-              std::move(sql), factory_, perm_converter_));
+              std::move(sql),
+              factory_,
+              perm_converter_,
+              log_manager_->getChild("TemporaryWorldStateView")));
     }
 
     expected::Result<std::unique_ptr<MutableStorage>, std::string>
@@ -120,7 +132,7 @@ namespace iroha {
       auto sql = std::make_unique<soci::session>(*connection_);
       // if we create mutable storage, then we intend to mutate wsv
       // this means that any state prepared before that moment is not needed
-      // and must be removed to preventy locking
+      // and must be removed to prevent locking
       if (block_is_prepared) {
         rollbackPrepared(*sql);
       }
@@ -138,7 +150,8 @@ namespace iroha {
               std::make_shared<PostgresCommandExecutor>(*sql, perm_converter_),
               std::move(sql),
               factory_,
-              block_storage_factory_->create()));
+              block_storage_factory_->create(),
+              log_manager_->getChild("MutableStorageImpl")));
     }
 
     boost::optional<std::shared_ptr<PeerQuery>> StorageImpl::createPeerQuery()
@@ -177,7 +190,8 @@ namespace iroha {
               std::move(pending_txs_storage),
               converter_,
               std::move(response_factory),
-              perm_converter_));
+              perm_converter_,
+              log_manager_->getChild("QueryExecutor")));
     }
 
     bool StorageImpl::insertBlock(const shared_model::interface::Block &block) {
@@ -314,17 +328,17 @@ namespace iroha {
     }
 
     expected::Result<ConnectionContext, std::string>
-    StorageImpl::initConnections(std::string block_store_dir) {
-      auto log_ = logger::log("StorageImpl:initConnection");
-      log_->info("Start storage creation");
+    StorageImpl::initConnections(std::string block_store_dir,
+                                 logger::LoggerPtr log) {
+      log->info("Start storage creation");
 
-      auto block_store = FlatFile::create(block_store_dir);
+      auto block_store = FlatFile::create(block_store_dir, log);
       if (not block_store) {
         return expected::makeError(
             (boost::format("Cannot create block store in %s") % block_store_dir)
                 .str());
       }
-      log_->info("block store created");
+      log->info("block store created");
 
       return expected::makeValue(ConnectionContext(std::move(*block_store)));
     }
@@ -354,6 +368,7 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::PermissionToString>
             perm_converter,
         std::shared_ptr<BlockStorageFactory> block_storage_factory,
+        logger::LoggerManagerTreePtr log_manager,
         size_t pool_size) {
       boost::optional<std::string> string_res = boost::none;
 
@@ -372,7 +387,8 @@ namespace iroha {
         return expected::makeError(string_res.value());
       }
 
-      auto ctx_result = initConnections(block_store_dir);
+      auto ctx_result =
+          initConnections(block_store_dir, log_manager->getLogger());
       auto db_result = initPostgresConnection(postgres_options, pool_size);
       expected::Result<std::shared_ptr<StorageImpl>, std::string> storage;
       ctx_result.match(
@@ -393,7 +409,8 @@ namespace iroha {
                                       perm_converter,
                                       std::move(block_storage_factory),
                                       pool_size,
-                                      enable_prepared_transactions)));
+                                      enable_prepared_transactions,
+                                      std::move(log_manager))));
                 },
                 [&](expected::Error<std::string> &error) { storage = error; });
           },
@@ -410,12 +427,15 @@ namespace iroha {
       try {
         *(storage->sql_) << "COMMIT";
         storage->committed = true;
-        return PostgresWsvQuery(*(storage->sql_), factory_).getPeers() |
-            [](auto &&peers) {
-              return boost::optional<std::unique_ptr<LedgerState>>(
-                  std::make_unique<LedgerState>(
-                      std::make_shared<PeerList>(std::move(peers))));
-            };
+        return PostgresWsvQuery(*(storage->sql_),
+                                factory_,
+                                log_manager_->getChild("WsvQuery")->getLogger())
+                   .getPeers()
+            | [](auto &&peers) {
+                return boost::optional<std::unique_ptr<LedgerState>>(
+                    std::make_unique<LedgerState>(
+                        std::make_shared<PeerList>(std::move(peers))));
+              };
       } catch (std::exception &e) {
         storage->committed = false;
         log_->warn("Mutable storage is not committed. Reason: {}", e.what());
@@ -444,11 +464,15 @@ namespace iroha {
         }
         soci::session sql(*connection_);
         sql << "COMMIT PREPARED '" + prepared_block_name_ + "';";
-        PostgresBlockIndex block_index(sql);
+        PostgresBlockIndex block_index(
+            sql, log_manager_->getChild("BlockIndex")->getLogger());
         block_index.index(block);
         block_is_prepared = false;
-        return PostgresWsvQuery(sql, factory_).getPeers() |
-                   [this, &block](auto &&peers)
+        return PostgresWsvQuery(sql,
+                                factory_,
+                                log_manager_->getChild("WsvQuery")->getLogger())
+                       .getPeers()
+                   | [this, &block](auto &&peers)
                    -> boost::optional<std::unique_ptr<LedgerState>> {
           if (this->storeBlock(block)) {
             return boost::optional<std::unique_ptr<LedgerState>>(
@@ -472,7 +496,9 @@ namespace iroha {
         return nullptr;
       }
       return std::make_shared<PostgresWsvQuery>(
-          std::make_unique<soci::session>(*connection_), factory_);
+          std::make_unique<soci::session>(*connection_),
+          factory_,
+          log_manager_->getChild("WsvQuery")->getLogger());
     }
 
     std::shared_ptr<BlockQuery> StorageImpl::getBlockQuery() const {
@@ -484,7 +510,8 @@ namespace iroha {
       return std::make_shared<PostgresBlockQuery>(
           std::make_unique<soci::session>(*connection_),
           *block_store_,
-          converter_);
+          converter_,
+          log_manager_->getChild("PostgresBlockQuery")->getLogger());
     }
 
     rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
@@ -551,6 +578,7 @@ DROP TABLE IF EXISTS signatory;
 DROP TABLE IF EXISTS peer;
 DROP TABLE IF EXISTS role;
 DROP TABLE IF EXISTS height_by_hash;
+DROP INDEX IF EXISTS tx_status_by_hash_hash_index;
 DROP TABLE IF EXISTS tx_status_by_hash;
 DROP TABLE IF EXISTS height_by_account_set;
 DROP TABLE IF EXISTS index_by_creator_height;
@@ -652,6 +680,7 @@ CREATE TABLE IF NOT EXISTS tx_status_by_hash (
     hash varchar,
     status boolean
 );
+CREATE INDEX IF NOT EXISTS tx_status_by_hash_hash_index ON tx_status_by_hash USING hash (hash);
 
 CREATE TABLE IF NOT EXISTS height_by_account_set (
     account_id text,

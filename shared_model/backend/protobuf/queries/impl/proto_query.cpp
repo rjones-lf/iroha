@@ -51,14 +51,14 @@ namespace shared_model {
       TransportType proto_;
 
       ProtoQueryVariantType variant_{[this] {
-        const auto &ar = proto_;
+        auto &ar = proto_;
         int which = ar.payload()
                         .GetDescriptor()
                         ->FindFieldByNumber(ar.payload().query_case())
                         ->index_in_oneof();
-        return shared_model::detail::variant_impl<ProtoQueryListType>::
-            template load<ProtoQueryVariantType>(std::forward<decltype(ar)>(ar),
-                                                 which);
+        return shared_model::detail::variant_impl<
+            ProtoQueryListType>::template load<ProtoQueryVariantType>(ar,
+                                                                      which);
       }()};
 
       QueryVariantType ivariant_{variant_};

@@ -11,7 +11,7 @@
 #include <shared_mutex>
 
 #include <rxcpp/rx.hpp>
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 
 namespace iroha {
   namespace ordering {
@@ -52,13 +52,13 @@ namespace iroha {
       OnDemandConnectionManager(
           std::shared_ptr<transport::OdOsNotificationFactory> factory,
           rxcpp::observable<CurrentPeers> peers,
-          logger::Logger log = logger::log("OnDemandConnectionManager"));
+          logger::LoggerPtr log);
 
       OnDemandConnectionManager(
           std::shared_ptr<transport::OdOsNotificationFactory> factory,
           rxcpp::observable<CurrentPeers> peers,
           CurrentPeers initial_peers,
-          logger::Logger log = logger::log("OnDemandConnectionManager"));
+          logger::LoggerPtr log);
 
       ~OnDemandConnectionManager() override;
 
@@ -82,7 +82,7 @@ namespace iroha {
        */
       void initializeConnections(const CurrentPeers &peers);
 
-      logger::Logger log_;
+      logger::LoggerPtr log_;
       std::shared_ptr<transport::OdOsNotificationFactory> factory_;
       rxcpp::composite_subscription subscription_;
 

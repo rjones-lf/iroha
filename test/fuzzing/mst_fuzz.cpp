@@ -12,6 +12,7 @@
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
+#include "logger/dummy_logger.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
@@ -22,13 +23,13 @@ using namespace iroha::network;
 
 namespace fuzzing {
   struct MstFixture {
+    std::shared_ptr<iroha::TestCompleter> completer_;
     std::shared_ptr<MstTransportGrpc> mst_transport_grpc_;
 
     MstFixture() {
-      spdlog::set_level(spdlog::level::err);
-
       auto async_call_ = std::make_shared<
-          iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
+          iroha::network::AsyncGrpcClient<google::protobuf::Empty>>(
+          logger::getDummyLoggerPtr());
       // TODO luckychess 25.12.2018 Component initialisation reuse
       // IR-1886, IR-142
       std::unique_ptr<shared_model::validation::AbstractValidator<
@@ -53,14 +54,18 @@ namespace fuzzing {
           std::make_shared<NiceMock<iroha::ametsuchi::MockStorage>>();
       auto cache =
           std::make_shared<iroha::ametsuchi::TxPresenceCacheImpl>(storage);
+      completer_ = std::make_shared<iroha::TestCompleter>();
       mst_transport_grpc_ = std::make_shared<MstTransportGrpc>(
           async_call_,
           std::move(tx_factory),
           std::move(parser),
           std::move(batch_factory),
           std::move(cache),
+          completer_,
           shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
-              .publicKey());
+              .publicKey(),
+          logger::getDummyLoggerPtr(),
+          logger::getDummyLoggerPtr());
     }
   };
 }  // namespace fuzzing

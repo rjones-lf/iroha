@@ -15,6 +15,7 @@
 #include "cryptography/public_key.hpp"
 #include "interfaces/common_objects/signature.hpp"
 #include "interfaces/iroha_internal/block.hpp"
+#include "logger/logger.hpp"
 #include "simulator/block_creator.hpp"
 
 namespace iroha {
@@ -28,7 +29,7 @@ namespace iroha {
           std::shared_ptr<simulator::BlockCreator> block_creator,
           std::shared_ptr<consensus::ConsensusResultCache>
               consensus_result_cache,
-          logger::Logger log)
+          logger::LoggerPtr log)
           : hash_gate_(std::move(hash_gate)),
             orderer_(std::move(orderer)),
             hash_provider_(std::move(hash_provider)),

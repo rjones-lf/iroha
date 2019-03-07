@@ -24,6 +24,7 @@ add_library(ametsuchi
 
 target_link_libraries(ametsuchi
     logger
+    logger_manager
     rxcpp
     libs_files
     common

@@ -9,7 +9,9 @@
 #include <utility>
 
 #include "common/bind.hpp"
+#include "consensus/yac/consistency_model.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
+#include "logger/logger_manager.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -38,7 +40,8 @@ namespace iroha {
               proposal_storages_.end(),
               msg.hash.vote_round,
               peers_in_round,
-              std::make_shared<SupermajorityCheckerImpl>());
+              supermajority_checker_,
+              log_manager_->getChild("ProposalStorage"));
         } else {
           return boost::none;
         }
@@ -58,8 +61,12 @@ namespace iroha {
       // --------| public api |--------
 
       YacVoteStorage::YacVoteStorage(
-          std::shared_ptr<CleanupStrategy> cleanup_strategy)
-          : strategy_(std::move(cleanup_strategy)) {}
+          std::shared_ptr<CleanupStrategy> cleanup_strategy,
+          std::unique_ptr<SupermajorityChecker> supermajority_checker,
+          logger::LoggerManagerTreePtr log_manager)
+          : strategy_(std::move(cleanup_strategy)),
+            supermajority_checker_(std::move(supermajority_checker)),
+            log_manager_(std::move(log_manager)) {}
 
       boost::optional<Answer> YacVoteStorage::store(
           std::vector<VoteMessage> state, PeersNumberType peers_in_round) {

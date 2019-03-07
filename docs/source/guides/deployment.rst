@@ -159,64 +159,7 @@ In order to form a block, which includes more than a single peer, or requires cu
 Automated
 ---------
 
-Anyone can reuse existing Ansible Playbook in order to create a network of peers running Iroha.
-Currently, this is a solution for development and testing, in other words, a proof of concept, and cannot be used in production environment, due to some security flaws.
-For production network, a manual composing of genesis block is required.
-
-Prerequisites
-"""""""""""""
-
- * One ore more <virtual> machines with a Linux distributive installed.
- * SSH access to those machines
- * Ansible installed on a local machine
-
-Step-by-step guide
-""""""""""""""""""
-
-1. Create peers.list file in $IROHA_HOME/deploy/ansible/data
-
-2. Write all peers IP addresses followed by the internal port 10001 (e.g 31.192.120.36:10001)
-
-3. Open $IROHA_HOME/deploy/ansible/hosts file
-
-4. Write all IP addresses in [hosts] group
-
-5. Open terminal 
-
-6. Disable host key checking, because it can cause troubles due to interactive prompt
- 
-.. code-block:: shell
-
-    export ANSIBLE_HOST_KEY_CHECKING=False
-
-7. Go to ansible folder
-
-.. code-block:: shell
-
-    cd $IROHA_HOME/deploy/ansible
-
-8. Run playbook, providing your private key and hosts file
- 
-.. code-block:: shell
-
-    ansible-playbook --private-key=~/.ssh/iroha -i hosts provisioning.yml
-
-9. Wait until playbook finishes and then Iroha network is ready and up.
-
-Checking Iroha peer status
-""""""""""""""""""""""""""
-
-1. SSH into any of your machines
- 
-.. code-block:: shell
-
-    ssh -i ~/.ssh/iroha iroha@35.205.142.238
-
-2. Check Iroha container logs:
- 
-.. code-block:: shell
-
-    docker logs iroha 
+.. mdinclude:: ../../../deploy/ansible/roles/iroha-docker/README.md
 
 Dealing with troubles
 ^^^^^^^^^^^^^^^^^^^^^

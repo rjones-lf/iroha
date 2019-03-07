@@ -11,7 +11,8 @@
 #include <soci/soci.h>
 #include "ametsuchi/command_executor.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
+#include "logger/logger_manager_fwd.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -28,7 +29,8 @@ namespace iroha {
      public:
       struct SavepointWrapperImpl : public TemporaryWsv::SavepointWrapper {
         SavepointWrapperImpl(const TemporaryWsvImpl &wsv,
-                             std::string savepoint_name);
+                             std::string savepoint_name,
+                             logger::LoggerPtr log);
 
         void release() override;
 
@@ -38,7 +40,7 @@ namespace iroha {
         soci::session &sql_;
         std::string savepoint_name_;
         bool is_released_;
-        logger::Logger log_;
+        logger::LoggerPtr log_;
       };
 
       TemporaryWsvImpl(
@@ -47,7 +49,7 @@ namespace iroha {
               factory,
           std::shared_ptr<shared_model::interface::PermissionToString>
               perm_converter,
-          logger::Logger log = logger::log("TemporaryWSV"));
+          logger::LoggerManagerTreePtr log_manager);
 
       expected::Result<void, validation::CommandError> apply(
           const shared_model::interface::Transaction &transaction) override;
@@ -68,7 +70,8 @@ namespace iroha {
       std::unique_ptr<soci::session> sql_;
       std::unique_ptr<CommandExecutor> command_executor_;
 
-      logger::Logger log_;
+      logger::LoggerManagerTreePtr log_manager_;
+      logger::LoggerPtr log_;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

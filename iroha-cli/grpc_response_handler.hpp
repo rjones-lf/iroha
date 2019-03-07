@@ -6,6 +6,8 @@
 #ifndef IROHA_CLI_GRPC_RESPONSE_HANDLER_HPP
 #define IROHA_CLI_GRPC_RESPONSE_HANDLER_HPP
 
+#include "logger/logger_fwd.hpp"
+#include "logger/logger_manager_fwd.hpp"
 #include "query_response_handler.hpp"
 #include "transaction_response_handler.hpp"
 
@@ -16,8 +18,7 @@ namespace spdlog {
 namespace iroha_cli {
   class GrpcResponseHandler {
    public:
-    explicit GrpcResponseHandler(
-        logger::Logger log = logger::log("GrpcResponseHandler"));
+    explicit GrpcResponseHandler(logger::LoggerManagerTreePtr log_manager);
     /**
      * Handle iroha GRPC TxResponse
      * @param response
@@ -33,7 +34,7 @@ namespace iroha_cli {
     TransactionResponseHandler tx_handler_;
     QueryResponseHandler query_handler_;
     void handleGrpcErrors(grpc::StatusCode code);
-    std::shared_ptr<spdlog::logger> log_;
+    logger::LoggerPtr log_;
     std::unordered_map<int, std::string> handler_map_;
   };
 }  // namespace iroha_cli
