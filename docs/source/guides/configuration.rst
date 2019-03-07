@@ -60,11 +60,11 @@ Environment-specific parameters
 Logging
 -------
 
-In Iroha logging can be adjusted as granularly as you want. Each component
-has its own logging configuration with properties inherited from its parent,
-able to be overriden through config file. This means all the component loggers
-are organized in a tree with a single root. The relevant section of the
-configuration file contains the overriden values:
+In Iroha logging can be adjusted as granularly as you want.
+Each component has its own logging configuration with properties inherited from
+its parent, able to be overriden through config file.
+This means all the component loggers are organized in a tree with a single root.
+The relevant section of the configuration file contains the overriding values:
 
 .. code-block:: json
   :linenos:
@@ -94,13 +94,20 @@ configuration file contains the overriden values:
 
 Every part of this config section is optional.
 
-- ``level`` sets the verbosity. Available valies are (in decreasing verbosity
-  order): trace, debug, info, warning, error, critical.
+- ``level`` sets the verbosity.
+  Available valies are (in decreasing verbosity order):
+  - ``trace`` print everything
+  - ``debug``
+  - ``info``
+  - ``warning
+  - ``error``
+  - ``critical`` print only critical messages
 - ``patterns`` controls the formatting of each log string for different
-  verbosity levels. Each value overrides the less verbose levels too. So in the
-  example above, the "don't panic" pattern also applies to info and warning
-  levels, and the trace level pattern is the only one that is not initialized
-  in the config (it will be set to default hardcoded value).
-- ``children`` describes the overrides of child nodes. The keys are the names
-  of the components, and the values have the same syntax and semantics as the
-  root log configuration.
+  verbosity levels.
+  Each value overrides the less verbose levels too.
+  So in the example above, the "don't panic" pattern also applies to info and
+  warning levels, and the trace level pattern is the only one that is not
+  initialized in the config (it will be set to default hardcoded value).
+- ``children`` describes the overrides of child nodes.
+  The keys are the names of the components, and the values have the same syntax
+  and semantics as the root log configuration.
