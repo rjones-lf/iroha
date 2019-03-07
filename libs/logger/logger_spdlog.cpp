@@ -52,9 +52,9 @@ namespace logger {
     static LogPatterns default_patterns;
     if (not is_initialized.test_and_set()) {
       default_patterns.setPattern(
-          LogLevel::kTrace, R"([%Y-%m-%d %H:%M:%S.%F] [th:%t] [%5l] [%n]: %v)");
+          LogLevel::kTrace, R"([%Y-%m-%d %H:%M:%S.%F][th:%t][%5l][%n]: %v)");
       default_patterns.setPattern(LogLevel::kInfo,
-                                  R"([%Y-%m-%d %H:%M:%S.%F] [%L] [%n]: %v)");
+                                  R"([%Y-%m-%d %H:%M:%S.%F][%L][%n]: %v)");
     }
     return default_patterns;
   }
@@ -72,6 +72,19 @@ namespace logger {
     return getDefaultLogPatterns().getPattern(level);
   }
 
+  LogPatterns &LogPatterns::inherit(const LogPatterns &base) {
+    if (patterns_.empty()) {
+      patterns_ = base.patterns_;
+    } else {
+      for (auto it = base.patterns_.cbegin();
+           it != base.patterns_.cend() and it->first < patterns_.begin()->first;
+           ++it) {
+        patterns_.emplace(*it);
+      }
+    }
+    return *this;
+  }
+
   LoggerSpdlog::LoggerSpdlog(std::string tag, ConstLoggerConfigPtr config)
       : tag_(tag), config_(std::move(config)), logger_(getOrCreateLogger(tag)) {
     setupLogger();
@@ -83,7 +96,7 @@ namespace logger {
   }
 
   void LoggerSpdlog::logInternal(Level level, const std::string &s) const {
-    logger_->log(getSpdlogLogLevel(config_->log_level), s);
+    logger_->log(getSpdlogLogLevel(level), s);
   }
 
   bool LoggerSpdlog::shouldLog(Level level) const {
