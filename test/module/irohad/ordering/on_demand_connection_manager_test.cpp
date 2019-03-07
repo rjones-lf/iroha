@@ -83,7 +83,7 @@ TEST_F(OnDemandConnectionManagerTest, onBatches) {
 
   auto set_expect = [&](OnDemandConnectionManager::PeerType type,
                         consensus::Round round) {
-    EXPECT_CALL(*connections[type], onBatches(round, collection)).Times(1);
+    EXPECT_CALL(*connections[type], onBatches(collection)).Times(1);
   };
 
   set_expect(
@@ -94,7 +94,7 @@ TEST_F(OnDemandConnectionManagerTest, onBatches) {
   set_expect(OnDemandConnectionManager::kNextRoundCommitConsumer,
              {round.block_round + 2, kNextCommitRoundConsumer});
 
-  manager->onBatches(round, collection);
+  manager->onBatches(collection);
 }
 
 /**

@@ -53,7 +53,6 @@ class OnDemandOrderingGateTest : public ::testing::Test {
                                                cache,
                                                std::move(ufactory),
                                                tx_cache,
-                                               initial_round,
                                                getTestLogger("OrderingGate"));
   }
 
@@ -81,7 +80,7 @@ TEST_F(OnDemandOrderingGateTest, propagateBatch) {
   OdOsNotification::CollectionType collection{batch};
 
   EXPECT_CALL(*cache, addToBack(UnorderedElementsAre(batch))).Times(1);
-  EXPECT_CALL(*notification, onBatches(initial_round, collection)).Times(1);
+  EXPECT_CALL(*notification, onBatches(collection)).Times(1);
 
   ordering_gate->propagateBatch(batch);
 }
@@ -272,8 +271,7 @@ TEST_F(OnDemandOrderingGateTest, PopNonEmptyBatchesFromTheCache) {
 
   EXPECT_CALL(*cache, addToBack(UnorderedElementsAreArray(collection)))
       .Times(1);
-  EXPECT_CALL(*notification,
-              onBatches(round, UnorderedElementsAreArray(collection)))
+  EXPECT_CALL(*notification, onBatches(UnorderedElementsAreArray(collection)))
       .Times(1);
 
   rounds.get_subscriber().on_next(OnDemandOrderingGate::BlockEvent{round, {}});
@@ -291,7 +289,7 @@ TEST_F(OnDemandOrderingGateTest, PopEmptyBatchesFromTheCache) {
   EXPECT_CALL(*cache, pop()).WillOnce(Return(empty_collection));
   EXPECT_CALL(*cache, addToBack(UnorderedElementsAreArray(empty_collection)))
       .Times(1);
-  EXPECT_CALL(*notification, onBatches(_, _)).Times(0);
+  EXPECT_CALL(*notification, onBatches(_)).Times(0);
 
   rounds.get_subscriber().on_next(OnDemandOrderingGate::BlockEvent{round, {}});
 }

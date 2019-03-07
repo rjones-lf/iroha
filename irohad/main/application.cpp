@@ -362,7 +362,6 @@ void Irohad::initOrderingGate() {
                                      std::move(factory),
                                      proposal_factory,
                                      persistent_cache,
-                                     {blocks.back()->height(), 1},
                                      delay,
                                      log_manager_->getChild("Ordering"));
   log_->info("[Init] => init ordering gate - [{}]",

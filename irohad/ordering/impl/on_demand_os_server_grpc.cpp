@@ -65,8 +65,6 @@ grpc::Status OnDemandOsServerGrpc::SendBatches(
     ::grpc::ServerContext *context,
     const proto::BatchesRequest *request,
     ::google::protobuf::Empty *response) {
-  consensus::Round round{request->round().block_round(),
-                         request->round().reject_round()};
   auto transactions = deserializeTransactions(request);
 
   auto batch_candidates = batch_parser_->parseBatches(std::move(transactions));
@@ -86,7 +84,7 @@ grpc::Status OnDemandOsServerGrpc::SendBatches(
         return acc;
       });
 
-  ordering_service_->onBatches(round, std::move(batches));
+  ordering_service_->onBatches(std::move(batches));
 
   return ::grpc::Status::OK;
 }

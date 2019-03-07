@@ -73,12 +73,10 @@ class OnDemandOsTest : public ::testing::Test {
 
   /**
    * Generate transactions with provided range
-   * @param os - ordering service for insertion
    * @param range - pair of [from, to)
    */
-  void generateTransactionsAndInsert(consensus::Round round,
-                                     std::pair<uint64_t, uint64_t> range) {
-    os->onBatches(round, generateTransactions(range));
+  void generateTransactionsAndInsert(std::pair<uint64_t, uint64_t> range) {
+    os->onBatches(generateTransactions(range));
   }
 
   OnDemandOrderingService::CollectionType generateTransactions(
@@ -135,7 +133,7 @@ TEST_F(OnDemandOsTest, EmptyRound) {
  * @then  check that previous round has all transaction
  */
 TEST_F(OnDemandOsTest, NormalRound) {
-  generateTransactionsAndInsert(target_round, {1, 2});
+  generateTransactionsAndInsert({1, 2});
 
   os->onCollaborationOutcome(commit_round);
 
@@ -150,7 +148,7 @@ TEST_F(OnDemandOsTest, NormalRound) {
  * AND the rest of transactions isn't appeared in next after next round
  */
 TEST_F(OnDemandOsTest, OverflowRound) {
-  generateTransactionsAndInsert(target_round, {1, transaction_limit * 2});
+  generateTransactionsAndInsert({1, transaction_limit * 2});
 
   os->onCollaborationOutcome(commit_round);
 
@@ -181,7 +179,7 @@ TEST_F(OnDemandOsTest, DISABLED_ConcurrentInsert) {
 
   auto call = [this](auto bounds) {
     for (auto i = bounds.first; i < bounds.second; ++i) {
-      this->generateTransactionsAndInsert(target_round, {i, i + 1});
+      this->generateTransactionsAndInsert({i, i + 1});
     }
   };
 
@@ -203,7 +201,7 @@ TEST_F(OnDemandOsTest, Erase) {
   for (auto i = commit_round.block_round;
        i < commit_round.block_round + proposal_limit;
        ++i) {
-    generateTransactionsAndInsert({i + 1, commit_round.reject_round}, {1, 2});
+    generateTransactionsAndInsert({1, 2});
     os->onCollaborationOutcome({i, commit_round.reject_round});
     ASSERT_TRUE(os->onRequestProposal({i + 1, commit_round.reject_round}));
   }
@@ -211,7 +209,7 @@ TEST_F(OnDemandOsTest, Erase) {
   for (consensus::BlockRoundType i = commit_round.block_round + proposal_limit;
        i < commit_round.block_round + 2 * proposal_limit;
        ++i) {
-    generateTransactionsAndInsert({i + 1, commit_round.reject_round}, {1, 2});
+    generateTransactionsAndInsert({1, 2});
     os->onCollaborationOutcome({i, commit_round.reject_round});
     ASSERT_FALSE(os->onRequestProposal(
         {i + 1 - proposal_limit, commit_round.reject_round}));
@@ -228,7 +226,7 @@ TEST_F(OnDemandOsTest, EraseReject) {
   for (auto i = reject_round.reject_round;
        i < reject_round.reject_round + proposal_limit;
        ++i) {
-    generateTransactionsAndInsert({reject_round.block_round, i + 1}, {1, 2});
+    generateTransactionsAndInsert({1, 2});
     os->onCollaborationOutcome({reject_round.block_round, i});
     ASSERT_TRUE(os->onRequestProposal({reject_round.block_round, i + 1}));
   }
@@ -237,7 +235,7 @@ TEST_F(OnDemandOsTest, EraseReject) {
            reject_round.reject_round + proposal_limit;
        i < reject_round.reject_round + 2 * proposal_limit;
        ++i) {
-    generateTransactionsAndInsert({reject_round.block_round, i + 1}, {1, 2});
+    generateTransactionsAndInsert({1, 2});
     os->onCollaborationOutcome({reject_round.block_round, i});
     ASSERT_FALSE(os->onRequestProposal(
         {reject_round.block_round, i + 1 - proposal_limit}));
@@ -280,7 +278,7 @@ TEST_F(OnDemandOsTest, UseFactoryForProposal) {
       .WillOnce(Return(ByMove(makeMockProposal())))
       .WillOnce(Return(ByMove(makeMockProposal())));
 
-  generateTransactionsAndInsert(target_round, {1, 2});
+  generateTransactionsAndInsert({1, 2});
 
   os->onCollaborationOutcome(commit_round);
 
@@ -306,7 +304,7 @@ TEST_F(OnDemandOsTest, AlreadyProcessedProposalDiscarded) {
       .WillOnce(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
           iroha::ametsuchi::tx_cache_status_responses::Committed()}));
 
-  os->onBatches(initial_round, batches);
+  os->onBatches(batches);
 
   os->onCollaborationOutcome(commit_round);
 
@@ -328,7 +326,7 @@ TEST_F(OnDemandOsTest, PassMissingTransaction) {
       .WillOnce(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
           iroha::ametsuchi::tx_cache_status_responses::Missing()}));
 
-  os->onBatches(target_round, batches);
+  os->onBatches(batches);
 
   os->onCollaborationOutcome(commit_round);
 
@@ -360,7 +358,7 @@ TEST_F(OnDemandOsTest, SeveralTransactionsOneCommited) {
       .WillOnce(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
           iroha::ametsuchi::tx_cache_status_responses::Missing()}));
 
-  os->onBatches(target_round, batches);
+  os->onBatches(batches);
 
   os->onCollaborationOutcome(commit_round);
 

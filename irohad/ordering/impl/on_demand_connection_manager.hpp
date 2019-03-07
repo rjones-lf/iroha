@@ -62,7 +62,7 @@ namespace iroha {
 
       ~OnDemandConnectionManager() override;
 
-      void onBatches(consensus::Round round, CollectionType batches) override;
+      void onBatches(CollectionType batches) override;
 
       boost::optional<std::shared_ptr<const ProposalType>> onRequestProposal(
           consensus::Round round) override;

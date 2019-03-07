@@ -25,27 +25,25 @@ OnDemandOrderingGate::OnDemandOrderingGate(
     std::shared_ptr<cache::OrderingGateCache> cache,
     std::shared_ptr<shared_model::interface::UnsafeProposalFactory> factory,
     std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-    consensus::Round initial_round,
     logger::LoggerPtr log)
     : log_(std::move(log)),
       ordering_service_(std::move(ordering_service)),
       network_client_(std::move(network_client)),
       events_subscription_(events.subscribe([this](auto event) {
         // exclusive lock
-        std::unique_lock<std::shared_timed_mutex> lock(mutex_);
+        consensus::Round current_round_;
         visit_in_place(event,
-                       [this](const BlockEvent &block_event) {
+                       [this, &current_round_](const BlockEvent &block_event) {
                          // block committed, increment block round
                          log_->debug("BlockEvent. {}", block_event.round);
                          current_round_ = block_event.round;
                        },
-                       [this](const EmptyEvent &empty_event) {
+                       [this, &current_round_](const EmptyEvent &empty_event) {
                          // no blocks committed, increment reject round
                          log_->debug("EmptyEvent");
                          current_round_ = empty_event.round;
                        });
         log_->debug("Current: {}", current_round_);
-        lock.unlock();
 
         visit_in_place(event,
                        [this](const BlockEvent &block_event) {
@@ -61,7 +59,6 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         cache_->addToBack(batches);
         if (not batches.empty()) {
           network_client_->onBatches(
-              current_round_,
               transport::OdOsNotification::CollectionType{batches.begin(),
                                                           batches.end()});
         }
@@ -78,8 +75,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
       })),
       cache_(std::move(cache)),
       proposal_factory_(std::move(factory)),
-      tx_cache_(std::move(tx_cache)),
-      current_round_(initial_round) {}
+      tx_cache_(std::move(tx_cache)) {}
 
 OnDemandOrderingGate::~OnDemandOrderingGate() {
   events_subscription_.unsubscribe();
@@ -89,9 +85,8 @@ void OnDemandOrderingGate::propagateBatch(
     std::shared_ptr<shared_model::interface::TransactionBatch> batch) {
   cache_->addToBack({batch});
 
-  std::shared_lock<std::shared_timed_mutex> lock(mutex_);
   network_client_->onBatches(
-      current_round_, transport::OdOsNotification::CollectionType{batch});
+      transport::OdOsNotification::CollectionType{batch});
 }
 
 rxcpp::observable<network::OrderingEvent> OnDemandOrderingGate::onProposal() {

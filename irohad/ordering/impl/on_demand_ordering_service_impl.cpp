@@ -57,11 +57,10 @@ void OnDemandOrderingServiceImpl::onCollaborationOutcome(
 
 // ----------------------------| OdOsNotification |-----------------------------
 
-void OnDemandOrderingServiceImpl::onBatches(consensus::Round round,
-                                            CollectionType batches) {
+void OnDemandOrderingServiceImpl::onBatches(CollectionType batches) {
   // read lock
   std::shared_lock<std::shared_timed_mutex> guard(lock_);
-  log_->info("onBatches => collection size = {}, {}", batches.size(), round);
+  log_->info("onBatches => collection size = {}", batches.size());
 
   auto unprocessed_batches =
       boost::adaptors::filter(batches, [this](const auto &batch) {

@@ -51,7 +51,7 @@ namespace iroha {
 
       // ----------------------- | OdOsNotification | --------------------------
 
-      void onBatches(consensus::Round, CollectionType batches) override;
+      void onBatches(CollectionType batches) override;
 
       boost::optional<std::shared_ptr<const ProposalType>> onRequestProposal(
           consensus::Round round) override;

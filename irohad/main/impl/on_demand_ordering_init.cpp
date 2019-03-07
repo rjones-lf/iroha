@@ -200,7 +200,6 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
             proposal_factory,
         std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-        consensus::Round initial_round,
         std::function<std::chrono::milliseconds(
             const synchronizer::SynchronizationEvent &)> delay_func,
         const logger::LoggerManagerTreePtr &ordering_log_manager) {
@@ -246,7 +245,6 @@ namespace iroha {
           std::move(cache),
           std::move(proposal_factory),
           std::move(tx_cache),
-          initial_round,
           ordering_log_manager->getChild("Gate")->getLogger());
     }
 
@@ -286,7 +284,6 @@ namespace iroha {
             proposal_factory,
         std::shared_ptr<TransportFactoryType> proposal_transport_factory,
         std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-        consensus::Round initial_round,
         std::function<std::chrono::milliseconds(
             const synchronizer::SynchronizationEvent &)> delay_func,
         logger::LoggerManagerTreePtr ordering_log_manager) {
@@ -309,7 +306,6 @@ namespace iroha {
           std::make_shared<ordering::cache::OnDemandCache>(),
           std::move(proposal_factory),
           std::move(tx_cache),
-          initial_round,
           std::move(delay_func),
           ordering_log_manager);
     }
