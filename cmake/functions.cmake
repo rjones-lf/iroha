@@ -155,3 +155,9 @@ macro(get_git_revision commit)
       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
   )
 endmacro()
+
+macro(append_build_flags)
+  string(REPLACE ";" " " SPACE_ARGS "${ARGN}")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${SPACE_ARGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SPACE_ARGS}")
+endmacro()
