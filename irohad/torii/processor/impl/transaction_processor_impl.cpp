@@ -87,14 +87,14 @@ namespace iroha {
       // commit transactions
       commits.subscribe(
           // on next
-          [this](auto model_block) {
-            for (const auto &tx : model_block->transactions()) {
+          [this](auto block) {
+            for (const auto &tx : block->transactions()) {
               const auto &hash = tx.hash();
               log_->debug("Committed transaction: {}", hash.hex());
               this->publishStatus(TxStatusType::kCommitted, hash);
             }
             for (const auto &rejected_tx_hash :
-                 model_block->rejected_transactions_hashes()) {
+                 block->rejected_transactions_hashes()) {
               log_->debug("Rejected transaction: {}", rejected_tx_hash.hex());
               this->publishStatus(TxStatusType::kRejected, rejected_tx_hash);
             }
