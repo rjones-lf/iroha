@@ -106,6 +106,7 @@ namespace iroha {
                   chain,
                   SynchronizationOutcomeType::kCommit,
                   blocks.back()->height() > expected_height
+                      // TODO 07.03.19 andrei: IR-387 Remove reject round
                       ? consensus::Round{blocks.back()->height(), 0}
                       : msg.round,
                   std::move(*ledger_state)};
