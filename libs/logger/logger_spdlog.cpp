@@ -52,7 +52,7 @@ namespace logger {
     static LogPatterns default_patterns;
     if (not is_initialized.test_and_set()) {
       default_patterns.setPattern(
-          LogLevel::kTrace, R"([%Y-%m-%d %H:%M:%S.%F][th:%t][%7l][%n]: %v)");
+          LogLevel::kTrace, R"([%Y-%m-%d %H:%M:%S.%F][th:%t][%=7l][%n]: %v)");
       default_patterns.setPattern(LogLevel::kInfo,
                                   R"([%Y-%m-%d %H:%M:%S.%F][%L][%n]: %v)");
     }
