@@ -24,20 +24,7 @@ namespace iroha {
           log_(std::move(log)) {}
 
     bool ChainValidatorImpl::validateAndApply(
-        rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
-            blocks,
-        ametsuchi::MutableStorage &storage) const {
-      log_->info("validate chain...");
-
-      return storage.apply(
-          blocks,
-          [this](const auto &block, auto &queries, const auto &top_hash) {
-            return this->validateBlock(block, queries, top_hash);
-          });
-    }
-
-    bool ChainValidatorImpl::validateAndApply(
-        std::shared_ptr<shared_model::interface::Block> block,
+        std::shared_ptr<const shared_model::interface::Block> block,
         ametsuchi::MutableStorage &storage) const {
       log_->info("validate block...");
 

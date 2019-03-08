@@ -22,6 +22,7 @@ using ::testing::ByRef;
 using ::testing::DoAll;
 using ::testing::InvokeArgument;
 using ::testing::Pointee;
+using ::testing::Ref;
 using ::testing::Return;
 using ::testing::ReturnRefOfCopy;
 using ::testing::SaveArg;
@@ -66,9 +67,6 @@ class ChainValidationTest : public ::testing::Test {
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
   shared_model::crypto::Hash hash = shared_model::crypto::Hash("valid hash");
   std::shared_ptr<MockBlock> block = std::make_shared<MockBlock>();
-  rxcpp::observable<std::shared_ptr<shared_model::interface::Block>> blocks =
-      rxcpp::observable<>::just(
-          std::shared_ptr<shared_model::interface::Block>(block));
 };
 
 /**
@@ -84,10 +82,10 @@ TEST_F(ChainValidationTest, ValidCase) {
 
   EXPECT_CALL(*query, getLedgerPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, apply(blocks, _))
+  EXPECT_CALL(*storage, apply(Ref(*block), _))
       .WillOnce(InvokeArgument<1>(ByRef(*block), ByRef(*query), ByRef(hash)));
 
-  ASSERT_TRUE(validator->validateAndApply(blocks, *storage));
+  ASSERT_TRUE(validator->validateAndApply(block, *storage));
   ASSERT_EQ(boost::size(block->signatures()), block_signatures_amount);
 }
 
@@ -106,11 +104,11 @@ TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
 
   EXPECT_CALL(*query, getLedgerPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, apply(blocks, _))
+  EXPECT_CALL(*storage, apply(Ref(*block), _))
       .WillOnce(
           InvokeArgument<1>(ByRef(*block), ByRef(*query), ByRef(another_hash)));
 
-  ASSERT_FALSE(validator->validateAndApply(blocks, *storage));
+  ASSERT_FALSE(validator->validateAndApply(block, *storage));
 }
 
 /**
@@ -126,9 +124,9 @@ TEST_F(ChainValidationTest, FailWhenNoSupermajority) {
 
   EXPECT_CALL(*query, getLedgerPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, apply(blocks, _))
+  EXPECT_CALL(*storage, apply(Ref(*block), _))
       .WillOnce(InvokeArgument<1>(ByRef(*block), ByRef(*query), ByRef(hash)));
 
-  ASSERT_FALSE(validator->validateAndApply(blocks, *storage));
+  ASSERT_FALSE(validator->validateAndApply(block, *storage));
   ASSERT_EQ(boost::size(block->signatures()), block_signatures_amount);
 }
