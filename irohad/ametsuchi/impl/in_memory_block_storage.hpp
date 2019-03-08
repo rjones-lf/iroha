@@ -18,23 +18,25 @@ namespace iroha {
      */
     class InMemoryBlockStorage : public BlockStorage {
      public:
+      bool insert(
+          Identifier id,
+          std::shared_ptr<const shared_model::interface::Block> block) override;
+
       bool insert(Identifier id,
                   const shared_model::interface::Block &block) override;
 
-      boost::optional<std::shared_ptr<shared_model::interface::Block>> fetch(
-          Identifier id) const override;
+      boost::optional<std::shared_ptr<const shared_model::interface::Block>>
+      fetch(Identifier id) const override;
 
-      Identifier lastId() const override;
+      size_t size() const override;
 
-      void dropAll() override;
+      void clear() override;
 
-      void visit(
-          std::function<void(Identifier,
-                             std::shared_ptr<shared_model::interface::Block>)>
-              visitor) const override;
+      void forEach(FunctionType function) const override;
 
      private:
-      std::map<Identifier, std::shared_ptr<shared_model::interface::Block>>
+      std::map<Identifier,
+               std::shared_ptr<const shared_model::interface::Block>>
           block_store_;
     };
 

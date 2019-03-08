@@ -9,6 +9,6 @@
 
 using namespace iroha::ametsuchi;
 
-std::shared_ptr<BlockStorage> InMemoryBlockStorageFactory::create() {
-  return std::make_shared<InMemoryBlockStorage>();
+std::unique_ptr<BlockStorage> InMemoryBlockStorageFactory::create() {
+  return std::make_unique<InMemoryBlockStorage>();
 }

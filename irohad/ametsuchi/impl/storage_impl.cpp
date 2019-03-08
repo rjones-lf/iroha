@@ -65,7 +65,7 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
         std::shared_ptr<shared_model::interface::PermissionToString>
             perm_converter,
-        std::shared_ptr<BlockStorageFactory> block_storage_factory,
+        std::unique_ptr<BlockStorageFactory> block_storage_factory,
         size_t pool_size,
         bool enable_prepared_blocks,
         logger::LoggerManagerTreePtr log_manager)
@@ -367,7 +367,7 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
         std::shared_ptr<shared_model::interface::PermissionToString>
             perm_converter,
-        std::shared_ptr<BlockStorageFactory> block_storage_factory,
+        std::unique_ptr<BlockStorageFactory> block_storage_factory,
         logger::LoggerManagerTreePtr log_manager,
         size_t pool_size) {
       boost::optional<std::string> string_res = boost::none;
@@ -422,7 +422,7 @@ namespace iroha {
         std::unique_ptr<MutableStorage> mutable_storage) {
       auto storage = static_cast<MutableStorageImpl *>(mutable_storage.get());
 
-      storage->block_storage_->visit(
+      storage->block_storage_->forEach(
           [this](auto, const auto &block) { this->storeBlock(*block); });
       try {
         *(storage->sql_) << "COMMIT";

@@ -24,7 +24,7 @@ class InMemoryBlockStorageTest : public ::testing::Test {
 
  protected:
   void TearDown() override {
-    block_storage_.dropAll();
+    block_storage_.clear();
   }
 
   InMemoryBlockStorage block_storage_;
@@ -81,24 +81,24 @@ TEST_F(InMemoryBlockStorageTest, FetchNonexistent) {
 
 /**
  * @given initialized block storage, single block with id_ inserted
- * @when lastId is fetched
- * @then id_ is returned
+ * @when size is fetched
+ * @then 1 is returned
  */
-TEST_F(InMemoryBlockStorageTest, LastId) {
+TEST_F(InMemoryBlockStorageTest, Size) {
   ASSERT_TRUE(block_storage_.insert(id_, *block_));
 
-  ASSERT_EQ(id_, block_storage_.lastId());
+  ASSERT_EQ(1, block_storage_.size());
 }
 
 /**
  * @given initialized block storage, single block with id_ inserted
- * @when storage is cleared with dropAll
+ * @when storage is cleared with clear
  * @then no blocks are left in storage
  */
-TEST_F(InMemoryBlockStorageTest, DropAll) {
+TEST_F(InMemoryBlockStorageTest, Clear) {
   ASSERT_TRUE(block_storage_.insert(id_, *block_));
 
-  block_storage_.dropAll();
+  block_storage_.clear();
 
   auto block_var = block_storage_.fetch(id_);
 
@@ -107,15 +107,15 @@ TEST_F(InMemoryBlockStorageTest, DropAll) {
 
 /**
  * @given initialized block storage, single block with id_ inserted
- * @when visit is called
+ * @when forEach is called
  * @then block with id_ is visited, lambda is invoked once
  */
-TEST_F(InMemoryBlockStorageTest, Visit) {
+TEST_F(InMemoryBlockStorageTest, ForEach) {
   ASSERT_TRUE(block_storage_.insert(id_, *block_));
 
   size_t count = 0;
 
-  block_storage_.visit([this, &count](auto id, const auto &block) {
+  block_storage_.forEach([this, &count](auto id, const auto &block) {
     ++count;
     ASSERT_EQ(id_, id);
     ASSERT_EQ(block_copy_, block.get());

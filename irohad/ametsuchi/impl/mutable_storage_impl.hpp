@@ -30,7 +30,7 @@ namespace iroha {
           std::unique_ptr<soci::session> sql,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               factory,
-          std::shared_ptr<BlockStorage> block_storage,
+          std::unique_ptr<BlockStorage> block_storage,
           logger::LoggerManagerTreePtr log_manager);
 
       bool apply(const shared_model::interface::Block &block) override;
@@ -63,7 +63,7 @@ namespace iroha {
       std::unique_ptr<PeerQuery> peer_query_;
       std::unique_ptr<BlockIndex> block_index_;
       std::shared_ptr<CommandExecutor> command_executor_;
-      std::shared_ptr<BlockStorage> block_storage_;
+      std::unique_ptr<BlockStorage> block_storage_;
 
       bool committed;
 

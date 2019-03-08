@@ -8,17 +8,17 @@
 
 #include <memory>
 
+#include "ametsuchi/block_storage.hpp"
+
 namespace iroha {
   namespace ametsuchi {
-
-    class BlockStorage;
 
     /**
      * Creates a block storage
      */
     class BlockStorageFactory {
      public:
-      virtual std::shared_ptr<BlockStorage> create() = 0;
+      virtual std::unique_ptr<BlockStorage> create() = 0;
 
       virtual ~BlockStorageFactory() = default;
     };

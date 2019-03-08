@@ -161,7 +161,7 @@ void Irohad::initStorage() {
       std::make_shared<shared_model::proto::ProtoPermissionToString>();
   auto block_converter =
       std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
-  auto block_storage_factory = std::make_shared<InMemoryBlockStorageFactory>();
+  auto block_storage_factory = std::make_unique<InMemoryBlockStorageFactory>();
   auto storageResult = StorageImpl::create(block_store_dir_,
                                            pg_conn_,
                                            common_objects_factory_,

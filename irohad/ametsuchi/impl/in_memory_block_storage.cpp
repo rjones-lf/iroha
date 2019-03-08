@@ -5,16 +5,20 @@
 
 #include "ametsuchi/impl/in_memory_block_storage.hpp"
 
-#include "interfaces/iroha_internal/block.hpp"
-
 using namespace iroha::ametsuchi;
+
+bool InMemoryBlockStorage::insert(
+    Identifier id,
+    std::shared_ptr<const shared_model::interface::Block> block) {
+  return block_store_.emplace(id, std::move(block)).second;
+}
 
 bool InMemoryBlockStorage::insert(Identifier id,
                                   const shared_model::interface::Block &block) {
   return block_store_.emplace(id, clone(block)).second;
 }
 
-boost::optional<std::shared_ptr<shared_model::interface::Block>>
+boost::optional<std::shared_ptr<const shared_model::interface::Block>>
 InMemoryBlockStorage::fetch(Identifier id) const {
   auto it = block_store_.find(id);
   if (it != block_store_.end()) {
@@ -24,19 +28,16 @@ InMemoryBlockStorage::fetch(Identifier id) const {
   }
 }
 
-InMemoryBlockStorage::Identifier InMemoryBlockStorage::lastId() const {
-  return block_store_.rbegin()->first;
+size_t InMemoryBlockStorage::size() const {
+  return block_store_.size();
 }
 
-void InMemoryBlockStorage::dropAll() {
+void InMemoryBlockStorage::clear() {
   block_store_.clear();
 }
 
-void InMemoryBlockStorage::visit(
-    std::function<void(Identifier,
-                       std::shared_ptr<shared_model::interface::Block>)>
-        visitor) const {
+void InMemoryBlockStorage::forEach(FunctionType function) const {
   for (const auto &pair : block_store_) {
-    visitor(pair.first, pair.second);
+    function(pair.first, pair.second);
   }
 }

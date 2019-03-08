@@ -44,7 +44,7 @@ namespace iroha {
         auto converter =
             std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
         auto block_storage_factory =
-            std::make_shared<InMemoryBlockStorageFactory>();
+            std::make_unique<InMemoryBlockStorageFactory>();
         StorageImpl::create(block_store_path,
                             pgopt_,
                             factory,

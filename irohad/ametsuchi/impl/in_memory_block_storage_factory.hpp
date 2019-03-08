@@ -13,7 +13,7 @@ namespace iroha {
 
     class InMemoryBlockStorageFactory : public BlockStorageFactory {
      public:
-      std::shared_ptr<BlockStorage> create() override;
+      std::unique_ptr<BlockStorage> create() override;
     };
 
   }  // namespace ametsuchi

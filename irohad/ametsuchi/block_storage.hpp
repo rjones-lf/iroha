@@ -11,12 +11,7 @@
 #include <memory>
 
 #include <boost/optional.hpp>
-
-namespace shared_model {
-  namespace interface {
-    class Block;
-  }  // namespace interface
-}  // namespace shared_model
+#include "interfaces/iroha_internal/block.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -35,33 +30,39 @@ namespace iroha {
        * Append block with given key
        * @return true if inserted successfully, false otherwise
        */
-      virtual bool insert(Identifier id,
-                          const shared_model::interface::Block &block) = 0;
+      virtual bool insert(
+          Identifier id,
+          std::shared_ptr<const shared_model::interface::Block> block) = 0;
+
+      [[deprecated("Use shared_ptr")]] virtual bool insert(
+          Identifier id, const shared_model::interface::Block &block) = 0;
 
       /**
        * Get block associated with given identifier
        * @return block if exists, boost::none otherwise
        */
-      virtual boost::optional<std::shared_ptr<shared_model::interface::Block>>
+      virtual boost::optional<
+          std::shared_ptr<const shared_model::interface::Block>>
       fetch(Identifier id) const = 0;
 
       /**
-       * Returns last appended key
+       * Returns the size of the storage
        */
-      virtual Identifier lastId() const = 0;
+      virtual size_t size() const = 0;
 
       /**
        * Clears the contents of storage
        */
-      virtual void dropAll() = 0;
+      virtual void clear() = 0;
+
+      /// type of function which can be applied to the elements of the storage
+      using FunctionType = std::function<void(
+          Identifier, std::shared_ptr<const shared_model::interface::Block>)>;
 
       /**
        * Iterates through all the stored blocks
        */
-      virtual void visit(
-          std::function<void(Identifier,
-                             std::shared_ptr<shared_model::interface::Block>)>
-              visitor) const = 0;
+      virtual void forEach(FunctionType function) const = 0;
 
       virtual ~BlockStorage() = default;
     };

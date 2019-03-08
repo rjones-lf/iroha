@@ -54,8 +54,8 @@ class StorageInitTest : public ::testing::Test {
   std::shared_ptr<shared_model::interface::PermissionToString> perm_converter_ =
       std::make_shared<shared_model::proto::ProtoPermissionToString>();
 
-  std::shared_ptr<BlockStorageFactory> block_storage_factory_ =
-      std::make_shared<InMemoryBlockStorageFactory>();
+  std::unique_ptr<BlockStorageFactory> block_storage_factory_ =
+      std::make_unique<InMemoryBlockStorageFactory>();
 
   void SetUp() override {
     ASSERT_FALSE(boost::filesystem::exists(block_store_path))
@@ -86,7 +86,7 @@ TEST_F(StorageInitTest, CreateStorageWithDatabase) {
                       factory,
                       converter,
                       perm_converter_,
-                      block_storage_factory_,
+                      std::move(block_storage_factory_),
                       storage_log_manager_)
       .match(
           [&storage](const Value<std::shared_ptr<StorageImpl>> &value) {
@@ -116,7 +116,7 @@ TEST_F(StorageInitTest, CreateStorageWithInvalidPgOpt) {
                       factory,
                       converter,
                       perm_converter_,
-                      block_storage_factory_,
+                      std::move(block_storage_factory_),
                       storage_log_manager_)
       .match(
           [](const Value<std::shared_ptr<StorageImpl>> &) {

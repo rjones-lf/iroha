@@ -57,7 +57,7 @@ namespace iroha {
               converter,
           std::shared_ptr<shared_model::interface::PermissionToString>
               perm_converter,
-          std::shared_ptr<BlockStorageFactory> block_storage_factory,
+          std::unique_ptr<BlockStorageFactory> block_storage_factory,
           logger::LoggerManagerTreePtr log_manager,
           size_t pool_size = 10);
 
@@ -128,7 +128,7 @@ namespace iroha {
                       converter,
                   std::shared_ptr<shared_model::interface::PermissionToString>
                       perm_converter,
-                  std::shared_ptr<BlockStorageFactory> block_storage_factory,
+                  std::unique_ptr<BlockStorageFactory> block_storage_factory,
                   size_t pool_size,
                   bool enable_prepared_blocks,
                   logger::LoggerManagerTreePtr log_manager);
@@ -166,7 +166,7 @@ namespace iroha {
       std::shared_ptr<shared_model::interface::PermissionToString>
           perm_converter_;
 
-      std::shared_ptr<BlockStorageFactory> block_storage_factory_;
+      std::unique_ptr<BlockStorageFactory> block_storage_factory_;
 
       logger::LoggerManagerTreePtr log_manager_;
       logger::LoggerPtr log_;
