@@ -91,9 +91,10 @@ class SynchronizerTest : public ::testing::Test {
   }
 
   std::shared_ptr<shared_model::interface::Block> makeCommit(
+      shared_model::interface::types::HeightType height = kHeight,
       size_t time = iroha::time::now()) const {
     shared_model::proto::UnsignedWrapper<shared_model::proto::Block> block{
-        TestUnsignedBlockBuilder().height(kHeight).createdTime(time).build()};
+        TestUnsignedBlockBuilder().height(height).createdTime(time).build()};
     for (const auto &key  : ledger_peer_keys) {
       block.signAndAddSignature(key);
     }
@@ -101,7 +102,7 @@ class SynchronizerTest : public ::testing::Test {
         std::move(block).finish());
   }
 
-  const shared_model::interface::types::HeightType kHeight{5};
+  static const shared_model::interface::types::HeightType kHeight{5};
 
   std::shared_ptr<MockChainValidator> chain_validator;
   std::shared_ptr<MockMutableFactory> mutable_factory;
@@ -214,6 +215,46 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
       // Check commit block
       ASSERT_EQ(block->height(), commit_message->height());
     });
+    ASSERT_EQ(commit_event.sync_outcome, SynchronizationOutcomeType::kCommit);
+    ASSERT_TRUE(block_wrapper.validate());
+  });
+
+  gate_outcome.get_subscriber().on_next(
+      consensus::VoteOther{public_keys, hash, consensus::Round{kHeight, 1}});
+
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given A commit from consensus and initialized components
+ * @when gate have voted for other block and multiple blocks are loaded
+ * @then Successful commit
+ */
+TEST_F(SynchronizerTest, ValidWhenValidChainMultipleBlocks) {
+  DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
+      SetFactory(&createMockMutableStorage);
+
+  EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
+
+  EXPECT_CALL(*mutable_factory, commit_(_))
+      .WillOnce(Return(ByMove(std::make_unique<LedgerState>(ledger_peers))));
+  EXPECT_CALL(*chain_validator, validateAndApply(_, _))
+      .Times(2)
+      .WillRepeatedly(Return(true));
+  auto second_commit = makeCommit(kHeight + 1);
+  EXPECT_CALL(*block_loader, retrieveBlocks(_, _))
+      .WillOnce(Return(rxcpp::observable<>::iterate(
+          std::vector<std::shared_ptr<shared_model::interface::Block>>{
+              commit_message, second_commit})));
+
+  auto wrapper =
+      make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
+  wrapper.subscribe([this](auto commit_event) {
+    EXPECT_EQ(*this->ledger_peers, *commit_event.ledger_state->ledger_peers);
+    auto block_wrapper =
+        make_test_subscriber<CallExact>(commit_event.synced_blocks, 2);
+    block_wrapper.subscribe();
+    ASSERT_EQ(commit_event.round.block_round, kHeight + 1);
     ASSERT_EQ(commit_event.sync_outcome, SynchronizationOutcomeType::kCommit);
     ASSERT_TRUE(block_wrapper.validate());
   });

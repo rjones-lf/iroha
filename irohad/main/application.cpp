@@ -553,6 +553,7 @@ void Irohad::initTransactionCommandService() {
       mst_processor,
       status_bus_,
       status_factory,
+      storage->on_commit(),
       command_service_log_manager->getChild("Processor")->getLogger());
   command_service = std::make_shared<::torii::CommandServiceImpl>(
       tx_processor,
