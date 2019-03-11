@@ -40,6 +40,8 @@ namespace iroha {
         consensus::Round round;
         /// hashes of processed transactions
         cache::OrderingGateCache::HashesSetType hashes;
+
+        std::string toString() const;
       };
 
       /**
@@ -48,6 +50,8 @@ namespace iroha {
       struct EmptyEvent {
         /// next round number
         consensus::Round round;
+
+        std::string toString() const;
       };
 
       using BlockRoundEventType = boost::variant<BlockEvent, EmptyEvent>;

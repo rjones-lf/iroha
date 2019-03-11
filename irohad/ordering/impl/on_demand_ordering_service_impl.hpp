@@ -100,7 +100,7 @@ namespace iroha {
           proposal_map_;
 
       /**
-       * Proposals for current rounds
+       * Collections of batches for current and next rounds
        */
       tbb::concurrent_queue<TransactionBatchType> current_round_batches_,
           next_round_batches_;

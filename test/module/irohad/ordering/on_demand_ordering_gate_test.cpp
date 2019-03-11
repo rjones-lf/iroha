@@ -65,8 +65,7 @@ class OnDemandOrderingGateTest : public ::testing::Test {
 
   std::shared_ptr<cache::MockOrderingGateCache> cache;
 
-  const consensus::Round initial_round = {1, kFirstRejectRound},
-                         round = {2, kFirstRejectRound};
+  const consensus::Round round = {2, kFirstRejectRound};
 };
 
 /**

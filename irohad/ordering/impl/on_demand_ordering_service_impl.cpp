@@ -99,10 +99,12 @@ OnDemandOrderingServiceImpl::onRequestProposal(consensus::Round round) {
  * Get transactions from the given batches queue. Does not break batches -
  * continues getting all the transactions from the ongoing batch until the
  * required amount is collected.
+ * @tparam Lambda - type of side effect function for batches
  * @param requested_tx_amount - amount of transactions to get
  * @param tx_batches_queue - the queue to get transactions from
  * @param discarded_txs_amount - the amount of discarded txs
-
+ * @param batch_operation - side effect function to be performed on each
+ * inserted batch. Passed pointer could be modified
  * @return transactions
  */
 template <typename Lambda>
@@ -206,8 +208,8 @@ void OnDemandOrderingServiceImpl::packNextProposals(
     auto txs = get_transactions(next_round_batches_, [](auto &) {});
 
     if (not txs.empty()) {
-      generate_proposal({round.block_round, round.reject_round + 1}, txs);
-      generate_proposal({round.block_round + 1, round.reject_round}, txs);
+      generate_proposal({round.block_round, kNextRejectRoundConsumer}, txs);
+      generate_proposal({round.block_round + 1, kNextCommitRoundConsumer}, txs);
     }
   }
 }

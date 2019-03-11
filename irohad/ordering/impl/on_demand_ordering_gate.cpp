@@ -18,6 +18,20 @@
 using namespace iroha;
 using namespace iroha::ordering;
 
+std::string OnDemandOrderingGate::BlockEvent::toString() const {
+  return shared_model::detail::PrettyStringBuilder()
+      .init("BlockEvent")
+      .append(round.toString())
+      .finalize();
+}
+
+std::string OnDemandOrderingGate::EmptyEvent::toString() const {
+  return shared_model::detail::PrettyStringBuilder()
+      .init("EmptyEvent")
+      .append(round.toString())
+      .finalize();
+}
+
 OnDemandOrderingGate::OnDemandOrderingGate(
     std::shared_ptr<OnDemandOrderingService> ordering_service,
     std::shared_ptr<transport::OdOsNotification> network_client,
@@ -30,20 +44,11 @@ OnDemandOrderingGate::OnDemandOrderingGate(
       ordering_service_(std::move(ordering_service)),
       network_client_(std::move(network_client)),
       events_subscription_(events.subscribe([this](auto event) {
-        // exclusive lock
-        consensus::Round current_round_;
-        visit_in_place(event,
-                       [this, &current_round_](const BlockEvent &block_event) {
-                         // block committed, increment block round
-                         log_->debug("BlockEvent. {}", block_event.round);
-                         current_round_ = block_event.round;
-                       },
-                       [this, &current_round_](const EmptyEvent &empty_event) {
-                         // no blocks committed, increment reject round
-                         log_->debug("EmptyEvent");
-                         current_round_ = empty_event.round;
-                       });
-        log_->debug("Current: {}", current_round_);
+        consensus::Round current_round =
+            visit_in_place(event, [this, &current_round](const auto &event) {
+              log_->debug("{}", event);
+              return event.round;
+            });
 
         visit_in_place(event,
                        [this](const BlockEvent &block_event) {
@@ -64,14 +69,14 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         }
 
         // notify our ordering service about new round
-        ordering_service_->onCollaborationOutcome(current_round_);
+        ordering_service_->onCollaborationOutcome(current_round);
 
         // request proposal for the current round
         auto proposal = this->processProposalRequest(
-            network_client_->onRequestProposal(current_round_));
+            network_client_->onRequestProposal(current_round));
         // vote for the object received from the network
         proposal_notifier_.get_subscriber().on_next(
-            network::OrderingEvent{std::move(proposal), current_round_});
+            network::OrderingEvent{std::move(proposal), current_round});
       })),
       cache_(std::move(cache)),
       proposal_factory_(std::move(factory)),
