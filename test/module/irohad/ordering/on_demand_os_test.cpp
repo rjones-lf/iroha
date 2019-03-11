@@ -372,8 +372,7 @@ TEST_F(OnDemandOsTest, PassMissingTransaction) {
 /**
  * @given initialized on-demand OS
  * @when add 3 batches, with second one being already commited
- * @then 2 new batches are in a proposal and already commited batch is
- * discarded
+ * @then 2 new batches are in a proposal and already commited batch is discarded
  */
 TEST_F(OnDemandOsTest, SeveralTransactionsOneCommited) {
   auto batches = generateTransactions({1, 4});
