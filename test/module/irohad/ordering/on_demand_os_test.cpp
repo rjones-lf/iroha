@@ -197,7 +197,7 @@ TEST_F(OnDemandOsTest, DISABLED_ConcurrentInsert) {
 /**
  * @given initialized on-demand OS
  * @when  insert proposal_limit rounds twice
- * @then  on second rounds check that old proposals are expired
+ * @then  check that old proposals are expired
  */
 TEST_F(OnDemandOsTest, Erase) {
   for (auto i = commit_round.block_round;
@@ -205,7 +205,6 @@ TEST_F(OnDemandOsTest, Erase) {
        ++i) {
     generateTransactionsAndInsert({i + 1, commit_round.reject_round}, {1, 2});
     os->onCollaborationOutcome({i, commit_round.reject_round});
-    ASSERT_TRUE(os->onRequestProposal({i + 1, commit_round.reject_round}));
   }
 
   for (consensus::BlockRoundType i = commit_round.block_round + proposal_limit;
@@ -213,8 +212,24 @@ TEST_F(OnDemandOsTest, Erase) {
        ++i) {
     generateTransactionsAndInsert({i + 1, commit_round.reject_round}, {1, 2});
     os->onCollaborationOutcome({i, commit_round.reject_round});
-    ASSERT_FALSE(os->onRequestProposal(
-        {i + 1 - proposal_limit, commit_round.reject_round}));
+  }
+
+  consensus::Round last_round = {commit_round.block_round + 2 * proposal_limit,
+                                 commit_round.reject_round};
+  for (consensus::BlockRoundType i = commit_round.block_round;
+       i < commit_round.block_round + 2 * proposal_limit;
+       ++i) {
+    consensus::Round current_round = {i + 1, commit_round.reject_round};
+    auto proposal = os->onRequestProposal({i + 1, commit_round.reject_round});
+
+    if (current_round.block_round >= last_round.block_round) {
+      ASSERT_TRUE(proposal);
+    } else if (last_round.block_round - current_round.block_round - 1
+               > proposal_limit) {
+      ASSERT_FALSE(proposal);
+    } else {
+      ASSERT_TRUE(proposal);
+    }
   }
 }
 
@@ -222,7 +237,7 @@ TEST_F(OnDemandOsTest, Erase) {
  * @given initialized on-demand OS
  * @when  insert proposal_limit rounds twice
  * AND outcome is reject
- * @then  on second rounds check that old proposals are expired
+ * @then  check that old proposals are expired
  */
 TEST_F(OnDemandOsTest, EraseReject) {
   for (auto i = reject_round.reject_round;
@@ -230,7 +245,6 @@ TEST_F(OnDemandOsTest, EraseReject) {
        ++i) {
     generateTransactionsAndInsert({reject_round.block_round, i + 1}, {1, 2});
     os->onCollaborationOutcome({reject_round.block_round, i});
-    ASSERT_TRUE(os->onRequestProposal({reject_round.block_round, i + 1}));
   }
 
   for (consensus::RejectRoundType i =
@@ -239,8 +253,25 @@ TEST_F(OnDemandOsTest, EraseReject) {
        ++i) {
     generateTransactionsAndInsert({reject_round.block_round, i + 1}, {1, 2});
     os->onCollaborationOutcome({reject_round.block_round, i});
-    ASSERT_FALSE(os->onRequestProposal(
-        {reject_round.block_round, i + 1 - proposal_limit}));
+  }
+
+  consensus::Round last_round = {
+      reject_round.block_round, reject_round.reject_round + 2 * proposal_limit};
+  for (consensus::BlockRoundType i = reject_round.reject_round;
+       i < reject_round.reject_round + 2 * proposal_limit;
+       ++i) {
+    consensus::Round current_round = {
+        reject_round.block_round,
+        static_cast<iroha::consensus::RejectRoundType>(i + 1)};
+    auto proposal = os->onRequestProposal(current_round);
+    if (current_round.reject_round >= last_round.reject_round) {
+      ASSERT_TRUE(proposal);
+    } else if (last_round.reject_round - current_round.reject_round - 1
+               > proposal_limit) {
+      ASSERT_FALSE(proposal);
+    } else {
+      ASSERT_TRUE(proposal);
+    }
   }
 }
 
@@ -334,8 +365,7 @@ TEST_F(OnDemandOsTest, PassMissingTransaction) {
   auto proposal = os->onRequestProposal(target_round);
 
   // since we only sent one transaction,
-  // if the proposal is present, there is no need to check for that specific
-  // tx
+  // if the proposal is present, there is no need to check for that specific tx
   EXPECT_TRUE(proposal);
 }
 

@@ -52,7 +52,7 @@ void OnDemandOrderingServiceImpl::onCollaborationOutcome(
   log_->debug("onCollaborationOutcome => write lock is acquired");
 
   packNextProposals(round);
-  tryErase();
+  tryErase(round);
 }
 
 // ----------------------------| OdOsNotification |-----------------------------
@@ -236,8 +236,14 @@ void OnDemandOrderingServiceImpl::packNextProposals(
       {round.block_round, currentRejectRoundConsumer(round.reject_round)});
 }
 
-void OnDemandOrderingServiceImpl::tryErase() {
-  while (proposal_map_.size() > number_of_proposals_) {
+void OnDemandOrderingServiceImpl::tryErase(
+    const consensus::Round &current_round) {
+  auto current_proposal = proposal_map_.find(current_round);
+  auto proposal_range_size = boost::size(
+      boost::make_iterator_range(proposal_map_.begin(), current_proposal));
+
+  while (proposal_range_size > number_of_proposals_
+         and proposal_map_.begin()->first < current_round) {
     log_->info("tryErase: erasing {}", proposal_map_.begin()->first);
     proposal_map_.erase(proposal_map_.begin());
   }

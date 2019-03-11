@@ -69,7 +69,7 @@ namespace iroha {
        * Method removes the oldest commit or chain of the oldest rejects
        * Note: method is not thread-safe
        */
-      void tryErase();
+      void tryErase(const consensus::Round &current_round);
 
       /**
        * Check if batch was already processed by the peer
