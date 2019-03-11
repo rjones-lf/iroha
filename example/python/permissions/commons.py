@@ -77,6 +77,7 @@ def genesis_block(admin, alice, test_permissions, multidomain=False):
     """
     peer = primitive_pb2.Peer()
     peer.address = '0.0.0.0:50541'
+    # ed25519.publickey_unsafe takes and returns a bytes object, while we have hex strings
     peer.peer_key = binascii.hexlify(ed25519.publickey_unsafe(binascii.unhexlify(admin['key'])))
     commands = [
         command('AddPeer', peer=peer),
