@@ -129,13 +129,20 @@ getTransactions(size_t requested_tx_amount,
                 boost::optional<size_t &> discarded_txs_amount) {
   std::vector<std::shared_ptr<shared_model::interface::Transaction>> collection;
 
-  for (auto it = batch_collection.begin();
+  auto it = batch_collection.begin();
+  for (;
        it != batch_collection.end() and collection.size() < requested_tx_amount;
        ++it) {
-    collection.insert(
-        std::end(collection),
-        std::make_move_iterator(std::begin((*it)->transactions())),
-        std::make_move_iterator(std::end((*it)->transactions())));
+    collection.insert(std::end(collection),
+                      std::begin((*it)->transactions()),
+                      std::end((*it)->transactions()));
+  }
+
+  if (discarded_txs_amount) {
+    *discarded_txs_amount = 0;
+    for (; it != batch_collection.end(); ++it) {
+      *discarded_txs_amount += boost::size((*it)->transactions());
+    }
   }
   batch_collection.clear();
 

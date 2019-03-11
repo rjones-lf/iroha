@@ -13,6 +13,7 @@
 #include <boost/range/empty.hpp>
 #include "ametsuchi/tx_presence_cache.hpp"
 #include "common/visitor.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "logger/logger.hpp"
 #include "ordering/impl/on_demand_common.hpp"
@@ -54,7 +55,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         // notify our ordering service about new round
         ordering_service_->onCollaborationOutcome(current_round_);
 
-        this->sendTransactionsOS(event);
+        this->sendCachedTransactions(event);
 
         // request proposal for the current round
         auto proposal = this->processProposalRequest(
@@ -101,7 +102,7 @@ OnDemandOrderingGate::processProposalRequest(
   return proposal_without_replays;
 }
 
-void OnDemandOrderingGate::sendTransactionsOS(
+void OnDemandOrderingGate::sendCachedTransactions(
     const BlockRoundEventType &event) {
   visit_in_place(event,
                  [this](const BlockEvent &block_event) {
@@ -117,10 +118,15 @@ void OnDemandOrderingGate::sendTransactionsOS(
 
   // get only transactions which fit to next proposal
   auto end_iterator = batches.begin();
-  if (batches.size() > transaction_limit_) {
-    std::advance(end_iterator, transaction_limit_);
-  } else {
-    end_iterator = batches.end();
+  auto current_number_of_transactions = 0u;
+  for (auto it = end_iterator; it != batches.end(); ++it) {
+    auto batch_size = (*it)->transactions().size();
+    if (current_number_of_transactions + batch_size <= transaction_limit_) {
+      current_number_of_transactions += batch_size;
+      end_iterator = it;
+    } else {
+      break;
+    }
   }
 
   if (not batches.empty()) {

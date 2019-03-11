@@ -84,7 +84,7 @@ namespace iroha {
               std::shared_ptr<const OnDemandOrderingService::ProposalType>>
               proposal) const;
 
-      void sendTransactionsOS(const BlockRoundEventType &event);
+      void sendCachedTransactions(const BlockRoundEventType &event);
 
       /**
        * remove already processed transactions from proposal
