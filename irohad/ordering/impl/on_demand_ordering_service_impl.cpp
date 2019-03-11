@@ -234,22 +234,12 @@ void OnDemandOrderingServiceImpl::packNextProposals(
   // new reject round
   open_round(
       {round.block_round, currentRejectRoundConsumer(round.reject_round)});
-
-  std::queue<consensus::Round>{}.swap(round_queue_);
-  for (auto &item : proposal_map_) {
-    if (item.first < round) {
-      round_queue_.push(item.first);
-      log_->debug("push item {} into queue", item.first);
-    }
-  }
 }
 
 void OnDemandOrderingServiceImpl::tryErase() {
-  while (round_queue_.size() > number_of_proposals_) {
-    auto &round = round_queue_.front();
-    proposal_map_.erase(round);
-    log_->info("tryErase: erased {}", round);
-    round_queue_.pop();
+  while (proposal_map_.size() > number_of_proposals_) {
+    log_->info("tryErase: erasing {}", proposal_map_.begin()->first);
+    proposal_map_.erase(proposal_map_.begin());
   }
 }
 

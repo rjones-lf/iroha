@@ -88,11 +88,6 @@ namespace iroha {
       size_t number_of_proposals_;
 
       /**
-       * Queue which holds all rounds in linear order
-       */
-      std::queue<consensus::Round> round_queue_;
-
-      /**
        * Map of available proposals
        */
       std::map<consensus::Round, std::shared_ptr<const ProposalType>>
