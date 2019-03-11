@@ -5,7 +5,6 @@
 
 #include "consensus/yac/yac.hpp"
 
-#include <algorithm>
 #include <utility>
 
 #include "common/bind.hpp"
@@ -44,36 +43,23 @@ namespace iroha {
           std::shared_ptr<YacCryptoProvider> crypto,
           std::shared_ptr<Timer> timer,
           ClusterOrdering order,
-          std::vector<std::shared_ptr<shared_model::interface::Peer>> peers,
           logger::LoggerPtr log) {
-        return std::make_shared<Yac>(vote_storage,
-                                     network,
-                                     crypto,
-                                     timer,
-                                     order,
-                                     std::move(peers),
-                                     std::move(log));
+        return std::make_shared<Yac>(
+            vote_storage, network, crypto, timer, order, std::move(log));
       }
 
-      Yac::Yac(
-          YacVoteStorage vote_storage,
-          std::shared_ptr<YacNetwork> network,
-          std::shared_ptr<YacCryptoProvider> crypto,
-          std::shared_ptr<Timer> timer,
-          ClusterOrdering order,
-          std::vector<std::shared_ptr<shared_model::interface::Peer>> peers,
-          logger::LoggerPtr log)
+      Yac::Yac(YacVoteStorage vote_storage,
+               std::shared_ptr<YacNetwork> network,
+               std::shared_ptr<YacCryptoProvider> crypto,
+               std::shared_ptr<Timer> timer,
+               ClusterOrdering order,
+               logger::LoggerPtr log)
           : vote_storage_(std::move(vote_storage)),
             network_(std::move(network)),
             crypto_(std::move(crypto)),
             timer_(std::move(timer)),
             cluster_order_(order),
-            log_(std::move(log)) {
-        std::transform(std::make_move_iterator(peers.begin()),
-                       std::make_move_iterator(peers.end()),
-                       std::back_inserter(peer_keys_),
-                       [](auto &&peer) { return std::move(peer)->pubkey(); });
-      }
+            log_(std::move(log)) {}
 
       // ------|Hash gate|------
 
@@ -95,18 +81,42 @@ namespace iroha {
 
       // ------|Network notifications|------
 
+      template <typename T, typename P>
+      void removeMatching(std::vector<T> &target, const P &predicate) {
+        target.erase(std::remove_if(target.begin(), target.end(), predicate),
+                     target.end());
+      }
+
+      template <typename T>
+      bool contains(const std::vector<T> &haystack, const T &needle) {
+        return std::find(haystack.begin(), haystack.end(), needle)
+            != haystack.end();
+      }
+
       void Yac::onState(std::vector<VoteMessage> state) {
         std::lock_guard<std::mutex> guard(mutex_);
-        state.erase(std::remove_if(state.begin(),
-                                   state.end(),
-                                   [this](const VoteMessage &vote) {
-                                     return std::find(
-                                                this->peer_keys_.begin(),
-                                                this->peer_keys_.end(),
-                                                vote.signature->publicKey())
-                                         == this->peer_keys_.end();
-                                   }),
-                    state.end());
+
+        std::vector<shared_model::crypto::PublicKey> peer_keys;
+        peer_keys.reserve(cluster_order_.getNumberOfPeers());
+        for (const auto &peer : cluster_order_.getPeers()) {
+          peer_keys.push_back(peer->pubkey());
+        }
+
+        removeMatching(
+            state,
+            [peer_keys = std::move(peer_keys), this](const VoteMessage &vote) {
+              if (not contains(peer_keys, vote.signature->publicKey())) {
+                log_->warn("Got a vote from an unknown peer: {}", vote);
+                return true;
+              }
+              return false;
+            });
+
+        if (state.empty()) {
+          log_->debug("No votes left in the message.");
+          return;
+        }
+
         if (crypto_->verify(state)) {
           applyState(state);
         } else {

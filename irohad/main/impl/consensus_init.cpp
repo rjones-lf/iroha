@@ -40,7 +40,6 @@ namespace {
 
   std::shared_ptr<Yac> createYac(
       ClusterOrdering initial_order,
-      std::vector<std::shared_ptr<shared_model::interface::Peer>> peers,
       const shared_model::crypto::Keypair &keypair,
       std::shared_ptr<Timer> timer,
       std::shared_ptr<YacNetwork> network,
@@ -58,7 +57,6 @@ namespace {
         createCryptoProvider(keypair, std::move(common_objects_factory)),
         std::move(timer),
         initial_order,
-        std::move(peers),
         consensus_log_manager->getChild("HashGate")->getLogger());
   }
 }  // namespace
@@ -108,17 +106,12 @@ namespace iroha {
           ConsistencyModel consistency_model,
           const logger::LoggerManagerTreePtr &consensus_log_manager) {
         auto peer_orderer = createPeerOrderer(peer_query_factory);
-        auto peers = peer_query_factory->createPeerQuery()
-                         .value()
-                         ->getLedgerPeers()
-                         .value();
 
         consensus_network_ = std::make_shared<NetworkImpl>(
             async_call,
             consensus_log_manager->getChild("Network")->getLogger());
 
         auto yac = createYac(peer_orderer->getInitialOrdering().value(),
-                             std::move(peers),
                              keypair,
                              createTimer(vote_delay_milliseconds),
                              consensus_network_,

@@ -121,7 +121,6 @@ class ConsensusSunnyDayTest : public ::testing::Test {
         crypto,
         timer,
         order.value(),
-        default_peers,
         getTestLogger("Yac"));
     network->subscribe(yac);
 

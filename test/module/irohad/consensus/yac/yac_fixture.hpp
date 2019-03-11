@@ -70,7 +70,6 @@ namespace iroha {
               crypto,
               timer,
               ordering,
-              default_peers,
               getTestLogger("Yac"));
           network->subscribe(yac);
         }
