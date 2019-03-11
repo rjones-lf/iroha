@@ -438,10 +438,11 @@ namespace iroha {
                                 factory_,
                                 log_manager_->getChild("WsvQuery")->getLogger())
                    .getPeers()
-            | [](auto &&peers) {
+            | [this](auto &&peers) {
                 return boost::optional<std::unique_ptr<LedgerState>>(
                     std::make_unique<LedgerState>(
-                        std::make_shared<PeerList>(std::move(peers))));
+                        std::make_shared<PeerList>(std::move(peers)),
+                        this->getBlockQuery()->getTopBlockHeight()));
               };
       } catch (std::exception &e) {
         storage->committed = false;
@@ -484,7 +485,8 @@ namespace iroha {
           if (this->storeBlock(block)) {
             return boost::optional<std::unique_ptr<LedgerState>>(
                 std::make_unique<LedgerState>(
-                    std::make_shared<PeerList>(std::move(peers))));
+                    std::make_shared<PeerList>(std::move(peers)),
+                    this->getBlockQuery()->getTopBlockHeight()));
           }
           return boost::none;
         };

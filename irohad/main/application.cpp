@@ -692,7 +692,6 @@ Irohad::RunResult Irohad::run() {
 
             ordering_init.sync_event_notifier.get_subscriber().on_next(
                 synchronizer::SynchronizationEvent{
-                    rxcpp::observable<>::just(block),
                     SynchronizationOutcomeType::kCommit,
                     {block->height(), ordering::kFirstRejectRound}});
             return {};
