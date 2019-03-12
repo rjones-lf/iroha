@@ -259,13 +259,16 @@ TEST_F(OnDemandOrderingGateTest, ReplayedTransactionInProposal) {
  * @then batch1 and batch2 are propagated to network
  */
 TEST_F(OnDemandOrderingGateTest, PopNonEmptyBatchesFromTheCache) {
-  // prepare hashes for mock batches
+  // prepare internals of mock batches
   shared_model::interface::types::HashType hash1("hash1");
+  auto tx1 = createMockTransactionWithHash(hash1);
+
   shared_model::interface::types::HashType hash2("hash2");
+  auto tx2 = createMockTransactionWithHash(hash2);
 
   // prepare batches
-  auto batch1 = createMockBatchWithHash(hash1);
-  auto batch2 = createMockBatchWithHash(hash2);
+  auto batch1 = createMockBatchWithTransactions({tx1}, "a");
+  auto batch2 = createMockBatchWithTransactions({tx2}, "b");
 
   cache::OrderingGateCache::BatchesSetType collection{batch1, batch2};
 
