@@ -47,7 +47,7 @@ if (EXISTS "${PROJECT_SOURCE_DIR}/.git")
     # Get pretty version
     execute_process(COMMAND
         "${GIT_EXECUTABLE}"
-        describe --tags
+        describe --tags --always
         WORKING_DIRECTORY
         "${PROJECT_SOURCE_DIR}"
         RESULT_VARIABLE
