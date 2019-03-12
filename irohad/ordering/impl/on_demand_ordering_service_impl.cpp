@@ -111,7 +111,8 @@ template <typename Lambda>
 static std::vector<std::shared_ptr<shared_model::interface::Transaction>>
 getTransactions(size_t requested_tx_amount,
                 detail::BatchSetType &batch_collection,
-                boost::optional<size_t &> discarded_txs_amount) {
+                boost::optional<size_t &> discarded_txs_amount,
+                Lambda batch_operation) {
   std::vector<std::shared_ptr<shared_model::interface::Transaction>> collection;
 
   auto it = batch_collection.begin();
@@ -121,7 +122,7 @@ getTransactions(size_t requested_tx_amount,
     collection.insert(std::end(collection),
                       std::begin((*it)->transactions()),
                       std::end((*it)->transactions()));
-    batch_operation(batch);
+    batch_operation(*it);
   }
 
   if (discarded_txs_amount) {
