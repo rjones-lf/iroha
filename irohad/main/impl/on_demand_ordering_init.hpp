@@ -83,7 +83,7 @@ namespace iroha {
        * parameters
        */
       auto createService(
-          size_t max_size,
+          size_t max_number_of_transactions,
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               proposal_factory,
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
@@ -99,7 +99,7 @@ namespace iroha {
       /**
        * Initializes on-demand ordering gate and ordering sevice components
        *
-       * @param max_size maximum number of transaction in a proposal
+       * @param max_number_of_transactions maximum number of transaction in a proposal
        * @param delay timeout for ordering service response on proposal request
        * @param initial_hashes seeds for peer list permutations for first k
        * rounds they are required since hash of block i defines round i + k
@@ -120,7 +120,7 @@ namespace iroha {
        * @return initialized ordering gate
        */
       std::shared_ptr<network::OrderingGate> initOrderingGate(
-          size_t max_size,
+          size_t max_number_of_transactions,
           std::chrono::milliseconds delay,
           std::vector<shared_model::interface::types::HashType> initial_hashes,
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
