@@ -39,6 +39,7 @@ services:
       - psql_storage-{{ node.human_hostname }}:/var/lib/postgresql/data
     networks:
       - iroha-db-net
+    command: -c max_prepared_transactions=100
 
 {% endfor %}
 

@@ -59,8 +59,13 @@
     name: "{{ iroha_network_name }}"
   when: not overlay_network
 
+- name: pull Iroha
+  command: docker-compose pull
+  args:
+    chdir: "{{ deploy_dir }}"
+  changed_when: False
+
 - name: run Iroha
   docker_service:
     project_src: "{{ deploy_dir }}"
     project_name: ansible_iroha
-    pull: yes
