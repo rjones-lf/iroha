@@ -103,10 +103,14 @@ namespace iroha {
             auto ledger_state = mutable_factory_->commit(std::move(storage));
 
             if (ledger_state) {
-              return SynchronizationEvent{chain,
-                                          SynchronizationOutcomeType::kCommit,
-                                          msg.round,
-                                          std::move(*ledger_state)};
+              return SynchronizationEvent{
+                  chain,
+                  SynchronizationOutcomeType::kCommit,
+                  blocks.back()->height() > expected_height
+                      // TODO 07.03.19 andrei: IR-387 Remove reject round
+                      ? consensus::Round{blocks.back()->height(), 0}
+                      : msg.round,
+                  std::move(*ledger_state)};
             } else {
               return boost::none;
             }

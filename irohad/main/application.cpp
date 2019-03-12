@@ -362,7 +362,6 @@ void Irohad::initOrderingGate() {
                                      std::move(factory),
                                      proposal_factory,
                                      persistent_cache,
-                                     {blocks.back()->height(), 1},
                                      delay,
                                      log_manager_->getChild("Ordering"));
   log_->info("[Init] => init ordering gate - [{}]",
@@ -553,6 +552,7 @@ void Irohad::initTransactionCommandService() {
       mst_processor,
       status_bus_,
       status_factory,
+      storage->on_commit(),
       command_service_log_manager->getChild("Processor")->getLogger());
   command_service = std::make_shared<::torii::CommandServiceImpl>(
       tx_processor,

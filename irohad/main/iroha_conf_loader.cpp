@@ -196,7 +196,7 @@ void getVal<logger::LoggerManagerTreePtr>(const std::string &path,
                                           const rapidjson::Value &src) {
   assert_fatal(src.IsObject(), path + " must be a logger tree config");
   logger::LoggerConfig root_config{logger::kDefaultLogLevel,
-                                   logger::getDefaultLogPatterns()};
+                                   logger::LogPatterns{}};
   updateLoggerConfig(path, root_config, src.GetObject());
   dest = std::make_shared<logger::LoggerManagerTree>(
       std::make_shared<const logger::LoggerConfig>(std::move(root_config)));

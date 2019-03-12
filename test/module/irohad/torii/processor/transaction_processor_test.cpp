@@ -43,8 +43,6 @@ class TransactionProcessorTest : public ::testing::Test {
     pcs = std::make_shared<MockPeerCommunicationService>();
     mst = std::make_shared<MockMstProcessor>(getTestLogger("MstProcessor"));
 
-    EXPECT_CALL(*pcs, on_commit())
-        .WillRepeatedly(Return(commit_notifier.get_observable()));
     EXPECT_CALL(*pcs, onVerifiedProposal())
         .WillRepeatedly(Return(verified_prop_notifier.get_observable()));
 
@@ -61,6 +59,7 @@ class TransactionProcessorTest : public ::testing::Test {
         mst,
         status_bus,
         std::make_shared<shared_model::proto::ProtoTxStatusFactory>(),
+        commit_notifier.get_observable(),
         getTestLogger("TransactionProcessor"));
   }
 
@@ -125,6 +124,10 @@ class TransactionProcessorTest : public ::testing::Test {
       mst_update_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_prepared_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_expired_notifier;
+  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
+      commit_notifier;
+  rxcpp::subjects::subject<simulator::VerifiedProposalCreatorEvent>
+      verified_prop_notifier;
 
   std::shared_ptr<MockPeerCommunicationService> pcs;
   std::shared_ptr<MockStatusBus> status_bus;
@@ -135,10 +138,6 @@ class TransactionProcessorTest : public ::testing::Test {
   shared_model::builder::TransactionStatusBuilder<
       shared_model::proto::TransactionStatusBuilder>
       status_builder;
-
-  rxcpp::subjects::subject<SynchronizationEvent> commit_notifier;
-  rxcpp::subjects::subject<simulator::VerifiedProposalCreatorEvent>
-      verified_prop_notifier;
 
   consensus::Round round;
   const size_t proposal_size = 5;
@@ -317,13 +316,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
   auto block = TestBlockBuilder().transactions(txs).build();
 
   // 2. Create block and notify transaction processor about it
-  SynchronizationEvent commit_event{
-      rxcpp::observable<>::just(
-          std::shared_ptr<shared_model::interface::Block>(clone(block))),
-      SynchronizationOutcomeType::kCommit,
-      {},
-      {}};
-  commit_notifier.get_subscriber().on_next(commit_event);
+  commit_notifier.get_subscriber().on_next(
+      std::shared_ptr<shared_model::interface::Block>(clone(block)));
 
   SCOPED_TRACE("Committed status verification");
   validateStatuses<shared_model::interface::CommittedTxResponse>(txs);
@@ -405,13 +399,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
                        }))
                    .build();
 
-  SynchronizationEvent commit_event{
-      rxcpp::observable<>::just(
-          std::shared_ptr<shared_model::interface::Block>(clone(block))),
-      SynchronizationOutcomeType::kCommit,
-      {},
-      {}};
-  commit_notifier.get_subscriber().on_next(commit_event);
+  commit_notifier.get_subscriber().on_next(
+      std::shared_ptr<shared_model::interface::Block>(clone(block)));
 
   {
     SCOPED_TRACE("Rejected status verification");

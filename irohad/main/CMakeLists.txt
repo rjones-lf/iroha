@@ -66,6 +66,7 @@ target_link_libraries(irohad
     iroha_conf_loader
     logger
     logger_manager
+    irohad_version
     )
 
 add_library(iroha_conf_loader iroha_conf_loader.cpp)

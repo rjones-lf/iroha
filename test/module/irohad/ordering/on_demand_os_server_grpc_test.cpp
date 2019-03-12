@@ -64,8 +64,8 @@ struct OnDemandOsServerGrpcTest : public ::testing::Test {
 /**
  * Separate action required because CollectionType is non-copyable
  */
-ACTION_P(SaveArg1Move, var) {
-  *var = std::move(arg1);
+ACTION_P(SaveArg0Move, var) {
+  *var = std::move(arg0);
 }
 
 /**
@@ -93,11 +93,8 @@ TEST_F(OnDemandOsServerGrpcTest, SendBatches) {
                             shared_model::interface::TransactionBatchImpl>(
                             cand));
                   }));
-  EXPECT_CALL(*notification, onBatches(round, _))
-      .WillOnce(SaveArg1Move(&collection));
+  EXPECT_CALL(*notification, onBatches(_)).WillOnce(SaveArg0Move(&collection));
   proto::BatchesRequest request;
-  request.mutable_round()->set_block_round(round.block_round);
-  request.mutable_round()->set_reject_round(round.reject_round);
   request.add_transactions()
       ->mutable_payload()
       ->mutable_reduced_payload()

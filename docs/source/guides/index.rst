@@ -11,3 +11,4 @@ Guides and how-tos
     libraries.rst
     dependencies.rst
     k8s-deployment.rst
+    sec-install.rst

@@ -18,6 +18,12 @@
 #include "interfaces/common_objects/peer.hpp"
 #include "logger/logger.hpp"
 
+// TODO: 2019-03-04 @muratovv refactor std::vector<VoteMessage> with a
+// separate class IR-374
+auto &getRound(const std::vector<iroha::consensus::yac::VoteMessage> &state) {
+  return state.at(0).hash.vote_round;
+}
+
 namespace iroha {
   namespace consensus {
     namespace yac {
@@ -137,55 +143,77 @@ namespace iroha {
         // TODO 10.06.2018 andrei: IR-1407 move YAC propagation strategy to a
         // separate entity
 
-        answer | [&](const auto &answer) {
-          auto &proposal_round = state.at(0).hash.vote_round;
+        iroha::match_in_place(
+            answer,
+            [&](const auto &answer) {
+              auto &proposal_round = getRound(state);
 
-          /*
-           * It is possible that a new peer with an outdated peers list may
-           * collect an outcome from a smaller number of peers which are
-           * included in set of `f` peers in the system. The new peer will not
-           * accept our message with valid supermajority because he cannot apply
-           * votes from unknown peers.
-           */
-          if (state.size() > 1) {
-            // some peer has already collected commit/reject, so it is sent
-            if (vote_storage_.getProcessingState(proposal_round)
-                == ProposalState::kNotSentNotProcessed) {
-              vote_storage_.nextProcessingState(proposal_round);
-              log_->info(
-                  "Received supermajority of votes for {}, skip propagation",
-                  proposal_round);
-            }
-          }
-
-          auto processing_state =
-              vote_storage_.getProcessingState(proposal_round);
-
-          auto votes = [](const auto &state) { return state.votes; };
-
-          switch (processing_state) {
-            case ProposalState::kNotSentNotProcessed:
-              vote_storage_.nextProcessingState(proposal_round);
-              log_->info("Propagate state {} to whole network", proposal_round);
-              this->propagateState(visit_in_place(answer, votes));
-              break;
-            case ProposalState::kSentNotProcessed:
-              vote_storage_.nextProcessingState(proposal_round);
-              log_->info("Pass outcome for {} to pipeline", proposal_round);
-              this->closeRound();
-              notifier_.get_subscriber().on_next(answer);
-              break;
-            case ProposalState::kSentProcessed:
-              if (state.size() == 1) {
-                this->findPeer(state.at(0)) | [&](const auto &from) {
-                  log_->info("Propagate state {} directly to {}",
-                             proposal_round,
-                             from->address());
-                  this->propagateStateDirectly(*from,
-                                               visit_in_place(answer, votes));
-                };
+              /*
+               * It is possible that a new peer with an outdated peers list may
+               * collect an outcome from a smaller number of peers which are
+               * included in set of `f` peers in the system. The new peer will
+               * not accept our message with valid supermajority because he
+               * cannot apply votes from unknown peers.
+               */
+              if (state.size() > 1) {
+                // some peer has already collected commit/reject, so it is sent
+                if (vote_storage_.getProcessingState(proposal_round)
+                    == ProposalState::kNotSentNotProcessed) {
+                  vote_storage_.nextProcessingState(proposal_round);
+                  log_->info(
+                      "Received supermajority of votes for {}, skip "
+                      "propagation",
+                      proposal_round);
+                }
               }
-              break;
+
+              auto processing_state =
+                  vote_storage_.getProcessingState(proposal_round);
+
+              auto votes = [](const auto &state) { return state.votes; };
+
+              switch (processing_state) {
+                case ProposalState::kNotSentNotProcessed:
+                  vote_storage_.nextProcessingState(proposal_round);
+                  log_->info("Propagate state {} to whole network",
+                             proposal_round);
+                  this->propagateState(visit_in_place(answer, votes));
+                  break;
+                case ProposalState::kSentNotProcessed:
+                  vote_storage_.nextProcessingState(proposal_round);
+                  log_->info("Pass outcome for {} to pipeline", proposal_round);
+                  this->closeRound();
+                  notifier_.get_subscriber().on_next(answer);
+                  break;
+                case ProposalState::kSentProcessed:
+                  this->tryPropagateBack(state);
+                  break;
+              }
+            },
+            // sent a state which didn't match with current one
+            [&]() { this->tryPropagateBack(state); });
+      }
+
+      void Yac::tryPropagateBack(const std::vector<VoteMessage> &state) {
+        // yac back propagation will work only if another peer is in
+        // propagation stage because if peer sends list of votes this means that
+        // state is already committed
+        if (state.size() != 1) {
+          return;
+        }
+
+        vote_storage_.getLastFinalizedRound() | [&](const auto &last_round) {
+          if (getRound(state) <= last_round) {
+            vote_storage_.getState(last_round) | [&](const auto &last_state) {
+              this->findPeer(state.at(0)) | [&](const auto &from) {
+                log_->info("Propagate state {} directly to {}",
+                           last_round,
+                           from->address());
+                auto votes = [](const auto &state) { return state.votes; };
+                this->propagateStateDirectly(*from,
+                                             visit_in_place(last_state, votes));
+              };
+            };
           }
         };
       }

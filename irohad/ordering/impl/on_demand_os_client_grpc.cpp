@@ -31,11 +31,8 @@ OnDemandOsClientGrpc::OnDemandOsClientGrpc(
       time_provider_(std::move(time_provider)),
       proposal_request_timeout_(proposal_request_timeout) {}
 
-void OnDemandOsClientGrpc::onBatches(consensus::Round round,
-                                     CollectionType batches) {
+void OnDemandOsClientGrpc::onBatches(CollectionType batches) {
   proto::BatchesRequest request;
-  request.mutable_round()->set_block_round(round.block_round);
-  request.mutable_round()->set_reject_round(round.reject_round);
   for (auto &batch : batches) {
     for (auto &transaction : batch->transactions()) {
       *request.add_transactions() = std::move(

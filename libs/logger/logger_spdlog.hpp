@@ -38,6 +38,9 @@ namespace logger {
      */
     std::string getPattern(LogLevel level) const;
 
+    /// Inherit missing level overrides from another patterns
+    LogPatterns &inherit(const LogPatterns &base);
+
    private:
     std::map<LogLevel, std::string> patterns_;
   };
