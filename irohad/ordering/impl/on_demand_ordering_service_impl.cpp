@@ -242,10 +242,11 @@ void OnDemandOrderingServiceImpl::tryErase(
   auto proposal_range_size = boost::size(
       boost::make_iterator_range(proposal_map_.begin(), current_proposal));
 
-  while (proposal_range_size > number_of_proposals_
-         and proposal_map_.begin()->first < current_round) {
+  while (proposal_range_size > number_of_proposals_) {
+    BOOST_ASSERT(proposal_map_.begin()->first < current_round);
     log_->info("tryErase: erasing {}", proposal_map_.begin()->first);
     proposal_map_.erase(proposal_map_.begin());
+    --proposal_range_size;
   }
 }
 
