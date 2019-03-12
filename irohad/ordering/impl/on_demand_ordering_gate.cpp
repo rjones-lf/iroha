@@ -119,11 +119,10 @@ void OnDemandOrderingGate::sendCachedTransactions(
   // get only transactions which fit to next proposal
   auto end_iterator = batches.begin();
   auto current_number_of_transactions = 0u;
-  for (auto it = end_iterator; it != batches.end(); ++it) {
-    auto batch_size = (*it)->transactions().size();
+  for (; end_iterator != batches.end(); ++end_iterator) {
+    auto batch_size = (*end_iterator)->transactions().size();
     if (current_number_of_transactions + batch_size <= transaction_limit_) {
       current_number_of_transactions += batch_size;
-      end_iterator = it;
     } else {
       break;
     }
