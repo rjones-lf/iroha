@@ -20,20 +20,27 @@ namespace iroha {
 
       inline std::shared_ptr<shared_model::interface::Peer> makePeer(
           const std::string &address) {
-        auto key = std::string(32, '0');
-        std::copy(address.begin(), address.end(), key.begin());
         auto peer = std::make_shared<MockPeer>();
         EXPECT_CALL(*peer, address())
             .WillRepeatedly(::testing::ReturnRefOfCopy(address));
         EXPECT_CALL(*peer, pubkey())
             .WillRepeatedly(::testing::ReturnRefOfCopy(
-                shared_model::interface::types::PubkeyType(key)));
-
+                shared_model::interface::types::PubkeyType(address)));
         return peer;
       }
 
       inline VoteMessage createVote(YacHash hash, const std::string &pub_key) {
         VoteMessage vote;
+
+        auto block_signature = std::make_shared<MockSignature>();
+        EXPECT_CALL(*block_signature, publicKey())
+            .WillRepeatedly(::testing::ReturnRefOfCopy(
+                shared_model::crypto::PublicKey(pub_key)));
+        EXPECT_CALL(*block_signature, signedData())
+            .WillRepeatedly(::testing::ReturnRefOfCopy(
+                shared_model::crypto::Signed(pub_key)));
+        hash.block_signature = block_signature;
+        vote.hash = std::move(hash);
 
         auto signature = std::make_shared<MockSignature>();
         EXPECT_CALL(*signature, publicKey())
@@ -43,9 +50,7 @@ namespace iroha {
             .WillRepeatedly(::testing::ReturnRefOfCopy(
                 shared_model::crypto::Signed(pub_key)));
 
-        hash.block_signature = signature;
-        vote.hash = std::move(hash);
-        vote.signature = createSig(pub_key);
+        vote.signature = signature;
         return vote;
       }
 

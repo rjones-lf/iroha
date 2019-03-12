@@ -40,6 +40,8 @@ namespace iroha {
         consensus::Round round;
         /// hashes of processed transactions
         cache::OrderingGateCache::HashesSetType hashes;
+
+        std::string toString() const;
       };
 
       /**
@@ -48,6 +50,8 @@ namespace iroha {
       struct EmptyEvent {
         /// next round number
         consensus::Round round;
+
+        std::string toString() const;
       };
 
       using BlockRoundEventType = boost::variant<BlockEvent, EmptyEvent>;
@@ -62,7 +66,6 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               factory,
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-          consensus::Round initial_round,
           size_t transaction_limit,
           logger::LoggerPtr log);
 
@@ -104,9 +107,7 @@ namespace iroha {
           proposal_factory_;
       std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache_;
 
-      consensus::Round current_round_;
       rxcpp::subjects::subject<network::OrderingEvent> proposal_notifier_;
-      mutable std::shared_timed_mutex mutex_;
     };
 
   }  // namespace ordering

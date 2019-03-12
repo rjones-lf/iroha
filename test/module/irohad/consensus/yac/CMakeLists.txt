@@ -94,3 +94,9 @@ target_link_libraries(buffered_cleanup_strategy_test
     yac
     consensus_round
     )
+
+addtest(yac_synchronization_test yac_synchronization_test.cpp)
+target_link_libraries(yac_synchronization_test
+    yac
+    test_logger
+    )

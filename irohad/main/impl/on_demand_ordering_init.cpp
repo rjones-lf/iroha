@@ -200,7 +200,6 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
             proposal_factory,
         std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-        consensus::Round initial_round,
         std::function<std::chrono::milliseconds(
             const synchronizer::SynchronizationEvent &)> delay_func,
         size_t max_number_of_transactions,
@@ -247,7 +246,6 @@ namespace iroha {
           std::move(cache),
           std::move(proposal_factory),
           std::move(tx_cache),
-          initial_round,
           max_number_of_transactions,
           ordering_log_manager->getChild("Gate")->getLogger());
     }
@@ -288,12 +286,13 @@ namespace iroha {
             proposal_factory,
         std::shared_ptr<TransportFactoryType> proposal_transport_factory,
         std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-        consensus::Round initial_round,
         std::function<std::chrono::milliseconds(
             const synchronizer::SynchronizationEvent &)> delay_func,
         logger::LoggerManagerTreePtr ordering_log_manager) {
-      auto ordering_service = createService(
-          max_number_of_transactions, proposal_factory, tx_cache, ordering_log_manager);
+      auto ordering_service = createService(max_number_of_transactions,
+                                            proposal_factory,
+                                            tx_cache,
+                                            ordering_log_manager);
       service = std::make_shared<ordering::transport::OnDemandOsServerGrpc>(
           ordering_service,
           std::move(transaction_factory),
@@ -311,7 +310,6 @@ namespace iroha {
           std::make_shared<ordering::cache::OnDemandCache>(),
           std::move(proposal_factory),
           std::move(tx_cache),
-          initial_round,
           std::move(delay_func),
           max_number_of_transactions,
           ordering_log_manager);

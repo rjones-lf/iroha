@@ -137,7 +137,7 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyVote) {
       .WillRepeatedly(Return(true));
   std::vector<std::vector<VoteMessage>> messages;
   EXPECT_CALL(*network, sendState(_, _))
-      .Times(default_peers.size())
+      .Times(default_peers.size() + 1)
       .WillRepeatedly(Invoke(
           [&](const auto &, const auto &msg) { messages.push_back(msg); }));
 
@@ -154,7 +154,7 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyVote) {
   }
 
   // verify that on_commit subscribers are notified
-  ASSERT_EQ(default_peers.size() + 1, messages.size());
+  ASSERT_EQ(default_peers.size() + 2, messages.size());
 }
 
 /**

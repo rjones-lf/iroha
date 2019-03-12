@@ -40,10 +40,8 @@ OnDemandConnectionManager::~OnDemandConnectionManager() {
   subscription_.unsubscribe();
 }
 
-void OnDemandConnectionManager::onBatches(consensus::Round round,
-                                          CollectionType batches) {
+void OnDemandConnectionManager::onBatches(CollectionType batches) {
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
-
   /*
    * Transactions are always sent to the round after the next round (+2)
    * There are 3 possibilities - next reject in the current round, first reject
@@ -57,19 +55,9 @@ void OnDemandConnectionManager::onBatches(consensus::Round round,
    * 2 v . .
    */
 
-  auto propagate = [this, batches](PeerType type, consensus::Round round) {
-    log_->debug("onBatches, {}", round);
-
-    connections_.peers[type]->onBatches(round, batches);
-  };
-
-  propagate(
-      kCurrentRoundRejectConsumer,
-      {round.block_round, currentRejectRoundConsumer(round.reject_round)});
-  propagate(kNextRoundRejectConsumer,
-            {round.block_round + 1, kNextRejectRoundConsumer});
-  propagate(kNextRoundCommitConsumer,
-            {round.block_round + 2, kNextCommitRoundConsumer});
+  connections_.peers[kCurrentRoundRejectConsumer]->onBatches(batches);
+  connections_.peers[kNextRoundRejectConsumer]->onBatches(batches);
+  connections_.peers[kNextRoundCommitConsumer]->onBatches(batches);
 }
 
 boost::optional<std::shared_ptr<const OnDemandConnectionManager::ProposalType>>

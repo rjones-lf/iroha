@@ -58,7 +58,7 @@ namespace iroha {
 
       // ----------------------- | OdOsNotification | --------------------------
 
-      void onBatches(consensus::Round, CollectionType batches) override;
+      void onBatches(CollectionType batches) override;
 
       boost::optional<std::shared_ptr<const ProposalType>> onRequestProposal(
           consensus::Round round) override;
@@ -107,12 +107,9 @@ namespace iroha {
           proposal_map_;
 
       /**
-       * Proposals for current rounds
+       * Collections of batches for current and next rounds
        */
-      std::unordered_map<consensus::Round,
-                         detail::BatchSetType,
-                         consensus::RoundTypeHasher>
-          current_proposals_;
+      detail::BatchSetType current_round_batches_, next_round_batches_;
 
       /**
        * Read write mutex for public methods

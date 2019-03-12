@@ -10,6 +10,7 @@
 #include <gflags/gflags.h>
 #include <grpc++/grpc++.h>
 #include "ametsuchi/storage.hpp"
+#include "common/irohad_version.hpp"
 #include "common/result.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "logger/logger.hpp"
@@ -106,20 +107,14 @@ logger::LoggerManagerTreePtr getDefaultLogManager() {
 }
 
 int main(int argc, char *argv[]) {
+  gflags::SetVersionString(iroha::kGitPrettyVersion);
+
   // Parsing command line arguments
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   logger::LoggerManagerTreePtr log_manager;
   logger::LoggerPtr log;
 
-  // If the global log level override was set in the command line arguments,
-  // create a logger manager with the given log level for all subsystems:
-  if (FLAGS_verbosity != kLogSettingsFromConfigFile) {
-    logger::LoggerConfig cfg;
-    cfg.log_level = config_members::LogLevels.at(FLAGS_verbosity);
-    log_manager = std::make_shared<logger::LoggerManagerTree>(std::move(cfg));
-    log = log_manager->getChild("Init")->getLogger();
-  }
 
   // Check if validators are registered.
   if (not config_validator_registered
@@ -137,6 +132,7 @@ int main(int argc, char *argv[]) {
     log_manager = config.logger_manager.value_or(getDefaultLogManager());
     log = log_manager->getChild("Init")->getLogger();
   }
+  log->info("Irohad version: {}", iroha::kGitPrettyVersion);
   log->info("config initialized");
 
   // Reading public and private key files

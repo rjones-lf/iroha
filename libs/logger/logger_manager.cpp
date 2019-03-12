@@ -35,7 +35,8 @@ namespace logger {
       boost::optional<LogPatterns> patterns) {
     LoggerConfig child_config{
         log_level.value_or(config_->log_level),
-        patterns ? LogPatterns{*std::move(patterns)} : config_->patterns};
+        patterns ? std::move(patterns)->inherit(config_->patterns)
+                 : config_->patterns};
     // Operator new is employed due to private visibility of used constructor.
     LoggerManagerTreePtr child(new LoggerManagerTree(
         joinTags(full_tag_, tag),

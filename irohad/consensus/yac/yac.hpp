@@ -85,6 +85,7 @@ namespace iroha {
         void propagateState(const std::vector<VoteMessage> &msg);
         void propagateStateDirectly(const shared_model::interface::Peer &to,
                                     const std::vector<VoteMessage> &msg);
+        void tryPropagateBack(const std::vector<VoteMessage> &state);
 
         // ------|Fields|------
         YacVoteStorage vote_storage_;

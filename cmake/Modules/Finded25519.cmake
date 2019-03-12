@@ -19,7 +19,10 @@ if (NOT ed25519_FOUND)
   externalproject_add(hyperledger_ed25519
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
-      CMAKE_ARGS     -DTESTING=OFF -DBUILD=STATIC
+      CMAKE_ARGS
+        -DTESTING=OFF
+        -DBUILD=STATIC
+        ${DEPS_CMAKE_ARGS}
       PATCH_COMMAND  ${PATCH_RANDOM}
       BUILD_BYPRODUCTS ${EP_PREFIX}/src/hyperledger_ed25519-build/${CMAKE_STATIC_LIBRARY_PREFIX}ed25519${CMAKE_STATIC_LIBRARY_SUFFIX}
       INSTALL_COMMAND "" # remove install step

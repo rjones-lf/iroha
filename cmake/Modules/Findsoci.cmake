@@ -37,6 +37,7 @@ set(VERSION 111b50af8c3876ea392367640b4bd83b4f903ab8) # 3.2.3
 set_target_description(soci "The C++ Database Access Library" ${URL} ${VERSION})
 
 if (NOT soci_FOUND)
+  SET(CMAKE_CXX_SOCI_FLAGS "${CMAKE_CXX_FLAGS} -I${postgres_INCLUDE_DIR}")
   externalproject_add(soci_soci
       GIT_REPOSITORY  ${URL}
       GIT_TAG         ${VERSION}
@@ -47,7 +48,10 @@ if (NOT soci_FOUND)
                       -DCMAKE_INCLUDE_PATH=${pq_INCLUDE_DIR}
                       -DCMAKE_LIBRARY_PATH=${pq_INCLUDE_DIR}
                       -DCMAKE_PROGRAM_PATH=${pg_config_EXECUTABLE_DIR}
-                      -DCMAKE_CXX_FLAGS=-I${postgres_INCLUDE_DIR}
+                      -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                      -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                      -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+                      -DCMAKE_CXX_FLAGS=${CMAKE_CXX_SOCI_FLAGS}
                       -DCMAKE_INSTALL_PREFIX=${EP_PREFIX}
                       -DWITH_BOOST=ON
                       -DWITH_DB2=OFF

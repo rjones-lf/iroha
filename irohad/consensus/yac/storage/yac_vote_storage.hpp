@@ -70,6 +70,7 @@ namespace iroha {
          * @return iterator to proposal storage
          */
         auto getProposalStorage(const Round &round);
+        auto getProposalStorage(const Round &round) const;
 
         /**
          * Find existed proposal storage or create new if required
@@ -136,6 +137,19 @@ namespace iroha {
          */
         void nextProcessingState(const Round &round);
 
+        /**
+         * Get last by order finalized round
+         * @return round if it exists
+         */
+        boost::optional<Round> getLastFinalizedRound() const;
+
+        /**
+         * Get the state attached of a past round
+         * @param round - required round
+         * @return state if round exists and finalized
+         */
+        boost::optional<Answer> getState(const Round &round) const;
+
        private:
         // --------| fields |--------
 
@@ -160,6 +174,9 @@ namespace iroha {
          * storage
          */
         std::shared_ptr<CleanupStrategy> strategy_;
+
+        /// last finalized round
+        boost::optional<Round> last_round_;
 
         std::shared_ptr<SupermajorityChecker> supermajority_checker_;
 

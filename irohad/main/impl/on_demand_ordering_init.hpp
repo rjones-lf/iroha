@@ -72,7 +72,6 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               proposal_factory,
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-          consensus::Round initial_round,
           std::function<std::chrono::milliseconds(
               const synchronizer::SynchronizationEvent &)> delay_func,
           size_t max_number_of_transactions,
@@ -115,8 +114,6 @@ namespace iroha {
        * requests to ordering service and processing responses
        * @param proposal_factory factory required by ordering service to produce
        * proposals
-       * @param initial_round initial value for current round used in
-       * OnDemandOrderingGate
        * @return initialized ordering gate
        */
       std::shared_ptr<network::OrderingGate> initOrderingGate(
@@ -137,7 +134,6 @@ namespace iroha {
               proposal_factory,
           std::shared_ptr<TransportFactoryType> proposal_transport_factory,
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-          consensus::Round initial_round,
           std::function<std::chrono::milliseconds(
               const synchronizer::SynchronizationEvent &)> delay_func,
           logger::LoggerManagerTreePtr ordering_log_manager);
