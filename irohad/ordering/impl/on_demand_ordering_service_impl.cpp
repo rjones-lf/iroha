@@ -214,7 +214,14 @@ void OnDemandOrderingServiceImpl::packNextProposals(
 
 void OnDemandOrderingServiceImpl::tryErase(
     const consensus::Round &current_round) {
-  auto current_proposal = proposal_map_.find(current_round);
+  auto current_proposal =
+      std::lower_bound(proposal_map_.begin(),
+                       proposal_map_.end(),
+                       current_round,
+                       [](const auto &map_item, const auto &round) {
+                         return map_item.first < round;
+                       });
+
   auto proposal_range_size = boost::size(
       boost::make_iterator_range(proposal_map_.begin(), current_proposal));
 
