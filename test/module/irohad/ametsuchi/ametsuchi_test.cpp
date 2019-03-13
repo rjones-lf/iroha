@@ -175,7 +175,7 @@ TEST_F(AmetsuchiTest, PeerTest) {
   auto peers = wsv->getPeers();
   ASSERT_TRUE(peers);
   ASSERT_EQ(peers->size(), 1);
-  ASSERT_EQ(peers->at(0)->address(), "192.168.9.1:500051");
+  ASSERT_EQ(peers->at(0)->address(), "192.168.9.1:50051");
 
   ASSERT_EQ(peers->at(0)->pubkey(), fake_pubkey);
 }

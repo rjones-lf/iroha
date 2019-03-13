@@ -172,11 +172,12 @@ def successPostSteps(scmVars, boolean packagePush, String dockerTag, List enviro
 
 def alwaysPostSteps(List environment, boolean coredumps) {
   stage('Linux always PostSteps') {
+    scmVars = checkout scm
     // handling coredumps (if tests crashed)
-    sh(script: "ls -al build")
+    sh(script: "ls -al build/bin")
     if (currentBuild.currentResult != "SUCCESS" && coredumps) {
       def dumpsFileName = sprintf('coredumps-%1$s.bzip2',
-        [GIT_COMMIT.substring(0,8)])
+        [scmVars.GIT_COMMIT.substring(0,8)])
 
       sh(script: "find . -type f -name '*.coredump' -exec tar -cjvf ${dumpsFileName} {} \\+;")
       sh(script: "tar -rf ${dumpsFileName} build/irohad")
