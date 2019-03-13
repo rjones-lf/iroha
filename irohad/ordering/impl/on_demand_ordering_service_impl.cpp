@@ -47,9 +47,6 @@ OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(
 void OnDemandOrderingServiceImpl::onCollaborationOutcome(
     consensus::Round round) {
   log_->info("onCollaborationOutcome => {}", round);
-  // exclusive write lock
-  std::lock_guard<std::shared_timed_mutex> guard(lock_);
-  log_->debug("onCollaborationOutcome => write lock is acquired");
 
   packNextProposals(round);
   tryErase(round);
@@ -58,39 +55,38 @@ void OnDemandOrderingServiceImpl::onCollaborationOutcome(
 // ----------------------------| OdOsNotification |-----------------------------
 
 void OnDemandOrderingServiceImpl::onBatches(CollectionType batches) {
-  // read lock
-  std::shared_lock<std::shared_timed_mutex> guard(lock_);
-  log_->info("onBatches => collection size = {}", batches.size());
-
   auto unprocessed_batches =
       boost::adaptors::filter(batches, [this](const auto &batch) {
-        log_->info("check batch {} for already processed transactions",
-                   batch->reducedHash().hex());
+        log_->debug("check batch {} for already processed transactions",
+                    batch->reducedHash().hex());
         return not this->batchAlreadyProcessed(*batch);
       });
-  std::for_each(
-      unprocessed_batches.begin(),
-      unprocessed_batches.end(),
-      [this](auto &obj) { current_round_batches_.insert(std::move(obj)); });
-  log_->debug("onBatches => collection is inserted");
+  std::for_each(unprocessed_batches.begin(),
+                unprocessed_batches.end(),
+                [this](auto &obj) {
+                  std::shared_lock<std::shared_timed_mutex> lock(write_mutex_);
+                  current_round_batches_.insert(std::move(obj));
+                });
+  log_->info("onBatches => collection size = {}", batches.size());
 }
 
 boost::optional<
     std::shared_ptr<const OnDemandOrderingServiceImpl::ProposalType>>
 OnDemandOrderingServiceImpl::onRequestProposal(consensus::Round round) {
-  // read lock
-  std::shared_lock<std::shared_timed_mutex> guard(lock_);
-  auto proposal = proposal_map_.find(round);
+  boost::optional<
+      std::shared_ptr<const OnDemandOrderingServiceImpl::ProposalType>>
+      result;
+  {
+    std::shared_lock<std::shared_timed_mutex> lock(read_mutex_);
+    auto it = proposal_map_.find(round);
+    result = boost::make_optional(it != proposal_map_.end(), it->second);
+  }
   // space between '{}' and 'returning' is not missing, since either nothing, or
   // NOT with space is printed
   log_->debug("onRequestProposal, {}, {}returning a proposal.",
               round,
-              (proposal == proposal_map_.end()) ? "NOT " : "");
-  if (proposal != proposal_map_.end()) {
-    return proposal->second;
-  } else {
-    return boost::none;
-  }
+              result ? "" : "NOT ");
+  return result;
 }
 
 // ---------------------------------| Private |---------------------------------
@@ -168,6 +164,11 @@ void OnDemandOrderingServiceImpl::packNextProposals(
    *
    * (1,0) - current round. The diagram is similar to the initial case.
    */
+  detail::BatchSetType current_round_batches;
+  {
+    std::lock_guard<std::shared_timed_mutex> lock(write_mutex_);
+    current_round_batches.swap(current_round_batches_);
+  }
 
   size_t discarded_txs_amount;
   auto get_transactions = [this, &discarded_txs_amount](auto &queue,
@@ -191,8 +192,8 @@ void OnDemandOrderingServiceImpl::packNextProposals(
         discarded_txs_amount);
   };
 
-  if (not current_round_batches_.empty()) {
-    auto txs = get_transactions(current_round_batches_, [this](auto &batch) {
+  if (not current_round_batches.empty()) {
+    auto txs = get_transactions(current_round_batches, [this](auto &batch) {
       next_round_batches_.insert(std::move(batch));
     });
 
@@ -214,22 +215,27 @@ void OnDemandOrderingServiceImpl::packNextProposals(
 
 void OnDemandOrderingServiceImpl::tryErase(
     const consensus::Round &current_round) {
-  auto current_proposal =
-      std::lower_bound(proposal_map_.begin(),
-                       proposal_map_.end(),
-                       current_round,
-                       [](const auto &map_item, const auto &round) {
-                         return map_item.first < round;
-                       });
+  auto current_proposal_it = proposal_map_.lower_bound(current_round);
+  for (size_t i = 0; i < number_of_proposals_
+       and current_proposal_it != proposal_map_.begin();
+       ++i) {
+    current_proposal_it--;
+  }
 
-  auto proposal_range_size = boost::size(
-      boost::make_iterator_range(proposal_map_.begin(), current_proposal));
+  if (current_proposal_it == proposal_map_.begin()) {
+    return;
+  }
 
-  while (proposal_range_size > number_of_proposals_) {
-    BOOST_ASSERT(proposal_map_.begin()->first < current_round);
-    log_->info("tryErase: erasing {}", proposal_map_.begin()->first);
-    proposal_map_.erase(proposal_map_.begin());
-    --proposal_range_size;
+  detail::ProposalMapType proposal_map{current_proposal_it,
+                                       proposal_map_.end()};
+
+  {
+    std::lock_guard<std::shared_timed_mutex> lock(read_mutex_);
+    proposal_map_.swap(proposal_map);
+  }
+
+  for (auto it = proposal_map.begin(); it != current_proposal_it; ++it) {
+    log_->debug("tryErase: erased {}", it->first);
   }
 }
 
