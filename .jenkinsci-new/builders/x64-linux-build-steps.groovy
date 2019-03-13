@@ -42,7 +42,7 @@ def testSteps(String buildDir, List environment, String testList) {
 
 def buildSteps(int parallelism, List compilerVersions, String build_type, boolean specialBranch, boolean coverage,
       boolean testing, String testList, boolean cppcheck, boolean sonar, boolean docs, boolean packagebuild,
-      boolean sanitize, boolean fuzzing, boolean useBTF, List environment) {
+      boolean sanitize, boolean fuzzing, boolean coredumps, boolean useBTF, List environment) {
   withEnv(environment) {
     scmVars = checkout scm
     def build = load '.jenkinsci-new/build.groovy'
@@ -62,7 +62,11 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
     if (sanitize){
       cmakeOptions += " -DSANITIZE='address;leak' "
     }
-
+    // enable coredumps collecting
+    if (coredumps) {
+      sh "echo %e.%p.coredump > /proc/sys/kernel/core_pattern"
+      sh "ulimit -c unlimited"
+    }
     // Create postgres
     // enable prepared transactions so that 2 phase commit works
     // we set it to 100 as a safe value
@@ -168,6 +172,20 @@ def successPostSteps(scmVars, boolean packagePush, String dockerTag, List enviro
 
 def alwaysPostSteps(List environment) {
   stage('Linux always PostSteps') {
+    // handling coredumps (if tests crashed)
+    if (currentBuild.currentResult != "SUCCESS" && coredumps) {
+      def dumpsFileName = sprintf('coredumps-%1$s.bzip2',
+        [GIT_COMMIT.substring(0,8)])
+
+      sh(script: "find . -type f -name '*.coredump' -exec tar -cjvf ${dumpsFileName} {} \\+;")
+      sh(script: "tar -rf ${dumpsFileName} build/irohad")
+      if( fileExists(dumpsFileName)) {
+        withCredentials([usernamePassword(credentialsId: 'ci_nexus', passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')]) {
+          sh(script: "curl -u ${NEXUS_USER}:${NEXUS_PASS} --upload-file ${WORKSPACE}/${dumpsFileName} https://nexus.iroha.tech/repository/artifacts/iroha/coredumps/${dumpsFileName}")
+        }
+        echo "Build is not SUCCESS! See core dumps at: https://nexus.iroha.tech/repository/artifacts/iroha/coredumps/${dumpsFileName}"
+      }
+    }
     withEnv(environment) {
       sh "docker rm -f ${env.IROHA_POSTGRES_HOST} || true"
       sh "docker network rm ${env.IROHA_NETWORK}"

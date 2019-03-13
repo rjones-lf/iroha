@@ -141,6 +141,7 @@ node ('master') {
   sanitize = false
   cppcheck = false
   fuzzing = false // x64linux_compiler_list= ['clang6']  testing = true testList = "(None)"
+  coredumps = true
   sonar = false
   coverage = false
   coverage_mac = false
@@ -234,7 +235,7 @@ node ('master') {
   echo "testing=${testing}, testList=${testList}, parallelism=${parallelism}, useBTF=${useBTF}"
   echo "x64linux_compiler_list=${x64linux_compiler_list}"
   echo "mac_compiler_list=${mac_compiler_list}"
-  echo "sanitize=${sanitize}, cppcheck=${cppcheck}, fuzzing=${fuzzing}, sonar=${sonar}, coverage=${coverage}, coverage_mac=${coverage_mac} doxygen=${doxygen}"
+  echo "sanitize=${sanitize}, cppcheck=${cppcheck}, fuzzing=${fuzzing}, coredumps=${coredumps}, sonar=${sonar}, coverage=${coverage}, coverage_mac=${coverage_mac} doxygen=${doxygen}"
   print scmVars
   print environmentList
 
@@ -255,7 +256,7 @@ node ('master') {
   if(!x64linux_compiler_list.isEmpty()){
     x64LinuxBuildSteps = [{x64LinuxBuildScript.buildSteps(
       parallelism==0 ?x64LinuxWorker.cpusAvailable : parallelism, x64linux_compiler_list, build_type, specialBranch, coverage,
-      testing, testList, cppcheck, sonar, doxygen, packageBuild, sanitize, fuzzing, useBTF, environmentList)}]
+      testing, testList, cppcheck, sonar, doxygen, packageBuild, sanitize, fuzzing, coredumps, useBTF, environmentList)}]
     //If "master" or "dev" also run Release build
     if(specialBranch && build_type == 'Debug'){
       x64LinuxBuildSteps += [{x64LinuxBuildScript.buildSteps(
@@ -263,7 +264,7 @@ node ('master') {
       false , testList, false, false, false, true, false, false, false, environmentList)}]
     }
     x64LinuxPostSteps = new Builder.PostSteps(
-      always: [{x64LinuxBuildScript.alwaysPostSteps(environmentList)}],
+      always: [{x64LinuxBuildScript.alwaysPostSteps(environmentList, coredumps)}],
       success: [{x64LinuxBuildScript.successPostSteps(scmVars, packagePush, pushDockerTag, environmentList)}])
   }
   def x64MacBuildSteps
