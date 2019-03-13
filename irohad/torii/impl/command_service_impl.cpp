@@ -196,30 +196,26 @@ namespace iroha {
       const auto &txs = batch->transactions();
 
       bool has_final_status{false};
-      has_final_status = std::accumulate(
-          txs.begin(), txs.end(), false, [this](auto res, const auto &tx) {
-            if (res) {
-              return res;
-            }
 
-            auto on_final_status = [] { return true; };
+      for (auto tx : txs) {
+        const auto &tx_hash = tx->hash();
+        if (auto found = cache_->findItem(tx_hash)) {
+          log_->debug("Found in cache: {}", **found);
+          has_final_status = iroha::visit_in_place(
+              (*found)->get(),
+              [](const shared_model::interface::CommittedTxResponse &) {
+                return true;
+              },
+              [](const shared_model::interface::RejectedTxResponse &) {
+                return true;
+              },
+              [](const auto &rest_responses) { return false; });
+        }
 
-            const auto &tx_hash = tx->hash();
-            if (auto found = cache_->findItem(tx_hash)) {
-              log_->debug("Found in cache: {}", **found);
-              return iroha::visit_in_place(
-                  (*found)->get(),
-                  [](const shared_model::interface::CommittedTxResponse &) {
-                    return true;
-                  },
-                  [](const shared_model::interface::RejectedTxResponse &) {
-                    return true;
-                  },
-                  [](const auto &rest_responses) { return false; });
-            } else {
-              return false;
-            }
-          });
+        if (has_final_status) {
+          break;
+        }
+      }
 
       if (has_final_status) {
         // if the transaction or batch has appeared in the cache with final
