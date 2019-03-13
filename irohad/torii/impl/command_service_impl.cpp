@@ -129,8 +129,29 @@ namespace iroha {
       using ResponsePtrType =
           std::shared_ptr<shared_model::interface::TransactionResponse>;
       auto initial_status = cache_->findItem(hash).value_or([&] {
-        log_->debug("tx is not received: {}", hash);
-        return status_factory_->makeNotReceived(hash);
+        // if cache_ didn't contain some status there is required to check
+        // persistent cache
+
+        log_->debug("tx {} don't present in cache", hash);
+        auto from_persistent_cache = tx_presence_cache_->check(hash);
+        if (not from_persistent_cache) {
+          // TODO andrei 30.11.18 IR-51 Handle database error
+          log_->warn("Check hash presence database error. {}", hash);
+          return status_factory_->makeNotReceived(hash);
+        }
+        return iroha::visit_in_place(
+            *from_persistent_cache,
+            [this,
+             &hash](const iroha::ametsuchi::tx_cache_status_responses::Committed
+                        &) { return status_factory_->makeCommitted(hash); },
+            [this, &hash](
+                const iroha::ametsuchi::tx_cache_status_responses::Rejected &) {
+              return status_factory_->makeRejected(hash);
+            },
+            [this, &hash](
+                const iroha::ametsuchi::tx_cache_status_responses::Missing &) {
+              return status_factory_->makeNotReceived(hash);
+            });
       }());
       return status_bus_
           ->statuses()
