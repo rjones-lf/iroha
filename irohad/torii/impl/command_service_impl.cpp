@@ -203,10 +203,9 @@ namespace iroha {
           log_->debug("Found in cache: {}", **found);
           has_final_status = iroha::visit_in_place(
               (*found)->get(),
-              [](const shared_model::interface::CommittedTxResponse &) {
-                return true;
-              },
-              [](const shared_model::interface::RejectedTxResponse &) {
+              [](const auto &final_responses)
+                  -> std::enable_if_t<
+                      FinalStatusValue<decltype(final_responses), bool>> {
                 return true;
               },
               [](const auto &rest_responses) { return false; });
@@ -218,9 +217,8 @@ namespace iroha {
       }
 
       if (has_final_status) {
-        // if the transaction or batch has appeared in the cache with final
-        // status this guarantees the transaction was passed to a consensus
-        // before
+        // presence of the transaction or batch in the cache with final status
+        // guarantees that the transaction was passed to consensus before
         log_->warn("Replayed batch would not be served - present in cache. {}",
                    *batch);
         return;
