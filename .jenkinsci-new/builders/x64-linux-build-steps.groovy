@@ -173,6 +173,7 @@ def successPostSteps(scmVars, boolean packagePush, String dockerTag, List enviro
 def alwaysPostSteps(List environment, boolean coredumps) {
   stage('Linux always PostSteps') {
     // handling coredumps (if tests crashed)
+    sh(script: "ls -al build")
     if (currentBuild.currentResult != "SUCCESS" && coredumps) {
       def dumpsFileName = sprintf('coredumps-%1$s.bzip2',
         [GIT_COMMIT.substring(0,8)])
