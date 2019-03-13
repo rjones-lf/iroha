@@ -185,3 +185,8 @@ Do not have a keypair for a peer
 --------------------------------
 
 In order to create a keypair for an account or a peer, use iroha-cli binary by passing the name of the peer with `--new_account` option.
+For example: 
+
+.. code-block:: shell
+
+    ./iroha-cli --account_name newuser@test --new_account
