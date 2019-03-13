@@ -180,7 +180,7 @@ def alwaysPostSteps(List environment, boolean coredumps) {
 
       // sh(script: "touch coredumps.upload")
       sh(script: "echo 'build/bin' > coredumps.upload")
-      sh(script: "find . -type f -name '*.coredump' -exec echo '{}' >> coredumps.upload \\;")
+      sh(script: "find . -type f -name '*.coredump' -exec echo '{}' \\; >> coredumps.upload")
       sh(script: "tar -cjvf ${dumpsFileName} -T coredumps.upload")
       // sh(script: "find . -type f -name '*.coredump' -exec tar -cjvf ${dumpsFileName} {} \\+;")
       // sh(script: "tar -rf ${dumpsFileName} build/bin")
