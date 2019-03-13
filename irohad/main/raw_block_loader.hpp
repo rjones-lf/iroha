@@ -11,7 +11,7 @@
 
 #include <boost/optional.hpp>
 
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -29,7 +29,7 @@ namespace iroha {
      */
     class BlockLoader {
      public:
-      explicit BlockLoader(logger::Logger log = logger::log("BlockLoader"));
+      explicit BlockLoader(logger::LoggerPtr log);
 
       /**
        * Parse block from file
@@ -47,7 +47,7 @@ namespace iroha {
       boost::optional<std::string> loadFile(const std::string &path);
 
      private:
-      logger::Logger log_;
+      logger::LoggerPtr log_;
     };
 
   }  // namespace main

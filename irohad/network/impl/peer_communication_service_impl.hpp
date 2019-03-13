@@ -8,7 +8,7 @@
 
 #include "network/peer_communication_service.hpp"
 
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 
 namespace iroha {
   namespace simulator {
@@ -28,7 +28,7 @@ namespace iroha {
           std::shared_ptr<OrderingGate> ordering_gate,
           std::shared_ptr<synchronizer::Synchronizer> synchronizer,
           std::shared_ptr<simulator::VerifiedProposalCreator> proposal_creator,
-          logger::Logger log = logger::log("PCS"));
+          logger::LoggerPtr log);
 
       void propagate_batch(
           std::shared_ptr<shared_model::interface::TransactionBatch> batch)
@@ -46,7 +46,7 @@ namespace iroha {
       std::shared_ptr<OrderingGate> ordering_gate_;
       std::shared_ptr<synchronizer::Synchronizer> synchronizer_;
       std::shared_ptr<simulator::VerifiedProposalCreator> proposal_creator_;
-      logger::Logger log_;
+      logger::LoggerPtr log_;
     };
   }  // namespace network
 }  // namespace iroha

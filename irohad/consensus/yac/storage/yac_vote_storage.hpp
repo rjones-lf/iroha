@@ -11,11 +11,15 @@
 #include <vector>
 
 #include <boost/optional.hpp>
+#include "consensus/yac/consistency_model.hpp"
 #include "consensus/yac/outcome_messages.hpp"  // because messages passed by value
+#include "consensus/yac/storage/cleanup_strategy.hpp"
 #include "consensus/yac/storage/storage_result.hpp"  // for Answer
 #include "consensus/yac/storage/yac_common.hpp"      // for ProposalHash
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
+#include "consensus/yac/supermajority_checker.hpp"
 #include "consensus/yac/yac_types.hpp"
+#include "logger/logger_manager_fwd.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -66,6 +70,7 @@ namespace iroha {
          * @return iterator to proposal storage
          */
         auto getProposalStorage(const Round &round);
+        auto getProposalStorage(const Round &round) const;
 
         /**
          * Find existed proposal storage or create new if required
@@ -75,11 +80,27 @@ namespace iroha {
          * This parameter used on creation of proposal storage
          * @return - iter for required proposal storage
          */
-        auto findProposalStorage(const VoteMessage &msg,
-                                 PeersNumberType peers_in_round);
+        boost::optional<std::vector<YacProposalStorage>::iterator>
+        findProposalStorage(const VoteMessage &msg,
+                            PeersNumberType peers_in_round);
+
+        /**
+         * Remove proposal storage by round
+         */
+        void remove(const Round &round);
 
        public:
         // --------| public api |--------
+
+        /**
+         * @param cleanup_strategy - strategy for removing elements from storage
+         * @param consistency_model - consensus consistency model (CFT, BFT).
+         * @param log_manager - log manager to create component loggers
+         */
+        YacVoteStorage(
+            std::shared_ptr<CleanupStrategy> cleanup_strategy,
+            std::unique_ptr<SupermajorityChecker> supermajority_checker,
+            logger::LoggerManagerTreePtr log_manager);
 
         /**
          * Insert votes in storage
@@ -116,8 +137,24 @@ namespace iroha {
          */
         void nextProcessingState(const Round &round);
 
+        /**
+         * Get last by order finalized round
+         * @return round if it exists
+         */
+        boost::optional<Round> getLastFinalizedRound() const;
+
+        /**
+         * Get the state attached of a past round
+         * @param round - required round
+         * @return state if round exists and finalized
+         */
+        boost::optional<Answer> getState(const Round &round) const;
+
        private:
         // --------| fields |--------
+
+        // TODO: 2019-02-28 @muratovv refactor proposal_storages_ &
+        // processing_state_ with separate entity IR-360
 
         /**
          * Active proposal storages
@@ -131,6 +168,19 @@ namespace iroha {
          */
         std::unordered_map<Round, ProposalState, RoundTypeHasher>
             processing_state_;
+
+        /**
+         * Provides strategy managing rounds (adding and removing) for the
+         * storage
+         */
+        std::shared_ptr<CleanupStrategy> strategy_;
+
+        /// last finalized round
+        boost::optional<Round> last_round_;
+
+        std::shared_ptr<SupermajorityChecker> supermajority_checker_;
+
+        logger::LoggerManagerTreePtr log_manager_;
       };
 
     }  // namespace yac

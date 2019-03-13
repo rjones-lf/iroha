@@ -24,8 +24,7 @@ namespace iroha {
     template <typename Response>
     class AsyncGrpcClient {
      public:
-      explicit AsyncGrpcClient(
-          logger::Logger log = logger::log("AsyncGrpcClient"))
+      explicit AsyncGrpcClient(logger::LoggerPtr log)
           : thread_(&AsyncGrpcClient::asyncCompleteRpc, this),
             log_(std::move(log)) {}
 
@@ -53,7 +52,6 @@ namespace iroha {
 
       grpc::CompletionQueue cq_;
       std::thread thread_;
-      logger::Logger log_;
 
       /**
        * State and data information of gRPC call
@@ -80,6 +78,9 @@ namespace iroha {
         call->response_reader = lambda(&call->context, &cq_);
         call->response_reader->Finish(&call->reply, &call->status, call);
       }
+
+     private:
+      logger::LoggerPtr log_;
     };
   }  // namespace network
 }  // namespace iroha

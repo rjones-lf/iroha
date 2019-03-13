@@ -13,6 +13,7 @@
 #include "builders/default_builders.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/result_fixture.hpp"
+#include "framework/test_logger.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
@@ -390,7 +391,7 @@ shared_model::proto::Block getBlock() {
 }
 
 TEST_F(AmetsuchiTest, TestingStorageWhenInsertBlock) {
-  auto log = logger::testLog("TestStorage");
+  auto log = getTestLogger("TestStorage");
   log->info(
       "Test case: create storage "
       "=> insert block "
@@ -666,4 +667,22 @@ TEST_F(PreparedBlockTest, CommitPreparedFailsAfterCommit) {
 
   shared_model::interface::Amount resultingBalance{"15.00"};
   validateAccountAsset(sql_query, "admin@test", "coin#test", resultingBalance);
+}
+
+/**
+ * @given Storage with prepared state
+ * @when another temporary wsv is created and transaction is applied
+ * @then previous state is dropped and new transaction is applied successfully
+ */
+TEST_F(PreparedBlockTest, TemporaryWsvUnlocks) {
+  auto result = temp_wsv->apply(*initial_tx);
+  ASSERT_TRUE(framework::expected::val(result));
+  storage->prepareBlock(std::move(temp_wsv));
+
+  using framework::expected::val;
+  temp_wsv = std::move(val(storage->createTemporaryWsv())->value);
+
+  result = temp_wsv->apply(*initial_tx);
+  ASSERT_TRUE(framework::expected::val(result));
+  storage->prepareBlock(std::move(temp_wsv));
 }

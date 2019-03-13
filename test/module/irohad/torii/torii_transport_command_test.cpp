@@ -16,6 +16,7 @@
 #include "cryptography/public_key.hpp"
 #include "endpoint.pb.h"
 #include "endpoint_mock.grpc.pb.h"
+#include "framework/test_logger.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
@@ -84,7 +85,8 @@ class CommandServiceTransportGrpcTest : public testing::Test {
         batch_parser,
         batch_factory,
         rxcpp::observable<>::iterate(gate_objects),
-        gate_objects.size());
+        gate_objects.size(),
+        getTestLogger("CommandServiceTransportGrpc"));
   }
 
   std::shared_ptr<MockStatusBus> status_bus;

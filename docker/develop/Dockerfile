@@ -32,8 +32,6 @@ RUN set -e; \
         git ssh tar gzip ca-certificates gnupg \
         # Pythons
         python-pip python3-pip python3-setuptools python-dev \
-        # SWIG dependencies
-        libpcre3-dev autoconf bison  \
         # other
         curl file gdb gdbserver ccache \
         gcovr cppcheck doxygen rsync graphviz graphviz-dev unzip vim zip; \
@@ -235,10 +233,12 @@ RUN set -e; \
 # install ed25519
 RUN set -e; \
     git clone git://github.com/hyperledger/iroha-ed25519.git /tmp/ed25519; \
-    (cd /tmp/ed25519 ; git checkout f42953c631fae93011612f6b1ee33f1f88c3f8af); \
+    (cd /tmp/ed25519 ; git checkout b61a1e77af5dc458ed6a5aee395d5b22775a4917); \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -DTESTING=OFF \
+        -DHASH=sha3_brainhub \
+        -DEDIMPL=ref10 \
         -H/tmp/ed25519 \
         -B/tmp/ed25519/build; \
     cmake --build /tmp/ed25519/build --target install -- -j${PARALLELISM}; \
@@ -255,15 +255,6 @@ RUN set -e; \
     echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections; \
     apt-get -y install oracle-java8-installer; \
     java -version
-
-# Build SWIG
-RUN set -e; \
-    curl -L -o /tmp/swig-3.0.12.tar.gz https://github.com/swig/swig/archive/rel-3.0.12.tar.gz; \
-    tar -C /tmp -zxf /tmp/swig-3.0.12.tar.gz; \
-    cd /tmp/swig-rel-3.0.12; \
-    ./autogen.sh && ./configure && make -j${PARALLELISM}; \
-    make install; \
-    rm -rf /tmp/swig-rel-3.0.12
 
 RUN set -e; \
     add-apt-repository -y ppa:jonathonf/python-3.6; \

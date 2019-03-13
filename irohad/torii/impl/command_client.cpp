@@ -8,6 +8,7 @@
 #include <grpc++/grpc++.h>
 
 #include "common/byteutils.hpp"
+#include "logger/logger.hpp"
 #include "torii/command_client.hpp"
 #include "transaction.pb.h"
 
@@ -18,7 +19,7 @@ namespace torii {
 
   CommandSyncClient::CommandSyncClient(
       std::unique_ptr<iroha::protocol::CommandService_v1::StubInterface> stub,
-      logger::Logger log)
+      logger::LoggerPtr log)
       : stub_(std::move(stub)), log_(std::move(log)) {}
 
   grpc::Status CommandSyncClient::Torii(const Transaction &tx) const {

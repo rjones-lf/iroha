@@ -8,13 +8,16 @@
 
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/impl/timer_impl.hpp"
+#include "consensus/yac/storage/buffered_cleanup_strategy.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "consensus/yac/storage/yac_vote_storage.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
 #include "consensus/yac/yac.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 
+#include "framework/test_logger.hpp"
 #include "framework/test_subscriber.hpp"
+#include "logger/logger_manager.hpp"
 #include "module/irohad/consensus/yac/mock_yac_crypto_provider.hpp"
 #include "module/irohad/consensus/yac/yac_test_util.hpp"
 #include "module/shared_model/interface_mocks.hpp"
@@ -26,6 +29,10 @@ using ::testing::Return;
 
 using namespace iroha::consensus::yac;
 using namespace framework::test_subscriber;
+
+// TODO mboldyrev 14.02.2019 IR-324 Use supermajority checker mock
+static const iroha::consensus::yac::ConsistencyModel kConsistencyModel =
+    iroha::consensus::yac::ConsistencyModel::kBft;
 
 static size_t num_peers = 1, my_num = 0;
 
@@ -61,6 +68,7 @@ class FixedCryptoProvider : public MockYacCryptoProvider {
 
 class ConsensusSunnyDayTest : public ::testing::Test {
  public:
+  std::shared_ptr<CleanupStrategy> cleanup_strategy;
   std::unique_ptr<grpc::Server> server;
   std::shared_ptr<NetworkImpl> network;
   std::shared_ptr<MockYacCryptoProvider> crypto;
@@ -84,9 +92,13 @@ class ConsensusSunnyDayTest : public ::testing::Test {
   }
 
   void SetUp() override {
+    cleanup_strategy =
+        std::make_shared<iroha::consensus::yac::BufferedCleanupStrategy>();
     auto async_call = std::make_shared<
-        iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
-    network = std::make_shared<NetworkImpl>(async_call);
+        iroha::network::AsyncGrpcClient<google::protobuf::Empty>>(
+        getTestLogger("AsyncCall"));
+    network =
+        std::make_shared<NetworkImpl>(async_call, getTestLogger("YacNetwork"));
     crypto = std::make_shared<FixedCryptoProvider>(std::to_string(my_num));
     timer = std::make_shared<TimerImpl>([this] {
       // static factory with a single thread
@@ -99,7 +111,15 @@ class ConsensusSunnyDayTest : public ::testing::Test {
     auto order = ClusterOrdering::create(default_peers);
     ASSERT_TRUE(order);
 
-    yac = Yac::create(YacVoteStorage(), network, crypto, timer, order.value());
+    yac = Yac::create(
+        YacVoteStorage(cleanup_strategy,
+                       getSupermajorityChecker(kConsistencyModel),
+                       getTestLoggerManager()->getChild("YacVoteStorage")),
+        network,
+        crypto,
+        timer,
+        order.value(),
+        getTestLogger("Yac"));
     network->subscribe(yac);
 
     grpc::ServerBuilder builder;

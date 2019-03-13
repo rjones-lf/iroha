@@ -15,7 +15,7 @@
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 #include "ordering/impl/ordering_gate_cache/ordering_gate_cache.hpp"
 #include "ordering/on_demand_ordering_service.hpp"
 
@@ -40,6 +40,8 @@ namespace iroha {
         consensus::Round round;
         /// hashes of processed transactions
         cache::OrderingGateCache::HashesSetType hashes;
+
+        std::string toString() const;
       };
 
       /**
@@ -48,6 +50,8 @@ namespace iroha {
       struct EmptyEvent {
         /// next round number
         consensus::Round round;
+
+        std::string toString() const;
       };
 
       using BlockRoundEventType = boost::variant<BlockEvent, EmptyEvent>;
@@ -62,8 +66,8 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               factory,
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-          consensus::Round initial_round,
-          logger::Logger log = logger::log("OnDemandOrderingGate"));
+          size_t transaction_limit,
+          logger::LoggerPtr log);
 
       ~OnDemandOrderingGate() override;
 
@@ -72,9 +76,6 @@ namespace iroha {
           override;
 
       rxcpp::observable<network::OrderingEvent> onProposal() override;
-
-      [[deprecated("Use ctor")]] void setPcs(
-          const iroha::network::PeerCommunicationService &pcs) override;
 
      private:
       /**
@@ -86,6 +87,8 @@ namespace iroha {
               std::shared_ptr<const OnDemandOrderingService::ProposalType>>
               proposal) const;
 
+      void sendCachedTransactions(const BlockRoundEventType &event);
+
       /**
        * remove already processed transactions from proposal
        */
@@ -93,7 +96,9 @@ namespace iroha {
           std::shared_ptr<const shared_model::interface::Proposal> proposal)
           const;
 
-      logger::Logger log_;
+      /// max number of transactions passed to one ordering service
+      size_t transaction_limit_;
+      logger::LoggerPtr log_;
       std::shared_ptr<OnDemandOrderingService> ordering_service_;
       std::shared_ptr<transport::OdOsNotification> network_client_;
       rxcpp::composite_subscription events_subscription_;
@@ -102,9 +107,7 @@ namespace iroha {
           proposal_factory_;
       std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache_;
 
-      consensus::Round current_round_;
       rxcpp::subjects::subject<network::OrderingEvent> proposal_notifier_;
-      mutable std::shared_timed_mutex mutex_;
     };
 
   }  // namespace ordering

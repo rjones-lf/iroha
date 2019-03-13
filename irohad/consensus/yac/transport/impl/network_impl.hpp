@@ -13,18 +13,15 @@
 #include <unordered_map>
 
 #include "consensus/yac/outcome_messages.hpp"
+#include "consensus/yac/vote_message.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 #include "network/impl/async_grpc_client.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
-
-      struct CommitMessage;
-      struct RejectMessage;
-      struct VoteMessage;
 
       /**
        * Class which provides implementation of transport for consensus based on
@@ -34,7 +31,9 @@ namespace iroha {
        public:
         explicit NetworkImpl(
             std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
-                async_call);
+                async_call,
+            logger::LoggerPtr log);
+
         void subscribe(
             std::shared_ptr<YacNetworkNotifications> handler) override;
 
@@ -76,6 +75,8 @@ namespace iroha {
          */
         std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
             async_call_;
+
+        logger::LoggerPtr log_;
       };
 
     }  // namespace yac

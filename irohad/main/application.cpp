@@ -16,10 +16,12 @@
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "common/bind.hpp"
-#include "consensus/yac/impl/supermajority_checker_impl.hpp"
+#include "consensus/yac/consistency_model.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
+#include "logger/logger.hpp"
+#include "logger/logger_manager.hpp"
 #include "main/server_runner.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
@@ -61,6 +63,10 @@ using namespace iroha::consensus::yac;
 
 using namespace std::chrono_literals;
 
+/// Consensus consistency model type.
+static constexpr iroha::consensus::yac::ConsistencyModel
+    kConsensusConsistencyModel = iroha::consensus::yac::ConsistencyModel::kBft;
+
 /**
  * Configuring iroha daemon
  */
@@ -74,6 +80,9 @@ Irohad::Irohad(const std::string &block_store_dir,
                std::chrono::milliseconds vote_delay,
                std::chrono::minutes mst_expiration_time,
                const shared_model::crypto::Keypair &keypair,
+               std::chrono::milliseconds max_rounds_delay,
+               size_t stale_stream_max_rounds,
+               logger::LoggerManagerTreePtr logger_manager,
                const boost::optional<GossipPropagationStrategyParams>
                    &opt_mst_gossip_params)
     : block_store_dir_(block_store_dir),
@@ -86,9 +95,13 @@ Irohad::Irohad(const std::string &block_store_dir,
       vote_delay_(vote_delay),
       is_mst_supported_(opt_mst_gossip_params),
       mst_expiration_time_(mst_expiration_time),
+      max_rounds_delay_(max_rounds_delay),
+      stale_stream_max_rounds_(stale_stream_max_rounds),
       opt_mst_gossip_params_(opt_mst_gossip_params),
-      keypair(keypair) {
-  log_ = logger::log("IROHAD");
+      keypair(keypair),
+      ordering_init(logger_manager->getLogger()),
+      log_manager_(std::move(logger_manager)),
+      log_(log_manager_->getLogger()) {
   log_->info("created");
   // Initializing storage at this point in order to insert genesis block before
   // initialization of iroha daemon
@@ -151,7 +164,8 @@ void Irohad::initStorage() {
                                            pg_conn_,
                                            common_objects_factory_,
                                            std::move(block_converter),
-                                           perm_converter);
+                                           perm_converter,
+                                           log_manager_->getChild("Storage"));
   storageResult.match(
       [&](expected::Value<std::shared_ptr<ametsuchi::StorageImpl>> &_storage) {
         storage = _storage.value;
@@ -193,10 +207,14 @@ void Irohad::initBatchParser() {
 void Irohad::initValidators() {
   auto factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
       shared_model::validation::DefaultProposalValidator>>();
-  stateful_validator =
-      std::make_shared<StatefulValidatorImpl>(std::move(factory), batch_parser);
+  auto validators_log_manager = log_manager_->getChild("Validators");
+  stateful_validator = std::make_shared<StatefulValidatorImpl>(
+      std::move(factory),
+      batch_parser,
+      validators_log_manager->getChild("Stateful")->getLogger());
   chain_validator = std::make_shared<ChainValidatorImpl>(
-      std::make_shared<consensus::yac::SupermajorityCheckerImpl>());
+      getSupermajorityChecker(kConsensusConsistencyModel),
+      validators_log_manager->getChild("Chain")->getLogger());
 
   log_->info("[Init] => validators");
 }
@@ -206,7 +224,8 @@ void Irohad::initValidators() {
  */
 void Irohad::initNetworkClient() {
   async_call_ =
-      std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
+      std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>(
+          log_manager_->getChild("AsyncNetworkClient")->getLogger());
 }
 
 void Irohad::initFactories() {
@@ -305,12 +324,14 @@ void Irohad::initOrderingGate() {
       shared_model::validation::DefaultProposalValidator>>();
 
   const uint64_t kCounter = 0, kMaxLocalCounter = 2;
-  // reject_counter and local_counter are local mutable variables of lambda
-  const uint64_t kMaxDelaySeconds = 5;
-  auto delay = [reject_counter = kCounter,
+  // reject_delay and local_counter are local mutable variables of lambda
+  const auto kMaxDelay(max_rounds_delay_);
+  const auto kMaxDelayIncrement(std::chrono::milliseconds(1000));
+  auto delay = [reject_delay = std::chrono::milliseconds(0),
                 local_counter = kCounter,
                 // MSVC requires const variables to be captured
-                kMaxDelaySeconds,
+                kMaxDelay,
+                kMaxDelayIncrement,
                 kMaxLocalCounter](const auto &commit) mutable {
     using iroha::synchronizer::SynchronizationOutcomeType;
     if (commit.sync_outcome == SynchronizationOutcomeType::kReject
@@ -319,29 +340,30 @@ void Irohad::initOrderingGate() {
       ++local_counter;
       if (local_counter == kMaxLocalCounter) {
         local_counter = 0;
-        if (reject_counter < kMaxDelaySeconds) {
-          reject_counter++;
+        if (reject_delay < kMaxDelay) {
+          reject_delay += std::min(kMaxDelay, kMaxDelayIncrement);
         }
       }
     } else {
-      reject_counter = 0;
+      reject_delay = std::chrono::milliseconds(0);
     }
-    return std::chrono::seconds(reject_counter);
+    return reject_delay;
   };
 
-  ordering_gate = ordering_init.initOrderingGate(max_proposal_size_,
-                                                 proposal_delay_,
-                                                 std::move(hashes),
-                                                 storage,
-                                                 transaction_factory,
-                                                 batch_parser,
-                                                 transaction_batch_factory_,
-                                                 async_call_,
-                                                 std::move(factory),
-                                                 proposal_factory,
-                                                 persistent_cache,
-                                                 {blocks.back()->height(), 1},
-                                                 delay);
+  ordering_gate =
+      ordering_init.initOrderingGate(max_proposal_size_,
+                                     proposal_delay_,
+                                     std::move(hashes),
+                                     storage,
+                                     transaction_factory,
+                                     batch_parser,
+                                     transaction_batch_factory_,
+                                     async_call_,
+                                     std::move(factory),
+                                     proposal_factory,
+                                     persistent_cache,
+                                     delay,
+                                     log_manager_->getChild("Ordering"));
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
 }
@@ -360,12 +382,14 @@ void Irohad::initSimulator() {
       std::make_unique<
           shared_model::validation::DefaultUnsignedBlockValidator>(),
       std::make_unique<shared_model::validation::ProtoBlockValidator>());
-  simulator = std::make_shared<Simulator>(ordering_gate,
-                                          stateful_validator,
-                                          storage,
-                                          storage,
-                                          crypto_signer_,
-                                          std::move(block_factory));
+  simulator = std::make_shared<Simulator>(
+      ordering_gate,
+      stateful_validator,
+      storage,
+      storage,
+      crypto_signer_,
+      std::move(block_factory),
+      log_manager_->getChild("Simulator")->getLogger());
 
   log_->info("[Init] => init simulator");
 }
@@ -384,7 +408,10 @@ void Irohad::initConsensusCache() {
  */
 void Irohad::initBlockLoader() {
   block_loader =
-      loader_init.initBlockLoader(storage, storage, consensus_result_cache_);
+      loader_init.initBlockLoader(storage,
+                                  storage,
+                                  consensus_result_cache_,
+                                  log_manager_->getChild("BlockLoader"));
 
   log_->info("[Init] => block loader");
 }
@@ -393,14 +420,17 @@ void Irohad::initBlockLoader() {
  * Initializing consensus gate
  */
 void Irohad::initConsensusGate() {
-  consensus_gate = yac_init.initConsensusGate(storage,
-                                              simulator,
-                                              block_loader,
-                                              keypair,
-                                              consensus_result_cache_,
-                                              vote_delay_,
-                                              async_call_,
-                                              common_objects_factory_);
+  consensus_gate =
+      yac_init.initConsensusGate(storage,
+                                 simulator,
+                                 block_loader,
+                                 keypair,
+                                 consensus_result_cache_,
+                                 vote_delay_,
+                                 async_call_,
+                                 common_objects_factory_,
+                                 kConsensusConsistencyModel,
+                                 log_manager_->getChild("Consensus"));
   consensus_gate->onOutcome().subscribe(
       consensus_gate_events_subscription,
       consensus_gate_objects.get_subscriber());
@@ -412,7 +442,12 @@ void Irohad::initConsensusGate() {
  */
 void Irohad::initSynchronizer() {
   synchronizer = std::make_shared<SynchronizerImpl>(
-      consensus_gate, chain_validator, storage, storage, block_loader);
+      consensus_gate,
+      chain_validator,
+      storage,
+      storage,
+      block_loader,
+      log_manager_->getChild("Synchronizer")->getLogger());
 
   log_->info("[Init] => synchronizer");
 }
@@ -422,7 +457,10 @@ void Irohad::initSynchronizer() {
  */
 void Irohad::initPeerCommunicationService() {
   pcs = std::make_shared<PeerCommunicationServiceImpl>(
-      ordering_gate, synchronizer, simulator);
+      ordering_gate,
+      synchronizer,
+      simulator,
+      log_manager_->getChild("PeerCommunicationService")->getLogger());
 
   pcs->onProposal().subscribe([this](const auto &) {
     log_->info("~~~~~~~~~| PROPOSAL ^_^ |~~~~~~~~~ ");
@@ -454,8 +492,14 @@ void Irohad::initStatusBus() {
 }
 
 void Irohad::initMstProcessor() {
+  auto mst_logger_manager =
+      log_manager_->getChild("MultiSignatureTransactions");
+  auto mst_state_logger = mst_logger_manager->getChild("State")->getLogger();
   auto mst_completer = std::make_shared<DefaultCompleter>(mst_expiration_time_);
-  auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
+  auto mst_storage = std::make_shared<MstStorageStateImpl>(
+      mst_completer,
+      mst_state_logger,
+      mst_logger_manager->getChild("Storage")->getLogger());
   std::shared_ptr<iroha::PropagationStrategy> mst_propagation;
   if (is_mst_supported_) {
     mst_transport = std::make_shared<iroha::network::MstTransportGrpc>(
@@ -465,7 +509,9 @@ void Irohad::initMstProcessor() {
         transaction_batch_factory_,
         persistent_cache,
         mst_completer,
-        keypair.publicKey());
+        keypair.publicKey(),
+        std::move(mst_state_logger),
+        mst_logger_manager->getChild("Transport")->getLogger());
     mst_propagation = std::make_shared<GossipPropagationStrategy>(
         storage, rxcpp::observe_on_new_thread(), *opt_mst_gossip_params_);
   } else {
@@ -475,7 +521,11 @@ void Irohad::initMstProcessor() {
 
   auto mst_time = std::make_shared<MstTimeProviderImpl>();
   auto fair_mst_processor = std::make_shared<FairMstProcessor>(
-      mst_transport, mst_storage, mst_propagation, mst_time);
+      mst_transport,
+      mst_storage,
+      mst_propagation,
+      mst_time,
+      mst_logger_manager->getChild("Processor")->getLogger());
   mst_processor = fair_mst_processor;
   mst_transport->subscribe(fair_mst_processor);
   log_->info("[Init] => MST processor");
@@ -493,12 +543,25 @@ void Irohad::initPendingTxsStorage() {
  * Initializing transaction command service
  */
 void Irohad::initTransactionCommandService() {
+  auto command_service_log_manager = log_manager_->getChild("CommandService");
   auto status_factory =
       std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
+  auto cs_cache = std::make_shared<::torii::CommandServiceImpl::CacheType>();
   auto tx_processor = std::make_shared<TransactionProcessorImpl>(
-      pcs, mst_processor, status_bus_, status_factory);
+      pcs,
+      mst_processor,
+      status_bus_,
+      status_factory,
+      storage->on_commit(),
+      command_service_log_manager->getChild("Processor")->getLogger());
   command_service = std::make_shared<::torii::CommandServiceImpl>(
-      tx_processor, storage, status_bus_, status_factory);
+      tx_processor,
+      storage,
+      status_bus_,
+      status_factory,
+      cs_cache,
+      persistent_cache,
+      command_service_log_manager->getLogger());
   command_service_transport =
       std::make_shared<::torii::CommandServiceTransportGrpc>(
           command_service,
@@ -510,7 +573,8 @@ void Irohad::initTransactionCommandService() {
           consensus_gate_objects.get_observable().map([](const auto &) {
             return ::torii::CommandServiceTransportGrpc::ConsensusGateEvent{};
           }),
-          2);  // TODO 18.01.2019 igor-egorov, make it configurable IR-230
+          stale_stream_max_rounds_,
+          command_service_log_manager->getChild("Transport")->getLogger());
 
   log_->info("[Init] => command service");
 }
@@ -519,11 +583,16 @@ void Irohad::initTransactionCommandService() {
  * Initializing query command service
  */
 void Irohad::initQueryService() {
+  auto query_service_log_manager = log_manager_->getChild("QueryService");
   auto query_processor = std::make_shared<QueryProcessorImpl>(
-      storage, storage, pending_txs_storage_, query_response_factory_);
+      storage,
+      storage,
+      pending_txs_storage_,
+      query_response_factory_,
+      query_service_log_manager->getChild("Processor")->getLogger());
 
-  query_service =
-      std::make_shared<::torii::QueryService>(query_processor, query_factory);
+  query_service = std::make_shared<::torii::QueryService>(
+      query_processor, query_factory, query_service_log_manager->getLogger());
 
   log_->info("[Init] => query service");
 }
@@ -541,13 +610,15 @@ Irohad::RunResult Irohad::run() {
 
   // Initializing torii server
   torii_server = std::make_unique<ServerRunner>(
-      listen_ip_ + ":" + std::to_string(torii_port_), false);
+      listen_ip_ + ":" + std::to_string(torii_port_),
+      log_manager_->getChild("ToriiServerRunner")->getLogger(),
+      false);
 
   // Initializing internal server
   internal_server = std::make_unique<ServerRunner>(
       listen_ip_ + ":" + std::to_string(internal_port_),
-      false,
-      logger::log("InternalServerRunner"));
+      log_manager_->getChild("InternalServerRunner")->getLogger(),
+      false);
 
   // Run torii server
   return (torii_server->append(command_service_transport)
@@ -562,7 +633,7 @@ Irohad::RunResult Irohad::run() {
             }
             // Run internal server
             return internal_server->append(ordering_init.service)
-                .append(yac_init.consensus_network)
+                .append(yac_init.getConsensusNetwork())
                 .append(loader_init.service)
                 .run();
           })
@@ -585,12 +656,13 @@ Irohad::RunResult Irohad::run() {
                 std::shared_ptr<shared_model::interface::Block>>>(&block_var)
                              ->value;
 
-            pcs->on_commit()
-                .start_with(synchronizer::SynchronizationEvent{
+            pcs->on_commit().subscribe(ordering_init.notifier.get_subscriber());
+
+            ordering_init.notifier.get_subscriber().on_next(
+                synchronizer::SynchronizationEvent{
                     rxcpp::observable<>::just(block),
                     SynchronizationOutcomeType::kCommit,
-                    {block->height(), ordering::kFirstRejectRound}})
-                .subscribe(ordering_init.notifier.get_subscriber());
+                    {block->height(), ordering::kFirstRejectRound}});
             return {};
           },
           [&](const expected::Error<std::string> &e) -> RunResult {

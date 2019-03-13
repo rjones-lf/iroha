@@ -7,6 +7,7 @@
 
 #include <gtest/gtest.h>
 #include <boost/range/combine.hpp>
+#include "framework/test_logger.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "module/irohad/ordering/ordering_mocks.hpp"
 #include "module/shared_model/interface_mocks.hpp"
@@ -45,7 +46,10 @@ struct OnDemandConnectionManagerTest : public ::testing::Test {
     }
 
     manager = std::make_shared<OnDemandConnectionManager>(
-        factory, peers.get_observable(), cpeers);
+        factory,
+        peers.get_observable(),
+        cpeers,
+        getTestLogger("OsConnectionManager"));
   }
 
   OnDemandConnectionManager::CurrentPeers cpeers;
@@ -75,22 +79,16 @@ TEST_F(OnDemandConnectionManagerTest, FactoryUsed) {
  */
 TEST_F(OnDemandConnectionManagerTest, onBatches) {
   OdOsNotification::CollectionType collection;
-  consensus::Round round{1, 2};
 
-  auto set_expect = [&](OnDemandConnectionManager::PeerType type,
-                        consensus::Round round) {
-    EXPECT_CALL(*connections[type], onBatches(round, collection)).Times(1);
+  auto set_expect = [&](OnDemandConnectionManager::PeerType type) {
+    EXPECT_CALL(*connections[type], onBatches(collection)).Times(1);
   };
 
-  set_expect(
-      OnDemandConnectionManager::kCurrentRoundRejectConsumer,
-      {round.block_round, currentRejectRoundConsumer(round.reject_round)});
-  set_expect(OnDemandConnectionManager::kNextRoundRejectConsumer,
-             {round.block_round + 1, kNextRejectRoundConsumer});
-  set_expect(OnDemandConnectionManager::kNextRoundCommitConsumer,
-             {round.block_round + 2, kNextCommitRoundConsumer});
+  set_expect(OnDemandConnectionManager::kCurrentRoundRejectConsumer);
+  set_expect(OnDemandConnectionManager::kNextRoundRejectConsumer);
+  set_expect(OnDemandConnectionManager::kNextRoundCommitConsumer);
 
-  manager->onBatches(round, collection);
+  manager->onBatches(collection);
 }
 
 /**

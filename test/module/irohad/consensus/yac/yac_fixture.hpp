@@ -9,12 +9,19 @@
 #include <gtest/gtest.h>
 
 #include "consensus/yac/cluster_order.hpp"
+#include "consensus/yac/storage/buffered_cleanup_strategy.hpp"
 #include "consensus/yac/yac.hpp"
 
+#include "framework/test_logger.hpp"
+#include "logger/logger_manager.hpp"
 #include "module/irohad/consensus/yac/mock_yac_crypto_provider.hpp"
 #include "module/irohad/consensus/yac/mock_yac_network.hpp"
 #include "module/irohad/consensus/yac/mock_yac_timer.hpp"
 #include "module/irohad/consensus/yac/yac_test_util.hpp"
+
+// TODO mboldyrev 14.02.2019 IR-324 Use supermajority checker mock
+static const iroha::consensus::yac::ConsistencyModel kConsistencyModel =
+    iroha::consensus::yac::ConsistencyModel::kBft;
 
 namespace iroha {
   namespace consensus {
@@ -53,7 +60,17 @@ namespace iroha {
         }
 
         void initYac(ClusterOrdering ordering) {
-          yac = Yac::create(YacVoteStorage(), network, crypto, timer, ordering);
+          yac = Yac::create(
+              YacVoteStorage(
+                  std::make_shared<
+                      iroha::consensus::yac::BufferedCleanupStrategy>(),
+                  getSupermajorityChecker(kConsistencyModel),
+                  getTestLoggerManager()->getChild("YacVoteStorage")),
+              network,
+              crypto,
+              timer,
+              ordering,
+              getTestLogger("Yac"));
           network->subscribe(yac);
         }
       };

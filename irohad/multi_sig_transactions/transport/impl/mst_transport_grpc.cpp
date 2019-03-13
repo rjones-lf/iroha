@@ -13,6 +13,7 @@
 #include "backend/protobuf/transaction.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/transaction.hpp"
+#include "logger/logger.hpp"
 #include "validators/field_validator.hpp"
 
 using namespace iroha;
@@ -34,14 +35,18 @@ MstTransportGrpc::MstTransportGrpc(
         transaction_batch_factory,
     std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache,
     std::shared_ptr<Completer> mst_completer,
-    shared_model::crypto::PublicKey my_key)
+    shared_model::crypto::PublicKey my_key,
+    logger::LoggerPtr mst_state_logger,
+    logger::LoggerPtr log)
     : async_call_(std::move(async_call)),
       transaction_factory_(std::move(transaction_factory)),
       batch_parser_(std::move(batch_parser)),
       batch_factory_(std::move(transaction_batch_factory)),
       tx_presence_cache_(std::move(tx_presence_cache)),
       mst_completer_(std::move(mst_completer)),
-      my_key_(shared_model::crypto::toBinaryString(my_key)) {}
+      my_key_(shared_model::crypto::toBinaryString(my_key)),
+      mst_state_logger_(std::move(mst_state_logger)),
+      log_(std::move(log)) {}
 
 shared_model::interface::types::SharedTxsCollectionType
 MstTransportGrpc::deserializeTransactions(const transport::MstState *request) {
@@ -58,10 +63,9 @@ MstTransportGrpc::deserializeTransactions(const transport::MstState *request) {
               },
               [&](const iroha::expected::Error<TransportFactoryType::Error>
                       &error) {
-                async_call_->log_->info(
-                    "Transaction deserialization failed: hash {}, {}",
-                    error.error.hash,
-                    error.error.error);
+                log_->info("Transaction deserialization failed: hash {}, {}",
+                           error.error.hash,
+                           error.error.error);
                 return false;
               });
         })
@@ -77,13 +81,13 @@ grpc::Status MstTransportGrpc::SendState(
     ::grpc::ServerContext *context,
     const ::iroha::network::transport::MstState *request,
     ::google::protobuf::Empty *response) {
-  async_call_->log_->info("MstState Received");
+  log_->info("MstState Received");
 
   auto transactions = deserializeTransactions(request);
 
   auto batches = batch_parser_->parseBatches(transactions);
 
-  MstState new_state = MstState::empty(mst_completer_);
+  MstState new_state = MstState::empty(mst_state_logger_, mst_completer_);
 
   for (auto &batch : batches) {
     batch_factory_->createTransactionBatch(batch).match(
@@ -92,8 +96,8 @@ grpc::Status MstTransportGrpc::SendState(
           auto cache_presence = tx_presence_cache_->check(*value.value);
           if (not cache_presence) {
             // TODO andrei 30.11.18 IR-51 Handle database error
-            async_call_->log_->warn(
-                "Check tx presence database error. Batch: {}", *value.value);
+            log_->warn("Check tx presence database error. Batch: {}",
+                       *value.value);
             return;
           }
           auto is_replay = std::any_of(
@@ -112,26 +116,23 @@ grpc::Status MstTransportGrpc::SendState(
           }
         },
         [&](iroha::expected::Error<std::string> &error) {
-          async_call_->log_->warn("Batch deserialization failed: {}",
-                                  error.error);
+          log_->warn("Batch deserialization failed: {}", error.error);
         });
   }
 
-  async_call_->log_->info("batches in MstState: {}",
-                          new_state.getBatches().size());
+  log_->info("batches in MstState: {}", new_state.getBatches().size());
 
   shared_model::crypto::PublicKey source_key(request->source_peer_key());
   auto key_invalid_reason =
       shared_model::validation::validatePubkey(source_key);
   if (key_invalid_reason) {
-    async_call_->log_->info(
-        "Dropping received MST State due to invalid public key: {}",
-        *key_invalid_reason);
+    log_->info("Dropping received MST State due to invalid public key: {}",
+               *key_invalid_reason);
     return grpc::Status::OK;
   }
 
   if (new_state.isEmpty()) {
-    async_call_->log_->info(
+    log_->info(
         "All transactions from received MST state have been processed already, "
         "nothing to propagate to MST processor");
     return grpc::Status::OK;
@@ -140,7 +141,7 @@ grpc::Status MstTransportGrpc::SendState(
   if (auto subscriber = subscriber_.lock()) {
     subscriber->onNewState(source_key, std::move(new_state));
   } else {
-    async_call_->log_->warn("No subscriber for MST SendState event is set");
+    log_->warn("No subscriber for MST SendState event is set");
   }
 
   return grpc::Status::OK;
@@ -153,7 +154,7 @@ void MstTransportGrpc::subscribe(
 
 void MstTransportGrpc::sendState(const shared_model::interface::Peer &to,
                                  ConstRefState providing_state) {
-  async_call_->log_->info("Propagate MstState to peer {}", to.address());
+  log_->info("Propagate MstState to peer {}", to.address());
   sendStateAsyncImpl(to, providing_state, my_key_, *async_call_);
 }
 

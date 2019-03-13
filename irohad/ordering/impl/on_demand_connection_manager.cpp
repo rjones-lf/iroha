@@ -7,6 +7,7 @@
 
 #include <boost/range/combine.hpp>
 #include "interfaces/iroha_internal/proposal.hpp"
+#include "logger/logger.hpp"
 #include "ordering/impl/on_demand_common.hpp"
 
 using namespace iroha;
@@ -15,7 +16,7 @@ using namespace iroha::ordering;
 OnDemandConnectionManager::OnDemandConnectionManager(
     std::shared_ptr<transport::OdOsNotificationFactory> factory,
     rxcpp::observable<CurrentPeers> peers,
-    logger::Logger log)
+    logger::LoggerPtr log)
     : log_(std::move(log)),
       factory_(std::move(factory)),
       subscription_(peers.subscribe([this](const auto &peers) {
@@ -29,7 +30,7 @@ OnDemandConnectionManager::OnDemandConnectionManager(
     std::shared_ptr<transport::OdOsNotificationFactory> factory,
     rxcpp::observable<CurrentPeers> peers,
     CurrentPeers initial_peers,
-    logger::Logger log)
+    logger::LoggerPtr log)
     : OnDemandConnectionManager(std::move(factory), peers, std::move(log)) {
   // using start_with(initial_peers) results in deadlock
   initializeConnections(initial_peers);
@@ -39,10 +40,8 @@ OnDemandConnectionManager::~OnDemandConnectionManager() {
   subscription_.unsubscribe();
 }
 
-void OnDemandConnectionManager::onBatches(consensus::Round round,
-                                          CollectionType batches) {
+void OnDemandConnectionManager::onBatches(CollectionType batches) {
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
-
   /*
    * Transactions are always sent to the round after the next round (+2)
    * There are 3 possibilities - next reject in the current round, first reject
@@ -56,19 +55,9 @@ void OnDemandConnectionManager::onBatches(consensus::Round round,
    * 2 v . .
    */
 
-  auto propagate = [this, batches](PeerType type, consensus::Round round) {
-    log_->debug("onBatches, {}", round);
-
-    connections_.peers[type]->onBatches(round, batches);
-  };
-
-  propagate(
-      kCurrentRoundRejectConsumer,
-      {round.block_round, currentRejectRoundConsumer(round.reject_round)});
-  propagate(kNextRoundRejectConsumer,
-            {round.block_round + 1, kNextRejectRoundConsumer});
-  propagate(kNextRoundCommitConsumer,
-            {round.block_round + 2, kNextCommitRoundConsumer});
+  connections_.peers[kCurrentRoundRejectConsumer]->onBatches(batches);
+  connections_.peers[kNextRoundRejectConsumer]->onBatches(batches);
+  connections_.peers[kNextRoundCommitConsumer]->onBatches(batches);
 }
 
 boost::optional<std::shared_ptr<const OnDemandConnectionManager::ProposalType>>

@@ -8,5 +8,6 @@
 AddTest(logger_test logger_test.cpp)
 target_link_libraries(logger_test
     logger
+    logger_manager
     )
 

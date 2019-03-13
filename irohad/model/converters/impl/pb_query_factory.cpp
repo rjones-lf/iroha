@@ -5,6 +5,7 @@
 
 #include "model/converters/pb_query_factory.hpp"
 
+#include "logger/logger.hpp"
 #include "model/common.hpp"
 #include "model/queries/get_account.hpp"
 #include "model/queries/get_account_assets.hpp"
@@ -19,7 +20,7 @@ namespace iroha {
   namespace model {
     namespace converters {
 
-      PbQueryFactory::PbQueryFactory(logger::Logger log)
+      PbQueryFactory::PbQueryFactory(logger::LoggerPtr log)
           : log_{std::move(log)} {
         serializers_[typeid(GetAccount)] = &PbQueryFactory::serializeGetAccount;
         serializers_[typeid(GetAccountAssets)] =

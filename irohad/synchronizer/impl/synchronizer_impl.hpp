@@ -10,7 +10,7 @@
 
 #include "ametsuchi/mutable_factory.hpp"
 #include "ametsuchi/peer_query_factory.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
 #include "validation/chain_validator.hpp"
@@ -31,7 +31,7 @@ namespace iroha {
           std::shared_ptr<ametsuchi::MutableFactory> mutable_factory,
           std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
           std::shared_ptr<network::BlockLoader> block_loader,
-          logger::Logger log = logger::log("Synchronizer"));
+          logger::LoggerPtr log);
 
       ~SynchronizerImpl() override;
 
@@ -67,7 +67,7 @@ namespace iroha {
       rxcpp::subjects::subject<SynchronizationEvent> notifier_;
       rxcpp::composite_subscription subscription_;
 
-      logger::Logger log_;
+      logger::LoggerPtr log_;
     };
 
   }  // namespace synchronizer

@@ -33,3 +33,4 @@ typing==3.6.2
 urllib3==1.23
 watchdog==0.8.3
 yarg==0.1.9
+m2r

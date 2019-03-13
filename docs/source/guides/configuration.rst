@@ -31,6 +31,8 @@ Deployment-specific parameters
   service, consensus and block loader.
 - ``pg_opt`` is used for setting credentials of PostgreSQL: hostname, port,
   username and password.
+- ``log`` is an optional parameter controlling log output verbosity and format
+  (see below).
 
 Environment-specific parameters
 -------------------------------
@@ -54,3 +56,60 @@ Environment-specific parameters
 - ``mst_enable`` enables or disables multisignature transaction support in
   Iroha. We recommend setting this parameter to ``false`` at the moment until
   you really need it.
+
+Logging
+-------
+
+In Iroha logging can be adjusted as granularly as you want.
+Each component has its own logging configuration with properties inherited from
+its parent, able to be overridden through config file.
+This means all the component loggers are organized in a tree with a single root.
+The relevant section of the configuration file contains the overriding values:
+
+.. code-block:: json
+  :linenos:
+
+  "log": {
+    "level": "info",
+    "patterns": {
+      "debug": "don't panic, it's %v.",
+      "error": "MAMA MIA! %v!!!"
+    },
+    "children": {
+      "KeysManager": {
+        "level": "trace"
+      },
+      "Irohad": {
+        "children": {
+          "Storage": {
+            "level": "trace",
+            "patterns": {
+              "debug": "thread %t: %v."
+            }
+          }
+        }
+      }
+    }
+  }
+
+Every part of this config section is optional.
+
+- ``level`` sets the verbosity.
+  Available values are (in decreasing verbosity order):
+
+  - ``trace`` - print everything
+  - ``debug``
+  - ``info``
+  - ``warning``
+  - ``error``
+  - ``critical`` - print only critical messages
+
+- ``patterns`` controls the formatting of each log string for different
+  verbosity levels.
+  Each value overrides the less verbose levels too.
+  So in the example above, the "don't panic" pattern also applies to info and
+  warning levels, and the trace level pattern is the only one that is not
+  initialized in the config (it will be set to default hardcoded value).
+- ``children`` describes the overrides of child nodes.
+  The keys are the names of the components, and the values have the same syntax
+  and semantics as the root log configuration.

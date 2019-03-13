@@ -10,6 +10,7 @@
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "framework/mock_stream.h"
+#include "framework/test_logger.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "module/shared_model/validators/validators.hpp"
@@ -45,18 +46,21 @@ class OnDemandOsClientGrpcTest : public ::testing::Test {
     auto ustub = std::make_unique<proto::MockOnDemandOrderingStub>();
     stub = ustub.get();
     async_call =
-        std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
+        std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>(
+            getTestLogger("AsyncCall"));
     auto validator = std::make_unique<MockProposalValidator>();
     proposal_validator = validator.get();
     auto proto_validator = std::make_unique<MockProtoProposalValidator>();
     proto_proposal_validator = proto_validator.get();
     proposal_factory = std::make_shared<ProtoProposalTransportFactory>(
         std::move(validator), std::move(proto_validator));
-    client = std::make_shared<OnDemandOsClientGrpc>(std::move(ustub),
-                                                    async_call,
-                                                    proposal_factory,
-                                                    [&] { return timepoint; },
-                                                    timeout);
+    client =
+        std::make_shared<OnDemandOsClientGrpc>(std::move(ustub),
+                                               async_call,
+                                               proposal_factory,
+                                               [&] { return timepoint; },
+                                               timeout,
+                                               getTestLogger("OdOsClientGrpc"));
   }
 
   proto::MockOnDemandOrderingStub *stub;
@@ -92,10 +96,8 @@ TEST_F(OnDemandOsClientGrpcTest, onBatches) {
       std::make_unique<shared_model::interface::TransactionBatchImpl>(
           shared_model::interface::types::SharedTxsCollectionType{
               std::make_unique<shared_model::proto::Transaction>(tx)}));
-  client->onBatches(round, std::move(collection));
+  client->onBatches(std::move(collection));
 
-  ASSERT_EQ(request.round().block_round(), round.block_round);
-  ASSERT_EQ(request.round().reject_round(), round.reject_round);
   ASSERT_EQ(request.transactions()
                 .Get(0)
                 .payload()

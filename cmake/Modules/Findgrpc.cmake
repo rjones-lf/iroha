@@ -44,6 +44,7 @@ if (NOT grpc_FOUND)
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
       CMAKE_ARGS
+        ${DEPS_CMAKE_ARGS}
         -DgRPC_PROTOBUF_PROVIDER=package
         ${PROTO_DEP}
         -DgRPC_ZLIB_PROVIDER=package

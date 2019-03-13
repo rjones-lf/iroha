@@ -9,6 +9,7 @@
 #include "ametsuchi/impl/soci_utils.hpp"
 #include "common/result.hpp"
 #include "cryptography/public_key.hpp"
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -20,13 +21,13 @@ namespace iroha {
     PostgresWsvQuery::PostgresWsvQuery(
         soci::session &sql,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
-        logger::Logger log)
+        logger::LoggerPtr log)
         : sql_(sql), factory_(std::move(factory)), log_(std::move(log)) {}
 
     PostgresWsvQuery::PostgresWsvQuery(
         std::unique_ptr<soci::session> sql,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
-        logger::Logger log)
+        logger::LoggerPtr log)
         : psql_(std::move(sql)),
           sql_(*psql_),
           factory_(std::move(factory)),
