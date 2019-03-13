@@ -170,7 +170,7 @@ def successPostSteps(scmVars, boolean packagePush, String dockerTag, List enviro
   }
 }
 
-def alwaysPostSteps(List environment) {
+def alwaysPostSteps(List environment, boolean coredumps) {
   stage('Linux always PostSteps') {
     // handling coredumps (if tests crashed)
     if (currentBuild.currentResult != "SUCCESS" && coredumps) {
