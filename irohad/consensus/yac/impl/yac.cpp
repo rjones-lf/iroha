@@ -7,6 +7,7 @@
 
 #include <utility>
 
+#include <boost/range/adaptor/transformed.hpp>
 #include "common/bind.hpp"
 #include "common/visitor.hpp"
 #include "consensus/yac/cluster_order.hpp"
@@ -87,31 +88,32 @@ namespace iroha {
                      target.end());
       }
 
-      template <typename T>
-      bool contains(const std::vector<T> &haystack, const T &needle) {
+      template <typename CollectionType, typename ElementType>
+      bool contains(const CollectionType &haystack, const ElementType &needle) {
         return std::find(haystack.begin(), haystack.end(), needle)
             != haystack.end();
       }
 
-      void Yac::onState(std::vector<VoteMessage> state) {
-        std::lock_guard<std::mutex> guard(mutex_);
-
-        std::vector<shared_model::crypto::PublicKey> peer_keys;
-        peer_keys.reserve(cluster_order_.getNumberOfPeers());
-        for (const auto &peer : cluster_order_.getPeers()) {
-          peer_keys.push_back(peer->pubkey());
-        }
-
+      /// moves the votes not present in known_keys from votes to return value
+      void Yac::removeUnknownPeersVotes(std::vector<VoteMessage> &votes) {
+        auto known_keys = cluster_order_.getPeers()
+            | boost::adaptors::transformed(
+                              [](const auto &peer) { return peer->pubkey(); });
         removeMatching(
-            state,
-            [peer_keys = std::move(peer_keys), this](const VoteMessage &vote) {
-              if (not contains(peer_keys, vote.signature->publicKey())) {
+            votes,
+            [known_keys = std::move(known_keys), this](VoteMessage &vote) {
+              if (not contains(known_keys, vote.signature->publicKey())) {
                 log_->warn("Got a vote from an unknown peer: {}", vote);
                 return true;
               }
               return false;
             });
+      }
 
+      void Yac::onState(std::vector<VoteMessage> state) {
+        std::lock_guard<std::mutex> guard(mutex_);
+
+        removeUnknownPeersVotes(state);
         if (state.empty()) {
           log_->debug("No votes left in the message.");
           return;
