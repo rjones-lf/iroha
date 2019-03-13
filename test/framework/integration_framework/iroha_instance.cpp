@@ -38,10 +38,10 @@ namespace integration_framework {
         vote_delay_(0ms),
         // amount of minutes in a day
         mst_expiration_time_(std::chrono::minutes(24 * 60)),
-        max_rounds_delay_(0ms),
-        stale_stream_max_rounds_(2),
         opt_mst_gossip_params_(boost::make_optional(
             mst_support, iroha::GossipPropagationStrategyParams{})),
+        max_rounds_delay_(0ms),
+        stale_stream_max_rounds_(2),
         irohad_log_manager_(std::move(irohad_log_manager)),
         log_(std::move(log)) {}
 
