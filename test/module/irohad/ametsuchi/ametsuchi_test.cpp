@@ -165,7 +165,7 @@ TEST_F(AmetsuchiTest, PeerTest) {
 
   std::vector<shared_model::proto::Transaction> txs;
   txs.push_back(TestTransactionBuilder()
-                    .addPeer("192.168.9.1:50051--", fake_pubkey)
+                    .addPeer("192.168.9.1:50051", fake_pubkey)
                     .build());
 
   auto block = createBlock(txs, 1, fake_hash);

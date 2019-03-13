@@ -178,12 +178,9 @@ def alwaysPostSteps(List environment, boolean coredumps) {
       def dumpsFileName = sprintf('coredumps-%1$s.bzip2',
         [scmVars.GIT_COMMIT.substring(0,8)])
 
-      // sh(script: "touch coredumps.upload")
       sh(script: "echo 'build/bin' > coredumps.upload")
       sh(script: "find . -type f -name '*.coredump' -exec echo '{}' \\; >> coredumps.upload")
       sh(script: "tar -cjvf ${dumpsFileName} -T coredumps.upload")
-      // sh(script: "find . -type f -name '*.coredump' -exec tar -cjvf ${dumpsFileName} {} \\+;")
-      // sh(script: "tar -rf ${dumpsFileName} build/bin")
       if( fileExists(dumpsFileName)) {
         withCredentials([usernamePassword(credentialsId: 'ci_nexus', passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')]) {
           sh(script: "curl -u ${NEXUS_USER}:${NEXUS_PASS} --upload-file ${WORKSPACE}/${dumpsFileName} https://nexus.iroha.tech/repository/artifacts/iroha/coredumps/${dumpsFileName}")
