@@ -66,7 +66,13 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveOneVote) {
 
 /**
  * Test provide scenario
- * when yac cold started and achieve supermajority of  votes
+ * when yac cold started and achieve supermajority of votes
+ *
+ * TODO 13.03.2019 mboldyrev IR-396: fix the test if needed
+ * the test passed successfully due to votes being equal and hence
+ * YacProposalStorage::checkPeerUniqueness(const VoteMessage &)
+ * returning `false'. This does not meet the `when' clause in this test
+ * description.
  */
 TEST_F(YacTest, DISABLED_YacWhenColdStartAndAchieveSupermajorityOfVotes) {
   cout << "----------|Start => receive supermajority of votes"
@@ -130,6 +136,12 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveCommitMessage) {
  * @given initialized YAC
  * @when receive supermajority of votes for a hash
  * @then commit is sent to the network before notifying subscribers
+ *
+ * TODO 13.03.2019 mboldyrev IR-396: fix the test if needed
+ * the test passed successfully due to votes being equal and hence
+ * YacProposalStorage::checkPeerUniqueness(const VoteMessage &)
+ * returning `false'. This does not meet the `when' clause in this test
+ * description.
  */
 TEST_F(YacTest, DISABLED_PropagateCommitBeforeNotifyingSubscribersApplyVote) {
   EXPECT_CALL(*crypto, verify(_))
