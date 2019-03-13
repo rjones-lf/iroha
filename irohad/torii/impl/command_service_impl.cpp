@@ -195,62 +195,38 @@ namespace iroha {
       const auto status_issuer = "ToriiBatchProcessor";
       const auto &txs = batch->transactions();
 
-      bool cache_has_at_least_one_tx{false};
-      bool batch_has_mst_pending_tx{false};
-      std::tie(cache_has_at_least_one_tx, batch_has_mst_pending_tx) =
-          // this accumulate can be split on two parts to perform visit_in_place
-          // two times - one for cache lookup with booleans initialization and
-          // another for statuses pushing. That can allow to move a part of code
-          // to a separate method for simplification
-          std::accumulate(
-              txs.begin(),
-              txs.end(),
-              std::make_pair<bool, bool>(false, false),
-              [this, &status_issuer](std::pair<bool, bool> lookup_result,
-                                     const auto &tx) {
-                const auto &tx_hash = tx->hash();
-                if (auto found = cache_->findItem(tx_hash)) {
-                  iroha::visit_in_place(
-                      (*found)->get(),
-                      [this, &found, &lookup_result, &status_issuer](
-                          const shared_model::interface::MstPendingResponse &) {
-                        this->pushStatus(status_issuer, *found);
-                        lookup_result.second = true;
-                      },
-                      [this, &tx_hash, &status_issuer](
-                          const shared_model::interface::NotReceivedTxResponse
-                              &) {
-                        // This branch covers an impossible case (this cache
-                        // cannot contain NotReceivedTxResponse, because the tx
-                        // has reached processBatch method, which means that
-                        // the tx already has StatelessValid status).
-                        // That is why we are not updating its status inside
-                        // internal cache, but still pushing to status bus.
-                        this->pushStatus(
-                            status_issuer,
-                            status_factory_->makeStatelessValid(tx_hash));
-                      },
-                      [this, &found, &status_issuer](const auto &status) {
-                        this->pushStatus(status_issuer, *found);
-                      });
-                  lookup_result.first = true;
-                }
-                return lookup_result;
-              });
+      bool has_final_status{false};
+      has_final_status = std::accumulate(
+          txs.begin(), txs.end(), false, [this](auto res, const auto &tx) {
+            if (res) {
+              return res;
+            }
 
-      if (cache_has_at_least_one_tx and not batch_has_mst_pending_tx) {
-        // If a non-persistent cache says that a transaction has pending status
-        // that means we have to check persistent cache too.
-        // Non-persistent cache might be overflowed and mst replay become
-        // possible without checking persistent cache.
+            auto on_final_status = [] { return true; };
 
-        // If there are no pending statuses and the transaction is found in
-        // non-persistent cache, then it is considered as a replay and prevented
-        // from further propagation.
+            const auto &tx_hash = tx->hash();
+            if (auto found = cache_->findItem(tx_hash)) {
+              log_->debug("Found in cache: {}", **found);
+              return iroha::visit_in_place(
+                  (*found)->get(),
+                  [](const shared_model::interface::CommittedTxResponse &) {
+                    return true;
+                  },
+                  [](const shared_model::interface::RejectedTxResponse &) {
+                    return true;
+                  },
+                  [](const auto &rest_responses) { return false; });
+            } else {
+              return false;
+            }
+          });
 
-        // If non-persistent cache does not contain any info about a
-        // transaction, then we just check persistent cache.
-        log_->warn("Replayed batch would not be served. {}", *batch);
+      if (has_final_status) {
+        // if the transaction or batch has appeared in the cache with final
+        // status this guarantees the transaction was passed to a consensus
+        // before
+        log_->warn("Replayed batch would not be served - present in cache. {}",
+                   *batch);
         return;
       }
 
@@ -290,7 +266,9 @@ namespace iroha {
                 });
           });
       if (is_replay) {
-        log_->warn("Replayed batch would not be served. {}", *batch);
+        log_->warn(
+            "Replayed batch would not be served - present in database. {}",
+            *batch);
         return;
       }
 
