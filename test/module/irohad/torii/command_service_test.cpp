@@ -81,9 +81,8 @@ TEST_F(CommandServiceTest, getStatusStreamWithAbsentHash) {
       .WillOnce(Return(ret_value));
   EXPECT_CALL(*status_bus_, statuses())
       .Times(2)
-      .WillRepeatedly(
-          Return(rxcpp::observable<>::create<iroha::torii::StatusBus::Objects>(
-              [](auto s) { s.on_completed(); })));
+      .WillRepeatedly(Return(
+          rxcpp::observable<>::empty<iroha::torii::StatusBus::Objects>()));
 
   bindCommandService();
   auto wrapper = framework::test_subscriber::make_test_subscriber<
