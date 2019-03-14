@@ -132,7 +132,7 @@ namespace iroha {
         // if cache_ doesn't contain some status there is required to check
         // persistent cache
 
-        log_->debug("tx {} don't present in cache", hash);
+        log_->debug("tx {} isn't present in cache", hash);
         auto from_persistent_cache = tx_presence_cache_->check(hash);
         if (not from_persistent_cache) {
           // TODO andrei 30.11.18 IR-51 Handle database error
