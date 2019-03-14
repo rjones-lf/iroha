@@ -205,10 +205,12 @@ namespace iroha {
               (*found)->get(),
               [](const auto &final_responses)
                   -> std::enable_if_t<
-                      FinalStatusValue<decltype(final_responses), bool>> {
-                return true;
-              },
-              [](const auto &rest_responses) { return false; });
+                      FinalStatusValue<decltype(final_responses)>,
+                      bool> { return true; },
+              [](const auto &rest_responses)
+                  -> std::enable_if_t<
+                      not FinalStatusValue<decltype(rest_responses)>,
+                      bool> { return false; });
         }
 
         if (has_final_status) {
