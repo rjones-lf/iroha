@@ -37,7 +37,7 @@ class CommandServiceTest : public Test {
     log_ = getTestLogger("CommandServiceTest");
   }
 
-  void bindCommandService() {
+  void initCommandService() {
     command_service_ = std::make_shared<iroha::torii::CommandServiceImpl>(
         transaction_processor_,
         storage_,
@@ -69,7 +69,6 @@ class CommandServiceTest : public Test {
 TEST_F(CommandServiceTest, getStatusStreamWithAbsentHash) {
   using HashType = shared_model::crypto::Hash;
   auto hash = HashType("a");
-  auto opt_hash = boost::optional<HashType>("a");
   iroha::ametsuchi::TxCacheStatusType ret_value{
       iroha::ametsuchi::tx_cache_status_responses::Committed{hash}};
 
@@ -80,11 +79,10 @@ TEST_F(CommandServiceTest, getStatusStreamWithAbsentHash) {
       .Times(1)
       .WillOnce(Return(ret_value));
   EXPECT_CALL(*status_bus_, statuses())
-      .Times(2)
       .WillRepeatedly(Return(
           rxcpp::observable<>::empty<iroha::torii::StatusBus::Objects>()));
 
-  bindCommandService();
+  initCommandService();
   auto wrapper = framework::test_subscriber::make_test_subscriber<
       framework::test_subscriber::CallExact>(
       command_service_->getStatusStream(hash), 1);

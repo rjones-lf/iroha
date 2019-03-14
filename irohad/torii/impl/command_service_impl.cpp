@@ -129,7 +129,7 @@ namespace iroha {
       using ResponsePtrType =
           std::shared_ptr<shared_model::interface::TransactionResponse>;
       auto initial_status = cache_->findItem(hash).value_or([&] {
-        // if cache_ didn't contain some status there is required to check
+        // if cache_ doesn't contain some status there is required to check
         // persistent cache
 
         log_->debug("tx {} don't present in cache", hash);
