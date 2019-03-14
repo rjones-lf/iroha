@@ -74,7 +74,7 @@ namespace iroha {
                           block.transactions().end(),
                           execute_transaction);
       if (block_applied) {
-        block_storage_->insert(block.height(), block);
+        block_storage_->insert(block);
         block_index_->index(block);
 
         top_hash_ = block.hash();

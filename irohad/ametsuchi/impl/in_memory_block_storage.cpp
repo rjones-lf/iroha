@@ -8,19 +8,19 @@
 using namespace iroha::ametsuchi;
 
 bool InMemoryBlockStorage::insert(
-    Identifier id,
     std::shared_ptr<const shared_model::interface::Block> block) {
-  return block_store_.emplace(id, std::move(block)).second;
+  auto height = block->height();
+  return block_store_.emplace(height, std::move(block)).second;
 }
 
-bool InMemoryBlockStorage::insert(Identifier id,
-                                  const shared_model::interface::Block &block) {
-  return block_store_.emplace(id, clone(block)).second;
+bool InMemoryBlockStorage::insert(const shared_model::interface::Block &block) {
+  return block_store_.emplace(block.height(), clone(block)).second;
 }
 
 boost::optional<std::shared_ptr<const shared_model::interface::Block>>
-InMemoryBlockStorage::fetch(Identifier id) const {
-  auto it = block_store_.find(id);
+InMemoryBlockStorage::fetch(
+    shared_model::interface::types::HeightType height) const {
+  auto it = block_store_.find(height);
   if (it != block_store_.end()) {
     return it->second;
   } else {
@@ -38,6 +38,6 @@ void InMemoryBlockStorage::clear() {
 
 void InMemoryBlockStorage::forEach(FunctionType function) const {
   for (const auto &pair : block_store_) {
-    function(pair.first, pair.second);
+    function(pair.second);
   }
 }

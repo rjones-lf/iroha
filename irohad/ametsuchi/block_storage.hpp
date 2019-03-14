@@ -22,28 +22,22 @@ namespace iroha {
     class BlockStorage {
      public:
       /**
-       * Type of storage key
-       */
-      using Identifier = uint32_t;
-
-      /**
-       * Append block with given key
+       * Append block, if the storage doesn't already contain the same block
        * @return true if inserted successfully, false otherwise
        */
       virtual bool insert(
-          Identifier id,
           std::shared_ptr<const shared_model::interface::Block> block) = 0;
 
       [[deprecated("Use shared_ptr")]] virtual bool insert(
-          Identifier id, const shared_model::interface::Block &block) = 0;
+          const shared_model::interface::Block &block) = 0;
 
       /**
-       * Get block associated with given identifier
+       * Get block with given height
        * @return block if exists, boost::none otherwise
        */
       virtual boost::optional<
           std::shared_ptr<const shared_model::interface::Block>>
-      fetch(Identifier id) const = 0;
+      fetch(shared_model::interface::types::HeightType height) const = 0;
 
       /**
        * Returns the size of the storage
@@ -57,7 +51,7 @@ namespace iroha {
 
       /// type of function which can be applied to the elements of the storage
       using FunctionType = std::function<void(
-          Identifier, std::shared_ptr<const shared_model::interface::Block>)>;
+          std::shared_ptr<const shared_model::interface::Block>)>;
 
       /**
        * Iterates through all the stored blocks

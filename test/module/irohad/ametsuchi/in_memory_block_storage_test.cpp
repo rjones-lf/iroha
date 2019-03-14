@@ -12,14 +12,12 @@
 using namespace iroha::ametsuchi;
 using ::testing::Invoke;
 using ::testing::NiceMock;
+using ::testing::Return;
 
 class InMemoryBlockStorageTest : public ::testing::Test {
  public:
   InMemoryBlockStorageTest() {
-    ON_CALL(*block_, clone()).WillByDefault(Invoke([this] {
-      block_copy_ = new NiceMock<MockBlock>();
-      return block_copy_;
-    }));
+    ON_CALL(*block_, height()).WillByDefault(Return(height_));
   }
 
  protected:
@@ -29,8 +27,7 @@ class InMemoryBlockStorageTest : public ::testing::Test {
 
   InMemoryBlockStorage block_storage_;
   std::shared_ptr<MockBlock> block_ = std::make_shared<NiceMock<MockBlock>>();
-  MockBlock *block_copy_;
-  InMemoryBlockStorage::Identifier id_ = 1;
+  shared_model::interface::types::HeightType height_ = 1;
 };
 
 /**
@@ -45,36 +42,36 @@ TEST(InMemoryBlockStorageFactoryTest, Creation) {
 }
 
 /**
- * @given initialized block storage, single block with id_ inserted
- * @when another block with id_ is inserted
+ * @given initialized block storage, single block with height_ inserted
+ * @when another block with height_ is inserted
  * @then second insertion fails
  */
 TEST_F(InMemoryBlockStorageTest, Insert) {
-  ASSERT_TRUE(block_storage_.insert(id_, *block_));
+  ASSERT_TRUE(block_storage_.insert(block_));
 
-  ASSERT_FALSE(block_storage_.insert(id_, *block_));
+  ASSERT_FALSE(block_storage_.insert(block_));
 }
 
 /**
- * @given initialized block storage, single block with id_ inserted
- * @when block with id_ is fetched
+ * @given initialized block storage, single block with height_ inserted
+ * @when block with height_ is fetched
  * @then it is returned
  */
 TEST_F(InMemoryBlockStorageTest, FetchExisting) {
-  ASSERT_TRUE(block_storage_.insert(id_, *block_));
+  ASSERT_TRUE(block_storage_.insert(block_));
 
-  auto block_var = block_storage_.fetch(id_);
+  auto block_var = block_storage_.fetch(height_);
 
-  ASSERT_EQ(block_copy_, block_var->get());
+  ASSERT_EQ(block_, *block_var);
 }
 
 /**
  * @given initialized block storage without blocks
- * @when block with id_ is fetched
+ * @when block with height_ is fetched
  * @then nothing is returned
  */
 TEST_F(InMemoryBlockStorageTest, FetchNonexistent) {
-  auto block_var = block_storage_.fetch(id_);
+  auto block_var = block_storage_.fetch(height_);
 
   ASSERT_FALSE(block_var);
 }
@@ -85,7 +82,7 @@ TEST_F(InMemoryBlockStorageTest, FetchNonexistent) {
  * @then 1 is returned
  */
 TEST_F(InMemoryBlockStorageTest, Size) {
-  ASSERT_TRUE(block_storage_.insert(id_, *block_));
+  ASSERT_TRUE(block_storage_.insert(block_));
 
   ASSERT_EQ(1, block_storage_.size());
 }
@@ -96,11 +93,11 @@ TEST_F(InMemoryBlockStorageTest, Size) {
  * @then no blocks are left in storage
  */
 TEST_F(InMemoryBlockStorageTest, Clear) {
-  ASSERT_TRUE(block_storage_.insert(id_, *block_));
+  ASSERT_TRUE(block_storage_.insert(block_));
 
   block_storage_.clear();
 
-  auto block_var = block_storage_.fetch(id_);
+  auto block_var = block_storage_.fetch(height_);
 
   ASSERT_FALSE(block_var);
 }
@@ -111,14 +108,14 @@ TEST_F(InMemoryBlockStorageTest, Clear) {
  * @then block with id_ is visited, lambda is invoked once
  */
 TEST_F(InMemoryBlockStorageTest, ForEach) {
-  ASSERT_TRUE(block_storage_.insert(id_, *block_));
+  ASSERT_TRUE(block_storage_.insert(block_));
 
   size_t count = 0;
 
-  block_storage_.forEach([this, &count](auto id, const auto &block) {
+  block_storage_.forEach([this, &count](const auto &block) {
     ++count;
-    ASSERT_EQ(id_, id);
-    ASSERT_EQ(block_copy_, block.get());
+    ASSERT_EQ(height_, block->height());
+    ASSERT_EQ(block_, block);
   });
 
   ASSERT_EQ(1, count);

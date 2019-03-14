@@ -423,7 +423,7 @@ namespace iroha {
       auto storage = static_cast<MutableStorageImpl *>(mutable_storage.get());
 
       storage->block_storage_->forEach(
-          [this](auto, const auto &block) { this->storeBlock(*block); });
+          [this](const auto &block) { this->storeBlock(*block); });
       try {
         *(storage->sql_) << "COMMIT";
         storage->committed = true;
