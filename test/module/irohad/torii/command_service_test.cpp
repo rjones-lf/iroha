@@ -64,7 +64,7 @@ class CommandServiceTest : public Test {
  *        @and hash with passed consensus but not present in runtime cache
  * @when  invoke getStatusStream by hash
  * @then  verify that code checks run-time and persistent caches for the hash
- *        @and return notReceived status
+ *        @and return CommittedTxResponse status
  */
 TEST_F(CommandServiceTest, getStatusStreamWithAbsentHash) {
   using HashType = shared_model::crypto::Hash;
@@ -87,6 +87,12 @@ TEST_F(CommandServiceTest, getStatusStreamWithAbsentHash) {
   bindCommandService();
   auto wrapper = framework::test_subscriber::make_test_subscriber<
       framework::test_subscriber::CallExact>(
-      command_service_->getStatusStream(hash), 0);
+      command_service_->getStatusStream(hash), 1);
+  wrapper.subscribe([](const auto &tx_response) {
+    return iroha::visit_in_place(
+        tx_response->get(),
+        [](const shared_model::interface::CommittedTxResponse &) {},
+        [](const auto &a) { FAIL() << "Wrong response!"; });
+  });
   ASSERT_TRUE(wrapper.validate());
 }
