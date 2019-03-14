@@ -55,6 +55,9 @@ namespace iroha {
 
         if (not event.round_data) {
           current_block_ = boost::none;
+          // previous block is committed to block storage, it is safe to clear
+          // the cache
+          consensus_result_cache_->release();
           log_->debug("Agreed on nothing to commit");
         } else {
           current_block_ = event.round_data->block;

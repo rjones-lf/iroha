@@ -149,6 +149,8 @@ namespace iroha {
                                             rejected_hashes);
       crypto_signer_->sign(*block);
 
+      last_block.reset();
+
       return block;
     }
 

@@ -9,14 +9,13 @@
 #include "ordering/on_demand_ordering_service.hpp"
 
 #include <map>
-#include <queue>
 #include <shared_mutex>
-#include <unordered_map>
 
 #include <tbb/concurrent_unordered_set.h>
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "logger/logger_fwd.hpp"
 #include "multi_sig_transactions/hash.hpp"
+#include "multi_sig_transactions/state/mst_state.hpp"
 #include "ordering/impl/on_demand_common.hpp"
 
 namespace iroha {
@@ -27,8 +26,9 @@ namespace iroha {
     namespace detail {
       using BatchSetType = tbb::concurrent_unordered_set<
           transport::OdOsNotification::TransactionBatchType,
-          model::PointerBatchHasher>;
-    }
+          model::PointerBatchHasher,
+          BatchHashEquality>;
+    }  // namespace detail
 
     class OnDemandOrderingServiceImpl : public OnDemandOrderingService {
      public:
