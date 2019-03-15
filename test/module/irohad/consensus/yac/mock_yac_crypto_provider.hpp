@@ -17,6 +17,8 @@ namespace iroha {
   namespace consensus {
     namespace yac {
 
+      // TODO 15.03.2019 mboldyrev IR-402
+      // fix the tests that impose requirements on mock public key format
       std::string padPubKeyString(const std::string &str) {
         using shared_model::crypto::DefaultCryptoAlgorithmType;
         assert(str.size() <= DefaultCryptoAlgorithmType::kPublicKeyLength);
