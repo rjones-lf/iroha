@@ -15,7 +15,10 @@ at ``example/config.sample``
     "max_proposal_size": 10,
     "proposal_delay": 5000,
     "vote_delay": 5000,
-    "mst_enable" : false
+    "mst_enable" : false,
+    "mst_expiration_time" : 1440,
+    "max_rounds_delay": 3000,
+    "stale_stream_max_rounds": 2
   }
 
 As you can see, configuration file is a valid ``json`` structure. Let's go 
@@ -56,6 +59,21 @@ Environment-specific parameters
 - ``mst_enable`` enables or disables multisignature transaction support in
   Iroha. We recommend setting this parameter to ``false`` at the moment until
   you really need it.
+- ``mst_expiration_time`` the time period after which a not fully signed MST
+  is considered expired.
+- ``max_rounds_delay`` optional parameter specifying the maximum delay between
+  two consensus rounds.
+  When Iroha is staying idle, it gradually increases the delay to reduce CPU,
+  network and logging load.
+  However too long delay may be unwanted when first transactions arrive after a
+  long idle time.
+  This parameter allows users to find an optimal tradeoff.
+- ``stale_stream_max_rounds`` maximum amount of rounds to keep an open status
+  stream while no status update is reported.
+  Increasing this value reduces the amount of times a client must reconnect to
+  track a transaction if for some reason it's does not update with new rounds.
+  However large values increase the average connected clients amount during
+  each round.
 
 Logging
 -------
