@@ -57,6 +57,8 @@ namespace iroha {
           current_block_ = boost::none;
           // previous block is committed to block storage, it is safe to clear
           // the cache
+          // TODO 2019-03-15 andrei: IR-405 Subscribe BlockLoaderService to
+          // BlockCreator::onBlock
           consensus_result_cache_->release();
           log_->debug("Agreed on nothing to commit");
         } else {
