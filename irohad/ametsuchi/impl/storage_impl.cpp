@@ -272,6 +272,10 @@ namespace iroha {
           log_->warn("Drop database was failed. Reason: {}", e.what());
         }
       } else {
+        // Clear all the tables first, as it takes much less time because the
+        // foreign key triggers are ignored.
+        soci::session(*connection_) << reset_;
+        // Empty tables can now be dropped very fast.
         soci::session(*connection_) << drop_;
       }
 
