@@ -8,7 +8,6 @@
 
 #include "ametsuchi/key_value_storage.hpp"
 
-#include <atomic>
 #include <memory>
 
 #include "logger/logger_fwd.hpp"
@@ -104,7 +103,7 @@ namespace iroha {
       /**
        * Last written key
        */
-      std::atomic<Identifier> current_id_;
+      Identifier current_id_;
 
       /**
        * Folder of storage

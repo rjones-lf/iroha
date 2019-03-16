@@ -28,8 +28,7 @@ std::string FlatFile::id_to_name(Identifier id) {
 }
 
 boost::optional<std::unique_ptr<FlatFile>> FlatFile::create(
-    const std::string &path,
-    logger::LoggerPtr log) {
+    const std::string &path, logger::LoggerPtr log) {
   boost::system::error_code err;
   if (not boost::filesystem::is_directory(path, err)
       and not boost::filesystem::create_directory(path, err)) {
@@ -71,7 +70,7 @@ bool FlatFile::add(Identifier id, const Bytes &block) {
   file.write(reinterpret_cast<const char *>(block.data()),
              block.size() * val_size);
 
-  // Update internals, release lock
+  // Update internals
   current_id_ = next_id;
   return true;
 }
@@ -100,13 +99,13 @@ std::string FlatFile::directory() const {
 }
 
 Identifier FlatFile::last_id() const {
-  return current_id_.load();
+  return current_id_;
 }
 
 void FlatFile::dropAll() {
   iroha::remove_dir_contents(dump_dir_, log_);
   auto res = FlatFile::check_consistency(dump_dir_, log_);
-  current_id_.store(*res);
+  current_id_ = *res;
 }
 
 // ----------| private API |----------
@@ -116,7 +115,7 @@ FlatFile::FlatFile(Identifier current_id,
                    FlatFile::private_tag,
                    logger::LoggerPtr log)
     : dump_dir_(path), log_{std::move(log)} {
-  current_id_.store(current_id);
+  current_id_ = current_id;
 }
 
 boost::optional<Identifier> FlatFile::check_consistency(
