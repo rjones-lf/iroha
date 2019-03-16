@@ -59,20 +59,22 @@ Environment-specific parameters
 - ``mst_enable`` enables or disables multisignature transaction support in
   Iroha. We recommend setting this parameter to ``false`` at the moment until
   you really need it.
-- ``mst_expiration_time`` the time period after which a not fully signed MST
-  is considered expired.
-- ``max_rounds_delay`` optional parameter specifying the maximum delay between
-  two consensus rounds.
-  When Iroha is staying idle, it gradually increases the delay to reduce CPU,
-  network and logging load.
+- ``mst_expiration_time`` is the time period (in minutes) after which a not
+  fully signed MST is considered expired.
+- ``max_rounds_delay`` is an optional parameter specifying the maximum delay
+  between two consensus rounds (in milliseconds).
+  When Iroha is idle, it gradually increases the delay to reduce CPU, network
+  and logging load.
   However too long delay may be unwanted when first transactions arrive after a
   long idle time.
-  This parameter allows users to find an optimal tradeoff.
-- ``stale_stream_max_rounds`` maximum amount of rounds to keep an open status
-  stream while no status update is reported.
+  This parameter allows users to find an optimal value in a tradeoff between
+  resource consumption and the delay of getting back to work after an idle
+  period.
+- ``stale_stream_max_rounds`` is the maximum amount of rounds to keep an open
+  status stream while no status update is reported.
   Increasing this value reduces the amount of times a client must reconnect to
-  track a transaction if for some reason it's does not update with new rounds.
-  However large values increase the average connected clients amount during
+  track a transaction if for some reason it is not updated with new rounds.
+  However large values increase the average number of connected clients during
   each round.
 
 Logging
