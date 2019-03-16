@@ -587,6 +587,7 @@ DROP TABLE IF EXISTS tx_status_by_hash;
 DROP TABLE IF EXISTS height_by_account_set;
 DROP TABLE IF EXISTS index_by_creator_height;
 DROP TABLE IF EXISTS position_by_account_asset;
+DROP TABLE IF EXISTS position_by_hash;
 )";
 
     const std::string &StorageImpl::reset_ = R"(
