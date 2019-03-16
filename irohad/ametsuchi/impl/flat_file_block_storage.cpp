@@ -63,8 +63,7 @@ FlatFileBlockStorage::fetch(
 }
 
 size_t FlatFileBlockStorage::size() const {
-  // TODO: works only if block numbers start from 1
-  return flat_file_storage_->last_id();
+  return flat_file_storage_->blockNumbers().size();
 }
 
 void FlatFileBlockStorage::clear() {
@@ -73,8 +72,8 @@ void FlatFileBlockStorage::clear() {
 
 void FlatFileBlockStorage::forEach(
     iroha::ametsuchi::BlockStorage::FunctionType function) const {
-  for (uint32_t id = 1; id <= flat_file_storage_->last_id(); ++id) {
-    auto block = fetch(id);
+  for (auto block_id : flat_file_storage_->blockNumbers()) {
+    auto block = fetch(block_id);
     BOOST_ASSERT(block);
     function(block.get());
   }

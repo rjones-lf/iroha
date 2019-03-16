@@ -79,7 +79,7 @@ TEST_F(BlStore_Test, BlockStoreWhenRemoveBlock) {
   ASSERT_TRUE(store);
   auto bl_store = std::move(*store);
   auto res = bl_store->last_id();
-  ASSERT_EQ(res, 1);
+  ASSERT_EQ(res, 3);
 }
 
 TEST_F(BlStore_Test, BlockStoreWhenAbsentFolder) {
@@ -118,15 +118,6 @@ TEST_F(BlStore_Test, BlockStoreInitializationFromNonemptyFolder) {
 
   // check that last ids of both block storages are the same
   ASSERT_EQ(bl_store1->last_id(), bl_store2->last_id());
-}
-
-/**
- * @given empty folder name
- * @then check consistency fails
- */
-TEST_F(BlStore_Test, EmptyDumpDir) {
-  auto res = FlatFile::check_consistency("", flat_file_log_);
-  ASSERT_FALSE(res);
 }
 
 /**
@@ -216,4 +207,18 @@ TEST_F(BlStore_Test, WriteDeniedFolder) {
   fs::remove(fs::path(block_store_path));
   auto res = bl_store->add(id, block);
   ASSERT_FALSE(res);
+}
+
+TEST_F(BlStore_Test, RandomNumbers) {
+  auto store = FlatFile::create(block_store_path, flat_file_log_);
+  ASSERT_TRUE(store);
+  auto bl_store = std::move(*store);
+  bl_store->add(5, block);
+  bl_store->add(22, block);
+  bl_store->add(11, block);
+  ASSERT_EQ(bl_store->last_id(), 22);
+  ASSERT_TRUE(bl_store->get(5));
+  ASSERT_TRUE(bl_store->get(22));
+  ASSERT_TRUE(bl_store->get(11));
+  ASSERT_FALSE(bl_store->get(1));
 }

@@ -9,6 +9,7 @@
 #include "ametsuchi/key_value_storage.hpp"
 
 #include <memory>
+#include <set>
 
 #include "logger/logger_fwd.hpp"
 
@@ -45,6 +46,13 @@ namespace iroha {
       static std::string id_to_name(Identifier id);
 
       /**
+       * Converts aligned string (see above) to number.
+       * @param name - name to convert
+       * @return id or boost::none
+       */
+      static boost::optional<Identifier> name_to_id(const std::string &name);
+
+      /**
        * Create storage in paths
        * @param path - target path for creating
        * @param log - logger
@@ -61,18 +69,9 @@ namespace iroha {
 
       Identifier last_id() const override;
 
-      /**
-       * Checking consistency of storage for provided folder
-       * If some block in the middle is missing all blocks following it are
-       * deleted
-       * @param dump_dir - folder of storage
-       * @param log - log for local messages
-       * @return - last available identifier
-       */
-      static boost::optional<Identifier> check_consistency(
-          const std::string &dump_dir, logger::LoggerPtr log);
-
       void dropAll() override;
+
+      const std::set<Identifier>& blockNumbers() const;
 
       // ----------| modify operations |----------
 
@@ -88,27 +87,22 @@ namespace iroha {
 
       /**
        * Create storage in path with respect to last key
-       * @param last_id - maximal key written in storage
        * @param path - folder of storage
        * @param log to print progress
        */
-      FlatFile(Identifier last_id,
-               const std::string &path,
+      FlatFile(const std::string &path,
+               std::set<Identifier> existing_files,
                FlatFile::private_tag,
                logger::LoggerPtr log);
 
      private:
-      // ----------| private fields |----------
-
-      /**
-       * Last written key
-       */
-      Identifier current_id_;
-
       /**
        * Folder of storage
        */
       const std::string dump_dir_;
+
+      //TODO: alias for collection type?
+      std::set<Identifier> available_blocks_;
 
       logger::LoggerPtr log_;
 
