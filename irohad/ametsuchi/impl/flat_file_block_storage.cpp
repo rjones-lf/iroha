@@ -12,12 +12,12 @@
 using namespace iroha::ametsuchi;
 
 FlatFileBlockStorage::FlatFileBlockStorage(
-    logger::LoggerPtr log,
     std::unique_ptr<FlatFile> flat_file,
-    std::unique_ptr<shared_model::interface::BlockJsonConverter> json_converter)
-    : log_(std::move(log)),
-      flat_file_storage_(std::move(flat_file)),
-      json_converter_(std::move(json_converter)) {}
+    std::shared_ptr<shared_model::interface::BlockJsonConverter> json_converter,
+    logger::LoggerPtr log)
+    : flat_file_storage_(std::move(flat_file)),
+      json_converter_(std::move(json_converter)),
+      log_(std::move(log)) {}
 
 bool FlatFileBlockStorage::insert(
     std::shared_ptr<const shared_model::interface::Block> block) {

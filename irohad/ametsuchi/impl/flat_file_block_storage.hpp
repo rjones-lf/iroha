@@ -16,10 +16,10 @@ namespace iroha {
     class FlatFileBlockStorage : public BlockStorage {
      public:
       FlatFileBlockStorage(
-          logger::LoggerPtr log,
           std::unique_ptr<FlatFile> flat_file,
-          std::unique_ptr<shared_model::interface::BlockJsonConverter>
-              json_converter);
+          std::shared_ptr<shared_model::interface::BlockJsonConverter>
+              json_converter,
+          logger::LoggerPtr log);
 
       bool insert(
           std::shared_ptr<const shared_model::interface::Block> block) override;
@@ -36,10 +36,10 @@ namespace iroha {
       void forEach(FunctionType function) const override;
 
      private:
-      logger::LoggerPtr log_;
       std::unique_ptr<FlatFile> flat_file_storage_;
-      std::unique_ptr<shared_model::interface::BlockJsonConverter>
+      std::shared_ptr<shared_model::interface::BlockJsonConverter>
           json_converter_;
+      logger::LoggerPtr log_;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

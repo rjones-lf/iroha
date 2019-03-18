@@ -8,26 +8,25 @@
 
 #include "ametsuchi/block_storage_factory.hpp"
 
-#include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "interfaces/iroha_internal/block_json_converter.hpp"
-#include "logger/logger_fwd.hpp"
+#include "logger/logger_manager.hpp"
 
 namespace iroha {
   namespace ametsuchi {
     class FlatFileBlockStorageFactory : public BlockStorageFactory {
      public:
       FlatFileBlockStorageFactory(
-          logger::LoggerPtr log,
-          std::unique_ptr<FlatFile> flat_file,
-          std::unique_ptr<shared_model::interface::BlockJsonConverter>
-              json_block_converter);
+          const std::string &path,
+          std::shared_ptr<shared_model::interface::BlockJsonConverter>
+              json_block_converter,
+          logger::LoggerManagerTreePtr log_manager);
       std::unique_ptr<BlockStorage> create() override;
 
      private:
-      logger::LoggerPtr log_;
-      std::unique_ptr<FlatFile> flat_file_;
-      std::unique_ptr<shared_model::interface::BlockJsonConverter>
+      std::string path_;
+      std::shared_ptr<shared_model::interface::BlockJsonConverter>
           json_block_converter_;
+      logger::LoggerManagerTreePtr log_manager_;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

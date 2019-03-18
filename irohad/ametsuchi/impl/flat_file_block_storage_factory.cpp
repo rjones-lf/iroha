@@ -10,15 +10,19 @@
 using namespace iroha::ametsuchi;
 
 FlatFileBlockStorageFactory::FlatFileBlockStorageFactory(
-    logger::LoggerPtr log,
-    std::unique_ptr<FlatFile> flat_file,
-    std::unique_ptr<shared_model::interface::BlockJsonConverter>
-        json_block_converter)
-    : log_(std::move(log)),
-      flat_file_(std::move(flat_file)),
-      json_block_converter_(std::move(json_block_converter)) {}
+    const std::string &path,
+    std::shared_ptr<shared_model::interface::BlockJsonConverter>
+        json_block_converter,
+    logger::LoggerManagerTreePtr log_manager)
+    : path_(path),
+      json_block_converter_(std::move(json_block_converter)),
+      log_manager_(std::move(log_manager)) {}
 
 std::unique_ptr<BlockStorage> FlatFileBlockStorageFactory::create() {
   return std::make_unique<FlatFileBlockStorage>(
-      std::move(log_), std::move(flat_file_), std::move(json_block_converter_));
+      std::move(FlatFile::create(
+                    path_, log_manager_->getChild("FlatFile")->getLogger())
+                    .get()),
+      json_block_converter_,
+      log_manager_->getLogger());
 }
