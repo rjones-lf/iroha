@@ -1,0 +1,175 @@
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include "ametsuchi/impl/flat_file_block_storage.hpp"
+#include "ametsuchi/impl/flat_file_block_storage_factory.hpp"
+
+#include <gtest/gtest.h>
+#include <boost/filesystem.hpp>
+#include "framework/test_logger.hpp"
+#include "module/shared_model/interface_mocks.hpp"
+
+using namespace iroha::ametsuchi;
+using namespace boost::filesystem;
+
+using ::testing::_;
+using ::testing::Invoke;
+using ::testing::NiceMock;
+using ::testing::Return;
+
+class FlatFileBlockStorageTest : public ::testing::Test {
+ public:
+  FlatFileBlockStorageTest() {
+    ON_CALL(*block_, height()).WillByDefault(Return(height_));
+  }
+
+ protected:
+  void SetUp() override {
+    create_directory(block_store_path_);
+  }
+
+  void TearDown() override {
+    remove_all(block_store_path_);
+  }
+
+  std::string block_store_path_ =
+      (temp_directory_path() / unique_path()).string();
+  std::shared_ptr<MockBlockJsonConverter> converter_ =
+      std::make_shared<NiceMock<MockBlockJsonConverter>>();
+  logger::LoggerManagerTreePtr log_manager_ = getTestLoggerManager();
+  std::shared_ptr<MockBlock> block_ = std::make_shared<NiceMock<MockBlock>>();
+  shared_model::interface::types::HeightType height_ = 1;
+};
+
+/**
+ * @given block storage factory
+ * @when create is called
+ * @then block storage is created
+ */
+TEST_F(FlatFileBlockStorageTest, Creation) {
+  auto block_storage =
+      FlatFileBlockStorageFactory(block_store_path_, converter_, log_manager_)
+          .create();
+  ASSERT_TRUE(block_storage);
+}
+
+/**
+ * @given initialized block storage, single block with height_ inserted
+ * @when another block with height_ is inserted
+ * @then second insertion fails
+ */
+TEST_F(FlatFileBlockStorageTest, Insert) {
+  auto block_storage =
+      FlatFileBlockStorageFactory(block_store_path_, converter_, log_manager_)
+          .create();
+  ASSERT_TRUE(block_storage->insert(block_));
+  ASSERT_FALSE(block_storage->insert(block_));
+}
+
+/**
+ * @given initialized block storage, single block with height_ inserted
+ * @when block with height_ is fetched
+ * @then it is returned
+ */
+TEST_F(FlatFileBlockStorageTest, FetchExisting) {
+  auto block_storage =
+      FlatFileBlockStorageFactory(block_store_path_, converter_, log_manager_)
+          .create();
+  ASSERT_TRUE(block_storage->insert(block_));
+
+  EXPECT_CALL(*converter_, deserialize(_))
+      .WillOnce(Invoke([&](const shared_model::interface::types::JsonType &)
+                           -> iroha::expected::Result<
+                               std::unique_ptr<shared_model::interface::Block>,
+                               std::string> {
+        auto return_block = std::make_unique<MockBlock>();
+        EXPECT_CALL(*return_block, height()).WillOnce(Return(height_));
+        return iroha::expected::makeValue<
+            std::unique_ptr<shared_model::interface::Block>>(
+            std::move(return_block));
+      }));
+  std::shared_ptr<const shared_model::interface::Block> block_var =
+      block_storage->fetch(height_).get();
+
+  ASSERT_EQ(block_->height(), block_var->height());
+}
+
+/**
+ * @given initialized block storage without blocks
+ * @when block with height_ is fetched
+ * @then nothing is returned
+ */
+TEST_F(FlatFileBlockStorageTest, FetchNonexistent) {
+  auto block_storage =
+      FlatFileBlockStorageFactory(block_store_path_, converter_, log_manager_)
+          .create();
+  auto block_var = block_storage->fetch(height_);
+  ASSERT_FALSE(block_var);
+}
+
+/**
+ * @given initialized block storage, single block with id_ inserted
+ * @when size is fetched
+ * @then 1 is returned
+ */
+TEST_F(FlatFileBlockStorageTest, Size) {
+  auto block_storage =
+      FlatFileBlockStorageFactory(block_store_path_, converter_, log_manager_)
+          .create();
+  ASSERT_TRUE(block_storage->insert(block_));
+
+  ASSERT_EQ(1, block_storage->size());
+}
+
+/**
+ * @given initialized block storage, single block with id_ inserted
+ * @when storage is cleared with clear
+ * @then no blocks are left in storage
+ */
+TEST_F(FlatFileBlockStorageTest, Clear) {
+  auto block_storage =
+      FlatFileBlockStorageFactory(block_store_path_, converter_, log_manager_)
+          .create();
+  ASSERT_TRUE(block_storage->insert(block_));
+
+  block_storage->clear();
+
+  auto block_var = block_storage->fetch(height_);
+
+  ASSERT_FALSE(block_var);
+}
+
+/**
+ * @given initialized block storage, single block with id_ inserted
+ * @when forEach is called
+ * @then block with id_ is visited, lambda is invoked once
+ */
+TEST_F(FlatFileBlockStorageTest, ForEach) {
+  auto block_storage =
+      FlatFileBlockStorageFactory(block_store_path_, converter_, log_manager_)
+          .create();
+  ASSERT_TRUE(block_storage->insert(block_));
+
+  EXPECT_CALL(*converter_, deserialize(_))
+      .WillOnce(Invoke([&](const shared_model::interface::types::JsonType &)
+                           -> iroha::expected::Result<
+                               std::unique_ptr<shared_model::interface::Block>,
+                               std::string> {
+        auto return_block = std::make_unique<MockBlock>();
+        EXPECT_CALL(*return_block, height()).WillOnce(Return(height_));
+        return iroha::expected::makeValue<
+            std::unique_ptr<shared_model::interface::Block>>(
+            std::move(return_block));
+      }));
+
+  size_t count = 0;
+
+  block_storage->forEach([this, &count](const auto &block) {
+    ++count;
+    ASSERT_EQ(height_, block->height());
+  });
+
+  ASSERT_EQ(1, count);
+}

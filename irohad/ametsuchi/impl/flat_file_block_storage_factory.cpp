@@ -19,10 +19,12 @@ FlatFileBlockStorageFactory::FlatFileBlockStorageFactory(
       log_manager_(std::move(log_manager)) {}
 
 std::unique_ptr<BlockStorage> FlatFileBlockStorageFactory::create() {
-  return std::make_unique<FlatFileBlockStorage>(
-      std::move(FlatFile::create(
-                    path_, log_manager_->getChild("FlatFile")->getLogger())
-                    .get()),
-      json_block_converter_,
-      log_manager_->getLogger());
+  auto flat_file =
+      FlatFile::create(path_, log_manager_->getChild("FlatFile")->getLogger());
+  if (not flat_file) {
+    return nullptr;
+  }
+  return std::make_unique<FlatFileBlockStorage>(std::move(flat_file.get()),
+                                                json_block_converter_,
+                                                log_manager_->getLogger());
 }
