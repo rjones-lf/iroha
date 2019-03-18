@@ -56,9 +56,9 @@ Environment-specific parameters
   next peer. Optimal value depends heavily on the amount of Iroha peers in the
   network (higher amount of nodes requires longer ``vote_delay``). We recommend
   to start with 100-1000 milliseconds.
-- ``mst_enable`` enables or disables multisignature transaction support in
-  Iroha. We recommend setting this parameter to ``false`` at the moment until
-  you really need it.
+- ``mst_enable`` enables or disables multisignature transaction network
+  transport in Iroha. We recommend setting this parameter to ``false`` at the
+  moment until you really need it.
 - ``mst_expiration_time`` is the time period (in minutes) after which a not
   fully signed MST is considered expired.
 - ``max_rounds_delay`` is an optional parameter specifying the maximum delay
