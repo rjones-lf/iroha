@@ -64,7 +64,8 @@ namespace iroha {
        * method called when block is written to the storage
        * @return observable with the Block committed
        */
-      virtual rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+      virtual rxcpp::observable<
+          std::shared_ptr<const shared_model::interface::Block>>
       on_commit() = 0;
 
       /**

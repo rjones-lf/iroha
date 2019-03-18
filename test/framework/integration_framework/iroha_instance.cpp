@@ -52,7 +52,7 @@ namespace integration_framework {
   }
 
   void IrohaInstance::rawInsertBlock(
-      const shared_model::interface::Block &block) {
+      std::shared_ptr<const shared_model::interface::Block> block) {
     instance_->storage->insertBlock(block);
   }
 

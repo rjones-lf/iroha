@@ -31,7 +31,7 @@ namespace iroha {
           response_factory_{std::move(response_factory)},
           log_{std::move(log)} {
       storage_->on_commit().subscribe(
-          [this](std::shared_ptr<shared_model::interface::Block> block) {
+          [this](std::shared_ptr<const shared_model::interface::Block> block) {
             auto block_response =
                 response_factory_->createBlockQueryResponse(clone(*block));
             blocks_query_subject_.get_subscriber().on_next(
