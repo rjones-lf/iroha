@@ -233,10 +233,12 @@ RUN set -e; \
 # install ed25519
 RUN set -e; \
     git clone git://github.com/hyperledger/iroha-ed25519.git /tmp/ed25519; \
-    (cd /tmp/ed25519 ; git checkout f42953c631fae93011612f6b1ee33f1f88c3f8af); \
+    (cd /tmp/ed25519 ; git checkout b61a1e77af5dc458ed6a5aee395d5b22775a4917); \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -DTESTING=OFF \
+        -DHASH=sha3_brainhub \
+        -DEDIMPL=ref10 \
         -H/tmp/ed25519 \
         -B/tmp/ed25519/build; \
     cmake --build /tmp/ed25519/build --target install -- -j${PARALLELISM}; \

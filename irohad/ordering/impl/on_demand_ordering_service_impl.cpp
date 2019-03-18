@@ -52,7 +52,7 @@ void OnDemandOrderingServiceImpl::onCollaborationOutcome(
   log_->debug("onCollaborationOutcome => write lock is acquired");
 
   packNextProposals(round);
-  tryErase();
+  tryErase(round);
 }
 
 // ----------------------------| OdOsNotification |-----------------------------
@@ -182,7 +182,6 @@ void OnDemandOrderingServiceImpl::packNextProposals(
     auto proposal = proposal_factory_->unsafeCreateProposal(
         round.block_round, now, txs | boost::adaptors::indirected);
     proposal_map_.emplace(round, std::move(proposal));
-    round_queue_.push(round);
     log_->debug(
         "packNextProposal: data has been fetched for {}. "
         "Number of transactions in proposal = {}. Discarded {} "
@@ -213,12 +212,24 @@ void OnDemandOrderingServiceImpl::packNextProposals(
   }
 }
 
-void OnDemandOrderingServiceImpl::tryErase() {
-  while (round_queue_.size() > number_of_proposals_) {
-    auto &round = round_queue_.front();
-    proposal_map_.erase(round);
-    log_->info("tryErase: erased {}", round);
-    round_queue_.pop();
+void OnDemandOrderingServiceImpl::tryErase(
+    const consensus::Round &current_round) {
+  auto current_proposal =
+      std::lower_bound(proposal_map_.begin(),
+                       proposal_map_.end(),
+                       current_round,
+                       [](const auto &map_item, const auto &round) {
+                         return map_item.first < round;
+                       });
+
+  auto proposal_range_size = boost::size(
+      boost::make_iterator_range(proposal_map_.begin(), current_proposal));
+
+  while (proposal_range_size > number_of_proposals_) {
+    BOOST_ASSERT(proposal_map_.begin()->first < current_round);
+    log_->info("tryErase: erasing {}", proposal_map_.begin()->first);
+    proposal_map_.erase(proposal_map_.begin());
+    --proposal_range_size;
   }
 }
 

@@ -11,6 +11,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include "ametsuchi/impl/in_memory_block_storage_factory.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
 #include "backend/protobuf/proto_permission_to_string.hpp"
@@ -52,6 +53,10 @@ class StorageInitTest : public ::testing::Test {
 
   std::shared_ptr<shared_model::interface::PermissionToString> perm_converter_ =
       std::make_shared<shared_model::proto::ProtoPermissionToString>();
+
+  std::unique_ptr<BlockStorageFactory> block_storage_factory_ =
+      std::make_unique<InMemoryBlockStorageFactory>();
+
   void SetUp() override {
     ASSERT_FALSE(boost::filesystem::exists(block_store_path))
         << "Temporary block store " << block_store_path
@@ -81,6 +86,7 @@ TEST_F(StorageInitTest, CreateStorageWithDatabase) {
                       factory,
                       converter,
                       perm_converter_,
+                      std::move(block_storage_factory_),
                       storage_log_manager_)
       .match(
           [&storage](const Value<std::shared_ptr<StorageImpl>> &value) {
@@ -110,6 +116,7 @@ TEST_F(StorageInitTest, CreateStorageWithInvalidPgOpt) {
                       factory,
                       converter,
                       perm_converter_,
+                      std::move(block_storage_factory_),
                       storage_log_manager_)
       .match(
           [](const Value<std::shared_ptr<StorageImpl>> &) {

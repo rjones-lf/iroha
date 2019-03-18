@@ -80,8 +80,8 @@ class OnDemandOsTest : public ::testing::Test {
   }
 
   OnDemandOrderingService::CollectionType generateTransactions(
-      std::pair<uint64_t, uint64_t> range) {
-    auto now = iroha::time::now();
+      std::pair<uint64_t, uint64_t> range,
+      shared_model::interface::types::TimestampType now = iroha::time::now()) {
     OnDemandOrderingService::CollectionType collection;
 
     for (auto i = range.first; i < range.second; ++i) {
@@ -194,52 +194,24 @@ TEST_F(OnDemandOsTest, DISABLED_ConcurrentInsert) {
 
 /**
  * @given initialized on-demand OS
- * @when  insert proposal_limit rounds twice
- * @then  on second rounds check that old proposals are expired
+ * @when  insert commit round and then proposal_limit reject rounds
+ * @then  first proposal still not expired
  */
 TEST_F(OnDemandOsTest, Erase) {
-  for (auto i = commit_round.block_round;
-       i < commit_round.block_round + proposal_limit;
-       ++i) {
-    generateTransactionsAndInsert({1, 2});
-    os->onCollaborationOutcome({i, commit_round.reject_round});
-    ASSERT_TRUE(os->onRequestProposal({i + 1, commit_round.reject_round}));
-  }
+  generateTransactionsAndInsert({1, 2});
+  os->onCollaborationOutcome(
+      {commit_round.block_round, commit_round.reject_round});
+  ASSERT_TRUE(os->onRequestProposal(
+      {commit_round.block_round + 1, commit_round.reject_round}));
 
-  for (consensus::BlockRoundType i = commit_round.block_round + proposal_limit;
-       i < commit_round.block_round + 2 * proposal_limit;
+  for (auto i = commit_round.reject_round;
+       i < commit_round.reject_round + proposal_limit;
        ++i) {
     generateTransactionsAndInsert({1, 2});
-    os->onCollaborationOutcome({i, commit_round.reject_round});
-    ASSERT_FALSE(os->onRequestProposal(
-        {i + 1 - proposal_limit, commit_round.reject_round}));
+    os->onCollaborationOutcome({commit_round.block_round + 1, i});
   }
-}
-
-/**
- * @given initialized on-demand OS
- * @when  insert proposal_limit rounds twice
- * AND outcome is reject
- * @then  on second rounds check that old proposals are expired
- */
-TEST_F(OnDemandOsTest, EraseReject) {
-  for (auto i = reject_round.reject_round;
-       i < reject_round.reject_round + proposal_limit;
-       ++i) {
-    generateTransactionsAndInsert({1, 2});
-    os->onCollaborationOutcome({reject_round.block_round, i});
-    ASSERT_TRUE(os->onRequestProposal({reject_round.block_round, i + 1}));
-  }
-
-  for (consensus::RejectRoundType i =
-           reject_round.reject_round + proposal_limit;
-       i < reject_round.reject_round + 2 * proposal_limit;
-       ++i) {
-    generateTransactionsAndInsert({1, 2});
-    os->onCollaborationOutcome({reject_round.block_round, i});
-    ASSERT_FALSE(os->onRequestProposal(
-        {reject_round.block_round, i + 1 - proposal_limit}));
-  }
+  ASSERT_TRUE(os->onRequestProposal(
+      {commit_round.block_round + 1, commit_round.reject_round}));
 }
 
 /**
@@ -370,4 +342,22 @@ TEST_F(OnDemandOsTest, SeveralTransactionsOneCommited) {
   EXPECT_EQ(boost::size(txs), 2);
   // already processed transaction is no present in the proposal
   EXPECT_TRUE(std::find(txs.begin(), txs.end(), batch2_tx) == txs.end());
+}
+
+/**
+ * @given initialized on-demand OS with a batch in collection
+ * @when the same batch arrives, round is closed, proposal is requested
+ * @then the proposal contains the batch once
+ */
+TEST_F(OnDemandOsTest, DuplicateTxTest) {
+  auto now = iroha::time::now();
+  auto txs1 = generateTransactions({1, 2}, now);
+  os->onBatches(txs1);
+
+  auto txs2 = generateTransactions({1, 2}, now);
+  os->onBatches(txs2);
+  os->onCollaborationOutcome(commit_round);
+  auto proposal = os->onRequestProposal(target_round);
+
+  ASSERT_EQ(1, boost::size((*proposal)->transactions()));
 }

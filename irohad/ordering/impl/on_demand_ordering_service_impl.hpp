@@ -8,14 +8,15 @@
 
 #include "ordering/on_demand_ordering_service.hpp"
 
-#include <queue>
+#include <map>
 #include <shared_mutex>
-#include <unordered_map>
 
 #include <tbb/concurrent_unordered_set.h>
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "logger/logger_fwd.hpp"
 #include "multi_sig_transactions/hash.hpp"
+// TODO 2019-03-15 andrei: IR-403 Separate BatchHashEquality and MstState
+#include "multi_sig_transactions/state/mst_state.hpp"
 #include "ordering/impl/on_demand_common.hpp"
 
 namespace iroha {
@@ -26,8 +27,9 @@ namespace iroha {
     namespace detail {
       using BatchSetType = tbb::concurrent_unordered_set<
           transport::OdOsNotification::TransactionBatchType,
-          model::PointerBatchHasher>;
-    }
+          model::PointerBatchHasher,
+          BatchHashEquality>;
+    }  // namespace detail
 
     class OnDemandOrderingServiceImpl : public OnDemandOrderingService {
      public:
@@ -75,7 +77,7 @@ namespace iroha {
        * Method removes the oldest commit or chain of the oldest rejects
        * Note: method is not thread-safe
        */
-      void tryErase();
+      void tryErase(const consensus::Round &current_round);
 
       /**
        * Check if batch was already processed by the peer
@@ -94,16 +96,9 @@ namespace iroha {
       size_t number_of_proposals_;
 
       /**
-       * Queue which holds all rounds in linear order
-       */
-      std::queue<consensus::Round> round_queue_;
-
-      /**
        * Map of available proposals
        */
-      std::unordered_map<consensus::Round,
-                         std::shared_ptr<const ProposalType>,
-                         consensus::RoundTypeHasher>
+      std::map<consensus::Round, std::shared_ptr<const ProposalType>>
           proposal_map_;
 
       /**

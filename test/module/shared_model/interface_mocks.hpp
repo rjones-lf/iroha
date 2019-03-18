@@ -18,7 +18,6 @@
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "interfaces/transaction.hpp"
 
-
 // TODO: 2019-01-18 @muratovv Separate file by classes IR-229
 struct MockBlock : public shared_model::interface::Block {
   MOCK_CONST_METHOD0(txsNumber,
@@ -112,6 +111,14 @@ struct MockTransactionBatch : public shared_model::interface::TransactionBatch {
   MOCK_CONST_METHOD0(clone, MockTransactionBatch *());
 };
 
+namespace shared_model {
+  namespace interface {
+    std::ostream &operator<<(std::ostream &os, const TransactionBatch &resp) {
+      return os << resp.toString();
+    }
+  }  // namespace interface
+}  // namespace shared_model
+
 /**
  * Creates mock batch with provided hash
  * @param hash -- const ref to reduced hash to be returned by the batch
@@ -180,8 +187,10 @@ struct MockPeer : public shared_model::interface::Peer {
 inline auto makePeer(const std::string &address,
                      const shared_model::crypto::PublicKey &pub_key) {
   auto peer = std::make_shared<MockPeer>();
-  EXPECT_CALL(*peer, address()).WillRepeatedly(testing::ReturnRefOfCopy(address));
-  EXPECT_CALL(*peer, pubkey()).WillRepeatedly(testing::ReturnRefOfCopy(pub_key));
+  EXPECT_CALL(*peer, address())
+      .WillRepeatedly(testing::ReturnRefOfCopy(address));
+  EXPECT_CALL(*peer, pubkey())
+      .WillRepeatedly(testing::ReturnRefOfCopy(pub_key));
   return peer;
 }
 
@@ -234,21 +243,21 @@ struct MockCommonObjectsFactory
 };
 
 struct MockDomain : public shared_model::interface::Domain {
-    MOCK_CONST_METHOD0(domainId,
-                       shared_model::interface::types::DomainIdType &());
-    MOCK_CONST_METHOD0(defaultRole,
-                       shared_model::interface::types::RoleIdType &());
-    MOCK_CONST_METHOD0(clone, MockDomain *());
+  MOCK_CONST_METHOD0(domainId,
+                     shared_model::interface::types::DomainIdType &());
+  MOCK_CONST_METHOD0(defaultRole,
+                     shared_model::interface::types::RoleIdType &());
+  MOCK_CONST_METHOD0(clone, MockDomain *());
 };
 
 struct MockAccount : public shared_model::interface::Account {
-    MOCK_CONST_METHOD0(accountId,
-                       shared_model::interface::types::AccountIdType &());
-    MOCK_CONST_METHOD0(domainId,
-                       shared_model::interface::types::DomainIdType &());
-    MOCK_CONST_METHOD0(quorum, shared_model::interface::types::QuorumType());
-    MOCK_CONST_METHOD0(jsonData, shared_model::interface::types::JsonType &());
-    MOCK_CONST_METHOD0(clone, MockAccount *());
+  MOCK_CONST_METHOD0(accountId,
+                     shared_model::interface::types::AccountIdType &());
+  MOCK_CONST_METHOD0(domainId,
+                     shared_model::interface::types::DomainIdType &());
+  MOCK_CONST_METHOD0(quorum, shared_model::interface::types::QuorumType());
+  MOCK_CONST_METHOD0(jsonData, shared_model::interface::types::JsonType &());
+  MOCK_CONST_METHOD0(clone, MockAccount *());
 };
 
 #endif  // IROHA_SHARED_MODEL_INTERFACE_MOCKS_HPP
