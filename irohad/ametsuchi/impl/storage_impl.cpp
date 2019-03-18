@@ -194,7 +194,8 @@ namespace iroha {
               log_manager_->getChild("QueryExecutor")));
     }
 
-    bool StorageImpl::insertBlock(const shared_model::interface::Block &block) {
+    bool StorageImpl::insertBlock(
+        std::shared_ptr<const shared_model::interface::Block> block) {
       log_->info("create mutable storage");
       auto storageResult = createMutableStorage();
       bool inserted = false;
@@ -222,7 +223,7 @@ namespace iroha {
           [&](iroha::expected::Value<std::unique_ptr<MutableStorage>>
                   &mutableStorage) {
             std::for_each(blocks.begin(), blocks.end(), [&](auto block) {
-              inserted &= mutableStorage.value->apply(*block);
+              inserted &= mutableStorage.value->apply(block);
             });
             commit(std::move(mutableStorage.value));
           },

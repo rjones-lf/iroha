@@ -226,7 +226,7 @@ int main(int argc, char *argv[]) {
       // clear previous storage if any
       irohad.dropStorage();
 
-      irohad.storage->insertBlock(*block.value());
+      irohad.storage->insertBlock(block.value());
       log->info("Genesis block inserted, number of transactions: {}",
                 block.value()->transactions().size());
     }

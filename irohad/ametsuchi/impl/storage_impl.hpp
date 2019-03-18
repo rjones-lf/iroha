@@ -83,7 +83,8 @@ namespace iroha {
        * @param blocks - block for insertion
        * @return true if all blocks are inserted
        */
-      bool insertBlock(const shared_model::interface::Block &block) override;
+      bool insertBlock(
+          std::shared_ptr<const shared_model::interface::Block> block) override;
 
       /**
        * Insert blocks without validation

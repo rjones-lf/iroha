@@ -48,7 +48,8 @@ namespace iroha {
        * @param block - block for insertion
        * @return true if inserted
        */
-      virtual bool insertBlock(const shared_model::interface::Block &block) = 0;
+      virtual bool insertBlock(
+          std::shared_ptr<const shared_model::interface::Block> block) = 0;
 
       /**
        * Raw insertion of blocks without validation
