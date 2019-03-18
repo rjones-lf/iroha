@@ -85,7 +85,7 @@ TEST_F(ChainValidationTest, ValidCase) {
   EXPECT_CALL(*query, getLedgerPeers()).WillOnce(Return(peers));
 
   EXPECT_CALL(*storage, apply(blocks, _))
-      .WillOnce(InvokeArgument<1>(ByRef(*block), ByRef(*query), ByRef(hash)));
+      .WillOnce(InvokeArgument<1>(block, ByRef(*query), ByRef(hash)));
 
   ASSERT_TRUE(validator->validateAndApply(blocks, *storage));
   ASSERT_EQ(boost::size(block->signatures()), block_signatures_amount);
@@ -107,8 +107,7 @@ TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
   EXPECT_CALL(*query, getLedgerPeers()).WillOnce(Return(peers));
 
   EXPECT_CALL(*storage, apply(blocks, _))
-      .WillOnce(
-          InvokeArgument<1>(ByRef(*block), ByRef(*query), ByRef(another_hash)));
+      .WillOnce(InvokeArgument<1>(block, ByRef(*query), ByRef(another_hash)));
 
   ASSERT_FALSE(validator->validateAndApply(blocks, *storage));
 }
@@ -127,7 +126,7 @@ TEST_F(ChainValidationTest, FailWhenNoSupermajority) {
   EXPECT_CALL(*query, getLedgerPeers()).WillOnce(Return(peers));
 
   EXPECT_CALL(*storage, apply(blocks, _))
-      .WillOnce(InvokeArgument<1>(ByRef(*block), ByRef(*query), ByRef(hash)));
+      .WillOnce(InvokeArgument<1>(block, ByRef(*query), ByRef(hash)));
 
   ASSERT_FALSE(validator->validateAndApply(blocks, *storage));
   ASSERT_EQ(boost::size(block->signatures()), block_signatures_amount);

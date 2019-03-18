@@ -51,9 +51,11 @@ namespace integration_framework {
                   logger::LoggerPtr log,
                   const boost::optional<std::string> &dbname = boost::none);
 
-    void makeGenesis(const shared_model::interface::Block &block);
+    void makeGenesis(
+        std::shared_ptr<const shared_model::interface::Block> block);
 
-    void rawInsertBlock(const shared_model::interface::Block &block);
+    void rawInsertBlock(
+        std::shared_ptr<const shared_model::interface::Block> block);
 
     void setMstGossipParams(
         std::chrono::milliseconds mst_gossip_emitting_period,
