@@ -32,19 +32,8 @@ Our documentation is hosted at ReadTheDocs service here: [http://iroha.readthedo
 We have documentation in several languages available and you are welcome to contribute on [POEditor website](https://poeditor.com/join/project/SFpZw7o33o)!
 
 #### Here is the build status of different translations
-| Language | Build status |
-|---|---|
-| English | [![Documentation Status](https://readthedocs.org/projects/iroha/badge/?version=latest)](https://iroha.readthedocs.io/en/latest/?badge=latest) |
-| German | [![Documentation Status](https://readthedocs.org/projects/iroha-de/badge/?version=master)](https://iroha.readthedocs.io/de/master/?badge=master) |
-| Spanish | [![Documentation Status](https://readthedocs.org/projects/iroha-es/badge/?version=latest)](https://iroha.readthedocs.io/es/latest/?badge=latest) |
-| French | [![Documentation Status](https://readthedocs.org/projects/iroha-fr/badge/?version=latest)](https://iroha.readthedocs.io/fr/latest/?badge=latest) |
-| Japanese | [![Documentation Status](https://readthedocs.org/projects/iroha-ja/badge/?version=latest)](https://iroha.readthedocs.io/ja/latest/?badge=latest) |
-| Korean | [![Documentation Status](https://readthedocs.org/projects/iroha-ko/badge/?version=latest)](https://iroha.readthedocs.io/ko/latest/?badge=latest) |
-| Dutch | [![Documentation Status](https://readthedocs.org/projects/iroha-nl/badge/?version=latest)](https://iroha.readthedocs.io/nl/latest/?badge=latest) |
-| Portuguese | [![Documentation Status](https://readthedocs.org/projects/iroha-pt/badge/?version=latest)](https://iroha.readthedocs.io/pt/latest/?badge=latest) |
-| Russian | [![Documentation Status](https://readthedocs.org/projects/iroha-ru/badge/?version=latest)](https://iroha.readthedocs.io/ru/latest/?badge=latest) |
-| Ukrainian | [![Documentation Status](https://readthedocs.org/projects/iroha-uk/badge/?version=latest)](https://iroha.readthedocs.io/uk/latest/?badge=latest) |
-| Simplified Chinese | [![Documentation Status](https://readthedocs.org/projects/iroha-zh/badge/?version=latest)](https://iroha.readthedocs.io/zh_CN/latest/?badge=latest) |
+| Build status | English [![Documentation Status](https://readthedocs.org/projects/iroha/badge/?version=latest)](https://iroha.readthedocs.io/en/latest/?badge=latest) | German [![Documentation Status](https://readthedocs.org/projects/iroha-de/badge/?version=master)](https://iroha.readthedocs.io/de/master/?badge=master) | Spanish [![Documentation Status](https://readthedocs.org/projects/iroha-es/badge/?version=latest)](https://iroha.readthedocs.io/es/latest/?badge=latest) | French [![Documentation Status](https://readthedocs.org/projects/iroha-fr/badge/?version=latest)](https://iroha.readthedocs.io/fr/latest/?badge=latest) | Japanese [![Documentation Status](https://readthedocs.org/projects/iroha-ja/badge/?version=latest)](https://iroha.readthedocs.io/ja/latest/?badge=latest) | Korean [![Documentation Status](https://readthedocs.org/projects/iroha-ko/badge/?version=latest)](https://iroha.readthedocs.io/ko/latest/?badge=latest) | Dutch [![Documentation Status](https://readthedocs.org/projects/iroha-nl/badge/?version=latest)](https://iroha.readthedocs.io/nl/latest/?badge=latest) | Portuguese [![Documentation Status](https://readthedocs.org/projects/iroha-pt/badge/?version=latest)](https://iroha.readthedocs.io/pt/latest/?badge=latest) | Russian [![Documentation Status](https://readthedocs.org/projects/iroha-ru/badge/?version=latest)](https://iroha.readthedocs.io/ru/latest/?badge=latest) | Ukrainian [![Documentation Status](https://readthedocs.org/projects/iroha-uk/badge/?version=latest)](https://iroha.readthedocs.io/uk/latest/?badge=latest) | Simplified Chinese [![Documentation Status](https://readthedocs.org/projects/iroha-zh/badge/?version=latest)](https://iroha.readthedocs.io/zh_CN/latest/?badge=latest) |
+|---|---|---|---|---|---|---|---|---|---|---|---|
 
 ### How to explore Iroha really fast?
 
