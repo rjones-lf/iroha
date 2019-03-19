@@ -29,6 +29,8 @@ namespace iroha {
      public:
       // ----------| public API |----------
 
+      using BlockIdCollectionType = std::set<Identifier>;
+
       static const uint32_t DIGIT_CAPACITY = 16;
 
       /**
@@ -71,7 +73,7 @@ namespace iroha {
 
       void dropAll() override;
 
-      const std::set<Identifier>& blockNumbers() const;
+      const BlockIdCollectionType &blockNumbers() const;
 
       // ----------| modify operations |----------
 
@@ -86,12 +88,13 @@ namespace iroha {
       // ----------| private API |----------
 
       /**
-       * Create storage in path with respect to last key
+       * Create storage in path
        * @param path - folder of storage
+       * @param existing_files - collection of existing files names
        * @param log to print progress
        */
       FlatFile(const std::string &path,
-               std::set<Identifier> existing_files,
+               BlockIdCollectionType existing_files,
                FlatFile::private_tag,
                logger::LoggerPtr log);
 
@@ -101,8 +104,7 @@ namespace iroha {
        */
       const std::string dump_dir_;
 
-      //TODO: alias for collection type?
-      std::set<Identifier> available_blocks_;
+      BlockIdCollectionType available_blocks_;
 
       logger::LoggerPtr log_;
 

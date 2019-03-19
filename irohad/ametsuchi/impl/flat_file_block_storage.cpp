@@ -21,16 +21,15 @@ FlatFileBlockStorage::FlatFileBlockStorage(
 
 bool FlatFileBlockStorage::insert(
     std::shared_ptr<const shared_model::interface::Block> block) {
-  auto serialized_block = json_converter_->serialize(*block);
-  if (auto error =
-          boost::get<expected::Error<std::string>>(&serialized_block)) {
-    log_->warn("Error while block serialization: {}", error->error);
-    return false;
-  }
-
-  auto block_json =
-      boost::get<expected::Value<std::string>>(serialized_block).value;
-  return flat_file_storage_->add(block->height(), stringToBytes(block_json));
+  return json_converter_->serialize(*block).match(
+      [&](const expected::Value<std::string> &block_json) {
+        return flat_file_storage_->add(block->height(),
+                                       stringToBytes(block_json.value));
+      },
+      [this](const auto &error) {
+        log_->warn("Error while block serialization: {}", error.error);
+        return false;
+      });
 }
 
 bool FlatFileBlockStorage::insert(const shared_model::interface::Block &block) {
@@ -45,21 +44,20 @@ FlatFileBlockStorage::fetch(
     return boost::none;
   }
 
-  auto deserialized_block =
-      json_converter_->deserialize(bytesToString(storage_block.get()));
-  if (auto error =
-          boost::get<expected::Error<std::string>>(&deserialized_block)) {
-    log_->warn("Error while block deserialization: {}", error->error);
-    return boost::none;
-  }
-
-  auto &block =
-      boost::get<
-          expected::Value<std::unique_ptr<shared_model::interface::Block>>>(
-          deserialized_block)
-          .value;
-  return boost::make_optional<
-      std::shared_ptr<const shared_model::interface::Block>>(std::move(block));
+  return json_converter_->deserialize(bytesToString(*storage_block))
+      .match(
+          [&](expected::Value<std::unique_ptr<shared_model::interface::Block>>
+                  &block) {
+            return boost::make_optional<
+                std::shared_ptr<const shared_model::interface::Block>>(
+                std::move(block.value));
+          },
+          [&](expected::Error<std::string> &error)
+              -> boost::optional<
+                  std::shared_ptr<const shared_model::interface::Block>> {
+            log_->warn("Error while block deserialization: {}", error.error);
+            return boost::none;
+          });
 }
 
 size_t FlatFileBlockStorage::size() const {
@@ -75,6 +73,6 @@ void FlatFileBlockStorage::forEach(
   for (auto block_id : flat_file_storage_->blockNumbers()) {
     auto block = fetch(block_id);
     BOOST_ASSERT(block);
-    function(block.get());
+    function(*block);
   }
 }

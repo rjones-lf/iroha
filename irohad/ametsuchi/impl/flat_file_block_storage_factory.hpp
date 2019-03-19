@@ -16,7 +16,7 @@ namespace iroha {
     class FlatFileBlockStorageFactory : public BlockStorageFactory {
      public:
       FlatFileBlockStorageFactory(
-          const std::string &path,
+          std::function<std::string()> path_provider,
           std::shared_ptr<shared_model::interface::BlockJsonConverter>
               json_block_converter,
           logger::LoggerManagerTreePtr log_manager);

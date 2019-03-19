@@ -18,6 +18,7 @@
 
 using namespace iroha::ametsuchi;
 using Identifier = FlatFile::Identifier;
+using BlockIdCollectionType = FlatFile::BlockIdCollectionType;
 
 // ----------| public API |----------
 
@@ -33,7 +34,7 @@ boost::optional<Identifier> FlatFile::name_to_id(const std::string &name) {
   }
   try {
     auto id = std::stoul(name);
-    return boost::make_optional<uint32_t>(id);
+    return boost::make_optional<Identifier>(id);
   } catch (const std::exception &e) {
     return boost::none;
   }
@@ -48,12 +49,12 @@ boost::optional<std::unique_ptr<FlatFile>> FlatFile::create(
     return boost::none;
   }
 
-  std::set<Identifier> files_found;
+  BlockIdCollectionType files_found;
   for (auto it = boost::filesystem::directory_iterator{path};
        it != boost::filesystem::directory_iterator{};
        ++it) {
     if (auto id = FlatFile::name_to_id(it->path().filename().string())) {
-      files_found.insert(id.get());
+      files_found.insert(*id);
     } else {
       boost::filesystem::remove(it->path());
     }
@@ -123,14 +124,14 @@ void FlatFile::dropAll() {
   available_blocks_.clear();
 }
 
-const std::set<Identifier> &FlatFile::blockNumbers() const {
+const BlockIdCollectionType &FlatFile::blockNumbers() const {
   return available_blocks_;
 }
 
 // ----------| private API |----------
 
 FlatFile::FlatFile(const std::string &path,
-                   std::set<Identifier> existing_files,
+                   BlockIdCollectionType existing_files,
                    FlatFile::private_tag,
                    logger::LoggerPtr log)
     : dump_dir_(path),

@@ -7,6 +7,7 @@
 #define IROHA_FLAT_FILE_BLOCK_STORAGE_HPP
 
 #include "ametsuchi/block_storage.hpp"
+
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "interfaces/iroha_internal/block_json_converter.hpp"
 #include "logger/logger_fwd.hpp"

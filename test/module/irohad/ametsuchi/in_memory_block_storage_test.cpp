@@ -77,7 +77,7 @@ TEST_F(InMemoryBlockStorageTest, FetchNonexistent) {
 }
 
 /**
- * @given initialized block storage, single block with id_ inserted
+ * @given initialized block storage, single block with height_ inserted
  * @when size is fetched
  * @then 1 is returned
  */
@@ -88,7 +88,7 @@ TEST_F(InMemoryBlockStorageTest, Size) {
 }
 
 /**
- * @given initialized block storage, single block with id_ inserted
+ * @given initialized block storage, single block with height_ inserted
  * @when storage is cleared with clear
  * @then no blocks are left in storage
  */
@@ -103,9 +103,9 @@ TEST_F(InMemoryBlockStorageTest, Clear) {
 }
 
 /**
- * @given initialized block storage, single block with id_ inserted
+ * @given initialized block storage, single block with height_ inserted
  * @when forEach is called
- * @then block with id_ is visited, lambda is invoked once
+ * @then block with height_ is visited, lambda is invoked once
  */
 TEST_F(InMemoryBlockStorageTest, ForEach) {
   ASSERT_TRUE(block_storage_.insert(block_));
