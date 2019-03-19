@@ -12,8 +12,6 @@ message Block_v1 {
   // everything that should be signed:
   message Payload {
     repeated Transaction transactions = 1;
-    uint32 tx_number = 2;  ///< The number of accepted transactions inside.
-                           ///< Maximum 16384 or 2^14.
     uint64 height = 3;          ///< The current block number in a ledger.
     string prev_block_hash = 4;  ///< Previous block hash.
     uint64 created_time = 5;
