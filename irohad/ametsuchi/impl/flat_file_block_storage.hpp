@@ -22,6 +22,8 @@ namespace iroha {
               json_converter,
           logger::LoggerPtr log);
 
+      ~FlatFileBlockStorage() override;
+
       bool insert(
           std::shared_ptr<const shared_model::interface::Block> block) override;
 

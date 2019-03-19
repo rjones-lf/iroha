@@ -5,6 +5,8 @@
 
 #include "ametsuchi/impl/flat_file_block_storage.hpp"
 
+#include <boost/filesystem.hpp>
+
 #include "backend/protobuf/block.hpp"
 #include "common/byteutils.hpp"
 #include "logger/logger.hpp"
@@ -18,6 +20,11 @@ FlatFileBlockStorage::FlatFileBlockStorage(
     : flat_file_storage_(std::move(flat_file)),
       json_converter_(std::move(json_converter)),
       log_(std::move(log)) {}
+
+FlatFileBlockStorage::~FlatFileBlockStorage() {
+  log_->info("Remove {} temp directory", flat_file_storage_->directory());
+  boost::filesystem::remove_all(flat_file_storage_->directory());
+}
 
 bool FlatFileBlockStorage::insert(
     std::shared_ptr<const shared_model::interface::Block> block) {

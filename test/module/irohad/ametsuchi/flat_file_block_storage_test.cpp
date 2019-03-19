@@ -30,10 +30,6 @@ class FlatFileBlockStorageTest : public ::testing::Test {
     create_directory(path_provider_());
   }
 
-  void TearDown() override {
-    remove_all(path_provider_());
-  }
-
   const std::string block_store_path_ =
       (temp_directory_path() / unique_path()).string();
 

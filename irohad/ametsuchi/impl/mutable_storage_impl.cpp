@@ -130,6 +130,7 @@ namespace iroha {
           log_->warn("Apply has been failed. Reason: {}", e.what());
         }
       }
+      block_storage_->clear();
     }
   }  // namespace ametsuchi
 }  // namespace iroha
