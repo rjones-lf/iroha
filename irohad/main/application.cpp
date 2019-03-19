@@ -175,7 +175,7 @@ void Irohad::initStorage() {
       },
       [&](expected::Error<std::string> &error) { log_->error(error.error); });
 
-  log_->info("[Init] => storage", logger::logBool(storage));
+  log_->info("[Init] => storage ({})", logger::logBool(storage));
 }
 
 bool Irohad::restoreWsv() {

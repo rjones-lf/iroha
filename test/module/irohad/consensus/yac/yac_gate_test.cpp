@@ -160,6 +160,39 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
 }
 
 /**
+ * @given yac gate, voting for the block @and receiving it on commit
+ * @when voting for nothing
+ * @then block cache is released
+ */
+TEST_F(YacGateTest, CacheReleased) {
+  YacHash empty_hash;
+
+  // yac consensus
+  EXPECT_CALL(*hash_gate, vote(expected_hash, _)).Times(1);
+  EXPECT_CALL(*hash_gate, vote(empty_hash, _)).Times(1);
+
+  // generate order of peers
+  EXPECT_CALL(*peer_orderer, getOrdering(_))
+      .Times(2)
+      .WillRepeatedly(Return(ClusterOrdering::create({makePeer("fake_node")})));
+
+  // make hash from block
+  EXPECT_CALL(*hash_provider, makeHash(_))
+      .WillOnce(Return(expected_hash))
+      .WillOnce(Return(empty_hash));
+
+  block_notifier.get_subscriber().on_next(
+      BlockCreatorEvent{RoundData{expected_proposal, expected_block}, round});
+
+  outcome_notifier.get_subscriber().on_next(expected_commit);
+  round.reject_round++;
+
+  gate->vote({boost::none, round});
+
+  ASSERT_EQ(block_cache->get(), nullptr);
+}
+
+/**
  * @given yac gate
  * @when unsuccesfully trying to retrieve peers order
  * @then system will not crash
@@ -259,7 +292,8 @@ class YacGateOlderTest : public YacGateTest {
 
     // generate order of peers
     ON_CALL(*peer_orderer, getOrdering(_))
-        .WillByDefault(Return(ClusterOrdering::create({makePeer("fake_node")})));
+        .WillByDefault(
+            Return(ClusterOrdering::create({makePeer("fake_node")})));
 
     // make hash from block
     ON_CALL(*hash_provider, makeHash(_)).WillByDefault(Return(expected_hash));
