@@ -6,6 +6,7 @@
 #include "ametsuchi/impl/storage_impl.hpp"
 
 #include <soci/postgresql/soci-postgresql.h>
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/format.hpp>
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "ametsuchi/impl/mutable_storage_impl.hpp"
@@ -42,6 +43,17 @@ namespace {
     } catch (std::exception &e) {
       return false;
     }
+  }
+
+  std::string formatPostgresMessage(const char *message) {
+    std::string formatted_message(message);
+    boost::replace_all(formatted_message, "\n", " ");
+    return formatted_message;
+  }
+
+  void processPqNotice(void *arg, const char *message) {
+    auto *log = reinterpret_cast<logger::Logger *>(arg);
+    log->debug("{}", formatPostgresMessage(message));
   }
 
 }  // namespace
@@ -84,6 +96,14 @@ namespace iroha {
           block_is_prepared(false) {
       prepared_block_name_ =
           "prepared_block" + postgres_options_.dbname().value_or("");
+
+      for (size_t i = 0; i != pool_size_; i++) {
+        soci::session &session = connection_->at(i);
+        auto *backend = static_cast<soci::postgresql_session_backend *>(
+            session.get_backend());
+        PQsetNoticeProcessor(backend->conn_, &processPqNotice, log_.get());
+      }
+
       soci::session sql(*connection_);
       // rollback current prepared transaction
       // if there exists any since last session
@@ -327,7 +347,8 @@ namespace iroha {
         return expected::makeValue(false);
       } catch (std::exception &e) {
         return expected::makeError<std::string>(
-            std::string("Connection to PostgreSQL broken: ") + e.what());
+            std::string("Connection to PostgreSQL broken: ")
+            + formatPostgresMessage(e.what()));
       }
     }
 
@@ -358,7 +379,7 @@ namespace iroha {
           session.open(*soci::factory_postgresql(), options_str);
         }
       } catch (const std::exception &e) {
-        return expected::makeError(e.what());
+        return expected::makeError(formatPostgresMessage(e.what()));
       }
       return expected::makeValue(pool);
     }
@@ -551,7 +572,7 @@ namespace iroha {
         sql << "ROLLBACK PREPARED '" + prepared_block_name_ + "';";
         block_is_prepared = false;
       } catch (const std::exception &e) {
-        log_->info(e.what());
+        log_->info("{}", formatPostgresMessage(e.what()));
       }
     }
 
