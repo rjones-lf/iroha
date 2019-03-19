@@ -23,7 +23,7 @@ namespace iroha {
       std::unique_ptr<BlockStorage> create() override;
 
      private:
-      std::string path_;
+      std::function<std::string()> path_provider_;
       std::shared_ptr<shared_model::interface::BlockJsonConverter>
           json_block_converter_;
       logger::LoggerManagerTreePtr log_manager_;
