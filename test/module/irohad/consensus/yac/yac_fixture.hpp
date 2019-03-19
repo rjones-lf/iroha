@@ -40,7 +40,7 @@ namespace iroha {
             default_peers = [] {
               std::vector<std::shared_ptr<shared_model::interface::Peer>>
                   result;
-              for (size_t i = 1; i <= 7; ++i) {
+              for (size_t i = 0; i < 7; ++i) {
                 result.push_back(makePeer(std::to_string(i)));
               }
               return result;

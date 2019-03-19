@@ -151,7 +151,7 @@ parts:
       mv $SNAPCRAFT_PART_INSTALL/include $SNAPCRAFT_PART_INSTALL/usr/local/include
   ed25519:
     source: https://github.com/hyperledger/iroha-ed25519.git
-    source-commit: f42953c631fae93011612f6b1ee33f1f88c3f8af
+    source-commit: b61a1e77af5dc458ed6a5aee395d5b22775a4917
     plugin: cmake
-    configflags: [-DTESTING=OFF]
+    configflags: [-DTESTING=OFF, -DHASH=sha3_brainhub, -DEDIMPL=ref10]
     after: [cmake]

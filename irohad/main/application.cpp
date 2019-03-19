@@ -5,6 +5,7 @@
 
 #include "main/application.hpp"
 
+#include "ametsuchi/impl/in_memory_block_storage_factory.hpp"
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "ametsuchi/impl/tx_presence_cache_impl.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
@@ -160,11 +161,13 @@ void Irohad::initStorage() {
       std::make_shared<shared_model::proto::ProtoPermissionToString>();
   auto block_converter =
       std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
+  auto block_storage_factory = std::make_unique<InMemoryBlockStorageFactory>();
   auto storageResult = StorageImpl::create(block_store_dir_,
                                            pg_conn_,
                                            common_objects_factory_,
                                            std::move(block_converter),
                                            perm_converter,
+                                           std::move(block_storage_factory),
                                            log_manager_->getChild("Storage"));
   storageResult.match(
       [&](expected::Value<std::shared_ptr<ametsuchi::StorageImpl>> &_storage) {
@@ -362,7 +365,6 @@ void Irohad::initOrderingGate() {
                                      std::move(factory),
                                      proposal_factory,
                                      persistent_cache,
-                                     {blocks.back()->height(), 1},
                                      delay,
                                      log_manager_->getChild("Ordering"));
   log_->info("[Init] => init ordering gate - [{}]",

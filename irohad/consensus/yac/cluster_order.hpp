@@ -52,8 +52,8 @@ namespace iroha {
          */
         bool hasNext() const;
 
-        std::vector<std::shared_ptr<shared_model::interface::Peer>> getPeers()
-            const;
+        const std::vector<std::shared_ptr<shared_model::interface::Peer>>
+            &getPeers() const;
 
         PeersNumberType getNumberOfPeers() const;
 

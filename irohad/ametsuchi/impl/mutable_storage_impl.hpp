@@ -8,9 +8,8 @@
 
 #include "ametsuchi/mutable_storage.hpp"
 
-#include <map>
-
 #include <soci/soci.h>
+#include "ametsuchi/block_storage.hpp"
 #include "ametsuchi/command_executor.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "logger/logger_fwd.hpp"
@@ -31,6 +30,7 @@ namespace iroha {
           std::unique_ptr<soci::session> sql,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               factory,
+          std::unique_ptr<BlockStorage> block_storage,
           logger::LoggerManagerTreePtr log_manager);
 
       bool apply(const shared_model::interface::Block &block) override;
@@ -58,15 +58,12 @@ namespace iroha {
                  MutableStoragePredicate predicate);
 
       shared_model::interface::types::HashType top_hash_;
-      // ordered collection is used to enforce block insertion order in
-      // StorageImpl::commit
-      std::map<uint32_t, std::shared_ptr<shared_model::interface::Block>>
-          block_store_;
 
       std::unique_ptr<soci::session> sql_;
       std::unique_ptr<PeerQuery> peer_query_;
       std::unique_ptr<BlockIndex> block_index_;
       std::shared_ptr<CommandExecutor> command_executor_;
+      std::unique_ptr<BlockStorage> block_storage_;
 
       bool committed;
 

@@ -69,6 +69,11 @@ target_link_libraries(tx_presence_cache_test
     shared_model_interfaces_factories
     )
 
+addtest(in_memory_block_storage_test in_memory_block_storage_test.cpp)
+target_link_libraries(in_memory_block_storage_test
+    ametsuchi
+    )
+
 add_library(ametsuchi_fixture INTERFACE)
 target_link_libraries(ametsuchi_fixture INTERFACE
     integration_framework_config_helper

@@ -65,6 +65,7 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
         std::shared_ptr<shared_model::interface::PermissionToString>
             perm_converter,
+        std::unique_ptr<BlockStorageFactory> block_storage_factory,
         size_t pool_size,
         bool enable_prepared_blocks,
         logger::LoggerManagerTreePtr log_manager)
@@ -75,6 +76,7 @@ namespace iroha {
           factory_(std::move(factory)),
           converter_(std::move(converter)),
           perm_converter_(std::move(perm_converter)),
+          block_storage_factory_(std::move(block_storage_factory)),
           log_manager_(std::move(log_manager)),
           log_(log_manager_->getLogger()),
           pool_size_(pool_size),
@@ -148,6 +150,7 @@ namespace iroha {
               std::make_shared<PostgresCommandExecutor>(*sql, perm_converter_),
               std::move(sql),
               factory_,
+              block_storage_factory_->create(),
               log_manager_->getChild("MutableStorageImpl")));
     }
 
@@ -364,6 +367,7 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
         std::shared_ptr<shared_model::interface::PermissionToString>
             perm_converter,
+        std::unique_ptr<BlockStorageFactory> block_storage_factory,
         logger::LoggerManagerTreePtr log_manager,
         size_t pool_size) {
       boost::optional<std::string> string_res = boost::none;
@@ -403,6 +407,7 @@ namespace iroha {
                                       factory,
                                       converter,
                                       perm_converter,
+                                      std::move(block_storage_factory),
                                       pool_size,
                                       enable_prepared_transactions,
                                       std::move(log_manager))));
@@ -414,12 +419,11 @@ namespace iroha {
     }
 
     boost::optional<std::unique_ptr<LedgerState>> StorageImpl::commit(
-        std::unique_ptr<MutableStorage> mutableStorage) {
-      auto storage_ptr = std::move(mutableStorage);  // get ownership of storage
-      auto storage = static_cast<MutableStorageImpl *>(storage_ptr.get());
-      for (const auto &block : storage->block_store_) {
-        storeBlock(*block.second);
-      }
+        std::unique_ptr<MutableStorage> mutable_storage) {
+      auto storage = static_cast<MutableStorageImpl *>(mutable_storage.get());
+
+      storage->block_storage_->forEach(
+          [this](const auto &block) { this->storeBlock(*block); });
       try {
         *(storage->sql_) << "COMMIT";
         storage->committed = true;
@@ -427,12 +431,11 @@ namespace iroha {
                                 factory_,
                                 log_manager_->getChild("WsvQuery")->getLogger())
                    .getPeers()
-            |
-            [](auto &&peers) {
-              return boost::optional<std::unique_ptr<LedgerState>>(
-                  std::make_unique<LedgerState>(
-                      std::make_shared<PeerList>(std::move(peers))));
-            };
+            | [](auto &&peers) {
+                return boost::optional<std::unique_ptr<LedgerState>>(
+                    std::make_unique<LedgerState>(
+                        std::make_shared<PeerList>(std::move(peers))));
+              };
       } catch (std::exception &e) {
         storage->committed = false;
         log_->warn("Mutable storage is not committed. Reason: {}", e.what());

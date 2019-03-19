@@ -20,8 +20,7 @@ message ProposalRound {
 }
 
 message BatchesRequest {
-  ProposalRound round = 1;
-  repeated protocol.Transaction transactions = 2;
+  repeated protocol.Transaction transactions = 1;
 }
 
 message ProposalRequest {

@@ -87,6 +87,9 @@ namespace iroha {
 
       boost::optional<Answer> YacVoteStorage::store(
           std::vector<VoteMessage> state, PeersNumberType peers_in_round) {
+        if (state.empty()) {
+          return boost::none;
+        }
         return findProposalStorage(state.at(0), peers_in_round) |
             [this, &state](auto &&storage) {
               const auto &round = storage->getStorageKey();
