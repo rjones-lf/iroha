@@ -18,9 +18,11 @@ namespace iroha {
     QueryService::QueryService(
         std::shared_ptr<iroha::torii::QueryProcessor> query_processor,
         std::shared_ptr<QueryFactoryType> query_factory,
-      logger::LoggerPtr log)
+        std::shared_ptr<BlocksQueryFactoryType> blocks_query_factory,
+        logger::LoggerPtr log)
         : query_processor_{std::move(query_processor)},
           query_factory_{std::move(query_factory)},
+          blocks_query_factory_{std::move(blocks_query_factory)},
           log_{std::move(log)} {}
 
     void QueryService::Find(iroha::protocol::Query const &request,
@@ -70,67 +72,59 @@ namespace iroha {
         const iroha::protocol::BlocksQuery *request,
         grpc::ServerWriter<iroha::protocol::BlockQueryResponse> *writer) {
       log_->debug("Fetching commits");
-      shared_model::proto::TransportBuilder<
-          shared_model::proto::BlocksQuery,
-          shared_model::validation::DefaultSignedBlocksQueryValidator>()
-          .build(*request)
-          .match(
-              [this, context, request, writer](
-                  const iroha::expected::Value<shared_model::proto::BlocksQuery>
-                      &query) {
-                rxcpp::composite_subscription sub;
-                query_processor_->blocksQueryHandle(query.value)
-                    .as_blocking()
-                    .subscribe(
-                        sub,
-                        [this, context, &sub, request, writer](
-                            const std::shared_ptr<
-                                shared_model::interface::BlockQueryResponse>
-                                response) {
-                          if (context->IsCancelled()) {
-                            log_->debug("Unsubscribed");
-                            sub.unsubscribe();
-                          } else {
-                            iroha::visit_in_place(
-                                response->get(),
-                                [this, writer, request](
-                                    const shared_model::interface::BlockResponse
-                                        &block_response) {
-                                  log_->debug(
-                                      "{} receives committed block",
-                                      request->meta().creator_account_id());
-                                  auto proto_block_response = static_cast<
-                                      const shared_model::proto::BlockResponse
-                                          &>(block_response);
-                                  writer->Write(
-                                      proto_block_response.getTransport());
-                                },
-                                [this, writer, request](
-                                    const shared_model::interface::
-                                        BlockErrorResponse
-                                            &block_error_response) {
-                                  log_->debug(
-                                      "{} received error with message: {}",
-                                      request->meta().creator_account_id(),
-                                      block_error_response.message());
-                                  auto proto_block_error_response =
-                                      static_cast<const shared_model::proto::
-                                                      BlockErrorResponse &>(
-                                          block_error_response);
-                                  writer->WriteLast(
-                                      proto_block_error_response.getTransport(),
-                                      grpc::WriteOptions());
-                                });
-                          }
-                        });
-              },
-              [this, writer](const auto &error) {
-                log_->debug("Stateless invalid: {}", error.error);
-                iroha::protocol::BlockQueryResponse response;
-                response.mutable_block_error_response()->set_message(
-                    std::move(error.error));
-                writer->WriteLast(response, grpc::WriteOptions());
-              });
+      blocks_query_factory_->build(*request).match(
+          [this, context, request, writer](
+              const iroha::expected::Value<std::unique_ptr<
+                  shared_model::interface::BlocksQuery>> &query) {
+            rxcpp::composite_subscription sub;
+            query_processor_->blocksQueryHandle(*query.value)
+                .as_blocking()
+                .subscribe(
+                    sub,
+                    [this, context, &sub, request, writer](
+                        const std::shared_ptr<
+                            shared_model::interface::BlockQueryResponse>
+                            response) {
+                      if (context->IsCancelled()) {
+                        log_->debug("Unsubscribed");
+                        sub.unsubscribe();
+                      } else {
+                        iroha::visit_in_place(
+                            response->get(),
+                            [this, writer, request](
+                                const shared_model::interface::BlockResponse
+                                    &block_response) {
+                              log_->debug("{} receives committed block",
+                                          request->meta().creator_account_id());
+                              auto proto_block_response = static_cast<
+                                  const shared_model::proto::BlockResponse &>(
+                                  block_response);
+                              writer->Write(
+                                  proto_block_response.getTransport());
+                            },
+                            [this, writer, request](
+                                const shared_model::interface::
+                                    BlockErrorResponse &block_error_response) {
+                              log_->debug("{} received error with message: {}",
+                                          request->meta().creator_account_id(),
+                                          block_error_response.message());
+                              auto proto_block_error_response = static_cast<
+                                  const shared_model::proto::BlockErrorResponse
+                                      &>(block_error_response);
+                              writer->WriteLast(
+                                  proto_block_error_response.getTransport(),
+                                  grpc::WriteOptions());
+                            });
+                      }
+                    });
+          },
+          [this, writer](const auto &error) {
+            log_->debug("Stateless invalid: {}", error.error.error);
+            iroha::protocol::BlockQueryResponse response;
+            response.mutable_block_error_response()->set_message(
+                std::move(error.error.error));
+            writer->WriteLast(response, grpc::WriteOptions());
+          });
 
       return grpc::Status::OK;
     }

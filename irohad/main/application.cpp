@@ -285,6 +285,18 @@ void Irohad::initFactories() {
                                                  shared_model::proto::Query>>(
       std::move(query_validator), std::move(proto_query_validator));
 
+  auto blocks_query_validator = std::make_unique<
+      shared_model::validation::DefaultSignedBlocksQueryValidator>();
+  auto proto_blocks_query_validator =
+      std::make_unique<shared_model::validation::ProtoBlocksQueryValidator>();
+
+  blocks_query_factory =
+      std::make_shared<shared_model::proto::ProtoTransportFactory<
+          shared_model::interface::BlocksQuery,
+          shared_model::proto::BlocksQuery>>(
+          std::move(blocks_query_validator),
+          std::move(proto_blocks_query_validator));
+
   log_->info("[Init] => factories");
 }
 
@@ -595,7 +607,10 @@ void Irohad::initQueryService() {
       query_service_log_manager->getChild("Processor")->getLogger());
 
   query_service = std::make_shared<::torii::QueryService>(
-      query_processor, query_factory, query_service_log_manager->getLogger());
+      query_processor,
+      query_factory,
+      blocks_query_factory,
+      query_service_log_manager->getLogger());
 
   log_->info("[Init] => query service");
 }
