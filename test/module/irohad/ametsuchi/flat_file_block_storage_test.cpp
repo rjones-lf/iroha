@@ -80,13 +80,15 @@ TEST_F(FlatFileBlockStorageTest, FetchExisting) {
           .create();
   ASSERT_TRUE(block_storage->insert(block_));
 
+  shared_model::interface::Block *raw_block;
+
   EXPECT_CALL(*converter_, deserialize(_))
       .WillOnce(Invoke([&](const shared_model::interface::types::JsonType &)
                            -> iroha::expected::Result<
                                std::unique_ptr<shared_model::interface::Block>,
                                std::string> {
         auto return_block = std::make_unique<MockBlock>();
-        EXPECT_CALL(*return_block, height()).WillOnce(Return(height_));
+        raw_block = return_block.get();
         return iroha::expected::makeValue<
             std::unique_ptr<shared_model::interface::Block>>(
             std::move(return_block));
@@ -94,7 +96,7 @@ TEST_F(FlatFileBlockStorageTest, FetchExisting) {
   std::shared_ptr<const shared_model::interface::Block> block_var =
       *(block_storage->fetch(height_));
 
-  ASSERT_EQ(block_->height(), block_var->height());
+  ASSERT_EQ(raw_block, block_var.get());
 }
 
 /**
@@ -153,13 +155,15 @@ TEST_F(FlatFileBlockStorageTest, ForEach) {
           .create();
   ASSERT_TRUE(block_storage->insert(block_));
 
+  shared_model::interface::Block *raw_block;
+
   EXPECT_CALL(*converter_, deserialize(_))
       .WillOnce(Invoke([&](const shared_model::interface::types::JsonType &)
                            -> iroha::expected::Result<
                                std::unique_ptr<shared_model::interface::Block>,
                                std::string> {
         auto return_block = std::make_unique<MockBlock>();
-        EXPECT_CALL(*return_block, height()).WillOnce(Return(height_));
+        raw_block = return_block.get();
         return iroha::expected::makeValue<
             std::unique_ptr<shared_model::interface::Block>>(
             std::move(return_block));
@@ -167,9 +171,9 @@ TEST_F(FlatFileBlockStorageTest, ForEach) {
 
   size_t count = 0;
 
-  block_storage->forEach([this, &count](const auto &block) {
+  block_storage->forEach([&count, &raw_block](const auto &block) {
     ++count;
-    ASSERT_EQ(height_, block->height());
+    ASSERT_EQ(raw_block, block.get());
   });
 
   ASSERT_EQ(1, count);
