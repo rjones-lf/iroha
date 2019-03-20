@@ -426,11 +426,13 @@ namespace iroha {
         std::unique_ptr<MutableStorage> mutable_storage) {
       auto storage = static_cast<MutableStorageImpl *>(mutable_storage.get());
 
-      storage->block_storage_->forEach(
-          [this](const auto &block) { this->storeBlock(*block); });
       try {
         *(storage->sql_) << "COMMIT";
         storage->committed = true;
+
+        storage->block_storage_->forEach(
+            [this](const auto &block) { this->storeBlock(*block); });
+
         return PostgresWsvQuery(*(storage->sql_),
                                 factory_,
                                 log_manager_->getChild("WsvQuery")->getLogger())
