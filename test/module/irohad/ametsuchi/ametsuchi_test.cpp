@@ -502,15 +502,8 @@ TEST_F(AmetsuchiTest, TestingWsvAfterCommitBlock) {
                         .build()
                         .signAndAddSignature(key)
                         .finish();
-  auto genesis_block =
-      TestBlockBuilder()
-          .transactions(
-              std::vector<shared_model::proto::Transaction>({genesis_tx}))
-          .height(1)
-          .prevHash(shared_model::crypto::Sha3_256::makeHash(
-              shared_model::crypto::Blob("")))
-          .createdTime(iroha::time::now())
-          .build();
+
+  auto genesis_block = createBlock({genesis_tx});
   apply(storage, genesis_block);
 
   auto add_ast_tx =
@@ -524,19 +517,12 @@ TEST_F(AmetsuchiTest, TestingWsvAfterCommitBlock) {
           .signAndAddSignature(key)
           .finish();
 
-  auto expected_block =
-      TestBlockBuilder()
-          .transactions(
-              std::vector<shared_model::proto::Transaction>({add_ast_tx}))
-          .height(1)
-          .prevHash(genesis_block.hash())
-          .createdTime(iroha::time::now())
-          .build();
+  auto expected_block = createBlock({add_ast_tx}, 1, genesis_block->hash());
 
   static auto wrapper =
       make_test_subscriber<CallExact>(storage->on_commit(), 1);
   wrapper.subscribe([&](const auto &block) {
-    ASSERT_EQ(*block, expected_block);
+    ASSERT_EQ(*block, *expected_block);
     shared_model::interface::Amount resultingAmount("10.00");
     validateAccountAsset(
         sql_query, "receiver@test", "coin#test", resultingAmount);

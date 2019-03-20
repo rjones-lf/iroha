@@ -432,7 +432,7 @@ namespace iroha {
         storage->committed = true;
 
         storage->block_storage_->forEach(
-            [this](const auto &block) { this->storeBlock(*block); });
+            [this](const auto &block) { this->storeBlock(block); });
 
         return PostgresWsvQuery(*(storage->sql_),
                                 factory_,
