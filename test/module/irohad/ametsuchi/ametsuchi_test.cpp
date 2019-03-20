@@ -470,6 +470,84 @@ TEST_F(AmetsuchiTest, TestRestoreWSV) {
   EXPECT_TRUE(res);
 }
 
+/**
+ * @given created storage
+ *        @and a subscribed observer on on_commit() event
+ * @when commit block
+ * @then the effect of transactions in the committed block can be verified with
+ * queries
+ */
+TEST_F(AmetsuchiTest, TestingWsvAfterCommitBlock) {
+  ASSERT_TRUE(storage);
+
+  shared_model::crypto::Keypair key{
+      shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()};
+
+  auto genesis_tx = shared_model::proto::TransactionBuilder()
+                        .creatorAccountId("admin@test")
+                        .createdTime(iroha::time::now())
+                        .quorum(1)
+                        .createRole("admin",
+                                    {Role::kCreateDomain,
+                                     Role::kCreateAccount,
+                                     Role::kAddAssetQty,
+                                     Role::kAddPeer,
+                                     Role::kReceive,
+                                     Role::kTransfer})
+                        .createDomain("test", "admin")
+                        .createAccount("admin", "test", key.publicKey())
+                        .createAccount("receiver", "test", key.publicKey())
+                        .createAsset("coin", "test", 2)
+                        .addAssetQuantity("coin#test", "20.00")
+                        .build()
+                        .signAndAddSignature(key)
+                        .finish();
+  auto genesis_block =
+      TestBlockBuilder()
+          .transactions(
+              std::vector<shared_model::proto::Transaction>({genesis_tx}))
+          .height(1)
+          .prevHash(shared_model::crypto::Sha3_256::makeHash(
+              shared_model::crypto::Blob("")))
+          .createdTime(iroha::time::now())
+          .build();
+  apply(storage, genesis_block);
+
+  auto add_ast_tx =
+      shared_model::proto::TransactionBuilder()
+          .creatorAccountId("admin@test")
+          .createdTime(iroha::time::now())
+          .quorum(1)
+          .transferAsset(
+              "admin@test", "receiver@test", "coin#test", "deal", "10.00")
+          .build()
+          .signAndAddSignature(key)
+          .finish();
+
+  auto expected_block =
+      TestBlockBuilder()
+          .transactions(
+              std::vector<shared_model::proto::Transaction>({add_ast_tx}))
+          .height(1)
+          .prevHash(genesis_block.hash())
+          .createdTime(iroha::time::now())
+          .build();
+
+  static auto wrapper =
+      make_test_subscriber<CallExact>(storage->on_commit(), 1);
+  wrapper.subscribe([&](const auto &block) {
+    ASSERT_EQ(*block, expected_block);
+    shared_model::interface::Amount resultingAmount("10.00");
+    validateAccountAsset(
+        sql_query, "receiver@test", "coin#test", resultingAmount);
+  });
+
+  apply(storage, expected_block);
+
+  ASSERT_TRUE(wrapper.validate());
+  wrapper.unsubscribe();
+}
+
 class PreparedBlockTest : public AmetsuchiTest {
  public:
   PreparedBlockTest()
