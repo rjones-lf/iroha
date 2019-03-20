@@ -92,7 +92,7 @@ TEST_F(FlatFileBlockStorageTest, FetchExisting) {
             std::move(return_block));
       }));
   std::shared_ptr<const shared_model::interface::Block> block_var =
-      block_storage->fetch(height_).get();
+      *(block_storage->fetch(height_));
 
   ASSERT_EQ(block_->height(), block_var->height());
 }

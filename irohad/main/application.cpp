@@ -170,7 +170,7 @@ void Irohad::initStorage() {
             .string();
       },
       block_converter,
-      log_manager_->getChild("FlatFileBlockFactory"));
+      log_manager_);
   auto storageResult = StorageImpl::create(block_store_dir_,
                                            pg_conn_,
                                            common_objects_factory_,

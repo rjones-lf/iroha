@@ -68,7 +68,7 @@ FlatFileBlockStorage::fetch(
 }
 
 size_t FlatFileBlockStorage::size() const {
-  return flat_file_storage_->blockNumbers().size();
+  return flat_file_storage_->blockIdentifiers().size();
 }
 
 void FlatFileBlockStorage::clear() {
@@ -77,7 +77,7 @@ void FlatFileBlockStorage::clear() {
 
 void FlatFileBlockStorage::forEach(
     iroha::ametsuchi::BlockStorage::FunctionType function) const {
-  for (auto block_id : flat_file_storage_->blockNumbers()) {
+  for (auto block_id : flat_file_storage_->blockIdentifiers()) {
     auto block = fetch(block_id);
     BOOST_ASSERT(block);
     function(*block);

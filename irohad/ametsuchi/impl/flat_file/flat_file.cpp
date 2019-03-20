@@ -124,16 +124,16 @@ void FlatFile::dropAll() {
   available_blocks_.clear();
 }
 
-const BlockIdCollectionType &FlatFile::blockNumbers() const {
+const BlockIdCollectionType &FlatFile::blockIdentifiers() const {
   return available_blocks_;
 }
 
 // ----------| private API |----------
 
-FlatFile::FlatFile(const std::string &path,
+FlatFile::FlatFile(std::string path,
                    BlockIdCollectionType existing_files,
                    FlatFile::private_tag,
                    logger::LoggerPtr log)
-    : dump_dir_(path),
+    : dump_dir_(std::move(path)),
       available_blocks_(std::move(existing_files)),
       log_{std::move(log)} {}

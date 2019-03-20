@@ -73,7 +73,10 @@ namespace iroha {
 
       void dropAll() override;
 
-      const BlockIdCollectionType &blockNumbers() const;
+      /**
+       * @return collection of available block ids
+       */
+      const BlockIdCollectionType &blockIdentifiers() const;
 
       // ----------| modify operations |----------
 
@@ -93,7 +96,7 @@ namespace iroha {
        * @param existing_files - collection of existing files names
        * @param log to print progress
        */
-      FlatFile(const std::string &path,
+      FlatFile(std::string path,
                BlockIdCollectionType existing_files,
                FlatFile::private_tag,
                logger::LoggerPtr log);

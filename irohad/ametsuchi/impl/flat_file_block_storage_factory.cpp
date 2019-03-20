@@ -24,7 +24,8 @@ std::unique_ptr<BlockStorage> FlatFileBlockStorageFactory::create() {
   if (not flat_file) {
     return nullptr;
   }
-  return std::make_unique<FlatFileBlockStorage>(std::move(flat_file.get()),
-                                                json_block_converter_,
-                                                log_manager_->getLogger());
+  return std::make_unique<FlatFileBlockStorage>(
+      std::move(flat_file.get()),
+      json_block_converter_,
+      log_manager_->getChild("FlatFileBlockFactory")->getLogger());
 }
