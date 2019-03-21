@@ -74,6 +74,12 @@ target_link_libraries(in_memory_block_storage_test
     ametsuchi
     )
 
+addtest(flat_file_block_storage_test flat_file_block_storage_test.cpp)
+target_link_libraries(flat_file_block_storage_test
+    ametsuchi
+    test_logger
+    )
+
 add_library(ametsuchi_fixture INTERFACE)
 target_link_libraries(ametsuchi_fixture INTERFACE
     integration_framework_config_helper

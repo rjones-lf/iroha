@@ -12,7 +12,6 @@
 
 namespace iroha {
   namespace ametsuchi {
-
     /**
      * Creates a block storage
      */

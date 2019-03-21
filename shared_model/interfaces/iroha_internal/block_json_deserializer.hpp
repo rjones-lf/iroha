@@ -26,7 +26,7 @@ namespace shared_model {
        * @return pointer to a block if json was valid or an error
        */
       virtual iroha::expected::Result<std::unique_ptr<Block>, std::string>
-      deserialize(const types::JsonType &json) const noexcept = 0;
+      deserialize(const types::JsonType &json) const = 0;
 
       virtual ~BlockJsonDeserializer() = default;
     };
