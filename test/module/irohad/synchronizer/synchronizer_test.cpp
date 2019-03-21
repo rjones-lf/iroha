@@ -29,6 +29,7 @@ using namespace iroha::network;
 using namespace framework::test_subscriber;
 
 using ::testing::_;
+using ::testing::AtLeast;
 using ::testing::ByMove;
 using ::testing::ByRef;
 using ::testing::DefaultValue;
@@ -59,7 +60,8 @@ class SynchronizerTest : public ::testing::Test {
     block_query = std::make_shared<::testing::NiceMock<MockBlockQuery>>();
 
     ledger_peers = std::make_shared<PeerList>();
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 3; ++i) {
+      // TODO mboldyrev 21.03.2019 IR-424 Avoid using honest crypto
       ledger_peer_keys.emplace_back(
           shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair());
       ledger_peers->emplace_back(
@@ -97,7 +99,7 @@ class SynchronizerTest : public ::testing::Test {
       size_t time = iroha::time::now()) const {
     shared_model::proto::UnsignedWrapper<shared_model::proto::Block> block{
         TestUnsignedBlockBuilder().height(height).createdTime(time).build()};
-    for (const auto &key  : ledger_peer_keys) {
+    for (const auto &key : ledger_peer_keys) {
       block.signAndAddSignature(key);
     }
     return std::make_shared<shared_model::proto::Block>(
@@ -190,7 +192,8 @@ void mutableStorageExpectChain(
   };
   if (must_create_storage) {
     EXPECT_CALL(mutable_factory, createMutableStorage())
-        .WillOnce(::testing::Invoke(create_mutable_storage));
+        .Times(AtLeast(1))
+        .WillRepeatedly(::testing::Invoke(create_mutable_storage));
   } else {
     EXPECT_CALL(mutable_factory, createMutableStorage())
         .WillRepeatedly(::testing::Invoke(create_mutable_storage));
@@ -376,9 +379,11 @@ TEST_F(SynchronizerTest, ExactlyThreeRetrievals) {
  * @then it will try until success
  */
 TEST_F(SynchronizerTest, RetrieveBlockTwoFailures) {
+  const size_t number_of_failures{ledger_peers->size() + 2};
   DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
       SetFactory(&createMockMutableStorage);
-  EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(3);
+  EXPECT_CALL(*mutable_factory, createMutableStorage())
+      .Times(number_of_failures + 1);
   EXPECT_CALL(*mutable_factory, commit_(_))
       .WillOnce(Return(ByMove(boost::optional<std::unique_ptr<LedgerState>>(
           std::make_unique<LedgerState>(ledger_peers)))));
@@ -390,10 +395,8 @@ TEST_F(SynchronizerTest, RetrieveBlockTwoFailures) {
     InSequence s;  // ensures the call order
     EXPECT_CALL(*chain_validator,
                 validateAndApply(ChainEq({commit_message}), _))
-        .WillOnce(Return(false));
-    EXPECT_CALL(*chain_validator,
-                validateAndApply(ChainEq({commit_message}), _))
-        .WillOnce(Return(false));
+        .Times(number_of_failures)
+        .WillRepeatedly(Return(false));
     EXPECT_CALL(*chain_validator,
                 validateAndApply(ChainEq({commit_message}), _))
         .WillOnce(Return(true));
