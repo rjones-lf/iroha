@@ -70,8 +70,10 @@ Environment-specific parameters
   This parameter allows users to find an optimal value in a tradeoff between
   resource consumption and the delay of getting back to work after an idle
   period.
-- ``stale_stream_max_rounds`` is the maximum amount of rounds to keep an open
-  status stream while no status update is reported.
+- ``stale_stream_max_rounds`` is an optional parameter specifying the maximum
+  amount of rounds to keep an open status stream while no status update is
+  reported.
+  The default value is 2.
   Increasing this value reduces the amount of times a client must reconnect to
   track a transaction if for some reason it is not updated with new rounds.
   However large values increase the average number of connected clients during
