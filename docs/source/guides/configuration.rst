@@ -59,10 +59,12 @@ Environment-specific parameters
 - ``mst_enable`` enables or disables multisignature transaction network
   transport in Iroha. We recommend setting this parameter to ``false`` at the
   moment until you really need it.
-  ``mst_expiration_time`` is the time period, in which a not fully signed
-  transaction is considered expired (in minutes).
+  ``mst_expiration_time`` is an optional parameter specifying the time period
+  in which a not fully signed transaction is considered expired (in minutes).
+  The default value is 1440.
 - ``max_rounds_delay`` is an optional parameter specifying the maximum delay
   between two consensus rounds (in milliseconds).
+  The default value is 3000.
   When Iroha is idle, it gradually increases the delay to reduce CPU, network
   and logging load.
   However too long delay may be unwanted when first transactions arrive after a
