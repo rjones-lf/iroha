@@ -62,7 +62,8 @@ OnDemandOrderingGate::OnDemandOrderingGate(
             current_round = ordering::nextRejectRound(event.round);
             break;
           default:
-            throw std::runtime_error("unknown SynchronizationOutcomeType");
+            log_->error("unknown SynchronizationOutcomeType");
+            assert(false);
         }
         log_->debug("Current: {}", current_round);
 
@@ -116,7 +117,8 @@ OnDemandOrderingGate::processProposalRequest(
 }
 
 void OnDemandOrderingGate::sendCachedTransactions() {
-  // TODO make cache_->getBatchesForRound(current_round) thet respects sync
+  // TODO mboldyrev 22.03.2019 IR-425
+  // make cache_->getBatchesForRound(current_round) thet respects sync
   auto batches = cache_->pop();
   cache_->addToBack(batches);
 
