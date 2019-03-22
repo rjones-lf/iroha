@@ -26,8 +26,9 @@ using namespace iroha::ordering;
 OnDemandOrderingGate::OnDemandOrderingGate(
     std::shared_ptr<OnDemandOrderingService> ordering_service,
     std::shared_ptr<transport::OdOsNotification> network_client,
-    rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
-        block_events,
+    rxcpp::observable<
+        std::shared_ptr<const cache::OrderingGateCache::HashesSetType>>
+        processed_tx_hashes,
     rxcpp::observable<iroha::synchronizer::SynchronizationEvent> sync_events,
     std::shared_ptr<cache::OrderingGateCache> cache,
     std::shared_ptr<shared_model::interface::UnsafeProposalFactory> factory,
@@ -38,24 +39,13 @@ OnDemandOrderingGate::OnDemandOrderingGate(
       transaction_limit_(transaction_limit),
       ordering_service_(std::move(ordering_service)),
       network_client_(std::move(network_client)),
-      block_events_subscription_(block_events.subscribe([this](auto block) {
-        // block committed, remove transactions from cache
-        log_->debug("Committed block handle: height {}.", block->height());
-        ordering::cache::OrderingGateCache::HashesSetType hashes;
-        const auto &committed = block->transactions();
-        std::transform(
-            committed.begin(),
-            committed.end(),
-            std::inserter(hashes, hashes.end()),
-            [](const auto &transaction) { return transaction.hash(); });
-        const auto &rejected = block->rejected_transactions_hashes();
-        std::copy(rejected.begin(),
-                  rejected.end(),
-                  std::inserter(hashes, hashes.end()));
-        log_->debug("Asking to remove {} transactions from cache.",
-                    hashes.size());
-        cache_->remove(hashes);
-      })),
+      processed_tx_hashes_subscription_(
+          processed_tx_hashes.subscribe([this](auto hashes) {
+            // remove transaction hashes from cache
+            log_->debug("Asking to remove {} transactions from cache.",
+                        hashes->size());
+            cache_->remove(*hashes);
+          })),
       sync_events_subscription_(sync_events.subscribe([this](auto event) {
         consensus::Round current_round;
         switch (event.sync_outcome) {
@@ -93,7 +83,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
       tx_cache_(std::move(tx_cache)) {}
 
 OnDemandOrderingGate::~OnDemandOrderingGate() {
-  block_events_subscription_.unsubscribe();
+  processed_tx_hashes_subscription_.unsubscribe();
   sync_events_subscription_.unsubscribe();
 }
 

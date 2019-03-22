@@ -44,8 +44,9 @@ namespace iroha {
       OnDemandOrderingGate(
           std::shared_ptr<OnDemandOrderingService> ordering_service,
           std::shared_ptr<transport::OdOsNotification> network_client,
-          rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
-              block_events,
+          rxcpp::observable<
+              std::shared_ptr<const cache::OrderingGateCache::HashesSetType>>
+              processed_tx_hashes,
           rxcpp::observable<iroha::synchronizer::SynchronizationEvent>
               sync_events,
           std::shared_ptr<cache::OrderingGateCache>
@@ -89,7 +90,7 @@ namespace iroha {
       logger::LoggerPtr log_;
       std::shared_ptr<OnDemandOrderingService> ordering_service_;
       std::shared_ptr<transport::OdOsNotification> network_client_;
-      rxcpp::composite_subscription block_events_subscription_;
+      rxcpp::composite_subscription processed_tx_hashes_subscription_;
       rxcpp::composite_subscription sync_events_subscription_;
       std::shared_ptr<cache::OrderingGateCache> cache_;
       std::shared_ptr<shared_model::interface::UnsafeProposalFactory>

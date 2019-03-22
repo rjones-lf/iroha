@@ -204,7 +204,28 @@ namespace iroha {
       return std::make_shared<ordering::OnDemandOrderingGate>(
           std::move(ordering_service),
           std::move(network_client),
-          commit_notifier.get_observable(),
+          commit_notifier.get_observable().map(
+              [this](auto block)
+                  -> std::shared_ptr<
+                      const ordering::cache::OrderingGateCache::HashesSetType> {
+                // take committed & rejected transaction hashes from committed
+                // block
+                log_->debug("Committed block handle: height {}.",
+                            block->height());
+                auto hashes = std::make_shared<
+                    ordering::cache::OrderingGateCache::HashesSetType>();
+                const auto &committed = block->transactions();
+                std::transform(
+                    committed.begin(),
+                    committed.end(),
+                    std::inserter(*hashes, hashes->end()),
+                    [](const auto &transaction) { return transaction.hash(); });
+                const auto &rejected = block->rejected_transactions_hashes();
+                std::copy(rejected.begin(),
+                          rejected.end(),
+                          std::inserter(*hashes, hashes->end()));
+                return hashes;
+              }),
           sync_event_notifier.get_observable()
               .lift<iroha::synchronizer::SynchronizationEvent>(
                   iroha::makeDelay<iroha::synchronizer::SynchronizationEvent>(

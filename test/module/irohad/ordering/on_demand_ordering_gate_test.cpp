@@ -47,19 +47,21 @@ class OnDemandOrderingGateTest : public ::testing::Test {
         .WillByDefault(
             Return(boost::make_optional<ametsuchi::TxCacheStatusType>(
                 iroha::ametsuchi::tx_cache_status_responses::Missing())));
-    ordering_gate =
-        std::make_shared<OnDemandOrderingGate>(ordering_service,
-                                               notification,
-                                               blocks.get_observable(),
-                                               sync_events.get_observable(),
-                                               cache,
-                                               std::move(ufactory),
-                                               tx_cache,
-                                               1000,
-                                               getTestLogger("OrderingGate"));
+    ordering_gate = std::make_shared<OnDemandOrderingGate>(
+        ordering_service,
+        notification,
+        processed_tx_hashes.get_observable(),
+        sync_events.get_observable(),
+        cache,
+        std::move(ufactory),
+        tx_cache,
+        1000,
+        getTestLogger("OrderingGate"));
   }
 
-  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>> blocks;
+  rxcpp::subjects::subject<
+      std::shared_ptr<const cache::OrderingGateCache::HashesSetType>>
+      processed_tx_hashes;
   rxcpp::subjects::subject<iroha::synchronizer::SynchronizationEvent> sync_events;
   std::shared_ptr<MockOnDemandOrderingService> ordering_service;
   std::shared_ptr<MockOdOsNotification> notification;
@@ -345,16 +347,11 @@ TEST_F(OnDemandOrderingGateTest, BatchesRemoveFromCache) {
   EXPECT_CALL(*cache, pop()).Times(1);
   EXPECT_CALL(*cache, remove(UnorderedElementsAre(hash1, hash2))).Times(1);
 
-  std::vector<std::shared_ptr<MockTransaction>> txs{
-      std::make_shared<MockTransaction>()};
-  ON_CALL(*txs[0], hash()).WillByDefault(ReturnRefOfCopy(hash1));
-  auto block = std::make_shared<MockBlock>();
-  ON_CALL(*block, transactions())
-      .WillByDefault(Return(txs | boost::adaptors::indirected));
-  ON_CALL(*block, rejected_transactions_hashes())
-      .WillByDefault(Return(
-          std::vector<shared_model::interface::types::HashType>{{hash2}}));
-  blocks.get_subscriber().on_next(block);
+  auto hashes =
+      std::make_shared<ordering::cache::OrderingGateCache::HashesSetType>();
+  hashes->emplace(hash1);
+  hashes->emplace(hash2);
+  processed_tx_hashes.get_subscriber().on_next(hashes);
   sync_events.get_subscriber().on_next(
       makeSyncEvent(SynchronizationOutcomeType::kCommit, round));
 }
