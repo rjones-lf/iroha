@@ -48,6 +48,8 @@ namespace shared_model {
           if (payload_field_descriptor) {
             const auto &payload =
                 m.GetReflection()->GetMessage(m, payload_field_descriptor);
+            // TODO: 2019-03-21 @muratovv refactor with template parameter
+            // IR-422
             hash = HashProvider::makeHash(makeBlob(payload));
           }
           return iroha::expected::makeError(Error{hash, answer.reason()});

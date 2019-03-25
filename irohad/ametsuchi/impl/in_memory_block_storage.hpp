@@ -21,8 +21,6 @@ namespace iroha {
       bool insert(
           std::shared_ptr<const shared_model::interface::Block> block) override;
 
-      bool insert(const shared_model::interface::Block &block) override;
-
       boost::optional<std::shared_ptr<const shared_model::interface::Block>>
       fetch(shared_model::interface::types::HeightType height) const override;
 

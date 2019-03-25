@@ -36,16 +36,17 @@ namespace iroha {
        *  - PeerQuery - interface for ledger peers list retrieval
        *  - HashType - hash of top block in blockchain
        */
-      using MutableStoragePredicate =
-          std::function<bool(const shared_model::interface::Block &,
-                             PeerQuery &,
-                             const shared_model::interface::types::HashType &)>;
+      using MutableStoragePredicate = std::function<bool(
+          std::shared_ptr<const shared_model::interface::Block>,
+          PeerQuery &,
+          const shared_model::interface::types::HashType &)>;
 
       /**
        * Applies block without additional validation function
        * @see apply(block, function)
        */
-      virtual bool apply(const shared_model::interface::Block &block) = 0;
+      virtual bool apply(
+          std::shared_ptr<const shared_model::interface::Block> block) = 0;
 
       /**
        * Applies an observable of blocks to current mutable state using logic

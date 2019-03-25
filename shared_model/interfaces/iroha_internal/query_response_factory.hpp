@@ -205,7 +205,7 @@ namespace shared_model {
        * @return block query response with block
        */
       virtual std::unique_ptr<BlockQueryResponse> createBlockQueryResponse(
-          std::shared_ptr<Block> block) const = 0;
+          std::shared_ptr<const Block> block) const = 0;
 
       /**
        * Create response for block query with error

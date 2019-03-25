@@ -60,7 +60,7 @@ if(COVERAGE)
   add_custom_target(coverage.info
       COMMAND ${LCOV_PROGRAM} --config-file ${LCOV_CONFIG_FILE} -o ${PROJECT_BINARY_DIR}/reports/coverage.info -c -d ${PROJECT_BINARY_DIR}
       COMMAND ${LCOV_PROGRAM} --config-file ${LCOV_CONFIG_FILE} -o ${PROJECT_BINARY_DIR}/reports/coverage.info -a ${PROJECT_BINARY_DIR}/reports/coverage.init.info -a ${PROJECT_BINARY_DIR}/reports/coverage.info
-      COMMAND ${LCOV_PROGRAM} --config-file ${LCOV_CONFIG_FILE} -o ${PROJECT_BINARY_DIR}/reports/coverage.info -r ${PROJECT_BINARY_DIR}/reports/coverage.info '/usr*' '${CMAKE_SOURCE_DIR}/external/*' '${CMAKE_SOURCE_DIR}/schema/*'
+      COMMAND ${LCOV_PROGRAM} --config-file ${LCOV_CONFIG_FILE} -o ${PROJECT_BINARY_DIR}/reports/coverage.info -r ${PROJECT_BINARY_DIR}/reports/coverage.info '/usr*' '/Library/Developer/CommandLineTools/*' '${PROJECT_BINARY_DIR}/*' '${CMAKE_BINARY_DIR}/*' '${CMAKE_SOURCE_DIR}/test/*'
       )
   set(REPORT_DIR ${CMAKE_BINARY_DIR}/reports)
   file(MAKE_DIRECTORY ${REPORT_DIR})

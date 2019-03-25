@@ -45,14 +45,15 @@ namespace integration_framework {
         irohad_log_manager_(std::move(irohad_log_manager)),
         log_(std::move(log)) {}
 
-  void IrohaInstance::makeGenesis(const shared_model::interface::Block &block) {
+  void IrohaInstance::makeGenesis(
+      std::shared_ptr<const shared_model::interface::Block> block) {
     instance_->storage->reset();
     rawInsertBlock(block);
     instance_->init();
   }
 
   void IrohaInstance::rawInsertBlock(
-      const shared_model::interface::Block &block) {
+      std::shared_ptr<const shared_model::interface::Block> block) {
     instance_->storage->insertBlock(block);
   }
 
