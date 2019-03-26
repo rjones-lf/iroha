@@ -117,7 +117,6 @@ namespace iroha {
           }
         }
       }
-      return boost::none;
     }
 
     boost::optional<std::unique_ptr<ametsuchi::MutableStorage>>
