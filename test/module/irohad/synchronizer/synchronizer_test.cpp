@@ -183,7 +183,10 @@ void mutableStorageExpectChain(
     } else {
       InSequence s;  // ensures the call order
       for (const auto &block : chain) {
-        EXPECT_CALL(*mutable_storage, apply(Eq(ByRef(*block))))
+        EXPECT_CALL(
+            *mutable_storage,
+            apply(std::const_pointer_cast<const shared_model::interface::Block>(
+                block)))
             .WillOnce(Return(true));
       }
     }
