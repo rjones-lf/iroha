@@ -60,7 +60,8 @@ Environment-specific parameters
   transport in Iroha. We recommend setting this parameter to ``false`` at the
   moment until you really need it.
   ``mst_expiration_time`` is an optional parameter specifying the time period
-  in which a not fully signed transaction is considered expired (in minutes).
+  in which a not fully signed transaction (or a batch) is considered expired
+  (in minutes).
   The default value is 1440.
 - ``max_rounds_delay`` is an optional parameter specifying the maximum delay
   between two consensus rounds (in milliseconds).
