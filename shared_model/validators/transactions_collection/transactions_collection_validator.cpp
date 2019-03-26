@@ -10,11 +10,11 @@
 #include <boost/format.hpp>
 #include <boost/range/adaptor/indirected.hpp>
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
+#include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "validators/default_validator.hpp"
 #include "validators/field_validator.hpp"
 #include "validators/signable_validator.hpp"
-#include "validators/transaction_batch_validator.hpp"
 #include "validators/transaction_validator.hpp"
 #include "validators/transactions_collection/batch_order_validator.hpp"
 
@@ -25,8 +25,10 @@ namespace shared_model {
     TransactionsCollectionValidator<TransactionValidator,
                                     CollectionCanBeEmpty>::
         TransactionsCollectionValidator(
+            std::shared_ptr<ValidatorsConfig> config,
             const TransactionValidator &transactions_validator)
-        : transaction_validator_(transactions_validator) {}
+        : transaction_validator_(transactions_validator),
+          batch_validator_(std::make_shared<BatchValidator>(config)) {}
 
     template <typename TransactionValidator, bool CollectionCanBeEmpty>
     template <typename Validator>
@@ -60,11 +62,17 @@ namespace shared_model {
       }
 
       interface::TransactionBatchParserImpl batch_parser;
-      BatchValidator batch_validator;
-
       auto batches = batch_parser.parseBatches(transactions);
       for (auto &batch : batches) {
-        if (auto answer = batch_validator.validate(batch)) {
+        interface::types::SharedTxsCollectionType batch_transactions;
+        for (auto &tx : batch) {
+          batch_transactions.emplace_back(
+              const_cast<interface::Transaction *>(&tx), [](auto) {});
+        }
+        std::unique_ptr<interface::TransactionBatch> batch_ptr =
+            std::make_unique<interface::TransactionBatchImpl>(
+                batch_transactions);
+        if (auto answer = batch_validator_->validate(*batch_ptr)) {
           reason.second.emplace_back(answer.reason());
         }
       }

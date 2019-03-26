@@ -9,12 +9,12 @@
 #include <boost/variant/static_visitor.hpp>
 
 #include "backend/protobuf/queries/proto_get_account.hpp"
-#include "backend/protobuf/queries/proto_get_block.hpp"
 #include "backend/protobuf/queries/proto_get_account_asset_transactions.hpp"
 #include "backend/protobuf/queries/proto_get_account_assets.hpp"
 #include "backend/protobuf/queries/proto_get_account_detail.hpp"
 #include "backend/protobuf/queries/proto_get_account_transactions.hpp"
 #include "backend/protobuf/queries/proto_get_asset_info.hpp"
+#include "backend/protobuf/queries/proto_get_block.hpp"
 #include "backend/protobuf/queries/proto_get_pending_transactions.hpp"
 #include "backend/protobuf/queries/proto_get_role_permissions.hpp"
 #include "backend/protobuf/queries/proto_get_roles.hpp"
@@ -35,9 +35,12 @@ namespace shared_model {
     template <typename FieldValidator>
     class QueryValidatorVisitor
         : public boost::static_visitor<ReasonsGroupType> {
-     public:
-      QueryValidatorVisitor(const FieldValidator &validator = FieldValidator())
+      QueryValidatorVisitor(const FieldValidator &validator)
           : validator_(validator) {}
+
+     public:
+      QueryValidatorVisitor(std::shared_ptr<ValidatorsConfig> config)
+          : QueryValidatorVisitor(FieldValidator{config}) {}
 
       ReasonsGroupType operator()(const interface::GetAccount &qry) const {
         ReasonsGroupType reason;
@@ -169,12 +172,15 @@ namespace shared_model {
      */
     template <typename FieldValidator, typename QueryFieldValidator>
     class QueryValidator : public AbstractValidator<interface::Query> {
-     public:
-      QueryValidator(const FieldValidator &field_validator = FieldValidator(),
-                     const QueryFieldValidator &query_field_validator =
-                         QueryFieldValidator())
+      QueryValidator(const FieldValidator &field_validator,
+                     const QueryFieldValidator &query_field_validator)
           : field_validator_(field_validator),
             query_field_validator_(query_field_validator) {}
+
+     public:
+      QueryValidator(std::shared_ptr<ValidatorsConfig> config)
+          : QueryValidator(FieldValidator{config},
+                           QueryFieldValidator{config}) {}
 
       /**
        * Applies validation to given query

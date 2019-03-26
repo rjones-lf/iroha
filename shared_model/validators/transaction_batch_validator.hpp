@@ -14,10 +14,15 @@ namespace shared_model {
     class BatchValidator
         : public AbstractValidator<interface::TransactionBatch> {
      public:
+      BatchValidator(std::shared_ptr<ValidatorsConfig> config);
+
       Answer validate(const interface::TransactionBatch &batch) const override;
 
+     private:
       Answer validate(interface::types::TransactionsForwardCollectionType
                           transactions) const;
+
+      const uint64_t max_batch_size_;
     };
   }  // namespace validation
 }  // namespace shared_model

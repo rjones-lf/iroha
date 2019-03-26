@@ -14,17 +14,26 @@ namespace {
     kOk,
     kNoBatchMeta,
     kIncorrectBatchMetaSize,
-    kIncorrectHashes
+    kIncorrectHashes,
+    kTooManyTransactions
   };
   /**
    * Check that all transactions from the collection are mentioned in batch_meta
    * and are positioned correctly
    * @param transactions to be checked
+   * @param max_batch_size - maximum amount of transactions within a batch
    * @return enum, reporting about success result or containing a found error
    */
   BatchCheckResult batchIsWellFormed(
       const shared_model::interface::types::TransactionsForwardCollectionType
-          &transactions) {
+          &transactions,
+      const uint64_t max_batch_size) {
+    // a batch cannot contain more transactions than max_proposal_size,
+    // otherwise it would not be processed anyway
+    const uint64_t batch_size = boost::size(transactions);
+    if (batch_size > max_batch_size) {
+      return BatchCheckResult::kTooManyTransactions;
+    }
     // equality of transactions batchMeta is checked during batch parsing
     auto batch_meta_opt = transactions.begin()->batchMeta();
     const auto transactions_quantity = boost::size(transactions);
@@ -61,6 +70,9 @@ namespace {
 namespace shared_model {
   namespace validation {
 
+    BatchValidator::BatchValidator(std::shared_ptr<ValidatorsConfig> config)
+        : max_batch_size_(config->max_batch_size) {}
+
     Answer BatchValidator::validate(
         const interface::TransactionBatch &batch) const {
       auto transactions = batch.transactions();
@@ -85,7 +97,7 @@ namespace shared_model {
         // here we are checking only batch logic, not transaction-related
       }
 
-      switch (batchIsWellFormed(transactions)) {
+      switch (batchIsWellFormed(transactions, max_batch_size_)) {
         case BatchCheckResult::kOk:
           break;
         case BatchCheckResult::kNoBatchMeta:
@@ -100,6 +112,10 @@ namespace shared_model {
           batch_reason.second.emplace_back(
               "Hashes of provided transactions and ones in batch_meta are "
               "different");
+          break;
+        case BatchCheckResult::kTooManyTransactions:
+          batch_reason.second.emplace_back(
+              "Batch contains too many transactions");
           break;
       }
 

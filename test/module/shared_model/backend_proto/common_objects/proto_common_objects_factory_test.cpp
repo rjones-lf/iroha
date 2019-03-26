@@ -8,14 +8,20 @@
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/result_fixture.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "validators/field_validator.hpp"
 
 using namespace shared_model;
 using namespace framework::expected;
 
-proto::ProtoCommonObjectsFactory<validation::FieldValidator> factory;
+class ProtoFixture : public ::testing::Test {
+ public:
+  ProtoFixture() : factory(iroha::test::kTestsValidatorsConfig) {}
 
-class PeerTest : public ::testing::Test {
+  proto::ProtoCommonObjectsFactory<validation::FieldValidator> factory;
+};
+
+class PeerTest : public ProtoFixture {
  public:
   std::string valid_address = "127.0.0.1:8080";
   crypto::PublicKey valid_pubkey =
@@ -52,7 +58,7 @@ TEST_F(PeerTest, InvalidPeerInitialization) {
       [](const ErrorOf<decltype(peer)> &e) { SUCCEED(); });
 }
 
-class AccountTest : public ::testing::Test {
+class AccountTest : public ProtoFixture {
  public:
   interface::types::AccountIdType valid_account_id = "hello@world";
   interface::types::DomainIdType valid_domain_id = "bit.connect";
@@ -97,7 +103,7 @@ TEST_F(AccountTest, InvalidAccountInitialization) {
       [](const ErrorOf<decltype(account)> &e) { SUCCEED(); });
 }
 
-class AccountAssetTest : public ::testing::Test {
+class AccountAssetTest : public ProtoFixture {
  public:
   interface::types::AccountIdType valid_account_id = "hello@world";
   interface::types::AssetIdType valid_asset_id = "bit#connect";
@@ -140,7 +146,7 @@ TEST_F(AccountAssetTest, InvalidAccountAssetInitialization) {
       [](const ErrorOf<decltype(account_asset)> &e) { SUCCEED(); });
 }
 
-class AssetTest : public ::testing::Test {
+class AssetTest : public ProtoFixture {
  public:
   interface::types::AssetIdType valid_asset_id = "bit#connect";
   interface::types::DomainIdType valid_domain_id = "iroha.com";
@@ -183,7 +189,7 @@ TEST_F(AssetTest, InvalidAssetInitialization) {
       [](const ErrorOf<decltype(asset)> &e) { SUCCEED(); });
 }
 
-class DomainTest : public ::testing::Test {
+class DomainTest : public ProtoFixture {
  public:
   interface::types::DomainIdType valid_domain_id = "iroha.com";
   interface::types::RoleIdType valid_role_id = "admin";
@@ -197,8 +203,7 @@ class DomainTest : public ::testing::Test {
  * @then domain is successfully initialized
  */
 TEST_F(DomainTest, ValidDomainInitialization) {
-  auto domain =
-      factory.createDomain(valid_domain_id, valid_role_id);
+  auto domain = factory.createDomain(valid_domain_id, valid_role_id);
 
   domain.match(
       [&](const ValueOf<decltype(domain)> &v) {
@@ -214,8 +219,7 @@ TEST_F(DomainTest, ValidDomainInitialization) {
  * @then domain is not initialized correctly
  */
 TEST_F(DomainTest, InvalidDomainInitialization) {
-  auto domain =
-      factory.createDomain(invalid_domain_id, valid_role_id);
+  auto domain = factory.createDomain(invalid_domain_id, valid_role_id);
 
   domain.match(
       [](const ValueOf<decltype(domain)> &v) {
@@ -224,7 +228,7 @@ TEST_F(DomainTest, InvalidDomainInitialization) {
       [](const ErrorOf<decltype(domain)> &e) { SUCCEED(); });
 }
 
-class SignatureTest : public ::testing::Test {
+class SignatureTest : public ProtoFixture {
  public:
   crypto::PublicKey valid_pubkey =
       crypto::DefaultCryptoAlgorithmType::generateKeypair().publicKey();
@@ -238,8 +242,7 @@ class SignatureTest : public ::testing::Test {
  * @then signature is successfully initialized
  */
 TEST_F(SignatureTest, ValidSignatureInitialization) {
-  auto signature =
-      factory.createSignature(valid_pubkey, valid_data);
+  auto signature = factory.createSignature(valid_pubkey, valid_data);
 
   signature.match(
       [&](const ValueOf<decltype(signature)> &v) {
@@ -255,8 +258,7 @@ TEST_F(SignatureTest, ValidSignatureInitialization) {
  * @then signature is not initialized correctly
  */
 TEST_F(SignatureTest, InvalidSignatureInitialization) {
-  auto signature =
-      factory.createSignature(invalid_pubkey, valid_data);
+  auto signature = factory.createSignature(invalid_pubkey, valid_data);
 
   signature.match(
       [](const ValueOf<decltype(signature)> &v) {

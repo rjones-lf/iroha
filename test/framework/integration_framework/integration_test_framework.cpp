@@ -38,6 +38,7 @@
 #include "logger/logger.hpp"
 #include "logger/logger_manager.hpp"
 #include "module/irohad/ametsuchi/tx_presence_cache_stub.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "module/shared_model/builders/protobuf/block.hpp"
 #include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/validators/always_valid_validators.hpp"
@@ -122,15 +123,20 @@ namespace integration_framework {
         tx_response_waiting(tx_response_waiting),
         maximum_proposal_size_(maximum_proposal_size),
         common_objects_factory_(
-            std::make_shared<AlwaysValidProtoCommonObjectsFactory>()),
+            std::make_shared<AlwaysValidProtoCommonObjectsFactory>(
+                iroha::test::kTestsValidatorsConfig)),
         transaction_factory_(std::make_shared<ProtoTransactionFactory>(
             std::make_unique<AlwaysValidInterfaceTransactionValidator>(),
             std::make_unique<AlwaysValidProtoTransactionValidator>())),
         batch_parser_(std::make_shared<
                       shared_model::interface::TransactionBatchParserImpl>()),
+        batch_validator_(
+            std::make_shared<shared_model::validation::BatchValidator>(
+                iroha::test::kTestsValidatorsConfig)),
         transaction_batch_factory_(
             std::make_shared<
-                shared_model::interface::TransactionBatchFactoryImpl>()),
+                shared_model::interface::TransactionBatchFactoryImpl>(
+                batch_validator_)),
         tx_presence_cache_(std::make_shared<AlwaysMissingTxPresenceCache>()),
         yac_transport_(std::make_shared<iroha::consensus::yac::NetworkImpl>(
             async_call_,

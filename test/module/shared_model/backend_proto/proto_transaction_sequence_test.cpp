@@ -10,6 +10,7 @@
 #include <boost/range/irange.hpp>
 #include "framework/batch_helper.hpp"
 #include "framework/result_fixture.hpp"
+#include "module/irohad/common/validators_config.hpp"
 
 using namespace shared_model;
 using ::testing::_;
@@ -24,15 +25,23 @@ shared_model::validation::Answer createAnswerWithErrors() {
   return answer;
 }
 
+class TransactionSequenceTestFixture : public ::testing::Test {
+ public:
+  TransactionSequenceTestFixture()
+      : txs_collection_validator(iroha::test::kTestsValidatorsConfig),
+        field_validator(iroha::test::kTestsValidatorsConfig) {}
+
+  validation::DefaultUnsignedTransactionsValidator txs_collection_validator;
+  validation::FieldValidator field_validator;
+};
+
 /**
  * @given Valid transaction collection of several transactions
  * @when create transaction sequence
  * @and transactions validator returns empty answer
  * @then TransactionSequence is created
  */
-TEST(TransactionSequenceTest, CreateTransactionSequenceWhenValid) {
-  validation::DefaultUnsignedTransactionsValidator tx_collection_validator;
-
+TEST_F(TransactionSequenceTestFixture, CreateTransactionSequenceWhenValid) {
   size_t transactions_size = 3;
   auto transactions =
       framework::batch::createValidBatch(transactions_size)->transactions();
@@ -45,7 +54,7 @@ TEST(TransactionSequenceTest, CreateTransactionSequenceWhenValid) {
 
   auto tx_sequence =
       interface::TransactionSequenceFactory::createTransactionSequence(
-          transactions, tx_collection_validator);
+          transactions, txs_collection_validator, field_validator);
 
   ASSERT_TRUE(framework::expected::val(tx_sequence));
 }
@@ -56,16 +65,16 @@ TEST(TransactionSequenceTest, CreateTransactionSequenceWhenValid) {
  * @and transactions validator returns non empty answer
  * @then TransactionSequence is not created
  */
-TEST(TransactionSequenceTest, CreateTransactionSequenceWhenInvalid) {
-  validation::DefaultUnsignedTransactionsValidator tx_collection_validator;
-
+TEST_F(TransactionSequenceTestFixture, CreateTransactionSequenceWhenInvalid) {
   std::shared_ptr<interface::Transaction> tx(
       clone(framework::batch::prepareTransactionBuilder("invalid@#account#name")
                 .build()));
 
   auto tx_sequence =
       interface::TransactionSequenceFactory::createTransactionSequence(
-          std::vector<decltype(tx)>{tx, tx, tx}, tx_collection_validator);
+          std::vector<decltype(tx)>{tx, tx, tx},
+          txs_collection_validator,
+          field_validator);
 
   ASSERT_TRUE(framework::expected::err(tx_sequence));
 }
@@ -77,12 +86,10 @@ TEST(TransactionSequenceTest, CreateTransactionSequenceWhenInvalid) {
  * @and create transaction sequence
  * @then expected number of batches is created and transactions
  */
-TEST(TransactionSequenceTest, CreateBatches) {
+TEST_F(TransactionSequenceTestFixture, CreateBatches) {
   size_t batches_number = 3;
   size_t txs_in_batch = 2;
   size_t single_transactions = 1;
-
-  validation::DefaultUnsignedTransactionsValidator txs_validator;
 
   interface::types::SharedTxsCollectionType tx_collection;
   auto now = iroha::time::now();
@@ -107,7 +114,7 @@ TEST(TransactionSequenceTest, CreateBatches) {
 
   auto tx_sequence_opt =
       interface::TransactionSequenceFactory::createTransactionSequence(
-          tx_collection, txs_validator);
+          tx_collection, txs_collection_validator, field_validator);
 
   auto tx_sequence = framework::expected::val(tx_sequence_opt);
   ASSERT_TRUE(tx_sequence)

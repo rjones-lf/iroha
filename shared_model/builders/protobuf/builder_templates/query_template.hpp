@@ -13,6 +13,7 @@
 #include "builders/protobuf/unsigned_proto.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/transaction.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "queries.pb.h"
 #include "validators/default_validator.hpp"
 
@@ -81,7 +82,7 @@ namespace shared_model {
       /// Set tx pagination meta
       template <typename PageMetaPayload>
       static auto setTxPaginationMeta(
-          PageMetaPayload *page_meta_payload,
+          PageMetaPayload * page_meta_payload,
           interface::types::TransactionsNumberType page_size,
           const boost::optional<interface::types::HashType> &first_hash =
               boost::none) {
@@ -91,9 +92,14 @@ namespace shared_model {
         }
       }
 
-     public:
-      TemplateQueryBuilder(const SV &validator = SV())
+      TemplateQueryBuilder(const SV &validator)
           : stateless_validator_(validator) {}
+
+     public:
+      // we do such default initialization only because it is deprecated and
+      // used only in tests
+      TemplateQueryBuilder()
+          : TemplateQueryBuilder(SV(iroha::test::kTestsValidatorsConfig)) {}
 
       auto createdTime(interface::types::TimestampType created_time) const {
         return transform<CreatedTime>([&](auto &qry) {
@@ -123,8 +129,8 @@ namespace shared_model {
         });
       }
 
-      auto getSignatories(
-          const interface::types::AccountIdType &account_id) const {
+      auto getSignatories(const interface::types::AccountIdType &account_id)
+          const {
         return queryField([&](auto proto_query) {
           auto query = proto_query->mutable_get_signatories();
           query->set_account_id(account_id);
@@ -159,8 +165,8 @@ namespace shared_model {
         });
       }
 
-      auto getAccountAssets(
-          const interface::types::AccountIdType &account_id) const {
+      auto getAccountAssets(const interface::types::AccountIdType &account_id)
+          const {
         return queryField([&](auto proto_query) {
           auto query = proto_query->mutable_get_account_assets();
           query->set_account_id(account_id);
@@ -204,8 +210,8 @@ namespace shared_model {
         });
       }
 
-      auto getRolePermissions(
-          const interface::types::RoleIdType &role_id) const {
+      auto getRolePermissions(const interface::types::RoleIdType &role_id)
+          const {
         return queryField([&](auto proto_query) {
           auto query = proto_query->mutable_get_role_permissions();
           query->set_role_id(role_id);

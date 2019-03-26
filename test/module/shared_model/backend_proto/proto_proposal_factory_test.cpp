@@ -8,6 +8,7 @@
 #include "backend/protobuf/proto_proposal_factory.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "framework/result_fixture.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "module/shared_model/validators/validators.hpp"
 #include "validators/default_validator.hpp"
 #include "validators/field_validator.hpp"
@@ -17,8 +18,11 @@ using namespace framework::expected;
 
 class ProposalFactoryTest : public ::testing::Test {
  public:
-  shared_model::proto::ProtoProposalFactory<
-      validation::AlwaysValidValidator>
+  ProposalFactoryTest()
+      : valid_factory(iroha::test::kTestsValidatorsConfig),
+        factory(iroha::test::kTestsValidatorsConfig) {}
+
+  shared_model::proto::ProtoProposalFactory<validation::AlwaysValidValidator>
       valid_factory;
   shared_model::proto::ProtoProposalFactory<
       validation::DefaultProposalValidator>
@@ -37,7 +41,6 @@ class ProposalFactoryTest : public ::testing::Test {
     txs.clear();
   }
 };
-
 
 /**
  * @given proposal factory and valid data

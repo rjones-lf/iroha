@@ -16,8 +16,17 @@
 
 namespace shared_model {
   namespace interface {
+    namespace {
+      // we use an unnamed namespace here because we don't want to add test as
+      // include path for the shared_model_interfaces_factories target
+      const uint64_t kTestsMaxBatchSize(10000);
+      const auto kValidatorsConfig =
+          std::make_shared<validation::ValidatorsConfig>(kTestsMaxBatchSize);
+    }  // namespace
+    auto batch_validator =
+        std::make_shared<validation::BatchValidator>(kValidatorsConfig);
     const std::unique_ptr<TransactionBatchFactory> batch_factory =
-        std::make_unique<TransactionBatchFactoryImpl>();
+        std::make_unique<TransactionBatchFactoryImpl>(batch_validator);
 
     template <typename TransactionValidator, typename FieldValidator>
     iroha::expected::Result<TransactionSequence, std::string>

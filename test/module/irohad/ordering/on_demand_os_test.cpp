@@ -15,6 +15,7 @@
 #include "framework/test_logger.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 #include "module/shared_model/validators/validators.hpp"
 #include "ordering/impl/on_demand_common.hpp"
@@ -50,7 +51,8 @@ class OnDemandOsTest : public ::testing::Test {
   void SetUp() override {
     // TODO: nickaleks IR-1811 use mock factory
     auto factory = std::make_unique<
-        shared_model::proto::ProtoProposalFactory<MockProposalValidator>>();
+        shared_model::proto::ProtoProposalFactory<MockProposalValidator>>(
+        iroha::test::kTestsValidatorsConfig);
     auto tx_cache =
         std::make_unique<NiceMock<iroha::ametsuchi::MockTxPresenceCache>>();
     mock_cache = tx_cache.get();
@@ -166,7 +168,8 @@ TEST_F(OnDemandOsTest, OverflowRound) {
 TEST_F(OnDemandOsTest, DISABLED_ConcurrentInsert) {
   auto large_tx_limit = 10000u;
   auto factory = std::make_unique<
-      shared_model::proto::ProtoProposalFactory<MockProposalValidator>>();
+      shared_model::proto::ProtoProposalFactory<MockProposalValidator>>(
+      iroha::test::kTestsValidatorsConfig);
   auto tx_cache =
       std::make_unique<NiceMock<iroha::ametsuchi::MockTxPresenceCache>>();
   os = std::make_shared<OnDemandOrderingServiceImpl>(

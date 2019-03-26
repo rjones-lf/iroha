@@ -42,14 +42,16 @@ namespace shared_model {
     template <typename FieldValidator>
     class CommandValidatorVisitor
         : public boost::static_visitor<ReasonsGroupType> {
+      CommandValidatorVisitor(const FieldValidator &validator)
+          : validator_(validator) {}
+
      public:
       CommandValidatorVisitor(const CommandValidatorVisitor &) = delete;
       CommandValidatorVisitor &operator=(const CommandValidatorVisitor &) =
           delete;
 
-      CommandValidatorVisitor(
-          const FieldValidator &validator = FieldValidator())
-          : validator_(validator) {}
+      CommandValidatorVisitor(std::shared_ptr<ValidatorsConfig> config)
+          : CommandValidatorVisitor(FieldValidator{config}) {}
 
       ReasonsGroupType operator()(
           const interface::AddAssetQuantity &aaq) const {
@@ -272,7 +274,8 @@ namespace shared_model {
         }
 
         for (const auto &command : tx.commands()) {
-          auto reason = boost::apply_visitor(CommandValidator(), command.get());
+          auto reason = boost::apply_visitor(
+              CommandValidator(validators_config_), command.get());
           if (not reason.second.empty()) {
             answer.addReason(std::move(reason));
           }
@@ -281,10 +284,12 @@ namespace shared_model {
         return answer;
       }
 
-     public:
-      explicit TransactionValidator(
-          const FieldValidator &field_validator = FieldValidator())
+      explicit TransactionValidator(const FieldValidator &field_validator)
           : field_validator_(field_validator) {}
+
+     public:
+      explicit TransactionValidator(std::shared_ptr<ValidatorsConfig> config)
+          : TransactionValidator(FieldValidator{config}) {}
 
       /**
        * Applies validation to given transaction
@@ -312,6 +317,7 @@ namespace shared_model {
 
      protected:
       FieldValidator field_validator_;
+      std::shared_ptr<ValidatorsConfig> validators_config_;
     };
 
   }  // namespace validation

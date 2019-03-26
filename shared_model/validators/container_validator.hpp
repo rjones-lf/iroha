@@ -34,15 +34,22 @@ namespace shared_model {
         }
       }
 
-     public:
-      explicit ContainerValidator(
-          const FieldValidator &field_validator = FieldValidator(),
-          const TransactionsCollectionValidator
-              &transactions_collection_validator =
-                  TransactionsCollectionValidator())
+      explicit ContainerValidator(const FieldValidator &field_validator,
+                                  const TransactionsCollectionValidator
+                                      &transactions_collection_validator)
           : transactions_collection_validator_(
                 transactions_collection_validator),
             field_validator_(field_validator) {}
+
+     public:
+      explicit ContainerValidator(std::shared_ptr<ValidatorsConfig> config,
+                                  const FieldValidator &field_validator)
+          : field_validator_{field_validator},
+            transactions_collection_validator_{config} {}
+
+      explicit ContainerValidator(std::shared_ptr<ValidatorsConfig> config)
+          : ContainerValidator(FieldValidator(config),
+                               TransactionsCollectionValidator(config)) {}
 
       template <typename Validator>
       Answer validate(const Iface &cont,

@@ -9,6 +9,7 @@
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "validators/answer.hpp"
+#include "validators/transaction_batch_validator.hpp"
 
 namespace shared_model {
   namespace validation {
@@ -21,6 +22,8 @@ namespace shared_model {
     class TransactionsCollectionValidator {
      protected:
       TransactionValidator transaction_validator_;
+      std::shared_ptr<AbstractValidator<interface::TransactionBatch>>
+          batch_validator_;
 
      private:
       template <typename Validator>
@@ -29,10 +32,15 @@ namespace shared_model {
               &transactions,
           Validator &&validator) const;
 
+      explicit TransactionsCollectionValidator(
+          std::shared_ptr<ValidatorsConfig> config,
+          const TransactionValidator &transactions_validator);
+
      public:
       explicit TransactionsCollectionValidator(
-          const TransactionValidator &transactions_validator =
-              TransactionValidator());
+          std::shared_ptr<ValidatorsConfig> config)
+          : TransactionsCollectionValidator(config,
+                                            TransactionValidator(config)) {}
 
       // TODO: IR-1505, igor-egorov, 2018-07-05 Remove method below when
       // proposal and block will return collection of shared transactions

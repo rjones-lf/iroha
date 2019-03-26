@@ -18,6 +18,7 @@
 #include "framework/config_helper.hpp"
 #include "framework/test_logger.hpp"
 #include "logger/logger_manager.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "validators/field_validator.hpp"
 
 using namespace iroha::ametsuchi;
@@ -46,7 +47,8 @@ class StorageInitTest : public ::testing::Test {
   std::shared_ptr<shared_model::proto::ProtoCommonObjectsFactory<
       shared_model::validation::FieldValidator>>
       factory = std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
-          shared_model::validation::FieldValidator>>();
+          shared_model::validation::FieldValidator>>(
+          iroha::test::kTestsValidatorsConfig);
 
   std::shared_ptr<shared_model::proto::ProtoBlockJsonConverter> converter =
       std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();

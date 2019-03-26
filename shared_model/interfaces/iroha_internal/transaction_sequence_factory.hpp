@@ -34,7 +34,7 @@ namespace shared_model {
           const types::SharedTxsCollectionType &transactions,
           const validation::TransactionsCollectionValidator<
               TransactionValidator> &validator,
-          const FieldValidator &field_validator = FieldValidator());
+          const FieldValidator &field_validator);
     };
 
   }  // namespace interface
