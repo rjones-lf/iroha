@@ -74,6 +74,8 @@ namespace shared_model {
         }
         return set;
       }()};
+
+      interface::types::HashType hash_ = makeHash(payload_);
     };
 
     Query::Query(const Query &o) : Query(o.impl_->proto_) {}
@@ -125,6 +127,10 @@ namespace shared_model {
       impl_->signatures_ =
           SignatureSetType<proto::Signature>{proto::Signature{*sig}};
       return true;
+    }
+
+    const interface::types::HashType &Query::hash() const {
+      return impl_->hash_;
     }
 
     interface::types::TimestampType Query::createdTime() const {

@@ -52,6 +52,12 @@ TEST_F(BlStore_Test, Read_Write_Test) {
   ASSERT_EQ(*res, block);
 }
 
+/**
+ * @given initialized FlatFile storage and 3 blocks are inserted into it
+ * @when storage removed, file for a second block removed and new storage is
+ * created on the same directory
+ * @then last block id is still 3
+ */
 TEST_F(BlStore_Test, BlockStoreWhenRemoveBlock) {
   log_->info("----------| Simulate removal of the block |----------");
   // Remove file in the middle of the block store
@@ -79,7 +85,7 @@ TEST_F(BlStore_Test, BlockStoreWhenRemoveBlock) {
   ASSERT_TRUE(store);
   auto bl_store = std::move(*store);
   auto res = bl_store->last_id();
-  ASSERT_EQ(res, 1);
+  ASSERT_EQ(res, 3);
 }
 
 TEST_F(BlStore_Test, BlockStoreWhenAbsentFolder) {
@@ -118,15 +124,6 @@ TEST_F(BlStore_Test, BlockStoreInitializationFromNonemptyFolder) {
 
   // check that last ids of both block storages are the same
   ASSERT_EQ(bl_store1->last_id(), bl_store2->last_id());
-}
-
-/**
- * @given empty folder name
- * @then check consistency fails
- */
-TEST_F(BlStore_Test, EmptyDumpDir) {
-  auto res = FlatFile::check_consistency("", flat_file_log_);
-  ASSERT_FALSE(res);
 }
 
 /**
@@ -216,4 +213,49 @@ TEST_F(BlStore_Test, WriteDeniedFolder) {
   fs::remove(fs::path(block_store_path));
   auto res = bl_store->add(id, block);
   ASSERT_FALSE(res);
+}
+
+/**
+ * @given initialized FlatFile storage
+ * @when several blocks with non-consecutive ids are inserted
+ * @then all inserted blocks are available, block 1 is not available
+ */
+TEST_F(BlStore_Test, RandomNumbers) {
+  auto store = FlatFile::create(block_store_path, flat_file_log_);
+  ASSERT_TRUE(store);
+  auto bl_store = std::move(*store);
+  bl_store->add(5, block);
+  bl_store->add(22, block);
+  bl_store->add(11, block);
+  ASSERT_TRUE(bl_store->get(5));
+  ASSERT_TRUE(bl_store->get(22));
+  ASSERT_TRUE(bl_store->get(11));
+  ASSERT_FALSE(bl_store->get(1));
+}
+
+/**
+ * @given initialized FlatFile storage
+ * @when 3 blocks with non-consecutive ids are inserted, storage removed, and
+ * new storage is created on the same directory
+ * @then only blocks with inserted ids are available
+ */
+TEST_F(BlStore_Test, RemoveAndCreateNew) {
+  {
+    auto store = FlatFile::create(block_store_path, flat_file_log_);
+    ASSERT_TRUE(store);
+    auto bl_store = std::move(*store);
+
+    bl_store->add(4, block);
+    bl_store->add(17, block);
+    bl_store->add(7, block);
+  }
+
+  auto store = FlatFile::create(block_store_path, flat_file_log_);
+  ASSERT_TRUE(store);
+  auto bl_store = std::move(*store);
+
+  ASSERT_TRUE(bl_store->get(4));
+  ASSERT_TRUE(bl_store->get(17));
+  ASSERT_TRUE(bl_store->get(7));
+  ASSERT_FALSE(bl_store->get(1));
 }

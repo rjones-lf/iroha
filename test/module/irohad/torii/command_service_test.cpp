@@ -94,3 +94,29 @@ TEST_F(CommandServiceTest, getStatusStreamWithAbsentHash) {
   });
   ASSERT_TRUE(wrapper.validate());
 }
+
+/**
+ * @given initialized command service
+ * @when  invoke processBatch on batch which isn't present in runtime and
+ * persistent caches
+ * @then  tx_processor batchHandle is invoked
+ */
+TEST_F(CommandServiceTest, ProcessBatchOn) {
+  auto hash = shared_model::crypto::Hash("a");
+  auto batch = createMockBatchWithTransactions(
+      {createMockTransactionWithHash(hash)}, "a");
+  EXPECT_CALL(*status_bus_, statuses())
+      .WillRepeatedly(Return(
+          rxcpp::observable<>::empty<iroha::torii::StatusBus::Objects>()));
+
+  EXPECT_CALL(
+      *tx_presence_cache_,
+      check(Matcher<const shared_model::interface::TransactionBatch &>(_)))
+      .WillRepeatedly(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>(
+          {iroha::ametsuchi::tx_cache_status_responses::Missing(hash)})));
+
+  EXPECT_CALL(*transaction_processor_, batchHandle(_)).Times(1);
+
+  initCommandService();
+  command_service_->handleTransactionBatch(batch);
+}

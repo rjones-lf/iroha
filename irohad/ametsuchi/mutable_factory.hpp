@@ -49,7 +49,7 @@ namespace iroha {
        * prepared block failed to apply. WSV is not changed in this case.
        */
       virtual boost::optional<std::unique_ptr<LedgerState>> commitPrepared(
-          const shared_model::interface::Block &block) = 0;
+          std::shared_ptr<const shared_model::interface::Block> block) = 0;
 
       virtual ~MutableFactory() = default;
     };

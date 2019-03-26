@@ -5,7 +5,9 @@
 
 #include "main/application.hpp"
 
-#include "ametsuchi/impl/in_memory_block_storage_factory.hpp"
+#include <boost/filesystem.hpp>
+
+#include "ametsuchi/impl/flat_file_block_storage_factory.hpp"
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "ametsuchi/impl/tx_presence_cache_impl.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
@@ -161,7 +163,14 @@ void Irohad::initStorage() {
       std::make_shared<shared_model::proto::ProtoPermissionToString>();
   auto block_converter =
       std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
-  auto block_storage_factory = std::make_unique<InMemoryBlockStorageFactory>();
+  auto block_storage_factory = std::make_unique<FlatFileBlockStorageFactory>(
+      []() {
+        return (boost::filesystem::temp_directory_path()
+                / boost::filesystem::unique_path())
+            .string();
+      },
+      block_converter,
+      log_manager_);
   auto storageResult = StorageImpl::create(block_store_dir_,
                                            pg_conn_,
                                            common_objects_factory_,
@@ -175,7 +184,7 @@ void Irohad::initStorage() {
       },
       [&](expected::Error<std::string> &error) { log_->error(error.error); });
 
-  log_->info("[Init] => storage", logger::logBool(storage));
+  log_->info("[Init] => storage ({})", logger::logBool(storage));
 }
 
 bool Irohad::restoreWsv() {
@@ -284,6 +293,18 @@ void Irohad::initFactories() {
       shared_model::proto::ProtoTransportFactory<shared_model::interface::Query,
                                                  shared_model::proto::Query>>(
       std::move(query_validator), std::move(proto_query_validator));
+
+  auto blocks_query_validator = std::make_unique<
+      shared_model::validation::DefaultSignedBlocksQueryValidator>();
+  auto proto_blocks_query_validator =
+      std::make_unique<shared_model::validation::ProtoBlocksQueryValidator>();
+
+  blocks_query_factory =
+      std::make_shared<shared_model::proto::ProtoTransportFactory<
+          shared_model::interface::BlocksQuery,
+          shared_model::proto::BlocksQuery>>(
+          std::move(blocks_query_validator),
+          std::move(proto_blocks_query_validator));
 
   log_->info("[Init] => factories");
 }
@@ -595,7 +616,10 @@ void Irohad::initQueryService() {
       query_service_log_manager->getChild("Processor")->getLogger());
 
   query_service = std::make_shared<::torii::QueryService>(
-      query_processor, query_factory, query_service_log_manager->getLogger());
+      query_processor,
+      query_factory,
+      blocks_query_factory,
+      query_service_log_manager->getLogger());
 
   log_->info("[Init] => query service");
 }

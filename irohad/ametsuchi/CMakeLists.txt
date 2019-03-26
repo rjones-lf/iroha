@@ -20,6 +20,8 @@ add_library(ametsuchi
     impl/tx_presence_cache_impl.cpp
     impl/in_memory_block_storage.cpp
     impl/in_memory_block_storage_factory.cpp
+    impl/flat_file_block_storage.cpp
+    impl/flat_file_block_storage_factory.cpp
     )
 
 target_link_libraries(ametsuchi

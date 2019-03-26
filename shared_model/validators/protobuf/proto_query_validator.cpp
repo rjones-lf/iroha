@@ -55,5 +55,10 @@ namespace shared_model {
       return validateProtoQuery(query);
     }
 
+    Answer ProtoBlocksQueryValidator::validate(
+        const iroha::protocol::BlocksQuery &) const {
+      return {};
+    }
+
   }  // namespace validation
 }  // namespace shared_model

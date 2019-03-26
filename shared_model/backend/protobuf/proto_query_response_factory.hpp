@@ -78,7 +78,7 @@ namespace shared_model {
           const crypto::Hash &query_hash) const override;
 
       std::unique_ptr<interface::BlockQueryResponse> createBlockQueryResponse(
-          std::unique_ptr<interface::Block> block) const override;
+          std::shared_ptr<const interface::Block> block) const override;
 
       std::unique_ptr<interface::BlockQueryResponse> createBlockQueryResponse(
           std::string error_message) const override;

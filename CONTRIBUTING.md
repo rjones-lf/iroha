@@ -7,7 +7,8 @@ The following is a short set of guidelines for contributing to Iroha.
 
 ##### [How Can I Contribute?](#how-can-i-contribute-1)
 
-- [Reporting bugs](#reporting-bugs)
+- [Reporting Bugs](#reporting-bugs)
+- [Reporting Vulnerabilities](#reporting-vulnerabilities)
 - [Suggesting Improvements](#suggesting-improvements)
 - [Asking Questions](#asking-questions)
 - [Your First Code Contribution](#your-first-code-contribution)
@@ -24,7 +25,7 @@ The following is a short set of guidelines for contributing to Iroha.
 
 ## How Can I Contribute?
 
-### Reporting bugs
+### Reporting Bugs
 
 *Bug* is an error, design flaw, failure or fault in Iroha that causes it to produce an incorrect or unexpected result, or to behave in unintended ways.
 
@@ -42,6 +43,17 @@ To submit a bug, [create new issue](https://jira.hyperledger.org/secure/CreateIs
 | Environment             | Your OS, device's specs, Virtual Environment if you use one, version of Iroha etc. |
 
 
+### Reporting Vulnerabilities
+
+While we try to be proactive in preventing security problems, we do not assume they’ll never come up.
+
+It is standard practice to responsibly and privately disclose to the vendor (Hyperledger organization)
+a security problem before publicizing, so a fix can be prepared, and damage from the vulnerability minimized.
+
+Before the First Major Release (1.0) all vulnerabilities are considered to be bugs, so feel free to submit them as described above.
+After the First Major Release please utilize [a bug bounty program here](https://hackerone.com/hyperledger) in order to submit vulnerabilities and get your reward.
+
+In any case — feel free to reach to any of existing maintainers in Rocket.Chat private messages or in an e-mail (check CONTRIBUTORS.md file) if you want to discuss whether your discovery is a vulnerability or a bug.
 
 ### Suggesting Improvements
 

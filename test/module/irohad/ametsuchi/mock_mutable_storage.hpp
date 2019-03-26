@@ -20,11 +20,13 @@ namespace iroha {
           bool(rxcpp::observable<
                    std::shared_ptr<shared_model::interface::Block>>,
                std::function<
-                   bool(const shared_model::interface::Block &,
+                   bool(std::shared_ptr<const shared_model::interface::Block>,
                         PeerQuery &,
                         const shared_model::interface::types::HashType &)>));
-      MOCK_METHOD1(apply, bool(const shared_model::interface::Block &));
-      MOCK_METHOD1(applyPrepared, bool(const shared_model::interface::Block &));
+      MOCK_METHOD1(apply,
+                   bool(std::shared_ptr<const shared_model::interface::Block>));
+      MOCK_METHOD1(applyPrepared,
+                   bool(std::shared_ptr<const shared_model::interface::Block>));
     };
 
   }  // namespace ametsuchi

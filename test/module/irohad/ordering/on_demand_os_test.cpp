@@ -80,8 +80,8 @@ class OnDemandOsTest : public ::testing::Test {
   }
 
   OnDemandOrderingService::CollectionType generateTransactions(
-      std::pair<uint64_t, uint64_t> range) {
-    auto now = iroha::time::now();
+      std::pair<uint64_t, uint64_t> range,
+      shared_model::interface::types::TimestampType now = iroha::time::now()) {
     OnDemandOrderingService::CollectionType collection;
 
     for (auto i = range.first; i < range.second; ++i) {
@@ -342,4 +342,22 @@ TEST_F(OnDemandOsTest, SeveralTransactionsOneCommited) {
   EXPECT_EQ(boost::size(txs), 2);
   // already processed transaction is no present in the proposal
   EXPECT_TRUE(std::find(txs.begin(), txs.end(), batch2_tx) == txs.end());
+}
+
+/**
+ * @given initialized on-demand OS with a batch in collection
+ * @when the same batch arrives, round is closed, proposal is requested
+ * @then the proposal contains the batch once
+ */
+TEST_F(OnDemandOsTest, DuplicateTxTest) {
+  auto now = iroha::time::now();
+  auto txs1 = generateTransactions({1, 2}, now);
+  os->onBatches(txs1);
+
+  auto txs2 = generateTransactions({1, 2}, now);
+  os->onBatches(txs2);
+  os->onCollaborationOutcome(commit_round);
+  auto proposal = os->onRequestProposal(target_round);
+
+  ASSERT_EQ(1, boost::size((*proposal)->transactions()));
 }

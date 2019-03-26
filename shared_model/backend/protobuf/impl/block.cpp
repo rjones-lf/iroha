@@ -57,6 +57,8 @@ namespace shared_model {
 
       interface::types::BlobType payload_blob_{
           [this] { return makeBlob(payload_); }()};
+
+      interface::types::HashType hash_ = makeHash(payload_blob_);
     };
 
     Block::Block(Block &&o) noexcept = default;
@@ -113,6 +115,10 @@ namespace shared_model {
                                                   signatures.end());
       }();
       return true;
+    }
+
+    const interface::types::HashType &Block::hash() const {
+      return impl_->hash_;
     }
 
     interface::types::TimestampType Block::createdTime() const {
