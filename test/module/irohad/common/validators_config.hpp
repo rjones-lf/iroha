@@ -10,11 +10,14 @@
 namespace iroha {
   namespace test {
 
-    static const uint64_t kTestsMaxBatchSize(10000u);
+    static inline uint64_t getTestsMaxBatchSize() {
+      return 10000;
+    }
+
     static const std::shared_ptr<shared_model::validation::ValidatorsConfig>
         kTestsValidatorsConfig(
             std::make_shared<shared_model::validation::ValidatorsConfig>(
-                kTestsMaxBatchSize));
+                getTestsMaxBatchSize()));
 
   }  // namespace test
 }  // namespace iroha
