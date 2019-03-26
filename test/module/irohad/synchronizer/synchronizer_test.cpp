@@ -375,10 +375,10 @@ TEST_F(SynchronizerTest, ExactlyThreeRetrievals) {
 
 /**
  * @given commit from the consensus and initialized components
- * @when synchronizer fails to download block from some peer
+ * @when synchronizer fails to download blocks more times than the peers amount
  * @then it will try until success
  */
-TEST_F(SynchronizerTest, RetrieveBlockTwoFailures) {
+TEST_F(SynchronizerTest, RetrieveBlockSeveralFailures) {
   const size_t number_of_failures{ledger_peers->size() + 2};
   DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
       SetFactory(&createMockMutableStorage);
