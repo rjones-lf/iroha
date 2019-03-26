@@ -74,32 +74,32 @@ namespace iroha {
     boost::optional<SynchronizationEvent>
     SynchronizerImpl::downloadMissingBlocks(
         const consensus::VoteOther &msg,
-        std::unique_ptr<ametsuchi::MutableStorage> storage,
         const shared_model::interface::types::HeightType height) {
       auto expected_height = msg.round.block_round;
 
-      // while blocks are not loaded and not committed
+      // TODO mboldyrev 21.03.2019 IR-423 Allow consensus outcome update
       while (true) {
         // TODO andrei 17.10.18 IR-1763 Add delay strategy for loading blocks
         for (const auto &public_key : msg.public_keys) {
-          auto network_chain =
-              block_loader_->retrieveBlocks(height, public_key);
-
-          std::vector<std::shared_ptr<shared_model::interface::Block>> blocks;
-          network_chain.as_blocking().subscribe(
-              [&blocks](auto block) { blocks.push_back(block); });
-          if (blocks.empty()) {
-            log_->info("Downloaded an empty chain");
-            continue;
-          } else {
-            log_->info("Successfully downloaded {} blocks", blocks.size());
+          auto storage = getStorage().value_or(nullptr);
+          if (not storage) {
+            return boost::none;
           }
 
-          auto chain =
-              rxcpp::observable<>::iterate(blocks, rxcpp::identity_immediate());
+          std::vector<std::shared_ptr<shared_model::interface::Block>> blocks;
+          auto network_chain =
+              block_loader_->retrieveBlocks(height, public_key)
+                  .tap([&blocks](std::shared_ptr<shared_model::interface::Block>
+                                     block) {
+                    blocks.push_back(std::move(block));
+                  });
 
-          if (blocks.back()->height() >= expected_height
-              and validator_->validateAndApply(chain, *storage)) {
+          if (validator_->validateAndApply(network_chain, *storage)
+              and not blocks.empty()
+              and blocks.back()->height() >= expected_height) {
+            auto chain = rxcpp::observable<>::iterate(
+                blocks, rxcpp::identity_immediate());
+
             auto ledger_state = mutable_factory_->commit(std::move(storage));
 
             if (ledger_state) {
@@ -186,14 +186,7 @@ namespace iroha {
         return;
       }
 
-      auto opt_storage = getStorage();
-      if (opt_storage == boost::none) {
-        return;
-      }
-      std::unique_ptr<ametsuchi::MutableStorage> storage =
-          std::move(opt_storage.value());
-      auto result =
-          downloadMissingBlocks(msg, std::move(storage), top_block_height);
+      auto result = downloadMissingBlocks(msg, top_block_height);
       if (result) {
         notifier_.get_subscriber().on_next(*result);
       }
