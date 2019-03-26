@@ -60,7 +60,7 @@ namespace iroha {
        * of ledger peers
        */
       bool validateBlock(
-          const shared_model::interface::Block &block,
+          std::shared_ptr<const shared_model::interface::Block> block,
           ametsuchi::PeerQuery &queries,
           const shared_model::interface::types::HashType &top_hash) const;
 

@@ -72,9 +72,9 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               proposal_factory,
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-          consensus::Round initial_round,
           std::function<std::chrono::milliseconds(
               const synchronizer::SynchronizationEvent &)> delay_func,
+          size_t max_number_of_transactions,
           const logger::LoggerManagerTreePtr &ordering_log_manager);
 
       /**
@@ -82,14 +82,13 @@ namespace iroha {
        * parameters
        */
       auto createService(
-          size_t max_size,
+          size_t max_number_of_transactions,
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               proposal_factory,
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
           const logger::LoggerManagerTreePtr &ordering_log_manager);
 
      public:
-
       /// Constructor.
       /// @param log - the logger to use for internal messages.
       OnDemandOrderingInit(logger::LoggerPtr log);
@@ -99,7 +98,7 @@ namespace iroha {
       /**
        * Initializes on-demand ordering gate and ordering sevice components
        *
-       * @param max_size maximum number of transaction in a proposal
+       * @param max_number_of_transactions maximum number of transaction in a proposal
        * @param delay timeout for ordering service response on proposal request
        * @param initial_hashes seeds for peer list permutations for first k
        * rounds they are required since hash of block i defines round i + k
@@ -115,12 +114,10 @@ namespace iroha {
        * requests to ordering service and processing responses
        * @param proposal_factory factory required by ordering service to produce
        * proposals
-       * @param initial_round initial value for current round used in
-       * OnDemandOrderingGate
        * @return initialized ordering gate
        */
       std::shared_ptr<network::OrderingGate> initOrderingGate(
-          size_t max_size,
+          size_t max_number_of_transactions,
           std::chrono::milliseconds delay,
           std::vector<shared_model::interface::types::HashType> initial_hashes,
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
@@ -137,7 +134,6 @@ namespace iroha {
               proposal_factory,
           std::shared_ptr<TransportFactoryType> proposal_transport_factory,
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-          consensus::Round initial_round,
           std::function<std::chrono::milliseconds(
               const synchronizer::SynchronizationEvent &)> delay_func,
           logger::LoggerManagerTreePtr ordering_log_manager);

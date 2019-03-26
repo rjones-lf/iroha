@@ -42,7 +42,7 @@ namespace iroha {
             std::chrono::milliseconds proposal_request_timeout,
             logger::LoggerPtr log);
 
-        void onBatches(consensus::Round round, CollectionType batches) override;
+        void onBatches(CollectionType batches) override;
 
         boost::optional<std::shared_ptr<const ProposalType>> onRequestProposal(
             consensus::Round round) override;

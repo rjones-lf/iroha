@@ -136,7 +136,7 @@ namespace iroha {
 
     void SynchronizerImpl::processNext(const consensus::PairValid &msg) {
       log_->info("at handleNext");
-      auto ledger_state = mutable_factory_->commitPrepared(*msg.block);
+      auto ledger_state = mutable_factory_->commitPrepared(msg.block);
       if (ledger_state) {
         notifier_.get_subscriber().on_next(
             SynchronizationEvent{rxcpp::observable<>::just(msg.block),
@@ -150,7 +150,7 @@ namespace iroha {
         }
         std::unique_ptr<ametsuchi::MutableStorage> storage =
             std::move(opt_storage.value());
-        if (storage->apply(*msg.block)) {
+        if (storage->apply(msg.block)) {
           ledger_state = mutable_factory_->commit(std::move(storage));
           if (ledger_state) {
             notifier_.get_subscriber().on_next(

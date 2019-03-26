@@ -96,10 +96,8 @@ TEST_F(OnDemandOsClientGrpcTest, onBatches) {
       std::make_unique<shared_model::interface::TransactionBatchImpl>(
           shared_model::interface::types::SharedTxsCollectionType{
               std::make_unique<shared_model::proto::Transaction>(tx)}));
-  client->onBatches(round, std::move(collection));
+  client->onBatches(std::move(collection));
 
-  ASSERT_EQ(request.round().block_round(), round.block_round);
-  ASSERT_EQ(request.round().reject_round(), round.reject_round);
   ASSERT_EQ(request.transactions()
                 .Get(0)
                 .payload()

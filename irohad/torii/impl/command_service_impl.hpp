@@ -24,6 +24,7 @@ namespace iroha {
      */
     class CommandServiceImpl : public CommandService {
      public:
+      // TODO: 2019-03-13 @muratovv fix with abstract cache type IR-397
       using CacheType = iroha::cache::Cache<
           shared_model::crypto::Hash,
           std::shared_ptr<shared_model::interface::TransactionResponse>,

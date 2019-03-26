@@ -227,7 +227,7 @@ namespace integration_framework {
       const Keypair &keypair) {
     initPipeline(keypair);
     iroha_instance_->makeGenesis(
-        IntegrationTestFramework::defaultBlock(keypair));
+        clone(IntegrationTestFramework::defaultBlock(keypair)));
     log_->info("added genesis block");
     subscribeQueuesAndRun();
     return *this;
@@ -244,7 +244,7 @@ namespace integration_framework {
   IntegrationTestFramework &IntegrationTestFramework::setInitialState(
       const Keypair &keypair, const shared_model::interface::Block &block) {
     initPipeline(keypair);
-    iroha_instance_->makeGenesis(block);
+    iroha_instance_->makeGenesis(clone(block));
     log_->info("added genesis block");
     subscribeQueuesAndRun();
     return *this;

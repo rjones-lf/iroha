@@ -40,7 +40,7 @@ namespace shared_model {
      private:
       types::SharedTxsCollectionType transactions_;
 
-      mutable boost::optional<types::HashType> reduced_hash_;
+      types::HashType reduced_hash_;
     };
 
   }  // namespace interface

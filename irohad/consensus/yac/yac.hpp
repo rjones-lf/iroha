@@ -78,6 +78,9 @@ namespace iroha {
         boost::optional<std::shared_ptr<shared_model::interface::Peer>>
         findPeer(const VoteMessage &vote);
 
+        /// Remove votes from unknown peers from given vector.
+        void removeUnknownPeersVotes(std::vector<VoteMessage> &votes);
+
         // ------|Apply data|------
         void applyState(const std::vector<VoteMessage> &state);
 
