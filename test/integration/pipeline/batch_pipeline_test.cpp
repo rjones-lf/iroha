@@ -204,7 +204,7 @@ TEST_P(BatchPipelineTest, ValidBatch) {
       {signedTx(batch_transactions[0], kFirstUserKeypair),
        signedTx(batch_transactions[1], kSecondUserKeypair)});
 
-  integration_framework::IntegrationTestFramework(1)
+  integration_framework::IntegrationTestFramework(2)
       .setInitialState(kAdminKeypair)
       .sendTxAwait(createFirstUser())
       .sendTxAwait(createSecondUser())
@@ -247,7 +247,7 @@ TEST_F(BatchPipelineTest, InvalidAtomicBatch) {
       {signedTx(batch_transactions[0], kFirstUserKeypair),
        signedTx(batch_transactions[1], kSecondUserKeypair)});
 
-  integration_framework::IntegrationTestFramework(1)
+  integration_framework::IntegrationTestFramework(2)
       .setInitialState(kAdminKeypair)
       .sendTxAwait(createFirstUser())
       .sendTxAwait(createSecondUser())
@@ -309,7 +309,7 @@ TEST_F(BatchPipelineTest, InvalidOrderedBatch) {
        signedTx(batch_transactions[1], kSecondUserKeypair),
        signedTx(batch_transactions[2], kFirstUserKeypair)});
 
-  integration_framework::IntegrationTestFramework(1)
+  integration_framework::IntegrationTestFramework(3)
       .setInitialState(kAdminKeypair)
       .sendTxAwait(createFirstUser())
       .sendTxAwait(createSecondUser())
