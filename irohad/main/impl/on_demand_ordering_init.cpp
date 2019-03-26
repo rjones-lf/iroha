@@ -159,21 +159,24 @@ namespace iroha {
          *
          *   0 1 2
          * 0 o x v
-         * 1 x v .
+         * 1 v v .
          * 2 v . .
          *
-         * v, round 0 - kCurrentRoundRejectConsumer
-         * v, round 1 - kNextRoundRejectConsumer
-         * v, round 2 - kNextRoundCommitConsumer
-         * o, round 0 - kIssuer
+         * v, round 0,2 - kRejectRejectConsumer
+         * v, round 1,1 - kRejectCommitConsumer
+         * v, round 1,0 - kCommitRejectConsumer
+         * v, round 2,0 - kCommitCommitConsumer
+         * o, round 0,0 - kIssuer
          */
-        peers.peers.at(OnDemandConnectionManager::kCurrentRoundRejectConsumer) =
+        peers.peers.at(OnDemandConnectionManager::kRejectRejectConsumer) =
             getOsPeer(kCurrentRound,
                       ordering::currentRejectRoundConsumer(
                           current_round.reject_round));
-        peers.peers.at(OnDemandConnectionManager::kNextRoundRejectConsumer) =
+        peers.peers.at(OnDemandConnectionManager::kRejectCommitConsumer) =
+            getOsPeer(kNextRound, ordering::kNextCommitRoundConsumer);
+        peers.peers.at(OnDemandConnectionManager::kCommitRejectConsumer) =
             getOsPeer(kNextRound, ordering::kNextRejectRoundConsumer);
-        peers.peers.at(OnDemandConnectionManager::kNextRoundCommitConsumer) =
+        peers.peers.at(OnDemandConnectionManager::kCommitCommitConsumer) =
             getOsPeer(kRoundAfterNext, ordering::kNextCommitRoundConsumer);
         peers.peers.at(OnDemandConnectionManager::kIssuer) =
             getOsPeer(kCurrentRound, current_round.reject_round);

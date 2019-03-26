@@ -44,20 +44,20 @@ void OnDemandConnectionManager::onBatches(CollectionType batches) {
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
   /*
    * Transactions are always sent to the round after the next round (+2)
-   * There are 3 possibilities - next reject in the current round, first reject
-   * in the next round, and first commit in the round after the next round
-   * This can be visualised as a diagram, where:
-   * o - current round, x - next round, v - target round
+   * There are 4 possibilities - all combinations of commits and rejects in the
+   * following two rounds. This can be visualised as a diagram, where: o -
+   * current round, x - next round, v - target round
    *
    *   0 1 2
    * 0 o x v
-   * 1 x v .
+   * 1 v v .
    * 2 v . .
    */
 
-  connections_.peers[kCurrentRoundRejectConsumer]->onBatches(batches);
-  connections_.peers[kNextRoundRejectConsumer]->onBatches(batches);
-  connections_.peers[kNextRoundCommitConsumer]->onBatches(batches);
+  connections_.peers[kRejectRejectConsumer]->onBatches(batches);
+  connections_.peers[kRejectCommitConsumer]->onBatches(batches);
+  connections_.peers[kCommitRejectConsumer]->onBatches(batches);
+  connections_.peers[kCommitCommitConsumer]->onBatches(batches);
 }
 
 boost::optional<std::shared_ptr<const OnDemandConnectionManager::ProposalType>>
