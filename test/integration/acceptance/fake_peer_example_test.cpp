@@ -25,8 +25,10 @@ using namespace shared_model::interface::permissions;
 using ::testing::_;
 using ::testing::Invoke;
 
-static constexpr std::chrono::seconds kMstStateWaitingTime(10);
-static constexpr std::chrono::seconds kSynchronizerWaitingTime(10);
+// TODO 27.03.2019 mboldyrev
+// increase timeout after fixing rx timeout operator usage
+static constexpr std::chrono::seconds kMstStateWaitingTime(5);
+static constexpr std::chrono::seconds kSynchronizerWaitingTime(5);
 
 class FakePeerExampleFixture : public AcceptanceFixture {
  public:
@@ -317,8 +319,11 @@ TEST_F(FakePeerExampleFixture,
   // provide the proposal
   proposal_storage->addTransactions({clone(tx)});
 
+  // TODO 27.03.2019 mboldyrev
+  // increase timeout after fixing rx timeout operator usage
+  constexpr std::chrono::seconds kCommitWaitingTime(5);
+
   // watch the proposal requests to fake peer
-  constexpr std::chrono::seconds kCommitWaitingTime(20);
   itf.getPcsOnCommitObservable()
       .filter([](const auto &sync_event) {
         return sync_event.sync_outcome
