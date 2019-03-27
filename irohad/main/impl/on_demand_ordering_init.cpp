@@ -157,14 +157,17 @@ namespace iroha {
          * See detailed description in
          * irohad/ordering/impl/on_demand_connection_manager.cpp
          *
-         *   0 1 2
-         * 0 o x v
-         * 1 v v .
-         * 2 v . .
+         *    0 1 2         0 1 2         0 1 2         0 1 2
+         *  0 o x v 0     0 o . .       0 o x .       0 o . .
+         *  1 . . . 1     1 x v .       1 v . .       1 x . .
+         *  2 . . . 2     2 . . .       2 . . .       2 v . .
+         * RejectReject  CommitReject  RejectCommit  CommitCommit
+         *
+         * o - current round, x - next round, v - target round
          *
          * v, round 0,2 - kRejectRejectConsumer
-         * v, round 1,1 - kRejectCommitConsumer
-         * v, round 1,0 - kCommitRejectConsumer
+         * v, round 1,1 - kCommitRejectConsumer
+         * v, round 1,0 - kRejectCommitConsumer
          * v, round 2,0 - kCommitCommitConsumer
          * o, round 0,0 - kIssuer
          */

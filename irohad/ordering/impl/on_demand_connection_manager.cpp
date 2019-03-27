@@ -48,10 +48,11 @@ void OnDemandConnectionManager::onBatches(CollectionType batches) {
    * following two rounds. This can be visualised as a diagram, where: o -
    * current round, x - next round, v - target round
    *
-   *   0 1 2
-   * 0 o x v
-   * 1 v v .
-   * 2 v . .
+   *    0 1 2         0 1 2         0 1 2         0 1 2
+   *  0 o x v 0     0 o . .       0 o x .       0 o . .
+   *  1 . . . 1     1 x v .       1 v . .       1 x . .
+   *  2 . . . 2     2 . . .       2 . . .       2 v . .
+   * RejectReject  CommitReject  RejectCommit  CommitCommit
    */
 
   connections_.peers[kRejectRejectConsumer]->onBatches(batches);
