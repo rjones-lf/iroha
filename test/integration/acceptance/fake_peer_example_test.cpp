@@ -315,32 +315,7 @@ TEST_F(FakePeerExampleFixture,
   auto &itf = prepareState();
 
   // provide the proposal
-  proposal_storage->setDefaultProvider(
-      [tx](
-          const auto &round) -> fake_peer::OrderingProposalRequestResult {
-        shared_model::proto::ProtoProposalFactory<
-            validation::AlwaysValidValidator>
-            valid_factory;
-        std::shared_ptr<const shared_model::proto::Proposal> proposal;
-        valid_factory
-            .createProposal(round.block_round,
-                            iroha::time::now(),
-                            std::vector<shared_model::proto::Transaction>({tx}))
-            .match(
-                [&proposal](iroha::expected::Value<std::unique_ptr<
-                                shared_model::interface::Proposal>> &v) {
-                  // casting std::shared_ptr<shared_model::interface::Proposal>
-                  // to std::shared_ptr<const shared_model::proto::Proposal>
-                  proposal = std::static_pointer_cast<
-                      const shared_model::proto::Proposal>(
-                      std::shared_ptr<shared_model::interface::Proposal>(
-                          std::move(v).value));
-                },
-                [](const iroha::expected::Error<std::string> &e) {
-                  FAIL() << "Could not create proposal: " << e.error;
-                });
-        return proposal;
-      });
+  proposal_storage->addTransactions({clone(tx)});
 
   // watch the proposal requests to fake peer
   constexpr std::chrono::seconds kCommitWaitingTime(20);
