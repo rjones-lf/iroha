@@ -25,10 +25,8 @@ using namespace shared_model::interface::permissions;
 using ::testing::_;
 using ::testing::Invoke;
 
-// TODO 27.03.2019 mboldyrev
-// increase timeout after fixing rx timeout operator usage
-static constexpr std::chrono::seconds kMstStateWaitingTime(5);
-static constexpr std::chrono::seconds kSynchronizerWaitingTime(5);
+static constexpr std::chrono::seconds kMstStateWaitingTime(20);
+static constexpr std::chrono::seconds kSynchronizerWaitingTime(20);
 
 class FakePeerExampleFixture : public AcceptanceFixture {
  public:
@@ -103,8 +101,8 @@ TEST_F(FakePeerExampleFixture,
           .quorum(2),
       kAdminKeypair));
 
-  // TODO 26.02.2019 mboldyrev fix timeout waiting in success case
-  mst_states_observable.timeout(kMstStateWaitingTime)
+  mst_states_observable
+      .timeout(kMstStateWaitingTime, rxcpp::observe_on_new_thread())
       .take(1)
       .as_blocking()
       .subscribe([](const auto &) {},
@@ -278,7 +276,7 @@ TEST_F(FakePeerExampleFixture, SynchronizeTheRightVersionOfForkedLedger) {
         return committed_block->height() == expected_height;
       })
       .take(1)
-      .timeout(kSynchronizerWaitingTime)
+      .timeout(kSynchronizerWaitingTime, rxcpp::observe_on_new_thread())
       .as_blocking()
       .subscribe([](const auto &) {},
                  [](std::exception_ptr ep) {
@@ -319,11 +317,9 @@ TEST_F(FakePeerExampleFixture,
   // provide the proposal
   proposal_storage->addTransactions({clone(tx)});
 
-  // TODO 27.03.2019 mboldyrev
-  // increase timeout after fixing rx timeout operator usage
-  constexpr std::chrono::seconds kCommitWaitingTime(5);
 
   // watch the proposal requests to fake peer
+  constexpr std::chrono::seconds kCommitWaitingTime(20);
   itf.getPcsOnCommitObservable()
       .filter([](const auto &sync_event) {
         return sync_event.sync_outcome
@@ -342,7 +338,7 @@ TEST_F(FakePeerExampleFixture,
         return incoming_hash == my_hash;
       })
       .take(1)
-      .timeout(kCommitWaitingTime)
+      .timeout(kCommitWaitingTime, rxcpp::observe_on_new_thread())
       .as_blocking()
       .subscribe([](const auto &) {},
                  [](std::exception_ptr ep) {
