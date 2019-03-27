@@ -25,25 +25,37 @@ namespace integration_framework {
       subscriptions_.emplace_back(
           getFakePeer().getMstStatesObservable().subscribe(
               [this](const auto &message) {
-                this->processMstMessage(message);
+                if (auto alive = fake_peer_wptr_.lock()) {
+                  this->processMstMessage(message);
+                }
               }));
       subscriptions_.emplace_back(
           getFakePeer().getYacStatesObservable().subscribe(
               [this](const auto &message) {
-                this->processYacMessage(message);
+                if (auto alive = fake_peer_wptr_.lock()) {
+                  this->processYacMessage(message);
+                }
               }));
       subscriptions_.emplace_back(
           getFakePeer().getOsBatchesObservable().subscribe(
-              [this](const auto &batch) { this->processOsBatch(batch); }));
+              [this](const auto &batch) {
+                if (auto alive = fake_peer_wptr_.lock()) {
+                  this->processOsBatch(batch);
+                }
+              }));
       subscriptions_.emplace_back(
           getFakePeer().getOgProposalsObservable().subscribe(
               [this](const auto &proposal) {
-                this->processOgProposal(proposal);
+                if (auto alive = fake_peer_wptr_.lock()) {
+                  this->processOgProposal(proposal);
+                }
               }));
       subscriptions_.emplace_back(
           getFakePeer().getBatchesObservable().subscribe(
               [this](const auto &batches) {
-                this->processOrderingBatches(*batches);
+                if (auto alive = fake_peer_wptr_.lock()) {
+                  this->processOrderingBatches(*batches);
+                }
               }));
     }
 
