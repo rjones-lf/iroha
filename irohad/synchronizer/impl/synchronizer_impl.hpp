@@ -43,14 +43,11 @@ namespace iroha {
        * Iterate through the peers which signed the commit_message, load and
        * apply the missing blocks
        * @param commit_message - the commit that triggered synchronization
-       * @param storage - mutable storage to apply downloaded commits from other
-       * peers
        * @param height - the top block height of a peer that needs to be
        * synchronized
        */
       boost::optional<SynchronizationEvent> downloadMissingBlocks(
           const consensus::VoteOther &msg,
-          std::unique_ptr<ametsuchi::MutableStorage> storage,
           const shared_model::interface::types::HeightType height);
 
       void processNext(const consensus::PairValid &msg);
