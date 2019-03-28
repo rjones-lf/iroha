@@ -51,6 +51,7 @@ class TransportTest : public ::testing::Test {
   std::shared_ptr<iroha::DefaultCompleter> completer_;
   std::shared_ptr<iroha::MockMstTransportNotification>
       mst_notification_transport_;
+  size_t mst_state_txs_limit_{10};
 };
 
 /**
@@ -96,6 +97,7 @@ TEST_F(TransportTest, SendAndReceive) {
                                          std::move(batch_factory_),
                                          std::move(tx_presence_cache_),
                                          completer_,
+                                         mst_state_txs_limit_,
                                          my_key_.publicKey(),
                                          getTestLogger("MstState"),
                                          getTestLogger("MstTransportGrpc"));
@@ -105,7 +107,8 @@ TEST_F(TransportTest, SendAndReceive) {
   std::condition_variable cv;
 
   auto time = iroha::time::now();
-  auto state = iroha::MstState::empty(getTestLogger("MstState"), completer_);
+  auto state = iroha::MstState::empty(
+      completer_, mst_state_txs_limit_, getTestLogger("MstState"));
   state += addSignaturesFromKeyPairs(
       makeTestBatch(txBuilder(1, time)), 0, makeKey());
   state += addSignaturesFromKeyPairs(
@@ -115,7 +118,7 @@ TEST_F(TransportTest, SendAndReceive) {
   state += addSignaturesFromKeyPairs(
       makeTestBatch(txBuilder(3, time)), 0, makeKey());
 
-  ASSERT_EQ(3, state.getBatches().size());
+  ASSERT_EQ(3, state.batchesQuantity());
 
   std::unique_ptr<grpc::Server> server;
 
@@ -184,6 +187,7 @@ TEST_F(TransportTest, ReplayAttack) {
                                          std::move(batch_factory_),
                                          tx_presence_cache_,
                                          completer_,
+                                         mst_state_txs_limit_,
                                          my_key_.publicKey(),
                                          getTestLogger("MstState"),
                                          getTestLogger("MstTransportGrpc"));
@@ -191,7 +195,8 @@ TEST_F(TransportTest, ReplayAttack) {
   transport->subscribe(mst_notification_transport_);
 
   auto batch = makeTestBatch(txBuilder(1), txBuilder(2));
-  auto state = iroha::MstState::empty(getTestLogger("MstState"), completer_);
+  auto state = iroha::MstState::empty(
+      completer_, mst_state_txs_limit_, getTestLogger("MstState"));
   state += addSignaturesFromKeyPairs(
       addSignaturesFromKeyPairs(batch, 0, makeKey()), 1, makeKey());
 
@@ -200,7 +205,7 @@ TEST_F(TransportTest, ReplayAttack) {
       .WillOnce(
           Invoke([&batch](::testing::Unused, const iroha::MstState &state) {
             auto batches = state.getBatches();
-            ASSERT_EQ(batches.size(), 1);
+            ASSERT_EQ(state.batchesQuantity(), 1);
             ASSERT_EQ(**batches.begin(), *batch);
           }));
 
