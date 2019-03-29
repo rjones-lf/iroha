@@ -103,6 +103,14 @@ def successPostSteps(scmVars, boolean packagePush, List environment) {
 def alwaysPostSteps(List environment) {
   stage('Mac always PostSteps') {
     withEnv(environment) {
+      sh '''
+        set -x
+        PROC=$( ps uax | grep postgres | grep 5433 |  grep -o "/var/jenkins/.*" | cut -d' ' -f1 )
+        if [ -n "${PROC}" ]; then
+          pg_ctl -D ${PROC}/ stop
+          rm -rf  ${PROC}
+        fi
+      '''
       cleanWs()
     }
   }
