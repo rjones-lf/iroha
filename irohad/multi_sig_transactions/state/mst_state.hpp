@@ -7,6 +7,7 @@
 #define IROHA_MST_STATE_HPP
 
 #include <chrono>
+#include <functional>
 #include <queue>
 #include <unordered_set>
 #include <vector>
@@ -147,6 +148,15 @@ namespace iroha {
      * @return true, if state contains the element, false otherwise
      */
     bool contains(const DataType &element) const;
+
+    /// Apply visitor to all batches.
+    void iterateBatches(std::function<void(const DataType &)> visitor) const;
+
+    /// Apply visitor to all transactions.
+    void iterateTransactions(
+        std::function<
+            void(const std::shared_ptr<shared_model::interface::Transaction> &)>
+            visitor) const;
 
    private:
     // --------------------------| private api |------------------------------

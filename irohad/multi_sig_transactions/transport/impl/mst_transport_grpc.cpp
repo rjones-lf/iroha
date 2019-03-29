@@ -177,14 +177,12 @@ void sendStateAsyncImpl(const shared_model::interface::Peer &to,
 
   transport::MstState protoState;
   protoState.set_source_peer_key(sender_key);
-  for (auto &batch : state.getBatches()) {
-    for (auto &tx : batch->transactions()) {
-      // TODO (@l4l) 04/03/18 simplify with IR-1040
-      *protoState.add_transactions() =
-          std::static_pointer_cast<shared_model::proto::Transaction>(tx)
-              ->getTransport();
-    }
-  }
+  state.iterateTransactions([&protoState](const auto &tx) {
+    // TODO (@l4l) 04/03/18 simplify with IR-1040
+    *protoState.add_transactions() =
+        std::static_pointer_cast<shared_model::proto::Transaction>(tx)
+            ->getTransport();
+  });
 
   async_call.Call([&](auto context, auto cq) {
     return client->AsyncSendState(context, protoState, cq);

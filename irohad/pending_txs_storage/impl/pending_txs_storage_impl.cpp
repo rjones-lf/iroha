@@ -67,7 +67,7 @@ namespace iroha {
   void PendingTransactionStorageImpl::updatedBatchesHandler(
       const SharedState &updated_batches) {
     std::unique_lock<std::shared_timed_mutex> lock(mutex_);
-    for (auto &batch : updated_batches->getBatches()) {
+    updated_batches->iterateBatches([this](const auto &batch) {
       auto hash = batch->reducedHash();
       auto it = storage_.batches.find(hash);
       if (storage_.batches.end() == it) {
@@ -76,7 +76,7 @@ namespace iroha {
         }
       }
       storage_.batches[hash] = batch;
-    }
+    });
   }
 
   void PendingTransactionStorageImpl::removeBatch(const SharedBatch &batch) {

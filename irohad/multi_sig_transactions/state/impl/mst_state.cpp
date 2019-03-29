@@ -104,6 +104,21 @@ namespace iroha {
     return out;
   }
 
+  void MstState::iterateBatches(std::function<void(const DataType &)> visitor) const {
+    std::for_each(internal_state_.cbegin(), internal_state_.cend(), visitor);
+  }
+
+  void MstState::iterateTransactions(
+      std::function<
+          void(const std::shared_ptr<shared_model::interface::Transaction> &)>
+          visitor) const {
+    for (const auto &batch : internal_state_) {
+      std::for_each(batch->transactions().cbegin(),
+                    batch->transactions().cend(),
+                    visitor);
+    }
+  }
+
   // ------------------------------| private api |------------------------------
 
   bool MstState::Less::operator()(const DataType &left,
