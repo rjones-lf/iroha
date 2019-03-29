@@ -153,6 +153,7 @@ node ('master') {
   specialBranch = false
   parallelism = 0
   useBTF = false
+  forceDockerDevelopBuild = false
 
   if (scmVars.GIT_LOCAL_BRANCH in ["master","develop"] || scmVars.CHANGE_BRANCH_LOCAL in ["develop"])
     specialBranch =  true
@@ -235,6 +236,7 @@ node ('master') {
   echo "x64linux_compiler_list=${x64linux_compiler_list}"
   echo "mac_compiler_list=${mac_compiler_list}"
   echo "sanitize=${sanitize}, cppcheck=${cppcheck}, fuzzing=${fuzzing}, sonar=${sonar}, coverage=${coverage}, coverage_mac=${coverage_mac} doxygen=${doxygen}"
+  echo "forceDockerDevelopBuild=${forceDockerDevelopBuild}"
   print scmVars
   print environmentList
 
@@ -255,12 +257,12 @@ node ('master') {
   if(!x64linux_compiler_list.isEmpty()){
     x64LinuxBuildSteps = [{x64LinuxBuildScript.buildSteps(
       parallelism==0 ?x64LinuxWorker.cpusAvailable : parallelism, x64linux_compiler_list, build_type, specialBranch, coverage,
-      testing, testList, cppcheck, sonar, doxygen, packageBuild, sanitize, fuzzing, useBTF, environmentList)}]
+      testing, testList, cppcheck, sonar, doxygen, packageBuild, sanitize, fuzzing, useBTF, forceDockerDevelopBuild, environmentList)}]
     //If "master" or "dev" also run Release build
     if(specialBranch && build_type == 'Debug'){
       x64LinuxBuildSteps += [{x64LinuxBuildScript.buildSteps(
       parallelism==0 ?x64LinuxWorker.cpusAvailable : parallelism, x64linux_compiler_list, 'Release', specialBranch, false,
-      false , testList, false, false, false, true, false, false, false, environmentList)}]
+      false , testList, false, false, false, true, false, false, false, false, environmentList)}]
     }
     x64LinuxPostSteps = new Builder.PostSteps(
       always: [{x64LinuxBuildScript.alwaysPostSteps(environmentList)}],

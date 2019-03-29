@@ -42,7 +42,7 @@ def testSteps(String buildDir, List environment, String testList) {
 
 def buildSteps(int parallelism, List compilerVersions, String build_type, boolean specialBranch, boolean coverage,
       boolean testing, String testList, boolean cppcheck, boolean sonar, boolean docs, boolean packagebuild,
-      boolean sanitize, boolean fuzzing, boolean useBTF, List environment) {
+      boolean sanitize, boolean fuzzing, boolean useBTF, boolean forceDockerDevelopBuild, List environment) {
   withEnv(environment) {
     scmVars = checkout scm
     def build = load '.jenkinsci-new/build.groovy'
@@ -81,6 +81,7 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
         "${env.GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
         scmVars,
         environment,
+        forceDockerDevelopBuild,
         ['PARALLELISM': parallelism])
 
     iC.inside(""
@@ -123,7 +124,7 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
       }
     } // end iC.inside
     stage ('Docker ManifestPush'){
-      if (specialBranch) {
+      if (specialBranch || forceDockerDevelopBuild) {
         utils.dockerPush(iC, "${platform}-develop-build")
         dockerManifestPush(iC, "develop-build", environment)
       }

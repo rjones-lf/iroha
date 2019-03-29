@@ -211,6 +211,17 @@ cmd_description = """
       </ul>
    </li>
    <li>
+      <p><strong>forceDockerDevelopBuild</strong> = false </p>
+      <ul>
+         <li>
+            <p>Builds and push hyperledger/iroha:develop-build  </p>
+         </li>
+         <li>
+            <p>Ex: forceDockerDevelopBuild=true</p>
+         </li>
+      </ul>
+   </li>
+   <li>
       <p><strong>specialBranch</strong> = false (or = true if master|develop|dev ),</p>
       <ul>
          <li>
