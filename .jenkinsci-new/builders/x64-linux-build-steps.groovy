@@ -170,9 +170,8 @@ def successPostSteps(scmVars, boolean packagePush, String dockerTag, List enviro
   }
 }
 
-def alwaysPostSteps(List environment, boolean coredumps) {
+def alwaysPostSteps(scmVars, List environment, boolean coredumps) {
   stage('Linux always PostSteps') {
-    scmVars = checkout scm
     // handling coredumps (if tests crashed)
     if (currentBuild.currentResult != "SUCCESS" && coredumps) {
       def dumpsFileName = sprintf('coredumps-%1$s.bzip2',
@@ -185,7 +184,7 @@ def alwaysPostSteps(List environment, boolean coredumps) {
         withCredentials([usernamePassword(credentialsId: 'ci_nexus', passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')]) {
           sh(script: "curl -u ${NEXUS_USER}:${NEXUS_PASS} --upload-file ${WORKSPACE}/${dumpsFileName} https://nexus.iroha.tech/repository/artifacts/iroha/coredumps/${dumpsFileName}")
         }
-        echo "Build is not SUCCESS! See core dumps at: https://nexus.iroha.tech/repository/artifacts/iroha/coredumps/${dumpsFileName}"
+        echo "Build is not SUCCESS! See core dumps at: https://nexus.iroha.tech/service/rest/repository/browse/artifacts/iroha/coredumps/${dumpsFileName}"
       }
     }
     withEnv(environment) {

@@ -264,7 +264,7 @@ node ('master') {
       false , testList, false, false, false, true, false, false, false, environmentList)}]
     }
     x64LinuxPostSteps = new Builder.PostSteps(
-      always: [{x64LinuxBuildScript.alwaysPostSteps(environmentList, coredumps)}],
+      always: [{x64LinuxBuildScript.alwaysPostSteps(scmVars, environmentList, coredumps)}],
       success: [{x64LinuxBuildScript.successPostSteps(scmVars, packagePush, pushDockerTag, environmentList)}])
   }
   def x64MacBuildSteps
