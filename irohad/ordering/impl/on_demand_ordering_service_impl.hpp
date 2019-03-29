@@ -102,9 +102,9 @@ namespace iroha {
           proposal_map_;
 
       /**
-       * Collections of batches for current
+       * Collections of batches for current round
        */
-      detail::BatchSetType round_batches_;
+      detail::BatchSetType pending_batches_;
 
       /**
        * Read write mutex for public methods
