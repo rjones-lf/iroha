@@ -19,12 +19,6 @@
 #include "ordering/impl/ordering_gate_cache/ordering_gate_cache.hpp"
 #include "ordering/on_demand_ordering_service.hpp"
 
-namespace shared_model {
-  namespace interface {
-    class Block;
-  }
-}
-
 namespace iroha {
   namespace ametsuchi {
     class TxPresenceCache;

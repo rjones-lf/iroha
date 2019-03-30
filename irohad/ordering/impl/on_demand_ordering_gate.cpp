@@ -54,11 +54,11 @@ OnDemandOrderingGate::OnDemandOrderingGate(
             current_round = ordering::nextCommitRound(event.round);
             break;
           case iroha::synchronizer::SynchronizationOutcomeType::kReject:
-            log_->debug("Sync enent: reject.");
+            log_->debug("Sync event: reject.");
             current_round = ordering::nextRejectRound(event.round);
             break;
           case iroha::synchronizer::SynchronizationOutcomeType::kNothing:
-            log_->debug("Sync enent: nothing.");
+            log_->debug("Sync event: nothing.");
             current_round = ordering::nextRejectRound(event.round);
             break;
           default:
