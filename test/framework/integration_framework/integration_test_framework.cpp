@@ -324,8 +324,6 @@ namespace integration_framework {
     iroha_instance_->getIrohaInstance()
         ->getStorage()
         ->on_commit()
-        .zip(received_proposals)
-        .flat_map(proposal_flat_map)
         .subscribe([this](auto committed_block) {
           block_queue_.push(committed_block);
           log_->info("block commit");
