@@ -29,7 +29,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
     rxcpp::observable<
         std::shared_ptr<const cache::OrderingGateCache::HashesSetType>>
         processed_tx_hashes,
-    rxcpp::observable<iroha::synchronizer::SynchronizationEvent> sync_events,
+    rxcpp::observable<iroha::consensus::Round> round_switch_events,
     std::shared_ptr<cache::OrderingGateCache> cache,
     std::shared_ptr<shared_model::interface::UnsafeProposalFactory> factory,
     std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
@@ -46,46 +46,29 @@ OnDemandOrderingGate::OnDemandOrderingGate(
                         hashes->size());
             cache_->remove(*hashes);
           })),
-      sync_events_subscription_(sync_events.subscribe([this](auto event) {
-        consensus::Round current_round;
-        switch (event.sync_outcome) {
-          case iroha::synchronizer::SynchronizationOutcomeType::kCommit:
-            log_->debug("Sync commit: reject.");
-            current_round = ordering::nextCommitRound(event.round);
-            break;
-          case iroha::synchronizer::SynchronizationOutcomeType::kReject:
-            log_->debug("Sync event: reject.");
-            current_round = ordering::nextRejectRound(event.round);
-            break;
-          case iroha::synchronizer::SynchronizationOutcomeType::kNothing:
-            log_->debug("Sync event: nothing.");
-            current_round = ordering::nextRejectRound(event.round);
-            break;
-          default:
-            log_->error("unknown SynchronizationOutcomeType");
-            assert(false);
-        }
-        log_->debug("Current: {}", current_round);
+      round_switch_subscription_(
+          round_switch_events.subscribe([this](auto new_round) {
+            log_->debug("Current: {}", new_round);
 
-        // notify our ordering service about new round
-        ordering_service_->onCollaborationOutcome(current_round);
+            // notify our ordering service about new round
+            ordering_service_->onCollaborationOutcome(new_round);
 
-        this->sendCachedTransactions();
+            this->sendCachedTransactions();
 
-        // request proposal for the current round
-        auto proposal = this->processProposalRequest(
-            network_client_->onRequestProposal(current_round));
-        // vote for the object received from the network
-        proposal_notifier_.get_subscriber().on_next(
-            network::OrderingEvent{std::move(proposal), current_round});
-      })),
+            // request proposal for the current round
+            auto proposal = this->processProposalRequest(
+                network_client_->onRequestProposal(new_round));
+            // vote for the object received from the network
+            proposal_notifier_.get_subscriber().on_next(
+                network::OrderingEvent{std::move(proposal), new_round});
+          })),
       cache_(std::move(cache)),
       proposal_factory_(std::move(factory)),
       tx_cache_(std::move(tx_cache)) {}
 
 OnDemandOrderingGate::~OnDemandOrderingGate() {
   processed_tx_hashes_subscription_.unsubscribe();
-  sync_events_subscription_.unsubscribe();
+  round_switch_subscription_.unsubscribe();
 }
 
 void OnDemandOrderingGate::propagateBatch(
@@ -118,7 +101,7 @@ OnDemandOrderingGate::processProposalRequest(
 
 void OnDemandOrderingGate::sendCachedTransactions() {
   // TODO mboldyrev 22.03.2019 IR-425
-  // make cache_->getBatchesForRound(current_round) thet respects sync
+  // make cache_->getBatchesForRound(current_round) that respects sync
   auto batches = cache_->pop();
   cache_->addToBack(batches);
 

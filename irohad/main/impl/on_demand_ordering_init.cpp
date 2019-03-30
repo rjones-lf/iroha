@@ -229,7 +229,29 @@ namespace iroha {
           sync_event_notifier.get_observable()
               .lift<iroha::synchronizer::SynchronizationEvent>(
                   iroha::makeDelay<iroha::synchronizer::SynchronizationEvent>(
-                      delay_func, rxcpp::identity_current_thread())),
+                      delay_func, rxcpp::identity_current_thread()))
+              .map([log = log_](const auto &event) {
+                consensus::Round current_round;
+                switch (event.sync_outcome) {
+                  case iroha::synchronizer::SynchronizationOutcomeType::kCommit:
+                    log->debug("Sync event on {}: commit.", event.round);
+                    current_round = ordering::nextCommitRound(event.round);
+                    break;
+                  case iroha::synchronizer::SynchronizationOutcomeType::kReject:
+                    log->debug("Sync event on {}: reject.", event.round);
+                    current_round = ordering::nextRejectRound(event.round);
+                    break;
+                  case iroha::synchronizer::SynchronizationOutcomeType::
+                      kNothing:
+                    log->debug("Sync event on {}: nothing.", event.round);
+                    current_round = ordering::nextRejectRound(event.round);
+                    break;
+                  default:
+                    log->error("unknown SynchronizationOutcomeType");
+                    assert(false);
+                }
+                return current_round;
+              }),
           std::move(cache),
           std::move(proposal_factory),
           std::move(tx_cache),
