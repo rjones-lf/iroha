@@ -31,7 +31,7 @@ namespace iroha {
 
       return storage.apply(
           blocks,
-          [this](const auto &block, auto &queries, const auto &top_hash) {
+          [this](auto block, auto &queries, const auto &top_hash) {
             return this->validateBlock(block, queries, top_hash);
           });
     }
@@ -84,12 +84,12 @@ namespace iroha {
     }
 
     bool ChainValidatorImpl::validateBlock(
-        const shared_model::interface::Block &block,
+        std::shared_ptr<const shared_model::interface::Block> block,
         ametsuchi::PeerQuery &queries,
         const shared_model::interface::types::HashType &top_hash) const {
       log_->info("validate block: height {}, hash {}",
-                 block.height(),
-                 block.hash().hex());
+                 block->height(),
+                 block->hash().hex());
 
       auto peers = queries.getLedgerPeers();
       if (not peers) {
@@ -97,8 +97,8 @@ namespace iroha {
         return false;
       }
 
-      return validatePreviousHash(block, top_hash)
-          and validatePeerSupermajority(block, *peers);
+      return validatePreviousHash(*block, top_hash)
+          and validatePeerSupermajority(*block, *peers);
     }
 
   }  // namespace validation

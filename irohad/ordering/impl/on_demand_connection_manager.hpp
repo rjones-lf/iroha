@@ -29,9 +29,10 @@ namespace iroha {
        * Proposal is requested from the current ordering service: issuer
        */
       enum PeerType {
-        kCurrentRoundRejectConsumer = 0,
-        kNextRoundRejectConsumer,
-        kNextRoundCommitConsumer,
+        kRejectRejectConsumer = 0,
+        kRejectCommitConsumer,
+        kCommitRejectConsumer,
+        kCommitCommitConsumer,
         kIssuer,
         kCount
       };

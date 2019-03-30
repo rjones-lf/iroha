@@ -47,6 +47,9 @@ postgres_docker_tag: '9.5'
 iroha_peer_port: 10001
 # As above but for base Torii port
 iroha_torii_port: 50051
+# Enables 2 phase commit optimization. Postgres documentation suggests setting it to a max number of
+# connections, which is 100 by default
+iroha_postgres_max_prepared_transactions: 100
 
 # Rest of the options affect Iroha configuration
 # See https://iroha.readthedocs.io/en/latest/guides/configuration.html#configuration
@@ -60,3 +63,6 @@ iroha_postgres_password: postgres
 iroha_postgres_host: iroha-postgres
 iroha_postgres_port: 5432
 iroha_blockstore_path: /tmp/block_store
+#iroha_mst_expiration_time: 1440
+#iroha_max_rounds_delay: 3000
+#iroha_stale_stream_max_rounds: 2

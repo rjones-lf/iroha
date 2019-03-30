@@ -49,7 +49,7 @@ namespace iroha {
         std::shared_ptr<iroha::torii::StatusBus> status_bus,
         std::shared_ptr<shared_model::interface::TxStatusFactory>
             status_factory,
-        rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+        rxcpp::observable<std::shared_ptr<const shared_model::interface::Block>>
             commits,
         logger::LoggerPtr log)
         : pcs_(std::move(pcs)),

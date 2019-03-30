@@ -56,3 +56,11 @@ target_link_libraries(command_service_replay_test
     torii_service
     test_logger
     )
+
+addtest(command_service_test
+    command_service_test.cpp
+    )
+target_link_libraries(command_service_test
+    torii_service
+    test_logger
+    )

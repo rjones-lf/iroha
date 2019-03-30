@@ -124,7 +124,8 @@ class TransactionProcessorTest : public ::testing::Test {
       mst_update_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_prepared_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_expired_notifier;
-  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
+  rxcpp::subjects::subject<
+      std::shared_ptr<const shared_model::interface::Block>>
       commit_notifier;
   rxcpp::subjects::subject<simulator::VerifiedProposalCreatorEvent>
       verified_prop_notifier;

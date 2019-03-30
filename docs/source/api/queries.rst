@@ -829,3 +829,57 @@ Possible Stateful Validation Errors
 
 .. [#f1] https://www.ietf.org/rfc/rfc1035.txt
 .. [#f2] https://www.ietf.org/rfc/rfc1123.txt
+
+
+FetchCommits
+^^^^^^^^^^^^^^^^^^^^
+
+Purpose
+-------
+
+To get new blocks as soon as they are committed, a user can invoke `FetchCommits` RPC call to Iroha network.
+
+Request Schema
+--------------
+
+No request arguments are needed
+
+
+Response Schema
+---------------
+
+.. code-block:: proto
+
+    message BlockQueryResponse {
+      oneof response {
+        BlockResponse block_response = 1;
+        BlockErrorResponse block_error_response = 2;
+      }
+    }
+
+Please note that it returns a stream of `BlockQueryResponse`.
+
+Response Structure
+------------------
+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+    "Block", "Iroha block", "only committed blocks", "{ 'block_v1': ....}"
+
+Possible Stateful Validation Errors
+-----------------------------------
+
+.. csv-table::
+    :header: "Code", "Error Name", "Description", "How to solve"
+
+    "1", "Could not get block streaming", "Internal error happened", "Try again or contact developers"
+    "2", "No such permissions", "Query's creator does not have any of the permissions to get blocks", "Grant the necessary permission: individual, global or domain one"
+    "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
+
+Example
+-------
+You can check an example how to use this query here:
+https://github.com/x3medima17/twitter
+

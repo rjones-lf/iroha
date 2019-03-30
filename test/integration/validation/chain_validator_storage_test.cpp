@@ -65,10 +65,11 @@ namespace iroha {
           .build();
     }
 
-    /// Complete wrapper and return a signed object
+    /// Complete wrapper and return a signed object through pointer
     template <typename Wrapper>
-    auto completeBlock(Wrapper &&wrapper) {
-      return std::forward<Wrapper>(wrapper).finish();
+    std::shared_ptr<shared_model::interface::Block> completeBlock(
+        Wrapper &&wrapper) {
+      return clone(std::forward<Wrapper>(wrapper).finish());
     }
 
     /// Create mutable storage from initialized storage
@@ -134,19 +135,19 @@ namespace iroha {
 
     auto add_peer =
         completeTx(baseTx().addPeer("0.0.0.0:50545", keys.at(4).publicKey()));
-    auto block2 = completeBlock(baseBlock({add_peer}, 2, block1.hash())
+    auto block2 = completeBlock(baseBlock({add_peer}, 2, block1->hash())
                                     .signAndAddSignature(keys.at(0))
                                     .signAndAddSignature(keys.at(1))
                                     .signAndAddSignature(keys.at(2)));
 
-    auto block3 = completeBlock(baseBlock({dummyTx(3)}, 3, block2.hash())
+    auto block3 = completeBlock(baseBlock({dummyTx(3)}, 3, block2->hash())
                                     .signAndAddSignature(keys.at(0))
                                     .signAndAddSignature(keys.at(1))
                                     .signAndAddSignature(keys.at(2))
                                     .signAndAddSignature(keys.at(3))
                                     .signAndAddSignature(keys.at(4)));
 
-    ASSERT_TRUE(createAndValidateChain({clone(block2), clone(block3)}));
+    ASSERT_TRUE(createAndValidateChain({block2, block3}));
   }
 
   /**
@@ -160,18 +161,18 @@ namespace iroha {
   TEST_F(ChainValidatorStorageTest, NoPeerAdded) {
     auto block1 = generateAndApplyFirstBlock();
 
-    auto block2 = completeBlock(baseBlock({dummyTx(2)}, 2, block1.hash())
+    auto block2 = completeBlock(baseBlock({dummyTx(2)}, 2, block1->hash())
                                     .signAndAddSignature(keys.at(0))
                                     .signAndAddSignature(keys.at(1))
                                     .signAndAddSignature(keys.at(2)));
 
-    auto block3 = completeBlock(baseBlock({dummyTx(3)}, 3, block2.hash())
+    auto block3 = completeBlock(baseBlock({dummyTx(3)}, 3, block2->hash())
                                     .signAndAddSignature(keys.at(0))
                                     .signAndAddSignature(keys.at(1))
                                     .signAndAddSignature(keys.at(2))
                                     .signAndAddSignature(keys.at(3)));
 
-    ASSERT_TRUE(createAndValidateChain({clone(block2), clone(block3)}));
+    ASSERT_TRUE(createAndValidateChain({block2, block3}));
   }
 
   /**
@@ -194,7 +195,7 @@ namespace iroha {
             .signAndAddSignature(keys.at(2))
             .signAndAddSignature(keys.at(3)));
 
-    ASSERT_FALSE(createAndValidateChain({clone(block2)}));
+    ASSERT_FALSE(createAndValidateChain({block2}));
   }
 
   /**
@@ -209,11 +210,11 @@ namespace iroha {
 
     ASSERT_FALSE(supermajority_checker->hasSupermajority(2, 4))
         << "This test assumes that 2 out of 4 peers do not have supermajority!";
-    auto block2 = completeBlock(baseBlock({dummyTx(2)}, 2, block1.hash())
+    auto block2 = completeBlock(baseBlock({dummyTx(2)}, 2, block1->hash())
                                     .signAndAddSignature(keys.at(0))
                                     .signAndAddSignature(keys.at(1)));
 
-    ASSERT_FALSE(createAndValidateChain({clone(block2)}));
+    ASSERT_FALSE(createAndValidateChain({block2}));
   }
 
 }  // namespace iroha
