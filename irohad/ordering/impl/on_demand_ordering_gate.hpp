@@ -23,9 +23,6 @@ namespace iroha {
   namespace ametsuchi {
     class TxPresenceCache;
   }
-  namespace synchronizer {
-    struct SynchronizationEvent;
-  }
 
   namespace ordering {
 

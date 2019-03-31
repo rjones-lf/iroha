@@ -13,12 +13,10 @@
 #include <boost/range/empty.hpp>
 #include "ametsuchi/tx_presence_cache.hpp"
 #include "common/visitor.hpp"
-#include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "logger/logger.hpp"
 #include "ordering/impl/on_demand_common.hpp"
-#include "synchronizer/synchronizer_common.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
