@@ -21,40 +21,55 @@ namespace integration_framework {
       // Hint: such calls would precede the derived class construction.
       fake_peer_wptr_ = fake_peer;
       log_ = std::move(log);
+      std::weak_ptr<Behaviour> weak_this = shared_from_this();
       // subscribe for all messages
       subscriptions_.emplace_back(
           getFakePeer().getMstStatesObservable().subscribe(
-              [this](const auto &message) {
-                if (auto alive = fake_peer_wptr_.lock()) {
-                  this->processMstMessage(message);
+              [weak_this,
+               weak_fake_peer = fake_peer_wptr_](const auto &message) {
+                auto me_alive = weak_this.lock();
+                auto fake_peer_is_alive = weak_fake_peer.lock();
+                if (me_alive and fake_peer_is_alive) {
+                  me_alive->processMstMessage(message);
                 }
               }));
       subscriptions_.emplace_back(
           getFakePeer().getYacStatesObservable().subscribe(
-              [this](const auto &message) {
-                if (auto alive = fake_peer_wptr_.lock()) {
-                  this->processYacMessage(message);
+              [weak_this,
+               weak_fake_peer = fake_peer_wptr_](const auto &message) {
+                auto me_alive = weak_this.lock();
+                auto fake_peer_is_alive = weak_fake_peer.lock();
+                if (me_alive and fake_peer_is_alive) {
+                  me_alive->processYacMessage(message);
                 }
               }));
       subscriptions_.emplace_back(
           getFakePeer().getOsBatchesObservable().subscribe(
-              [this](const auto &batch) {
-                if (auto alive = fake_peer_wptr_.lock()) {
-                  this->processOsBatch(batch);
+              [weak_this, weak_fake_peer = fake_peer_wptr_](const auto &batch) {
+                auto me_alive = weak_this.lock();
+                auto fake_peer_is_alive = weak_fake_peer.lock();
+                if (me_alive and fake_peer_is_alive) {
+                  me_alive->processOsBatch(batch);
                 }
               }));
       subscriptions_.emplace_back(
           getFakePeer().getOgProposalsObservable().subscribe(
-              [this](const auto &proposal) {
-                if (auto alive = fake_peer_wptr_.lock()) {
-                  this->processOgProposal(proposal);
+              [weak_this,
+               weak_fake_peer = fake_peer_wptr_](const auto &proposal) {
+                auto me_alive = weak_this.lock();
+                auto fake_peer_is_alive = weak_fake_peer.lock();
+                if (me_alive and fake_peer_is_alive) {
+                  me_alive->processOgProposal(proposal);
                 }
               }));
       subscriptions_.emplace_back(
           getFakePeer().getBatchesObservable().subscribe(
-              [this](const auto &batches) {
-                if (auto alive = fake_peer_wptr_.lock()) {
-                  this->processOrderingBatches(*batches);
+              [weak_this,
+               weak_fake_peer = fake_peer_wptr_](const auto &batches) {
+                auto me_alive = weak_this.lock();
+                auto fake_peer_is_alive = weak_fake_peer.lock();
+                if (me_alive and fake_peer_is_alive) {
+                  me_alive->processOrderingBatches(*batches);
                 }
               }));
     }

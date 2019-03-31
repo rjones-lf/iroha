@@ -23,7 +23,7 @@ namespace shared_model {
 namespace integration_framework {
   namespace fake_peer {
 
-    class Behaviour {
+    class Behaviour : public std::enable_shared_from_this<Behaviour> {
      public:
       virtual ~Behaviour();
 
