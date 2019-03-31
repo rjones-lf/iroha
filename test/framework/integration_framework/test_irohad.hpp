@@ -26,6 +26,10 @@ namespace integration_framework {
                std::chrono::milliseconds vote_delay,
                std::chrono::minutes mst_expiration_time,
                const shared_model::crypto::Keypair &keypair,
+               std::chrono::milliseconds max_rounds_delay,
+               size_t stale_stream_max_rounds,
+               logger::LoggerManagerTreePtr irohad_log_manager,
+               logger::LoggerPtr log,
                const boost::optional<iroha::GossipPropagationStrategyParams>
                    &opt_mst_gossip_params = boost::none)
         : Irohad(block_store_dir,
@@ -38,7 +42,11 @@ namespace integration_framework {
                  vote_delay,
                  mst_expiration_time,
                  keypair,
-                 opt_mst_gossip_params) {}
+                 max_rounds_delay,
+                 stale_stream_max_rounds,
+                 std::move(irohad_log_manager),
+                 opt_mst_gossip_params),
+          log_(std::move(log)) {}
 
     auto &getCommandService() {
       return command_service;
@@ -87,6 +95,9 @@ namespace integration_framework {
         log_->warn("Tried to terminate without internal server");
       }
     }
+
+   private:
+    logger::LoggerPtr log_;
   };
 }  // namespace integration_framework
 

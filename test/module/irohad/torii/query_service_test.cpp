@@ -8,6 +8,7 @@
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/protobuf/queries.hpp"
+#include "framework/test_logger.hpp"
 #include "module/irohad/torii/processor/mock_query_processor.hpp"
 #include "utils/query_error_response_visitor.hpp"
 #include "validators/protobuf/proto_query_validator.hpp"
@@ -51,11 +52,26 @@ class QueryServiceTest : public ::testing::Test {
         shared_model::interface::Query,
         shared_model::proto::Query>>(std::move(query_validator),
                                      std::move(proto_query_validator));
+
+    auto blocks_query_validator = std::make_unique<
+        shared_model::validation::DefaultSignedBlocksQueryValidator>();
+    auto proto_blocks_query_validator =
+        std::make_unique<shared_model::validation::ProtoBlocksQueryValidator>();
+
+    blocks_query_factory =
+        std::make_shared<shared_model::proto::ProtoTransportFactory<
+            shared_model::interface::BlocksQuery,
+            shared_model::proto::BlocksQuery>>(
+            std::move(blocks_query_validator),
+            std::move(proto_blocks_query_validator));
   }
 
   void init() {
     query_service =
-        std::make_shared<QueryService>(query_processor, query_factory);
+        std::make_shared<QueryService>(query_processor,
+                                       query_factory,
+                                       blocks_query_factory,
+                                       getTestLogger("QueryService"));
   }
 
   std::unique_ptr<shared_model::interface::QueryResponse> getResponse() {
@@ -66,6 +82,7 @@ class QueryServiceTest : public ::testing::Test {
   std::shared_ptr<shared_model::proto::Query> query;
   std::shared_ptr<QueryService> query_service;
   std::shared_ptr<QueryService::QueryFactoryType> query_factory;
+  std::shared_ptr<QueryService::BlocksQueryFactoryType> blocks_query_factory;
   std::shared_ptr<MockQueryProcessor> query_processor;
 };
 

@@ -111,24 +111,6 @@ function(compile_proto_to_grpc_cpp PROTO)
   compile_proto_only_grpc_to_cpp(${PROTO} "${ARGN}")
 endfunction()
 
-function(compile_proto_to_python PROTO)
-  string(REGEX REPLACE "\\.proto$" "_pb2.py" PY_PB ${PROTO})
-  if (MSVC)
-    set(GEN_COMMAND "${Protobuf_PROTOC_EXECUTABLE}")
-    set(GEN_ARGS ${Protobuf_INCLUDE_DIR})
-  else()
-    set(GEN_COMMAND ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=${protobuf_LIBRARY_DIR}:$ENV{LD_LIBRARY_PATH} "${protoc_EXECUTABLE}")
-    set(GEN_ARGS ${protobuf_INCLUDE_DIR})
-  endif()
-  add_custom_command(
-      OUTPUT ${SWIG_BUILD_DIR}/${PY_PB}
-      COMMAND ${GEN_COMMAND}
-      ARGS -I${GEN_ARGS} -I${SM_SCHEMA_DIR} --python_out=${SWIG_BUILD_DIR} ${PROTO}
-      DEPENDS protoc ${SM_SCHEMA_DIR}/${PROTO}
-      WORKING_DIRECTORY ${IROHA_SCHEMA_DIR}
-      )
-endfunction()
-
 
 macro(set_target_description target description url commit)
   set_package_properties(${target}
@@ -143,7 +125,7 @@ endmacro()
 macro(add_install_step_for_bin target)
   install(TARGETS ${target}
       RUNTIME DESTINATION bin
-      CONFIGURATIONS Release
+      CONFIGURATIONS ${CMAKE_BUILD_TYPE}
       COMPONENT binaries)
 endmacro()
 
@@ -155,7 +137,7 @@ macro(add_install_step_for_lib libpath)
 
   install(FILES ${lib_major_minor_patch}
       DESTINATION lib
-      CONFIGURATIONS Release
+      CONFIGURATIONS ${CMAKE_BUILD_TYPE}
       COMPONENT libraries)
 endmacro()
 
@@ -172,4 +154,10 @@ macro(get_git_revision commit)
       OUTPUT_VARIABLE ${commit}
       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
   )
+endmacro()
+
+macro(append_build_flags)
+  string(REPLACE ";" " " SPACE_ARGS "${ARGN}")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${SPACE_ARGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SPACE_ARGS}")
 endmacro()

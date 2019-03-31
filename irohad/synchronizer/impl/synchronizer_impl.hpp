@@ -10,7 +10,7 @@
 
 #include "ametsuchi/mutable_factory.hpp"
 #include "ametsuchi/peer_query_factory.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
 #include "validation/chain_validator.hpp"
@@ -31,7 +31,7 @@ namespace iroha {
           std::shared_ptr<ametsuchi::MutableFactory> mutable_factory,
           std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
           std::shared_ptr<network::BlockLoader> block_loader,
-          logger::Logger log = logger::log("Synchronizer"));
+          logger::LoggerPtr log);
 
       ~SynchronizerImpl() override;
 
@@ -43,14 +43,11 @@ namespace iroha {
        * Iterate through the peers which signed the commit_message, load and
        * apply the missing blocks
        * @param commit_message - the commit that triggered synchronization
-       * @param storage - mutable storage to apply downloaded commits from other
-       * peers
        * @param height - the top block height of a peer that needs to be
        * synchronized
        */
       boost::optional<SynchronizationEvent> downloadMissingBlocks(
           const consensus::VoteOther &msg,
-          std::unique_ptr<ametsuchi::MutableStorage> storage,
           const shared_model::interface::types::HeightType height);
 
       void processNext(const consensus::PairValid &msg);
@@ -67,7 +64,7 @@ namespace iroha {
       rxcpp::subjects::subject<SynchronizationEvent> notifier_;
       rxcpp::composite_subscription subscription_;
 
-      logger::Logger log_;
+      logger::LoggerPtr log_;
     };
 
   }  // namespace synchronizer

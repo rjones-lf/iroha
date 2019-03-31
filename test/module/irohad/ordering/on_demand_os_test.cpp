@@ -12,6 +12,7 @@
 #include "backend/protobuf/proto_proposal_factory.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "datetime/time.hpp"
+#include "framework/test_logger.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/shared_model/interface_mocks.hpp"
@@ -61,26 +62,26 @@ class OnDemandOsTest : public ::testing::Test {
                 _)))
         .WillByDefault(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
             iroha::ametsuchi::tx_cache_status_responses::Missing()}));
-    os = std::make_shared<OnDemandOrderingServiceImpl>(transaction_limit,
-                                                       std::move(factory),
-                                                       std::move(tx_cache),
-                                                       proposal_limit,
-                                                       initial_round);
+    os = std::make_shared<OnDemandOrderingServiceImpl>(
+        transaction_limit,
+        std::move(factory),
+        std::move(tx_cache),
+        getTestLogger("OdOrderingService"),
+        proposal_limit,
+        initial_round);
   }
 
   /**
    * Generate transactions with provided range
-   * @param os - ordering service for insertion
    * @param range - pair of [from, to)
    */
-  void generateTransactionsAndInsert(consensus::Round round,
-                                     std::pair<uint64_t, uint64_t> range) {
-    os->onBatches(round, generateTransactions(range));
+  void generateTransactionsAndInsert(std::pair<uint64_t, uint64_t> range) {
+    os->onBatches(generateTransactions(range));
   }
 
   OnDemandOrderingService::CollectionType generateTransactions(
-      std::pair<uint64_t, uint64_t> range) {
-    auto now = iroha::time::now();
+      std::pair<uint64_t, uint64_t> range,
+      shared_model::interface::types::TimestampType now = iroha::time::now()) {
     OnDemandOrderingService::CollectionType collection;
 
     for (auto i = range.first; i < range.second; ++i) {
@@ -132,7 +133,7 @@ TEST_F(OnDemandOsTest, EmptyRound) {
  * @then  check that previous round has all transaction
  */
 TEST_F(OnDemandOsTest, NormalRound) {
-  generateTransactionsAndInsert(target_round, {1, 2});
+  generateTransactionsAndInsert({1, 2});
 
   os->onCollaborationOutcome(commit_round);
 
@@ -147,7 +148,7 @@ TEST_F(OnDemandOsTest, NormalRound) {
  * AND the rest of transactions isn't appeared in next after next round
  */
 TEST_F(OnDemandOsTest, OverflowRound) {
-  generateTransactionsAndInsert(target_round, {1, transaction_limit * 2});
+  generateTransactionsAndInsert({1, transaction_limit * 2});
 
   os->onCollaborationOutcome(commit_round);
 
@@ -168,15 +169,17 @@ TEST_F(OnDemandOsTest, DISABLED_ConcurrentInsert) {
       shared_model::proto::ProtoProposalFactory<MockProposalValidator>>();
   auto tx_cache =
       std::make_unique<NiceMock<iroha::ametsuchi::MockTxPresenceCache>>();
-  os = std::make_shared<OnDemandOrderingServiceImpl>(large_tx_limit,
-                                                     std::move(factory),
-                                                     std::move(tx_cache),
-                                                     proposal_limit,
-                                                     initial_round);
+  os = std::make_shared<OnDemandOrderingServiceImpl>(
+      large_tx_limit,
+      std::move(factory),
+      std::move(tx_cache),
+      getTestLogger("OdOrderingService"),
+      proposal_limit,
+      initial_round);
 
   auto call = [this](auto bounds) {
     for (auto i = bounds.first; i < bounds.second; ++i) {
-      this->generateTransactionsAndInsert(target_round, {i, i + 1});
+      this->generateTransactionsAndInsert({i, i + 1});
     }
   };
 
@@ -191,52 +194,24 @@ TEST_F(OnDemandOsTest, DISABLED_ConcurrentInsert) {
 
 /**
  * @given initialized on-demand OS
- * @when  insert proposal_limit rounds twice
- * @then  on second rounds check that old proposals are expired
+ * @when  insert commit round and then proposal_limit reject rounds
+ * @then  first proposal still not expired
  */
 TEST_F(OnDemandOsTest, Erase) {
-  for (auto i = commit_round.block_round;
-       i < commit_round.block_round + proposal_limit;
-       ++i) {
-    generateTransactionsAndInsert({i + 1, commit_round.reject_round}, {1, 2});
-    os->onCollaborationOutcome({i, commit_round.reject_round});
-    ASSERT_TRUE(os->onRequestProposal({i + 1, commit_round.reject_round}));
-  }
+  generateTransactionsAndInsert({1, 2});
+  os->onCollaborationOutcome(
+      {commit_round.block_round, commit_round.reject_round});
+  ASSERT_TRUE(os->onRequestProposal(
+      {commit_round.block_round + 1, commit_round.reject_round}));
 
-  for (consensus::BlockRoundType i = commit_round.block_round + proposal_limit;
-       i < commit_round.block_round + 2 * proposal_limit;
+  for (auto i = commit_round.reject_round;
+       i < commit_round.reject_round + proposal_limit;
        ++i) {
-    generateTransactionsAndInsert({i + 1, commit_round.reject_round}, {1, 2});
-    os->onCollaborationOutcome({i, commit_round.reject_round});
-    ASSERT_FALSE(os->onRequestProposal(
-        {i + 1 - proposal_limit, commit_round.reject_round}));
+    generateTransactionsAndInsert({1, 2});
+    os->onCollaborationOutcome({commit_round.block_round + 1, i});
   }
-}
-
-/**
- * @given initialized on-demand OS
- * @when  insert proposal_limit rounds twice
- * AND outcome is reject
- * @then  on second rounds check that old proposals are expired
- */
-TEST_F(OnDemandOsTest, EraseReject) {
-  for (auto i = reject_round.reject_round;
-       i < reject_round.reject_round + proposal_limit;
-       ++i) {
-    generateTransactionsAndInsert({reject_round.block_round, i + 1}, {1, 2});
-    os->onCollaborationOutcome({reject_round.block_round, i});
-    ASSERT_TRUE(os->onRequestProposal({reject_round.block_round, i + 1}));
-  }
-
-  for (consensus::RejectRoundType i =
-           reject_round.reject_round + proposal_limit;
-       i < reject_round.reject_round + 2 * proposal_limit;
-       ++i) {
-    generateTransactionsAndInsert({reject_round.block_round, i + 1}, {1, 2});
-    os->onCollaborationOutcome({reject_round.block_round, i});
-    ASSERT_FALSE(os->onRequestProposal(
-        {reject_round.block_round, i + 1 - proposal_limit}));
-  }
+  ASSERT_TRUE(os->onRequestProposal(
+      {commit_round.block_round + 1, commit_round.reject_round}));
 }
 
 /**
@@ -263,16 +238,19 @@ TEST_F(OnDemandOsTest, UseFactoryForProposal) {
             });
         return result;
       }));
-  os = std::make_shared<OnDemandOrderingServiceImpl>(transaction_limit,
-                                                     std::move(factory),
-                                                     std::move(tx_cache),
-                                                     proposal_limit,
-                                                     initial_round);
+  os = std::make_shared<OnDemandOrderingServiceImpl>(
+      transaction_limit,
+      std::move(factory),
+      std::move(tx_cache),
+      getTestLogger("OdOrderingService"),
+      proposal_limit,
+      initial_round);
 
   EXPECT_CALL(*mock_factory, unsafeCreateProposal(_, _, _))
+      .WillOnce(Return(ByMove(makeMockProposal())))
       .WillOnce(Return(ByMove(makeMockProposal())));
 
-  generateTransactionsAndInsert(target_round, {1, 2});
+  generateTransactionsAndInsert({1, 2});
 
   os->onCollaborationOutcome(commit_round);
 
@@ -298,7 +276,7 @@ TEST_F(OnDemandOsTest, AlreadyProcessedProposalDiscarded) {
       .WillOnce(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
           iroha::ametsuchi::tx_cache_status_responses::Committed()}));
 
-  os->onBatches(initial_round, batches);
+  os->onBatches(batches);
 
   os->onCollaborationOutcome(commit_round);
 
@@ -320,7 +298,7 @@ TEST_F(OnDemandOsTest, PassMissingTransaction) {
       .WillOnce(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
           iroha::ametsuchi::tx_cache_status_responses::Missing()}));
 
-  os->onBatches(target_round, batches);
+  os->onBatches(batches);
 
   os->onCollaborationOutcome(commit_round);
 
@@ -352,7 +330,7 @@ TEST_F(OnDemandOsTest, SeveralTransactionsOneCommited) {
       .WillOnce(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
           iroha::ametsuchi::tx_cache_status_responses::Missing()}));
 
-  os->onBatches(target_round, batches);
+  os->onBatches(batches);
 
   os->onCollaborationOutcome(commit_round);
 
@@ -364,4 +342,47 @@ TEST_F(OnDemandOsTest, SeveralTransactionsOneCommited) {
   EXPECT_EQ(boost::size(txs), 2);
   // already processed transaction is no present in the proposal
   EXPECT_TRUE(std::find(txs.begin(), txs.end(), batch2_tx) == txs.end());
+}
+
+/**
+ * @given initialized on-demand OS with a batch in collection
+ * @when the same batch arrives, round is closed, proposal is requested
+ * @then the proposal contains the batch once
+ */
+TEST_F(OnDemandOsTest, DuplicateTxTest) {
+  auto now = iroha::time::now();
+  auto txs1 = generateTransactions({1, 2}, now);
+  os->onBatches(txs1);
+
+  auto txs2 = generateTransactions({1, 2}, now);
+  os->onBatches(txs2);
+  os->onCollaborationOutcome(commit_round);
+  auto proposal = os->onRequestProposal(target_round);
+
+  ASSERT_EQ(1, boost::size((*proposal)->transactions()));
+}
+
+/**
+ * @given initialized on-demand OS with a batch in collection
+ * @when two batches sequentially arrives in two reject rounds
+ * @then both of them are used for the next proposal
+ */
+TEST_F(OnDemandOsTest, RejectCommit) {
+  auto now = iroha::time::now();
+  auto txs1 = generateTransactions({1, 2}, now);
+  os->onBatches(txs1);
+  os->onCollaborationOutcome(
+      {initial_round.block_round, initial_round.reject_round + 1});
+
+  auto txs2 = generateTransactions({1, 2}, now + 1);
+  os->onBatches(txs2);
+  os->onCollaborationOutcome(
+      {initial_round.block_round, initial_round.reject_round + 2});
+  auto proposal = os->onRequestProposal(
+      {initial_round.block_round, initial_round.reject_round + 3});
+
+  ASSERT_EQ(2, boost::size((*proposal)->transactions()));
+
+  proposal = os->onRequestProposal(commit_round);
+  ASSERT_EQ(2, boost::size((*proposal)->transactions()));
 }

@@ -10,7 +10,7 @@
 
 #include "interfaces/iroha_internal/transaction_batch_parser.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 
 namespace iroha {
   namespace validation {
@@ -25,7 +25,7 @@ namespace iroha {
               factory,
           std::shared_ptr<shared_model::interface::TransactionBatchParser>
               batch_parser,
-          logger::Logger log = logger::log("SFV"));
+          logger::LoggerPtr log);
 
       std::unique_ptr<validation::VerifiedProposalAndErrors> validate(
           const shared_model::interface::Proposal &proposal,
@@ -35,7 +35,7 @@ namespace iroha {
       std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory_;
       std::shared_ptr<shared_model::interface::TransactionBatchParser>
           batch_parser_;
-      logger::Logger log_;
+      logger::LoggerPtr log_;
     };
 
   }  // namespace validation

@@ -26,7 +26,7 @@ namespace shared_model {
        * @return json string or an error
        */
       virtual iroha::expected::Result<types::JsonType, std::string>
-      serialize(const Block &block) const noexcept = 0;
+      serialize(const Block &block) const = 0;
 
       virtual ~BlockJsonSerializer() = default;
     };

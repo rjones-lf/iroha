@@ -7,10 +7,11 @@
 
 #include "consensus/yac/transport/impl/network_impl.hpp"
 #include "consensus/yac/transport/yac_pb_converters.hpp"
+#include "framework/mock_stream.h"
+#include "framework/test_logger.hpp"
 #include "module/irohad/consensus/yac/mock_yac_crypto_provider.hpp"
 #include "module/irohad/consensus/yac/mock_yac_network.hpp"
 #include "module/irohad/consensus/yac/yac_test_util.hpp"
-#include "framework/mock_stream.h"
 #include "yac_mock.grpc.pb.h"
 
 using ::testing::_;
@@ -29,7 +30,8 @@ namespace iroha {
         void SetUp() override {
           notifications = std::make_shared<MockYacNetworkNotifications>();
           async_call = std::make_shared<
-              network::AsyncGrpcClient<google::protobuf::Empty>>();
+              network::AsyncGrpcClient<google::protobuf::Empty>>(
+              getTestLogger("AsyncCall"));
           // stub will be deleted by unique_ptr created in client_creator
           stub = new iroha::consensus::yac::proto::MockYacStub();
           std::function<std::unique_ptr<proto::Yac::StubInterface>(
@@ -38,7 +40,8 @@ namespace iroha {
                 return std::unique_ptr<
                     iroha::consensus::yac::proto::MockYacStub>(stub);
               });
-          network = std::make_shared<NetworkImpl>(async_call, client_creator);
+          network = std::make_shared<NetworkImpl>(
+              async_call, client_creator, getTestLogger("YacNetwork"));
 
           message.hash.vote_hashes.proposal_hash = "proposal";
           message.hash.vote_hashes.block_hash = "block";

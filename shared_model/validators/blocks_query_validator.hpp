@@ -16,7 +16,8 @@ namespace shared_model {
      * @tparam FieldValidator - field validator type
      */
     template <typename FieldValidator>
-    class BlocksQueryValidator {
+    class BlocksQueryValidator
+        : public AbstractValidator<interface::BlocksQuery> {
      public:
       BlocksQueryValidator(
           const FieldValidator &field_validator = FieldValidator())

@@ -9,6 +9,7 @@
 #include "backend/protobuf/query_responses/proto_error_query_response.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/keypair.hpp"
+#include "framework/test_logger.hpp"
 #include "framework/test_subscriber.hpp"
 #include "interfaces/query_responses/block_query_response.hpp"
 #include "module/irohad/ametsuchi/mock_block_query.hpp"
@@ -42,7 +43,11 @@ class QueryProcessorTest : public ::testing::Test {
     query_response_factory =
         std::make_shared<shared_model::proto::ProtoQueryResponseFactory>();
     qpi = std::make_shared<torii::QueryProcessorImpl>(
-        storage, storage, nullptr, query_response_factory);
+        storage,
+        storage,
+        nullptr,
+        query_response_factory,
+        getTestLogger("QueryProcessor"));
     EXPECT_CALL(*storage, getBlockQuery())
         .WillRepeatedly(Return(block_queries));
     EXPECT_CALL(*storage, createQueryExecutor(_, _))

@@ -8,10 +8,10 @@
 
 #include "ametsuchi/key_value_storage.hpp"
 
-#include <atomic>
 #include <memory>
+#include <set>
 
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -28,6 +28,8 @@ namespace iroha {
 
      public:
       // ----------| public API |----------
+
+      using BlockIdCollectionType = std::set<Identifier>;
 
       static const uint32_t DIGIT_CAPACITY = 16;
 
@@ -46,12 +48,20 @@ namespace iroha {
       static std::string id_to_name(Identifier id);
 
       /**
+       * Converts aligned string (see above) to number.
+       * @param name - name to convert
+       * @return id or boost::none
+       */
+      static boost::optional<Identifier> name_to_id(const std::string &name);
+
+      /**
        * Create storage in paths
        * @param path - target path for creating
+       * @param log - logger
        * @return created storage
        */
       static boost::optional<std::unique_ptr<FlatFile>> create(
-          const std::string &path);
+          const std::string &path, logger::LoggerPtr log);
 
       bool add(Identifier id, const Bytes &blob) override;
 
@@ -61,17 +71,12 @@ namespace iroha {
 
       Identifier last_id() const override;
 
-      /**
-       * Checking consistency of storage for provided folder
-       * If some block in the middle is missing all blocks following it are
-       * deleted
-       * @param dump_dir - folder of storage
-       * @return - last available identifier
-       */
-      static boost::optional<Identifier> check_consistency(
-          const std::string &dump_dir);
-
       void dropAll() override;
+
+      /**
+       * @return collection of available block ids
+       */
+      const BlockIdCollectionType &blockIdentifiers() const;
 
       // ----------| modify operations |----------
 
@@ -86,30 +91,25 @@ namespace iroha {
       // ----------| private API |----------
 
       /**
-       * Create storage in path with respect to last key
-       * @param last_id - maximal key written in storage
+       * Create storage in path
        * @param path - folder of storage
+       * @param existing_files - collection of existing files names
        * @param log to print progress
        */
-      FlatFile(Identifier last_id,
-               const std::string &path,
+      FlatFile(std::string path,
+               BlockIdCollectionType existing_files,
                FlatFile::private_tag,
-               logger::Logger log = logger::log("FlatFile"));
+               logger::LoggerPtr log);
 
      private:
-      // ----------| private fields |----------
-
-      /**
-       * Last written key
-       */
-      std::atomic<Identifier> current_id_;
-
       /**
        * Folder of storage
        */
       const std::string dump_dir_;
 
-      logger::Logger log_;
+      BlockIdCollectionType available_blocks_;
+
+      logger::LoggerPtr log_;
 
      public:
       ~FlatFile() = default;

@@ -22,8 +22,8 @@ namespace iroha {
           std::vector<std::shared_ptr<shared_model::interface::Peer>> order)
           : order_(std::move(order)) {}
 
-    // TODO :  24/03/2018 x3medima17: make it const, IR-1164
-    const shared_model::interface::Peer& ClusterOrdering::currentLeader() {
+      // TODO :  24/03/2018 x3medima17: make it const, IR-1164
+      const shared_model::interface::Peer &ClusterOrdering::currentLeader() {
         if (index_ >= order_.size()) {
           index_ = 0;
         }
@@ -39,14 +39,15 @@ namespace iroha {
         return *this;
       }
 
-      std::vector<std::shared_ptr<shared_model::interface::Peer>>
-      ClusterOrdering::getPeers() const {
+      const std::vector<std::shared_ptr<shared_model::interface::Peer>>
+          &ClusterOrdering::getPeers() const {
         return order_;
       }
 
       size_t ClusterOrdering::getNumberOfPeers() const {
         return order_.size();
       }
+
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha

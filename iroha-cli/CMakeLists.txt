@@ -49,6 +49,8 @@ target_link_libraries(iroha-cli
     cli-flags_validators
     keys_manager
     boost
+    logger
+    logger_manager
     )
 
 add_install_step_for_bin(iroha-cli)

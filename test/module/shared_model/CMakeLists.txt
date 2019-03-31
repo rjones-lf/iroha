@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 add_subdirectory(backend_proto)
-add_subdirectory(bindings)
 add_subdirectory(converters)
 add_subdirectory(builders)
 add_subdirectory(validators)
@@ -20,7 +19,7 @@ AddTest(interface_test
     )
 target_link_libraries(interface_test
     shared_model_default_builders
-    logger
+    test_logger
     )
 
 add_library(commands_mocks_factory

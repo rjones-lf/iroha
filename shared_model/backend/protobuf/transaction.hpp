@@ -11,8 +11,7 @@
 
 namespace shared_model {
   namespace proto {
-
-    class Transaction FINAL : public interface::Transaction {
+    class Transaction final : public interface::Transaction {
      public:
       using TransportType = iroha::protocol::Transaction;
 
@@ -44,6 +43,8 @@ namespace shared_model {
 
       bool addSignature(const crypto::Signed &signed_blob,
                         const crypto::PublicKey &public_key) override;
+
+      const interface::types::HashType &hash() const override;
 
       const TransportType &getTransport() const;
 

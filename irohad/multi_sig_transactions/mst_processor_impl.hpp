@@ -8,7 +8,7 @@
 
 #include <memory>
 #include "cryptography/public_key.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 #include "multi_sig_transactions/mst_processor.hpp"
 #include "multi_sig_transactions/mst_propagation_strategy.hpp"
 #include "multi_sig_transactions/mst_time_provider.hpp"
@@ -33,7 +33,8 @@ namespace iroha {
     FairMstProcessor(std::shared_ptr<iroha::network::MstTransport> transport,
                      std::shared_ptr<MstStorage> storage,
                      std::shared_ptr<PropagationStrategy> strategy,
-                     std::shared_ptr<MstTimeProvider> time_provider);
+                     std::shared_ptr<MstTimeProvider> time_provider,
+                     logger::LoggerPtr log);
 
     ~FairMstProcessor();
 
@@ -107,6 +108,8 @@ namespace iroha {
     /// use for tracking the propagation subscription
 
     rxcpp::composite_subscription propagation_subscriber_;
+
+    logger::LoggerPtr log_;
   };
 }  // namespace iroha
 

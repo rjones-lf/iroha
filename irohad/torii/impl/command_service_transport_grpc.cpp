@@ -8,17 +8,21 @@
 #include "torii/impl/command_service_transport_grpc.hpp"
 
 #include <atomic>
+#include <condition_variable>
 #include <iterator>
 
 #include <boost/format.hpp>
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
+#include "common/combine_latest_until_first_completed.hpp"
+#include "common/run_loop_handler.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser.hpp"
 #include "interfaces/iroha_internal/tx_status_factory.hpp"
 #include "interfaces/transaction.hpp"
+#include "logger/logger.hpp"
 #include "torii/status_bus.hpp"
 
 namespace iroha {
@@ -36,7 +40,7 @@ namespace iroha {
             transaction_batch_factory,
         rxcpp::observable<ConsensusGateEvent> consensus_gate_objects,
         int maximum_rounds_without_update,
-        logger::Logger log)
+        logger::LoggerPtr log)
         : command_service_(std::move(command_service)),
           status_bus_(std::move(status_bus)),
           status_factory_(std::move(status_factory)),
@@ -162,15 +166,6 @@ namespace iroha {
       return grpc::Status::OK;
     }
 
-    namespace {
-      void handleEvents(rxcpp::composite_subscription &subscription,
-                        rxcpp::schedulers::run_loop &run_loop) {
-        while (subscription.is_subscribed() or not run_loop.empty()) {
-          run_loop.dispatch();
-        }
-      }
-    }  // namespace
-
     grpc::Status CommandServiceTransportGrpc::StatusStream(
         grpc::ServerContext *context,
         const iroha::protocol::TxStatusRequest *request,
@@ -187,33 +182,24 @@ namespace iroha {
       auto client_id_format = boost::format("Peer: '%s', %s");
       std::string client_id =
           (client_id_format % context->peer() % hash.toString()).str();
-      bool last_tx_status_received = false;
-      auto status_bus = command_service_->getStatusStream(hash)
-                            .finally([&last_tx_status_received] {
-                              last_tx_status_received = true;
-                            })
-                            .publish()
-                            .ref_count();
+      auto status_bus = command_service_->getStatusStream(hash);
       auto consensus_gate_observable =
           consensus_gate_objects_
               // a dummy start_with lets us don't wait for the consensus event
               // on further combine_latest
-              .start_with(ConsensusGateEvent{})
-              .publish()
-              .ref_count();
+              .start_with(ConsensusGateEvent{});
 
       boost::optional<iroha::protocol::TxStatus> last_tx_status;
       auto rounds_counter{0};
-      status_bus.combine_latest(current_thread, consensus_gate_observable)
-          .map([](const auto &tuple) { return std::get<0>(tuple); })
-          // complete the observable if client is disconnectedor too many
+      makeCombineLatestUntilFirstCompleted(
+          status_bus,
+          current_thread,
+          [](auto status, auto) { return status; },
+          consensus_gate_observable)
+          // complete the observable if client is disconnected or too many
           // rounds have passed without tx status change
-          .take_while([=,
-                       &rounds_counter,
-                       &last_tx_status,
-                       // last_tx_status_received has to be passed by reference
-                       // to prevent accessing its outdated state
-                       &last_tx_status_received](const auto &response) {
+          .take_while([=, &rounds_counter, &last_tx_status](
+                          const auto &response) {
             const auto &proto_response =
                 std::static_pointer_cast<
                     shared_model::proto::TransactionResponse>(response)
@@ -247,12 +233,6 @@ namespace iroha {
               return false;
             }
             log_->debug("status written, {}", client_id);
-            if (last_tx_status_received) {
-              // force stream to end because no more tx statuses will
-              // arrive. it is thread safe because of synchronization on
-              // current_thread
-              return false;
-            }
             return true;
           })
           .subscribe(subscription,
@@ -265,7 +245,7 @@ namespace iroha {
 
       // run loop while subscription is active or there are pending events in
       // the queue
-      handleEvents(subscription, rl);
+      iroha::schedulers::handleEvents(subscription, rl);
 
       log_->debug("status stream done, {}", client_id);
       return grpc::Status::OK;

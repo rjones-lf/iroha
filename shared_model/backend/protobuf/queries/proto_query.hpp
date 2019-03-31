@@ -13,7 +13,7 @@
 namespace shared_model {
   namespace proto {
 
-    class Query FINAL : public interface::Query {
+    class Query final : public interface::Query {
      public:
       using TransportType = iroha::protocol::Query;
 
@@ -40,6 +40,8 @@ namespace shared_model {
 
       bool addSignature(const crypto::Signed &signed_blob,
                         const crypto::PublicKey &public_key) override;
+
+      const interface::types::HashType &hash() const override;
 
       interface::types::TimestampType createdTime() const override;
 

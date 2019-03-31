@@ -7,4 +7,5 @@ target_link_libraries(chain_validator_storage_test
     ametsuchi_fixture
     yac
     chain_validator
+    test_logger
     )

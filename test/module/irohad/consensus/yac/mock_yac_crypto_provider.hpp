@@ -17,6 +17,16 @@ namespace iroha {
   namespace consensus {
     namespace yac {
 
+      // TODO 15.03.2019 mboldyrev IR-402
+      // fix the tests that impose requirements on mock public key format
+      std::string padPubKeyString(const std::string &str) {
+        using shared_model::crypto::DefaultCryptoAlgorithmType;
+        assert(str.size() <= DefaultCryptoAlgorithmType::kPublicKeyLength);
+        std::string padded(DefaultCryptoAlgorithmType::kPublicKeyLength, '0');
+        std::copy(str.begin(), str.end(), padded.begin());
+        return padded;
+      }
+
       /**
        * Creates test signature with empty signed data, and provided pubkey
        * @param pub_key - public key to put in the signature
@@ -24,15 +34,10 @@ namespace iroha {
        */
       std::shared_ptr<shared_model::interface::Signature> createSig(
           const std::string &pub_key) {
-        auto tmp =
-            shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
-                .publicKey();
-        std::string key(tmp.blob().size(), 0);
-        std::copy(pub_key.begin(), pub_key.end(), key.begin());
         auto sig = std::make_shared<MockSignature>();
         EXPECT_CALL(*sig, publicKey())
             .WillRepeatedly(::testing::ReturnRefOfCopy(
-                shared_model::crypto::PublicKey(key)));
+                shared_model::crypto::PublicKey(padPubKeyString(pub_key))));
         EXPECT_CALL(*sig, signedData())
             .WillRepeatedly(
                 ::testing::ReturnRefOfCopy(shared_model::crypto::Signed("")));
@@ -48,6 +53,13 @@ namespace iroha {
           VoteMessage vote;
           vote.hash = std::move(hash);
           vote.signature = createSig("");
+          return vote;
+        }
+
+        VoteMessage getVote(YacHash hash, std::string pub_key) {
+          VoteMessage vote;
+          vote.hash = std::move(hash);
+          vote.signature = createSig(std::move(pub_key));
           return vote;
         }
 

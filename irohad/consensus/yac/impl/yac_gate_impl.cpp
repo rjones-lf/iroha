@@ -15,6 +15,7 @@
 #include "cryptography/public_key.hpp"
 #include "interfaces/common_objects/signature.hpp"
 #include "interfaces/iroha_internal/block.hpp"
+#include "logger/logger.hpp"
 #include "simulator/block_creator.hpp"
 
 namespace iroha {
@@ -28,7 +29,7 @@ namespace iroha {
           std::shared_ptr<simulator::BlockCreator> block_creator,
           std::shared_ptr<consensus::ConsensusResultCache>
               consensus_result_cache,
-          logger::Logger log)
+          logger::LoggerPtr log)
           : hash_gate_(std::move(hash_gate)),
             orderer_(std::move(orderer)),
             hash_provider_(std::move(hash_provider)),
@@ -54,6 +55,11 @@ namespace iroha {
 
         if (not event.round_data) {
           current_block_ = boost::none;
+          // previous block is committed to block storage, it is safe to clear
+          // the cache
+          // TODO 2019-03-15 andrei: IR-405 Subscribe BlockLoaderService to
+          // BlockCreator::onBlock
+          consensus_result_cache_->release();
           log_->debug("Agreed on nothing to commit");
         } else {
           current_block_ = event.round_data->block;

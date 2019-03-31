@@ -12,6 +12,8 @@
 #include "common/is_any.hpp"
 #include "common/visitor.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "interfaces/transaction_responses/not_received_tx_response.hpp"
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace torii {
@@ -22,27 +24,37 @@ namespace iroha {
         std::shared_ptr<iroha::torii::StatusBus> status_bus,
         std::shared_ptr<shared_model::interface::TxStatusFactory>
             status_factory,
-        logger::Logger log)
+        std::shared_ptr<iroha::torii::CommandServiceImpl::CacheType> cache,
+        std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache,
+        logger::LoggerPtr log)
         : tx_processor_(std::move(tx_processor)),
           storage_(std::move(storage)),
           status_bus_(std::move(status_bus)),
-          cache_(std::make_shared<CacheType>()),
+          cache_(std::move(cache)),
           status_factory_(std::move(status_factory)),
+          tx_presence_cache_(std::move(tx_presence_cache)),
           log_(std::move(log)) {
       // Notifier for all clients
-      status_bus_->statuses().subscribe([this](auto response) {
-        // find response for this tx in cache; if status of received response
-        // isn't "greater" than cached one, dismiss received one
-        auto tx_hash = response->transactionHash();
-        auto cached_tx_state = cache_->findItem(tx_hash);
-        if (cached_tx_state
-            and response->comparePriorities(**cached_tx_state)
-                != shared_model::interface::TransactionResponse::
-                       PrioritiesComparisonResult::kGreater) {
-          return;
-        }
-        cache_->addItem(tx_hash, response);
-      });
+      status_subscription_ = status_bus_->statuses().subscribe(
+          // TODO mboldyrev IR-426 research approaches to the problem of member
+          // observer lifetime.
+          [cache = cache_](auto response) {
+            // find response for this tx in cache; if status of received
+            // response isn't "greater" than cached one, dismiss received one
+            auto tx_hash = response->transactionHash();
+            auto cached_tx_state = cache->findItem(tx_hash);
+            if (cached_tx_state
+                and response->comparePriorities(**cached_tx_state)
+                    != shared_model::interface::TransactionResponse::
+                           PrioritiesComparisonResult::kGreater) {
+              return;
+            }
+            cache->addItem(tx_hash, response);
+          });
+    }
+
+    CommandServiceImpl::~CommandServiceImpl() {
+      status_subscription_.unsubscribe();
     }
 
     void CommandServiceImpl::handleTransactionBatch(
@@ -119,8 +131,29 @@ namespace iroha {
       using ResponsePtrType =
           std::shared_ptr<shared_model::interface::TransactionResponse>;
       auto initial_status = cache_->findItem(hash).value_or([&] {
-        log_->debug("tx is not received: {}", hash);
-        return status_factory_->makeNotReceived(hash);
+        // if cache_ doesn't contain some status there is required to check
+        // persistent cache
+
+        log_->debug("tx {} isn't present in cache", hash);
+        auto from_persistent_cache = tx_presence_cache_->check(hash);
+        if (not from_persistent_cache) {
+          // TODO andrei 30.11.18 IR-51 Handle database error
+          log_->warn("Check hash presence database error. {}", hash);
+          return status_factory_->makeNotReceived(hash);
+        }
+        return iroha::visit_in_place(
+            *from_persistent_cache,
+            [this,
+             &hash](const iroha::ametsuchi::tx_cache_status_responses::Committed
+                        &) { return status_factory_->makeCommitted(hash); },
+            [this, &hash](
+                const iroha::ametsuchi::tx_cache_status_responses::Rejected &) {
+              return status_factory_->makeRejected(hash);
+            },
+            [this, &hash](
+                const iroha::ametsuchi::tx_cache_status_responses::Missing &) {
+              return status_factory_->makeNotReceived(hash);
+            });
       }());
       return status_bus_
           ->statuses()
@@ -161,30 +194,83 @@ namespace iroha {
 
     void CommandServiceImpl::processBatch(
         std::shared_ptr<shared_model::interface::TransactionBatch> batch) {
-      tx_processor_->batchHandle(batch);
+      const auto status_issuer = "ToriiBatchProcessor";
       const auto &txs = batch->transactions();
-      std::for_each(txs.begin(), txs.end(), [this](const auto &tx) {
+
+      bool has_final_status{false};
+
+      for (auto tx : txs) {
         const auto &tx_hash = tx->hash();
-        auto found = cache_->findItem(tx_hash);
-        // StatlessValid status goes only after
-        // EnoughSignaturesCollectedResponse So doesn't skip publishing status
-        // after it
-        if (found
-            and iroha::visit_in_place(
-                    found.value()->get(),
-                    [](const shared_model::interface::
-                           EnoughSignaturesCollectedResponse &) {
-                      return false;
-                    },
-                    [](auto &) { return true; })
-            and tx->quorum() < 2) {
-          log_->warn("Found transaction {} in cache, ignoring", tx_hash.hex());
-          return;
+        if (auto found = cache_->findItem(tx_hash)) {
+          log_->debug("Found in cache: {}", **found);
+          has_final_status = iroha::visit_in_place(
+              (*found)->get(),
+              [](const auto &final_responses)
+                  -> std::enable_if_t<
+                      FinalStatusValue<decltype(final_responses)>,
+                      bool> { return true; },
+              [](const auto &rest_responses)
+                  -> std::enable_if_t<
+                      not FinalStatusValue<decltype(rest_responses)>,
+                      bool> { return false; });
         }
 
-        this->pushStatus("ToriiBatchProcessor",
-                         status_factory_->makeStatelessValid(tx_hash));
-      });
+        if (has_final_status) {
+          break;
+        }
+      }
+
+      if (has_final_status) {
+        // presence of the transaction or batch in the cache with final status
+        // guarantees that the transaction was passed to consensus before
+        log_->warn("Replayed batch would not be served - present in cache. {}",
+                   *batch);
+        return;
+      }
+
+      auto cache_presence = tx_presence_cache_->check(*batch);
+      if (not cache_presence) {
+        // TODO andrei 30.11.18 IR-51 Handle database error
+        log_->warn("Check tx presence database error. {}", *batch);
+        return;
+      }
+      auto is_replay = std::any_of(
+          cache_presence->begin(),
+          cache_presence->end(),
+          [this, &status_issuer](const auto &tx_status) {
+            return iroha::visit_in_place(
+                tx_status,
+                [this, &status_issuer](
+                    const iroha::ametsuchi::tx_cache_status_responses::Missing
+                        &status) {
+                  this->pushStatus(
+                      status_issuer,
+                      status_factory_->makeStatelessValid(status.hash));
+                  return false;
+                },
+                [this, &status_issuer](
+                    const iroha::ametsuchi::tx_cache_status_responses::Committed
+                        &status) {
+                  this->pushStatus(status_issuer,
+                                   status_factory_->makeCommitted(status.hash));
+                  return true;
+                },
+                [this, &status_issuer](
+                    const iroha::ametsuchi::tx_cache_status_responses::Rejected
+                        &status) {
+                  this->pushStatus(status_issuer,
+                                   status_factory_->makeRejected(status.hash));
+                  return true;
+                });
+          });
+      if (is_replay) {
+        log_->warn(
+            "Replayed batch would not be served - present in database. {}",
+            *batch);
+        return;
+      }
+
+      tx_processor_->batchHandle(batch);
     }
 
   }  // namespace torii

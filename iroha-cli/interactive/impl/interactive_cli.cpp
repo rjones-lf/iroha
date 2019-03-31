@@ -8,6 +8,8 @@
 #include <ciso646>
 #include <utility>
 
+#include "logger/logger_manager.hpp"
+
 namespace iroha_cli {
   namespace interactive {
 
@@ -34,12 +36,30 @@ namespace iroha_cli {
         const std::string &default_peer_ip,
         int default_port,
         uint64_t qry_counter,
-        const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider)
+        const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider,
+        logger::LoggerManagerTreePtr response_handler_log_manager,
+        logger::LoggerPtr pb_qry_factory_log,
+        logger::LoggerPtr json_qry_factory_log,
+        logger::LoggerManagerTreePtr log_manager)
         : creator_(account_name),
-          tx_cli_(creator_, default_peer_ip, default_port, provider),
-          query_cli_(
-              creator_, default_peer_ip, default_port, qry_counter, provider),
-          statusCli_(default_peer_ip, default_port) {
+          tx_cli_(creator_,
+                  default_peer_ip,
+                  default_port,
+                  provider,
+                  response_handler_log_manager,
+                  pb_qry_factory_log,
+                  log_manager->getChild("Transaction")->getLogger()),
+          query_cli_(creator_,
+                     default_peer_ip,
+                     default_port,
+                     qry_counter,
+                     provider,
+                     std::move(response_handler_log_manager),
+                     pb_qry_factory_log,
+                     std::move(json_qry_factory_log),
+                     log_manager->getChild("Query")->getLogger()),
+          statusCli_(
+              default_peer_ip, default_port, std::move(pb_qry_factory_log)) {
       assign_main_handlers();
     }
 

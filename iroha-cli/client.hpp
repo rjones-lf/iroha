@@ -8,6 +8,7 @@
 
 #include <string>
 
+#include "logger/logger_fwd.hpp"
 #include "torii/command_client.hpp"
 #include "torii/query_client.hpp"
 
@@ -31,7 +32,9 @@ namespace iroha_cli {
     // TODO 13/09/17 luckychess: check if we need more status codes IR-494
     enum TxStatus { OK };
 
-    CliClient(std::string target_ip, int port);
+    CliClient(std::string target_ip,
+              int port,
+              logger::LoggerPtr pb_qry_factory_log);
     /**
      * Send Transaction to Iroha Peer, i.e. target_ip:port
      * @param tx
@@ -54,6 +57,8 @@ namespace iroha_cli {
    private:
     torii::CommandSyncClient command_client_;
     torii_utils::QuerySyncClient query_client_;
+
+    logger::LoggerPtr pb_qry_factory_log_;
   };
 }  // namespace iroha_cli
 
