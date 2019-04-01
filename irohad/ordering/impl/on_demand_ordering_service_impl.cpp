@@ -68,10 +68,9 @@ void OnDemandOrderingServiceImpl::onBatches(CollectionType batches) {
                    batch->reducedHash().hex());
         return not this->batchAlreadyProcessed(*batch);
       });
-  std::for_each(
-      unprocessed_batches.begin(),
-      unprocessed_batches.end(),
-      [this](auto &obj) { current_round_batches_.insert(std::move(obj)); });
+  std::for_each(unprocessed_batches.begin(),
+                unprocessed_batches.end(),
+                [this](auto &obj) { pending_batches_.insert(std::move(obj)); });
   log_->debug("onBatches => collection is inserted");
 }
 
@@ -99,20 +98,15 @@ OnDemandOrderingServiceImpl::onRequestProposal(consensus::Round round) {
  * Get transactions from the given batches queue. Does not break batches -
  * continues getting all the transactions from the ongoing batch until the
  * required amount is collected.
- * @tparam Lambda - type of side effect function for batches
  * @param requested_tx_amount - amount of transactions to get
  * @param batch_collection - the collection to get transactions from
  * @param discarded_txs_amount - the amount of discarded txs
- * @param batch_operation - side effect function to be performed on each
- * inserted batch. Passed pointer could be modified
  * @return transactions
  */
-template <typename Lambda>
 static std::vector<std::shared_ptr<shared_model::interface::Transaction>>
 getTransactions(size_t requested_tx_amount,
                 detail::BatchSetType &batch_collection,
-                boost::optional<size_t &> discarded_txs_amount,
-                Lambda batch_operation) {
+                boost::optional<size_t &> discarded_txs_amount) {
   std::vector<std::shared_ptr<shared_model::interface::Transaction>> collection;
 
   auto it = batch_collection.begin();
@@ -122,7 +116,6 @@ getTransactions(size_t requested_tx_amount,
     collection.insert(std::end(collection),
                       std::begin((*it)->transactions()),
                       std::end((*it)->transactions()));
-    batch_operation(*it);
   }
 
   if (discarded_txs_amount) {
@@ -131,7 +124,6 @@ getTransactions(size_t requested_tx_amount,
       *discarded_txs_amount += boost::size((*it)->transactions());
     }
   }
-  batch_collection.clear();
 
   return collection;
 }
@@ -169,18 +161,13 @@ void OnDemandOrderingServiceImpl::packNextProposals(
    * (1,0) - current round. The diagram is similar to the initial case.
    */
 
-  size_t discarded_txs_amount;
-  auto get_transactions = [this, &discarded_txs_amount](auto &queue,
-                                                        auto lambda) {
-    return getTransactions(
-        transaction_limit_, queue, discarded_txs_amount, lambda);
-  };
-
+  size_t discarded_txs_quantity;
   auto now = iroha::time::now();
-  auto generate_proposal = [this, now, &discarded_txs_amount](
+  auto generate_proposal = [this, now, &discarded_txs_quantity](
                                consensus::Round round, const auto &txs) {
     auto proposal = proposal_factory_->unsafeCreateProposal(
         round.block_round, now, txs | boost::adaptors::indirected);
+    proposal_map_.erase(round);
     proposal_map_.emplace(round, std::move(proposal));
     log_->debug(
         "packNextProposal: data has been fetched for {}. "
@@ -188,27 +175,20 @@ void OnDemandOrderingServiceImpl::packNextProposals(
         "transactions.",
         round,
         txs.size(),
-        discarded_txs_amount);
+        discarded_txs_quantity);
   };
 
-  if (not current_round_batches_.empty()) {
-    auto txs = get_transactions(current_round_batches_, [this](auto &batch) {
-      next_round_batches_.insert(std::move(batch));
-    });
-
-    if (not txs.empty() and round.reject_round != kFirstRejectRound) {
+  if (not pending_batches_.empty()) {
+    auto txs = getTransactions(
+        transaction_limit_, pending_batches_, discarded_txs_quantity);
+    if (not txs.empty()) {
       generate_proposal({round.block_round, round.reject_round + 1}, txs);
+      generate_proposal({round.block_round + 1, kFirstRejectRound}, txs);
     }
   }
 
-  if (not next_round_batches_.empty()
-      and round.reject_round == kFirstRejectRound) {
-    auto txs = get_transactions(next_round_batches_, [](auto &) {});
-
-    if (not txs.empty()) {
-      generate_proposal({round.block_round, kNextRejectRoundConsumer}, txs);
-      generate_proposal({round.block_round + 1, kNextCommitRoundConsumer}, txs);
-    }
+  if (round.reject_round == kFirstRejectRound) {
+    pending_batches_.clear();
   }
 }
 

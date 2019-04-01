@@ -361,3 +361,28 @@ TEST_F(OnDemandOsTest, DuplicateTxTest) {
 
   ASSERT_EQ(1, boost::size((*proposal)->transactions()));
 }
+
+/**
+ * @given initialized on-demand OS with a batch in collection
+ * @when two batches sequentially arrives in two reject rounds
+ * @then both of them are used for the next proposal
+ */
+TEST_F(OnDemandOsTest, RejectCommit) {
+  auto now = iroha::time::now();
+  auto txs1 = generateTransactions({1, 2}, now);
+  os->onBatches(txs1);
+  os->onCollaborationOutcome(
+      {initial_round.block_round, initial_round.reject_round + 1});
+
+  auto txs2 = generateTransactions({1, 2}, now + 1);
+  os->onBatches(txs2);
+  os->onCollaborationOutcome(
+      {initial_round.block_round, initial_round.reject_round + 2});
+  auto proposal = os->onRequestProposal(
+      {initial_round.block_round, initial_round.reject_round + 3});
+
+  ASSERT_EQ(2, boost::size((*proposal)->transactions()));
+
+  proposal = os->onRequestProposal(commit_round);
+  ASSERT_EQ(2, boost::size((*proposal)->transactions()));
+}
