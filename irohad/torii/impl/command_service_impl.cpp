@@ -35,19 +35,21 @@ namespace iroha {
           tx_presence_cache_(std::move(tx_presence_cache)),
           log_(std::move(log)) {
       // Notifier for all clients
-      status_subscription_ =
-          status_bus_->statuses().subscribe([this](auto response) {
+      status_subscription_ = status_bus_->statuses().subscribe(
+          // TODO mboldyrev IR-426 research approaches to the problem of member
+          // observer lifetime.
+          [cache = cache_](auto response) {
             // find response for this tx in cache; if status of received
             // response isn't "greater" than cached one, dismiss received one
             auto tx_hash = response->transactionHash();
-            auto cached_tx_state = cache_->findItem(tx_hash);
+            auto cached_tx_state = cache->findItem(tx_hash);
             if (cached_tx_state
                 and response->comparePriorities(**cached_tx_state)
                     != shared_model::interface::TransactionResponse::
                            PrioritiesComparisonResult::kGreater) {
               return;
             }
-            cache_->addItem(tx_hash, response);
+            cache->addItem(tx_hash, response);
           });
     }
 
