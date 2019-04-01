@@ -37,7 +37,7 @@ def build(Build build) {
     node(build.worker.label) {
       try {
         echo "Worker: ${env.NODE_NAME}"
-        gitNotify ("New CI: " + build.name, "Started...", 'PENDING')
+        gitNotify ("Jenkins: " + build.name, "Started...", 'PENDING')
         build.builder.buildSteps.each {
           it()
         }
@@ -66,9 +66,9 @@ def build(Build build) {
       // ALWAYS
       finally {
         if (currentBuild.currentResult == 'SUCCESS')
-           gitNotify ("New CI: " + build.name, "Finish", 'SUCCESS')
+           gitNotify ("Jenkins: " + build.name, "Finish", 'SUCCESS')
         else
-           gitNotify ("New CI: " + build.name, currentBuild.currentResult, 'FAILURE')
+           gitNotify ("Jenkins: " + build.name, currentBuild.currentResult, 'FAILURE')
 
         build.builder.postSteps.always.each {
           it()
@@ -195,18 +195,18 @@ node ('master') {
         break;
      case 'On open PR':
         // Just hint, not the main way to Notify about build status.
-        gitNotify ("New CI: Merge to trunk", "Please, run: 'Before merge to trunk'", 'PENDING', env.JOB_URL + "/build")
+        gitNotify ("Jenkins: Merge to trunk", "Please, run: 'Before merge to trunk'", 'PENDING', env.JOB_URL + "/build")
         mac_compiler_list = ['appleclang']
         coverage = true
         cppcheck = true
         sonar = true
         break;
      case 'Commit in Open PR':
-        gitNotify ("New CI: Merge to trunk", "Please, run: 'Before merge to trunk'", 'PENDING', env.JOB_URL + "/build")
+        gitNotify ("Jenkins: Merge to trunk", "Please, run: 'Before merge to trunk'", 'PENDING', env.JOB_URL + "/build")
         echo "All Default"
         break;
      case 'Before merge to trunk':
-        gitNotify ("New CI: Merge to trunk", "Started...", 'PENDING')
+        gitNotify ("Jenkins: Merge to trunk", "Started...", 'PENDING')
         x64linux_compiler_list = ['gcc5','gcc7', 'clang6' , 'clang7']
         mac_compiler_list = ['appleclang']
         testing = true
@@ -308,7 +308,10 @@ node ('master') {
   parallel tasks
 
   if (build_scenario == 'Before merge to trunk')
-    gitNotify ("New CI: Merge to trunk", "Finish", 'SUCCESS')
+    if (currentBuild.currentResult == 'SUCCESS')
+      gitNotify ("Jenkins: Merge to trunk", "Finish", 'SUCCESS')
+    else
+      gitNotify ("Jenkins: Merge to trunk", currentBuild.currentResult, 'FAILURE')
 }
 
 }
