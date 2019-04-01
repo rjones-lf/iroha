@@ -18,7 +18,14 @@ namespace iroha {
 
       class OnDemandCache : public OrderingGateCache {
        public:
-        void addToBack(const BatchesSetType &batches) override;
+        /**
+         * Create OnDemandCache instance
+         * @param max_cache_size - maximum amount of transactions contained in
+         * cache (calculated as a sum over all stored batches)
+         */
+        OnDemandCache(uint64_t max_cache_size);
+
+        bool addToBack(const BatchesSetType &batches) override;
 
         BatchesSetType pop() override;
 
@@ -29,9 +36,11 @@ namespace iroha {
         virtual const BatchesSetType &tail() const override;
 
        private:
+        const uint64_t max_cache_size_;
         mutable std::shared_timed_mutex mutex_;
-        using BatchesQueueType = boost::circular_buffer<BatchesSetType>;
-        BatchesQueueType circ_buffer{3, BatchesSetType{}};
+        using CacheElementType = std::pair<uint64_t, BatchesSetType>;
+        using BatchesQueueType = boost::circular_buffer<CacheElementType>;
+        BatchesQueueType circ_buffer{3, CacheElementType{}};
       };
 
     }  // namespace cache

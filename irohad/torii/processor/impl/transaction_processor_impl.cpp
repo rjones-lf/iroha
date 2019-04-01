@@ -111,7 +111,14 @@ namespace iroha {
       mst_processor_->onPreparedBatches().subscribe([this](auto &&batch) {
         log_->info("MST batch prepared");
         this->publishEnoughSignaturesStatus(batch->transactions());
-        this->pcs_->propagate_batch(batch);
+        log_->critical("BATCH {}", batch);
+        if (not this->pcs_->propagate_batch(batch)) {
+          log_->error("PCS was unable to serve the batch received from MST {}",
+                      batch->toString());
+          // TODO IR-430 igor-egorov, a batch might not be accepted by pcs, need
+          // to investigate the lifetime of a batch and IR-432 handle it somehow
+          // in case when pcs is not ready
+        }
       });
       mst_processor_->onExpiredBatches().subscribe([this](auto &&batch) {
         log_->info("MST batch {} is expired", batch->reducedHash());
@@ -121,19 +128,26 @@ namespace iroha {
       });
     }
 
-    void TransactionProcessorImpl::batchHandle(
+    bool TransactionProcessorImpl::batchHandle(
         std::shared_ptr<shared_model::interface::TransactionBatch>
             transaction_batch) const {
       log_->info("handle batch");
+      bool batch_passed_for_further_processing(true);
       if (transaction_batch->hasAllSignatures()
           and not mst_processor_->batchInStorage(transaction_batch)) {
         log_->info("propagating batch to PCS");
         this->publishEnoughSignaturesStatus(transaction_batch->transactions());
-        pcs_->propagate_batch(transaction_batch);
+        log_->critical("BATCH {}", transaction_batch);
+        if (not(batch_passed_for_further_processing =
+                    pcs_->propagate_batch(transaction_batch))) {
+          log_->info("PCS was unable to serve the batch {}",
+                     transaction_batch->toString());
+        }
       } else {
         log_->info("propagating batch to MST");
         mst_processor_->propagateBatch(transaction_batch);
       }
+      return batch_passed_for_further_processing;
     }
 
     void TransactionProcessorImpl::publishStatus(

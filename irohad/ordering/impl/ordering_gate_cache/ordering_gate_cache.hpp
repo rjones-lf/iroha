@@ -50,8 +50,10 @@ namespace iroha {
 
         /**
          * Concatenates batches from the tail of the queue with provided batches
+         * @param batches - input batches
+         * @return bool - true if batches were stored in cache
          */
-        virtual void addToBack(const BatchesSetType &batches) = 0;
+        virtual bool addToBack(const BatchesSetType &batches) = 0;
 
         /**
          * Pops the head batches and returns them

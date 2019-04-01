@@ -122,13 +122,26 @@ namespace iroha {
       auto transactions = deserializeTransactions(request);
 
       auto batches = batch_parser_->parseBatches(transactions);
+      std::vector<const shared_model::interface::types::HashType>
+          unprocessed_batches;
 
       for (auto &batch : batches) {
         batch_factory_->createTransactionBatch(batch).match(
             [&](iroha::expected::Value<std::unique_ptr<
                     shared_model::interface::TransactionBatch>> &value) {
-              this->command_service_->handleTransactionBatch(
-                  std::move(value).value);
+              const shared_model::interface::types::HashType hash =
+                  value.value->reducedHash();
+              bool batch_is_processed =
+                  this->command_service_->handleTransactionBatch(
+                      std::move(value).value);
+              if (not batch_is_processed) {
+                log_->info(
+                    "Transaction batch with reduced hash {} is not processed "
+                    "and has "
+                    "to be resent",
+                    hash);
+                unprocessed_batches.emplace_back(std::move(hash));
+              }
             },
             [&](iroha::expected::Error<std::string> &error) {
               std::vector<shared_model::crypto::Hash> hashes;
@@ -150,7 +163,20 @@ namespace iroha {
             });
       }
 
-      return grpc::Status::OK;
+      auto status = grpc::Status::OK;
+      if (not unprocessed_batches.empty()) {
+        std::stringstream message;
+        message << "The batches with the following reduced hashes were not "
+                   "processed, please resend them: [";
+        for (const auto &hash : unprocessed_batches) {
+          message << hash.toString() << ", ";
+        }
+        message << "]";
+        status =
+            grpc::Status(grpc::StatusCode::RESOURCE_EXHAUSTED, message.str());
+      }
+
+      return status;
     }
 
     grpc::Status CommandServiceTransportGrpc::Status(

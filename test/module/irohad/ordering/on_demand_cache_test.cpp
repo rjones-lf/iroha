@@ -18,19 +18,27 @@ using ::testing::Return;
 using ::testing::ReturnRef;
 using ::testing::UnorderedElementsAre;
 
+const uint64_t kMaxCacheSize = 10000;
+
+class OnDemandCacheTest : public ::testing::Test {
+ public:
+  OnDemandCacheTest() : cache(kMaxCacheSize) {}
+  OnDemandCache cache;
+};
+
 /**
  * @given empty cache
  * @when add to back is invoked with batch1 and batch2
  * @then back of the cache consists has batch1 and batch2
  */
-TEST(OnDemandCacheTest, TestAddToBack) {
-  OnDemandCache cache;
-
+TEST_F(OnDemandCacheTest, TestAddToBack) {
   shared_model::interface::types::HashType hash1("hash1");
-  auto batch1 = createMockBatchWithHash(hash1);
+  auto tx1 = createMockTransactionWithHash(hash1);
+  auto batch1 = createMockBatchWithTransactions({tx1}, "batch1");
 
   shared_model::interface::types::HashType hash2("hash2");
-  auto batch2 = createMockBatchWithHash(hash2);
+  auto tx2 = createMockTransactionWithHash(hash2);
+  auto batch2 = createMockBatchWithTransactions({tx2}, "batch2");
 
   cache.addToBack({batch1, batch2});
 
@@ -44,16 +52,17 @@ TEST(OnDemandCacheTest, TestAddToBack) {
  * @then first three times batch1, batch2 and batch3 will be returned
  * correspondingly and no batch will be returned 4th time
  */
-TEST(OnDemandCache, Pop) {
-  OnDemandCache cache;
-
+TEST_F(OnDemandCacheTest, Pop) {
   shared_model::interface::types::HashType hash1("hash1");
   shared_model::interface::types::HashType hash2("hash2");
   shared_model::interface::types::HashType hash3("hash3");
+  auto tx1 = createMockTransactionWithHash(hash1);
+  auto tx2 = createMockTransactionWithHash(hash2);
+  auto tx3 = createMockTransactionWithHash(hash3);
 
-  auto batch1 = createMockBatchWithHash(hash1);
-  auto batch2 = createMockBatchWithHash(hash2);
-  auto batch3 = createMockBatchWithHash(hash3);
+  auto batch1 = createMockBatchWithTransactions({tx1}, "batch1");
+  auto batch2 = createMockBatchWithTransactions({tx2}, "batch2");
+  auto batch3 = createMockBatchWithTransactions({tx3}, "batch3");
 
   cache.addToBack({batch1});
   /**
@@ -108,9 +117,7 @@ TEST(OnDemandCache, Pop) {
  * from batch1
  * @then only batch2 remains on the head of the queue
  */
-TEST(OnDemandCache, Remove) {
-  OnDemandCache cache;
-
+TEST_F(OnDemandCacheTest, Remove) {
   shared_model::interface::types::HashType hash1("hash1");
   shared_model::interface::types::HashType hash2("hash2");
   shared_model::interface::types::HashType hash3("hash3");

@@ -79,7 +79,9 @@ TEST_F(OnDemandOrderingGateTest, propagateBatch) {
   auto batch = createMockBatchWithHash(hash1);
   OdOsNotification::CollectionType collection{batch};
 
-  EXPECT_CALL(*cache, addToBack(UnorderedElementsAre(batch))).Times(1);
+  EXPECT_CALL(*cache, addToBack(UnorderedElementsAre(batch)))
+      .Times(1)
+      .WillOnce(Return(true));
   EXPECT_CALL(*notification, onBatches(collection)).Times(1);
 
   ordering_gate->propagateBatch(batch);

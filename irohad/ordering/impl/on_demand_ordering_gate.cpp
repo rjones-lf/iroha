@@ -75,12 +75,16 @@ OnDemandOrderingGate::~OnDemandOrderingGate() {
   events_subscription_.unsubscribe();
 }
 
-void OnDemandOrderingGate::propagateBatch(
+bool OnDemandOrderingGate::propagateBatch(
     std::shared_ptr<shared_model::interface::TransactionBatch> batch) {
-  cache_->addToBack({batch});
+  bool cached = cache_->addToBack({batch});
+  if (not cached) {
+    return false;
+  }
 
   network_client_->onBatches(
       transport::OdOsNotification::CollectionType{batch});
+  return true;
 }
 
 rxcpp::observable<network::OrderingEvent> OnDemandOrderingGate::onProposal() {
