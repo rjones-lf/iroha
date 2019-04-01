@@ -10,7 +10,6 @@
 #include <boost/range/algorithm/find.hpp>
 #include <boost/range/combine.hpp>
 #include "common/set.hpp"
-#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/transaction.hpp"
 #include "logger/logger.hpp"
 
@@ -108,6 +107,7 @@ namespace iroha {
     std::for_each(internal_state_.cbegin(), internal_state_.cend(), visitor);
   }
 
+  /*
   void MstState::iterateTransactions(
       std::function<
           void(const std::shared_ptr<shared_model::interface::Transaction> &)>
@@ -118,6 +118,7 @@ namespace iroha {
                     visitor);
     }
   }
+  */
 
   // ------------------------------| private api |------------------------------
 

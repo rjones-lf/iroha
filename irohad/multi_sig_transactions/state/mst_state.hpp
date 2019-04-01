@@ -6,6 +6,7 @@
 #ifndef IROHA_MST_STATE_HPP
 #define IROHA_MST_STATE_HPP
 
+#include <algorithm>
 #include <chrono>
 #include <functional>
 #include <queue>
@@ -15,6 +16,7 @@
 #include "logger/logger_fwd.hpp"
 #include "multi_sig_transactions/hash.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 
 namespace iroha {
 
@@ -153,10 +155,14 @@ namespace iroha {
     void iterateBatches(std::function<void(const DataType &)> visitor) const;
 
     /// Apply visitor to all transactions.
-    void iterateTransactions(
-        std::function<
-            void(const std::shared_ptr<shared_model::interface::Transaction> &)>
-            visitor) const;
+    template <typename Visitor>
+    inline void iterateTransactions(const Visitor &visitor) const {
+      for (const auto &batch : internal_state_) {
+        std::for_each(batch->transactions().cbegin(),
+                      batch->transactions().cend(),
+                      visitor);
+      }
+    }
 
    private:
     // --------------------------| private api |------------------------------
