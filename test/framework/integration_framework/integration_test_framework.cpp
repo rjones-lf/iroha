@@ -132,9 +132,12 @@ namespace integration_framework {
             std::make_shared<
                 shared_model::interface::TransactionBatchFactoryImpl>()),
         tx_presence_cache_(std::make_shared<AlwaysMissingTxPresenceCache>()),
-        yac_transport_(std::make_shared<iroha::consensus::yac::NetworkImpl>(
-            async_call_,
-            log_manager_->getChild("ConsensusTransport")->getLogger())),
+        yac_transport_(
+            std::make_shared<iroha::consensus::yac::YacNetworkSender>(
+                std::make_shared<iroha::consensus::yac::NetworkImpl>(
+                    async_call_,
+                    log_manager_->getChild("ConsensusTransport")
+                        ->getLogger()))),
         cleanup_on_exit_(cleanup_on_exit) {}
 
   IntegrationTestFramework::~IntegrationTestFramework() {
@@ -571,7 +574,7 @@ namespace integration_framework {
 
   IntegrationTestFramework &IntegrationTestFramework::sendYacState(
       const std::vector<iroha::consensus::yac::VoteMessage> &yac_state) {
-    yac_transport_->sendState(*this_peer_, yac_state);
+    yac_transport_->sendState(this_peer_, yac_state);
     return *this;
   }
 

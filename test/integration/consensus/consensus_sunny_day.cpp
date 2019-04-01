@@ -12,6 +12,7 @@
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "consensus/yac/storage/yac_vote_storage.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
+#include "consensus/yac/transport/impl/yac_network_sender.hpp"
 #include "consensus/yac/yac.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 
@@ -101,6 +102,7 @@ class ConsensusSunnyDayTest : public ::testing::Test {
         getTestLogger("AsyncCall"));
     network =
         std::make_shared<NetworkImpl>(async_call, getTestLogger("YacNetwork"));
+    auto yac_network_wrapper = std::make_shared<YacNetworkSender>(network);
     crypto = std::make_shared<FixedCryptoProvider>(my_pub_key);
     timer = std::make_shared<TimerImpl>([this] {
       // static factory with a single thread
@@ -117,12 +119,12 @@ class ConsensusSunnyDayTest : public ::testing::Test {
         YacVoteStorage(cleanup_strategy,
                        getSupermajorityChecker(kConsistencyModel),
                        getTestLoggerManager()->getChild("YacVoteStorage")),
-        network,
+        yac_network_wrapper,
         crypto,
         timer,
         order.value(),
         getTestLogger("Yac"));
-    network->subscribe(yac);
+    yac_network_wrapper->subscribe(yac);
 
     grpc::ServerBuilder builder;
     int port = 0;

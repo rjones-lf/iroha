@@ -82,8 +82,9 @@ class BasicMstPropagationFixture : public AcceptanceFixture {
  * @when such transaction is sent to one of two iroha peers in the network
  * @then that peer propagates MST state to another peer
  */
+// TODO: 2019-03-27 @muratovv the test is blocked by IR-276
 TEST_F(BasicMstPropagationFixture,
-       MstStateOfTransactionWithoutAllSignaturesPropagtesToOtherPeer) {
+       DISABLED_MstStateOfTransactionWithoutAllSignaturesPropagtesToOtherPeer) {
   auto notifications_getter =
       std::make_shared<iroha::MockMstTransportNotification>();
   std::mutex mst_mutex;
