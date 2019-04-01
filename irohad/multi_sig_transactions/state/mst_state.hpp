@@ -6,9 +6,8 @@
 #ifndef IROHA_MST_STATE_HPP
 #define IROHA_MST_STATE_HPP
 
-#include <algorithm>
+#include <algorithm>  // std::for_each
 #include <chrono>
-#include <functional>
 #include <queue>
 #include <unordered_set>
 #include <vector>
@@ -152,7 +151,10 @@ namespace iroha {
     bool contains(const DataType &element) const;
 
     /// Apply visitor to all batches.
-    void iterateBatches(std::function<void(const DataType &)> visitor) const;
+    template <typename Visitor>
+    inline void iterateBatches(const Visitor &visitor) const {
+      std::for_each(internal_state_.cbegin(), internal_state_.cend(), visitor);
+    }
 
     /// Apply visitor to all transactions.
     template <typename Visitor>
