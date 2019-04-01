@@ -122,8 +122,7 @@ namespace iroha {
       auto transactions = deserializeTransactions(request);
 
       auto batches = batch_parser_->parseBatches(transactions);
-      std::vector<const shared_model::interface::types::HashType>
-          unprocessed_batches;
+      std::vector<shared_model::interface::types::HashType> unprocessed_batches;
 
       for (auto &batch : batches) {
         batch_factory_->createTransactionBatch(batch).match(
