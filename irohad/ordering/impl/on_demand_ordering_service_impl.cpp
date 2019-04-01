@@ -61,12 +61,13 @@ void OnDemandOrderingServiceImpl::onBatches(CollectionType batches) {
                     batch->reducedHash().hex());
         return not this->batchAlreadyProcessed(*batch);
       });
-  std::for_each(unprocessed_batches.begin(),
-                unprocessed_batches.end(),
-                [this](auto &obj) {
-                  std::shared_lock<std::shared_timed_mutex> lock(write_mutex_);
-                  current_round_batches_.insert(std::move(obj));
-                });
+  std::for_each(
+      unprocessed_batches.begin(),
+      unprocessed_batches.end(),
+      [this](auto &obj) {
+        std::shared_lock<std::shared_timed_mutex> lock(batches_mutex_);
+        current_round_batches_.insert(std::move(obj));
+      });
   log_->info("onBatches => collection size = {}", batches.size());
 }
 
@@ -77,7 +78,7 @@ OnDemandOrderingServiceImpl::onRequestProposal(consensus::Round round) {
       std::shared_ptr<const OnDemandOrderingServiceImpl::ProposalType>>
       result;
   {
-    std::shared_lock<std::shared_timed_mutex> lock(read_mutex_);
+    std::shared_lock<std::shared_timed_mutex> lock(proposals_mutex_);
     auto it = proposal_map_.find(round);
     result = boost::make_optional(it != proposal_map_.end(), it->second);
   }
@@ -166,7 +167,7 @@ void OnDemandOrderingServiceImpl::packNextProposals(
    */
   detail::BatchSetType current_round_batches;
   {
-    std::lock_guard<std::shared_timed_mutex> lock(write_mutex_);
+    std::lock_guard<std::shared_timed_mutex> lock(batches_mutex_);
     current_round_batches.swap(current_round_batches_);
   }
 
@@ -215,13 +216,16 @@ void OnDemandOrderingServiceImpl::packNextProposals(
 
 void OnDemandOrderingServiceImpl::tryErase(
     const consensus::Round &current_round) {
+  // find first round that is not less than current_round
   auto current_proposal_it = proposal_map_.lower_bound(current_round);
+  // save at most number_of_proposals_ rounds that are less than current_round
   for (size_t i = 0; i < number_of_proposals_
        and current_proposal_it != proposal_map_.begin();
        ++i) {
     current_proposal_it--;
   }
 
+  // do not proceed if there is nothing to remove
   if (current_proposal_it == proposal_map_.begin()) {
     return;
   }
@@ -230,7 +234,7 @@ void OnDemandOrderingServiceImpl::tryErase(
                                        proposal_map_.end()};
 
   {
-    std::lock_guard<std::shared_timed_mutex> lock(read_mutex_);
+    std::lock_guard<std::shared_timed_mutex> lock(proposals_mutex_);
     proposal_map_.swap(proposal_map);
   }
 

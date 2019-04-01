@@ -111,7 +111,7 @@ namespace iroha {
       /**
        * Read and write mutexes for public methods
        */
-      std::shared_timed_mutex write_mutex_, read_mutex_;
+      std::shared_timed_mutex batches_mutex_, proposals_mutex_;
 
       std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
           proposal_factory_;
