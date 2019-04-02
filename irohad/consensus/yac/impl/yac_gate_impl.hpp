@@ -64,9 +64,10 @@ namespace iroha {
         std::shared_ptr<simulator::BlockCreator> block_creator_;
         std::shared_ptr<consensus::ConsensusResultCache>
             consensus_result_cache_;
-        // hash_gate_ should be destroyed first as it manages the pipeline
-        // thread
+        // hash_gate_ should be destroyed before other components because it
+        // manages the pipeline thread
         std::shared_ptr<HashGate> hash_gate_;
+        rxcpp::observable<GateObject> published_events_;
       };
 
     }  // namespace yac
