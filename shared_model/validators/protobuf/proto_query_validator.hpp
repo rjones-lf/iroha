@@ -19,6 +19,12 @@ namespace shared_model {
       Answer validate(const iroha::protocol::Query &query) const override;
     };
 
+    class ProtoBlocksQueryValidator
+        : public AbstractValidator<iroha::protocol::BlocksQuery> {
+     public:
+      Answer validate(const iroha::protocol::BlocksQuery &) const override;
+    };
+
   }  // namespace validation
 }  // namespace shared_model
 

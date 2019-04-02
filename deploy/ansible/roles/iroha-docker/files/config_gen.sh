@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 FORCE_OVERWRITE=0
 OUT_DIR='config'

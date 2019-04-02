@@ -72,7 +72,6 @@ namespace shared_model {
       Blob *clone() const override;
 
      private:
-      // TODO: 17/11/2017 luckychess use improved Lazy with references support
       Bytes blob_;
       std::string hex_;
     };

@@ -38,8 +38,7 @@ namespace shared_model {
       interface::types::BlobType reduced_payload_blob_{
           [this] { return makeBlob(reduced_payload_); }()};
 
-      interface::types::HashType reduced_hash_{
-          shared_model::crypto::Sha3_256::makeHash(reduced_payload_blob_)};
+      interface::types::HashType reduced_hash_{makeHash(reduced_payload_blob_)};
 
       std::vector<proto::Command> commands_{
           reduced_payload_.mutable_commands()->begin(),
@@ -62,6 +61,8 @@ namespace shared_model {
         return SignatureSetType<proto::Signature>(signatures.begin(),
                                                   signatures.end());
       }()};
+
+      interface::types::HashType hash_{makeHash(payload_blob_)};
     };  // namespace proto
 
     Transaction::Transaction(const TransportType &transaction) {
@@ -140,6 +141,10 @@ namespace shared_model {
       }();
 
       return true;
+    }
+
+    const interface::types::HashType &Transaction::hash() const {
+      return impl_->hash_;
     }
 
     const Transaction::TransportType &Transaction::getTransport() const {

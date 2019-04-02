@@ -15,7 +15,10 @@ at ``example/config.sample``
     "max_proposal_size": 10,
     "proposal_delay": 5000,
     "vote_delay": 5000,
-    "mst_enable" : false
+    "mst_enable" : false,
+    "mst_expiration_time" : 1440,
+    "max_rounds_delay": 3000,
+    "stale_stream_max_rounds": 2
   }
 
 As you can see, configuration file is a valid ``json`` structure. Let's go 
@@ -53,9 +56,31 @@ Environment-specific parameters
   next peer. Optimal value depends heavily on the amount of Iroha peers in the
   network (higher amount of nodes requires longer ``vote_delay``). We recommend
   to start with 100-1000 milliseconds.
-- ``mst_enable`` enables or disables multisignature transaction support in
-  Iroha. We recommend setting this parameter to ``false`` at the moment until
-  you really need it.
+- ``mst_enable`` enables or disables multisignature transaction network
+  transport in Iroha. We recommend setting this parameter to ``false`` at the
+  moment until you really need it.
+  ``mst_expiration_time`` is an optional parameter specifying the time period
+  in which a not fully signed transaction (or a batch) is considered expired
+  (in minutes).
+  The default value is 1440.
+- ``max_rounds_delay`` is an optional parameter specifying the maximum delay
+  between two consensus rounds (in milliseconds).
+  The default value is 3000.
+  When Iroha is idle, it gradually increases the delay to reduce CPU, network
+  and logging load.
+  However too long delay may be unwanted when first transactions arrive after a
+  long idle time.
+  This parameter allows users to find an optimal value in a tradeoff between
+  resource consumption and the delay of getting back to work after an idle
+  period.
+- ``stale_stream_max_rounds`` is an optional parameter specifying the maximum
+  amount of rounds to keep an open status stream while no status update is
+  reported.
+  The default value is 2.
+  Increasing this value reduces the amount of times a client must reconnect to
+  track a transaction if for some reason it is not updated with new rounds.
+  However large values increase the average number of connected clients during
+  each round.
 
 Logging
 -------

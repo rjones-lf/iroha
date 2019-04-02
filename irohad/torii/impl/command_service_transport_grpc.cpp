@@ -16,6 +16,7 @@
 #include <boost/range/adaptor/transformed.hpp>
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 #include "common/combine_latest_until_first_completed.hpp"
+#include "common/run_loop_handler.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser.hpp"
@@ -165,33 +166,6 @@ namespace iroha {
       return grpc::Status::OK;
     }
 
-    namespace {
-      void handleEvents(rxcpp::composite_subscription &subscription,
-                        rxcpp::schedulers::run_loop &run_loop) {
-        std::condition_variable wait_cv;
-
-        run_loop.set_notify_earlier_wakeup(
-            [&wait_cv](const auto &) { wait_cv.notify_one(); });
-
-        std::mutex wait_mutex;
-        std::unique_lock<std::mutex> lock(wait_mutex);
-        while (subscription.is_subscribed() or not run_loop.empty()) {
-          while (not run_loop.empty()
-                 and run_loop.peek().when <= run_loop.now()) {
-            run_loop.dispatch();
-          }
-
-          if (run_loop.empty()) {
-            wait_cv.wait(lock, [&run_loop, &subscription]() {
-              return not subscription.is_subscribed() or not run_loop.empty();
-            });
-          } else {
-            wait_cv.wait_until(lock, run_loop.peek().when);
-          }
-        }
-      }
-    }  // namespace
-
     grpc::Status CommandServiceTransportGrpc::StatusStream(
         grpc::ServerContext *context,
         const iroha::protocol::TxStatusRequest *request,
@@ -271,7 +245,7 @@ namespace iroha {
 
       // run loop while subscription is active or there are pending events in
       // the queue
-      handleEvents(subscription, rl);
+      iroha::schedulers::handleEvents(subscription, rl);
 
       log_->debug("status stream done, {}", client_id);
       return grpc::Status::OK;

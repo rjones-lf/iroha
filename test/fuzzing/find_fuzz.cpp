@@ -60,8 +60,23 @@ struct QueryFixture {
             shared_model::interface::Query,
             shared_model::proto::Query>>(std::move(query_validator),
                                          std::move(proto_query_validator));
+
+    auto blocks_query_validator = std::make_unique<
+        shared_model::validation::DefaultSignedBlocksQueryValidator>();
+    auto proto_blocks_query_validator =
+        std::make_unique<shared_model::validation::ProtoBlocksQueryValidator>();
+    auto blocks_query_factory =
+        std::make_shared<shared_model::proto::ProtoTransportFactory<
+            shared_model::interface::BlocksQuery,
+            shared_model::proto::BlocksQuery>>(
+            std::move(blocks_query_validator),
+            std::move(proto_blocks_query_validator));
+
     service_ = std::make_shared<iroha::torii::QueryService>(
-        qry_processor_, query_factory, logger::getDummyLoggerPtr());
+        qry_processor_,
+        query_factory,
+        blocks_query_factory,
+        logger::getDummyLoggerPtr());
   }
 };
 

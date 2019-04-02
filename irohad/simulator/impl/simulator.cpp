@@ -149,6 +149,9 @@ namespace iroha {
                                             rejected_hashes);
       crypto_signer_->sign(*block);
 
+      // TODO 2019-03-15 andrei: IR-404 Make last_block an explicit dependency
+      last_block.reset();
+
       return block;
     }
 

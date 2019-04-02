@@ -59,10 +59,13 @@ namespace iroha {
           auto vote = *PbConverters::deserializeVote(pb_vote, log_);
           state.push_back(vote);
         }
+        if (state.empty()) {
+          log_->info("Received an empty votes collection");
+          return grpc::Status::CANCELLED;
+        }
         if (not sameKeys(state)) {
           log_->info(
-              "Votes are stateless invalid: proposals are different, or empty "
-              "collection");
+              "Votes are statelessly invalid: proposal rounds are different");
           return grpc::Status::CANCELLED;
         }
 

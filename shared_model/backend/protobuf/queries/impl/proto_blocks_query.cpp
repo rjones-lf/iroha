@@ -20,7 +20,8 @@ namespace shared_model {
               set.emplace(proto_->signature());
             }
             return set;
-          }()} {}
+          }()},
+          hash_(makeHash(payload_)) {}
 
     template BlocksQuery::BlocksQuery(BlocksQuery::TransportType &);
     template BlocksQuery::BlocksQuery(const BlocksQuery::TransportType &);
@@ -64,6 +65,10 @@ namespace shared_model {
       // TODO: nickaleks IR-120 12.12.2018 remove set
       signatures_.emplace(proto_->signature());
       return true;
+    }
+
+    const interface::types::HashType &BlocksQuery::hash() const {
+      return hash_;
     }
 
     interface::types::TimestampType BlocksQuery::createdTime() const {
