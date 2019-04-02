@@ -3,9 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "consensus/yac/transport/impl/network_impl.hpp"
+
 #include <grpc++/grpc++.h>
 
-#include "consensus/yac/transport/impl/network_impl.hpp"
 #include "consensus/yac/transport/yac_pb_converters.hpp"
 #include "framework/mock_stream.h"
 #include "framework/test_logger.hpp"
@@ -62,8 +63,6 @@ namespace iroha {
         std::shared_ptr<NetworkImpl> network;
         std::shared_ptr<shared_model::interface::Peer> peer;
         VoteMessage message;
-        shared_model::crypto::PublicKey pubkey =
-            shared_model::crypto::PublicKey{""};
         iroha::consensus::yac::proto::MockYacStub *stub;
       };
 
