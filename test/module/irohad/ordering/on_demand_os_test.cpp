@@ -194,8 +194,11 @@ TEST_F(OnDemandOsTest, DISABLED_ConcurrentInsert) {
 
 /**
  * @given initialized on-demand OS
- * @when  insert commit round and then proposal_limit reject rounds
+ * @when  insert commit round and then proposal_limit + 2 reject rounds
  * @then  first proposal still not expired
+ *
+ * proposal_limit + 2 reject rounds are required in order to trigger deletion in
+ * tryErase
  */
 TEST_F(OnDemandOsTest, Erase) {
   generateTransactionsAndInsert({1, 2});
@@ -204,11 +207,11 @@ TEST_F(OnDemandOsTest, Erase) {
   ASSERT_TRUE(os->onRequestProposal(
       {commit_round.block_round + 1, commit_round.reject_round}));
 
-  for (auto i = commit_round.reject_round;
-       i < commit_round.reject_round + proposal_limit;
+  for (auto i = commit_round.reject_round + 1;
+       i < (commit_round.reject_round + 1) + (proposal_limit + 2);
        ++i) {
     generateTransactionsAndInsert({1, 2});
-    os->onCollaborationOutcome({commit_round.block_round + 1, i});
+    os->onCollaborationOutcome({commit_round.block_round, i});
   }
   ASSERT_TRUE(os->onRequestProposal(
       {commit_round.block_round + 1, commit_round.reject_round}));
