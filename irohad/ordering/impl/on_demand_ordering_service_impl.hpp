@@ -29,6 +29,10 @@ namespace iroha {
           transport::OdOsNotification::TransactionBatchType,
           model::PointerBatchHasher,
           BatchHashEquality>;
+
+      using ProposalMapType = std::map<
+          consensus::Round,
+          std::shared_ptr<const transport::OdOsNotification::ProposalType>>;
     }  // namespace detail
 
     class OnDemandOrderingServiceImpl : public OnDemandOrderingService {
@@ -98,8 +102,7 @@ namespace iroha {
       /**
        * Map of available proposals
        */
-      std::map<consensus::Round, std::shared_ptr<const ProposalType>>
-          proposal_map_;
+      detail::ProposalMapType proposal_map_;
 
       /**
        * Collections of batches for current round
@@ -107,9 +110,9 @@ namespace iroha {
       detail::BatchSetType pending_batches_;
 
       /**
-       * Read write mutex for public methods
+       * Batches and proposal collection mutexes for public methods
        */
-      std::shared_timed_mutex lock_;
+      std::shared_timed_mutex batches_mutex_, proposals_mutex_;
 
       std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
           proposal_factory_;

@@ -43,7 +43,7 @@ namespace iroha {
   DefaultCompleter::DefaultCompleter(std::chrono::minutes expiration_time)
       : expiration_time_(expiration_time) {}
 
-  bool DefaultCompleter::operator()(const DataType &batch) const {
+  bool DefaultCompleter::isCompleted(const DataType &batch) const {
     return std::all_of(batch->transactions().begin(),
                        batch->transactions().end(),
                        [](const auto &tx) {
@@ -51,11 +51,11 @@ namespace iroha {
                        });
   }
 
-  bool DefaultCompleter::operator()(const DataType &batch,
-                                    const TimeType &time) const {
+  bool DefaultCompleter::isExpired(const DataType &batch,
+                                   const TimeType &current_time) const {
     return oldestTimestamp(batch)
         + expiration_time_ / std::chrono::milliseconds(1)
-        < time;
+        < current_time;
   }
 
   // ------------------------------| public api |-------------------------------
@@ -97,15 +97,14 @@ namespace iroha {
 
   bool MstState::operator==(const MstState &rhs) const {
     return boost::size(batches_) == boost::size(rhs.batches_)
-        and boost::algorithm::all_of(boost::combine(batches_.right,
-                                                    rhs.batches_.right),
-                                     [](const auto &two_rels) {
-                                       const auto &r1 = boost::get<0>(two_rels);
-                                       const auto &r2 = boost::get<1>(two_rels);
-                                       return r1.second == r2.second
-                                           and r1.first->reducedHash()
-                                           == r2.first->reducedHash();
-                                     });
+        and boost::algorithm::all_of(
+                boost::combine(batches_.right, rhs.batches_.right),
+                [](const auto &two_rels) {
+                  const auto &r1 = boost::get<0>(two_rels);
+                  const auto &r2 = boost::get<1>(two_rels);
+                  return r1.second == r2.second
+                      and r1.first->reducedHash() == r2.first->reducedHash();
+                });
   }
 
   bool MstState::isEmpty() const {
@@ -120,15 +119,14 @@ namespace iroha {
     return {batches_range.begin(), batches_range.end()};
   }
 
-  MstState MstState::eraseByTime(const TimeType &time) {
+  MstState MstState::extractExpired(const TimeType &current_time) {
     MstState out = MstState::empty(log_, completer_);
-    for (auto it = batches_.left.begin();
-         it != batches_.left.end() and (*completer_)(it->second, time);) {
-      out += it->second;
-      it = batches_.left.erase(it);
-      assert(it == batches_.left.begin());
-    }
+    extractExpiredImpl(current_time, out);
     return out;
+  }
+
+  void MstState::eraseExpired(const TimeType &current_time) {
+    extractExpiredImpl(current_time, boost::none);
   }
 
   // ------------------------------| private api |------------------------------
@@ -190,7 +188,7 @@ namespace iroha {
     // Append new signatures to the existing state
     auto inserted_new_signatures = mergeSignaturesInBatch(found, rhs_batch);
 
-    if ((*completer_)(found)) {
+    if (completer_->isCompleted(found)) {
       // state already has completed transaction,
       // remove from state and return it
       batches_.right.erase(found);
@@ -212,6 +210,18 @@ namespace iroha {
 
   bool MstState::contains(const DataType &element) const {
     return batches_.right.find(element) != batches_.right.end();
+  }
+
+  void MstState::extractExpiredImpl(const TimeType &current_time,
+                                    boost::optional<MstState &> extracted) {
+    for (auto it = batches_.left.begin(); it != batches_.left.end()
+         and completer_->isExpired(it->second, current_time);) {
+      if (extracted) {
+        *extracted += it->second;
+      }
+      it = batches_.left.erase(it);
+      assert(it == batches_.left.begin());
+    }
   }
 
 }  // namespace iroha

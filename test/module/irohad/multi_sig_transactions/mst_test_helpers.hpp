@@ -107,7 +107,7 @@ namespace iroha {
    public:
     explicit TestCompleter() : DefaultCompleter(std::chrono::minutes(0)) {}
 
-    bool operator()(const DataType &batch) const override {
+    bool isCompleted(const DataType &batch) const override {
       return std::all_of(batch->transactions().begin(),
                          batch->transactions().end(),
                          [](const auto &tx) {
@@ -115,12 +115,13 @@ namespace iroha {
                          });
     }
 
-    bool operator()(const DataType &batch,
-                    const TimeType &time) const override {
-      return std::any_of(
-          batch->transactions().begin(),
-          batch->transactions().end(),
-          [&time](const auto &tx) { return tx->createdTime() < time; });
+    bool isExpired(const DataType &batch,
+                   const TimeType &current_time) const override {
+      return std::any_of(batch->transactions().begin(),
+                         batch->transactions().end(),
+                         [&current_time](const auto &tx) {
+                           return tx->createdTime() < current_time;
+                         });
     }
   };
 }  // namespace iroha

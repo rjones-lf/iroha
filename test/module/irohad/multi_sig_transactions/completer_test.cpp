@@ -49,7 +49,7 @@ TEST(CompleterTest, BatchQuorumTestEnoughSignatures) {
           sigs3 | boost::adaptors::indirected));
 
   auto batch = createMockBatchWithTransactions({tx1, tx2, tx3}, "");
-  ASSERT_TRUE((*completer)(batch));
+  ASSERT_TRUE(completer->isCompleted(batch));
 }
 
 /**
@@ -86,7 +86,7 @@ TEST(CompleterTest, BatchQuorumTestNotEnoughSignatures) {
   EXPECT_CALL(*tx3, signatures()).Times(0);
 
   auto batch = createMockBatchWithTransactions({tx1, tx2, tx3}, "");
-  ASSERT_FALSE((*completer)(batch));
+  ASSERT_FALSE(completer->isCompleted(batch));
 }
 
 /**
@@ -105,7 +105,7 @@ TEST(CompleterTest, BatchExpirationTestExpired) {
   auto tx3 = std::make_shared<MockTransaction>();
   EXPECT_CALL(*tx3, createdTime()).WillRepeatedly(Return(time));
   auto batch = createMockBatchWithTransactions({tx1, tx2, tx3}, "");
-  ASSERT_TRUE((*completer)(
+  ASSERT_TRUE(completer->isExpired(
       batch, time + std::chrono::minutes(2) / std::chrono::milliseconds(1)));
 }
 
@@ -132,5 +132,5 @@ TEST(CompleterTest, BatchExpirationTestNoExpired) {
       .WillRepeatedly(Return(
           time + std::chrono::minutes(4) / std::chrono::milliseconds(1)));
   auto batch = createMockBatchWithTransactions({tx1, tx2, tx3}, "");
-  ASSERT_FALSE((*completer)(batch, time));
+  ASSERT_FALSE(completer->isExpired(batch, time));
 }
