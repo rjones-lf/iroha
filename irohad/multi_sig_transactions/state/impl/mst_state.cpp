@@ -106,12 +106,11 @@ namespace iroha {
 
   MstState MstState::eraseByTime(const TimeType &time) {
     MstState out = MstState::empty(log_, completer_);
-    while (not index_.empty() and (*completer_)(index_.top(), time)) {
-      auto iter = internal_state_.find(index_.top());
-
-      out += *iter;
-      internal_state_.erase(iter);
-      index_.pop();
+    for (auto it = index_.left.begin();
+         it != index_.left.end() and (*completer_)(it->second, time);) {
+      out += it->second;
+      internal_state_.erase(it->second);
+      it = index_.left.erase(it);
     }
     return out;
   }
@@ -152,12 +151,15 @@ namespace iroha {
       : MstState(completer, InternalStateType{}, std::move(log)) {}
 
   MstState::MstState(const CompleterType &completer,
-                     const InternalStateType &transactions,
+                     const InternalStateType &batches,
                      logger::LoggerPtr log)
       : completer_(completer),
-        internal_state_(transactions.begin(), transactions.end()),
-        index_(transactions.begin(), transactions.end()),
-        log_(std::move(log)) {}
+        internal_state_(batches.begin(), batches.end()),
+        log_(std::move(log)) {
+          for (const auto &batch : batches) {
+            index_.insert(IndexType::value_type(oldestTimestamp(batch), batch));
+          }
+        }
 
   void MstState::insertOne(StateUpdateResult &state_update,
                            const DataType &rhs_batch) {
@@ -191,7 +193,7 @@ namespace iroha {
 
   void MstState::rawInsert(const DataType &rhs_batch) {
     internal_state_.insert(rhs_batch);
-    index_.push(rhs_batch);
+    index_.insert(IndexType::value_type(oldestTimestamp(rhs_batch), rhs_batch));
   }
 
   bool MstState::contains(const DataType &element) const {
