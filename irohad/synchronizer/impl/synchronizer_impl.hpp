@@ -61,6 +61,7 @@ namespace iroha {
       std::shared_ptr<network::BlockLoader> block_loader_;
 
       // internal
+      rxcpp::composite_subscription notifier_lifetime_;
       rxcpp::subjects::subject<SynchronizationEvent> notifier_;
       rxcpp::composite_subscription subscription_;
 

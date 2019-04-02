@@ -88,6 +88,8 @@ namespace iroha {
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
           const logger::LoggerManagerTreePtr &ordering_log_manager);
 
+      rxcpp::composite_subscription notifier_lifetime_;
+
      public:
       /// Constructor.
       /// @param log - the logger to use for internal messages.
@@ -98,7 +100,8 @@ namespace iroha {
       /**
        * Initializes on-demand ordering gate and ordering sevice components
        *
-       * @param max_number_of_transactions maximum number of transaction in a proposal
+       * @param max_number_of_transactions maximum number of transaction in a
+       * proposal
        * @param delay timeout for ordering service response on proposal request
        * @param initial_hashes seeds for peer list permutations for first k
        * rounds they are required since hash of block i defines round i + k

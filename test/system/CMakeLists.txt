@@ -3,6 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+# Required by Boost.Process
+add_definitions(-UBOOST_NO_IOSTREAM)
+
 addtest(irohad_test irohad_test.cpp)
 target_link_libraries(irohad_test
         boost

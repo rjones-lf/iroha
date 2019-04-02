@@ -6,16 +6,17 @@
 #ifndef IROHA_YAC_HPP
 #define IROHA_YAC_HPP
 
-#include <boost/optional.hpp>
+#include "consensus/yac/transport/yac_network_interface.hpp"  // for YacNetworkNotifications
+#include "consensus/yac/yac_gate.hpp"                         // for HashGate
+
 #include <memory>
 #include <mutex>
-#include <rxcpp/rx.hpp>
 
+#include <boost/optional.hpp>
+#include <rxcpp/rx.hpp>
 #include "consensus/yac/cluster_order.hpp"     //  for ClusterOrdering
 #include "consensus/yac/outcome_messages.hpp"  // because messages passed by value
 #include "consensus/yac/storage/yac_vote_storage.hpp"  // for VoteStorage
-#include "consensus/yac/transport/yac_network_interface.hpp"  // for YacNetworkNotifications
-#include "consensus/yac/yac_gate.hpp"                         // for HashGate
 #include "logger/logger_fwd.hpp"
 
 namespace iroha {
@@ -37,6 +38,8 @@ namespace iroha {
             std::shared_ptr<YacCryptoProvider> crypto,
             std::shared_ptr<Timer> timer,
             ClusterOrdering order,
+            Round round,
+            rxcpp::observe_on_one_worker worker,
             logger::LoggerPtr log);
 
         Yac(YacVoteStorage vote_storage,
@@ -44,7 +47,11 @@ namespace iroha {
             std::shared_ptr<YacCryptoProvider> crypto,
             std::shared_ptr<Timer> timer,
             ClusterOrdering order,
+            Round round,
+            rxcpp::observe_on_one_worker worker,
             logger::LoggerPtr log);
+
+        ~Yac() override;
 
         // ------|Hash gate|------
 
@@ -67,8 +74,9 @@ namespace iroha {
 
         /**
          * Erase temporary data of current round
+         * @param round received from the network
          */
-        void closeRound();
+        void closeRound(Round round);
 
         /**
          * Find corresponding peer in the ledger from vote message
@@ -91,15 +99,18 @@ namespace iroha {
         void tryPropagateBack(const std::vector<VoteMessage> &state);
 
         // ------|Fields|------
+        rxcpp::observe_on_one_worker worker_;
+        rxcpp::composite_subscription notifier_lifetime_;
+        rxcpp::subjects::synchronize<Answer, decltype(worker_)> notifier_;
         YacVoteStorage vote_storage_;
         std::shared_ptr<YacNetwork> network_;
         std::shared_ptr<YacCryptoProvider> crypto_;
         std::shared_ptr<Timer> timer_;
-        rxcpp::subjects::subject<Answer> notifier_;
         std::mutex mutex_;
 
         // ------|One round|------
         ClusterOrdering cluster_order_;
+        Round round_;
 
         // ------|Logger|------
         logger::LoggerPtr log_;

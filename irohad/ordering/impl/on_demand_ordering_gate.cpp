@@ -69,9 +69,11 @@ OnDemandOrderingGate::OnDemandOrderingGate(
       })),
       cache_(std::move(cache)),
       proposal_factory_(std::move(factory)),
-      tx_cache_(std::move(tx_cache)) {}
+      tx_cache_(std::move(tx_cache)),
+      proposal_notifier_(proposal_notifier_lifetime_) {}
 
 OnDemandOrderingGate::~OnDemandOrderingGate() {
+  proposal_notifier_lifetime_.unsubscribe();
   events_subscription_.unsubscribe();
 }
 

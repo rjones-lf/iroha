@@ -27,6 +27,7 @@ namespace iroha {
           mutable_factory_(std::move(mutable_factory)),
           block_query_factory_(std::move(block_query_factory)),
           block_loader_(std::move(block_loader)),
+          notifier_(notifier_lifetime_),
           log_(std::move(log)) {
       consensus_gate->onOutcome().subscribe(
           subscription_, [this](consensus::GateObject object) {
@@ -198,6 +199,7 @@ namespace iroha {
     }
 
     SynchronizerImpl::~SynchronizerImpl() {
+      notifier_lifetime_.unsubscribe();
       subscription_.unsubscribe();
     }
 

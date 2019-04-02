@@ -31,6 +31,7 @@ namespace iroha {
       class YacInit {
        public:
         std::shared_ptr<YacGate> initConsensusGate(
+            Round initial_round,
             std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
             std::shared_ptr<simulator::BlockCreator> block_creator,
             std::shared_ptr<network::BlockLoader> block_loader,

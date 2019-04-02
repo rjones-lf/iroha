@@ -103,6 +103,7 @@ Irohad::Irohad(const std::string &block_store_dir,
       opt_mst_gossip_params_(opt_mst_gossip_params),
       keypair(keypair),
       ordering_init(logger_manager->getLogger()),
+      consensus_gate_objects(consensus_gate_objects_lifetime),
       log_manager_(std::move(logger_manager)),
       log_(log_manager_->getLogger()) {
   log_->info("created");
@@ -112,6 +113,7 @@ Irohad::Irohad(const std::string &block_store_dir,
 }
 
 Irohad::~Irohad() {
+  consensus_gate_objects_lifetime.unsubscribe();
   consensus_gate_events_subscription.unsubscribe();
 }
 
@@ -444,8 +446,25 @@ void Irohad::initBlockLoader() {
  * Initializing consensus gate
  */
 void Irohad::initConsensusGate() {
+  auto block_query = storage->createBlockQuery();
+  if (not block_query) {
+    log_->error("Failed to create block query");
+    return;
+  }
+  auto block_var = (*block_query)->getTopBlock();
+  if (auto e = boost::get<expected::Error<std::string>>(&block_var)) {
+    log_->error("Failed to get the top block: {}", e->error);
+    return;
+  }
+
+  auto block =
+      boost::get<
+          expected::Value<std::shared_ptr<shared_model::interface::Block>>>(
+          &block_var)
+          ->value;
   consensus_gate =
-      yac_init.initConsensusGate(storage,
+      yac_init.initConsensusGate({block->height(), ordering::kFirstRejectRound},
+                                 storage,
                                  simulator,
                                  block_loader,
                                  keypair,

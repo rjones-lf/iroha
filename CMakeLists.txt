@@ -172,6 +172,10 @@ SET(IROHA_ROOT_PROJECT ON)
 # which are generally faster
 add_definitions(-DBOOST_NO_RTTI)
 
+# Disabled to avoid compilation errors due to missing operator<<
+# for irohad classes
+add_definitions(-DBOOST_NO_IOSTREAM)
+
 include(FeatureSummary)
 include(cmake/dependencies.cmake)
 include(cmake/clang-cxx-dev-tools.cmake)

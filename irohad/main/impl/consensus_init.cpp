@@ -17,6 +17,7 @@
 #include "logger/logger_manager.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
 
+using namespace iroha::consensus;
 using namespace iroha::consensus::yac;
 
 namespace {
@@ -41,12 +42,14 @@ namespace {
 
   std::shared_ptr<Yac> createYac(
       ClusterOrdering initial_order,
+      Round initial_round,
       const shared_model::crypto::Keypair &keypair,
       std::shared_ptr<Timer> timer,
       std::shared_ptr<YacNetwork> network,
       std::shared_ptr<shared_model::interface::CommonObjectsFactory>
           common_objects_factory,
       ConsistencyModel consistency_model,
+      rxcpp::observe_on_one_worker coordination,
       const logger::LoggerManagerTreePtr &consensus_log_manager) {
     std::shared_ptr<iroha::consensus::yac::CleanupStrategy> cleanup_strategy =
         std::make_shared<iroha::consensus::yac::BufferedCleanupStrategy>();
@@ -58,6 +61,8 @@ namespace {
         createCryptoProvider(keypair, std::move(common_objects_factory)),
         std::move(timer),
         initial_order,
+        initial_round,
+        coordination,
         consensus_log_manager->getChild("HashGate")->getLogger());
   }
 }  // namespace
@@ -91,6 +96,7 @@ namespace iroha {
       }
 
       std::shared_ptr<YacGate> YacInit::initConsensusGate(
+          Round initial_round,
           std::shared_ptr<iroha::ametsuchi::PeerQueryFactory>
               peer_query_factory,
           std::shared_ptr<simulator::BlockCreator> block_creator,
@@ -116,11 +122,13 @@ namespace iroha {
             consensus_log_manager->getChild("Network")->getLogger());
 
         auto yac = createYac(peer_orderer->getInitialOrdering().value(),
+                             initial_round,
                              keypair,
                              createTimer(vote_delay_milliseconds),
                              consensus_network_,
                              std::move(common_objects_factory),
                              consistency_model,
+                             coordination_,
                              consensus_log_manager);
         consensus_network_->subscribe(yac);
 

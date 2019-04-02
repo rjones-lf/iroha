@@ -74,6 +74,7 @@ namespace iroha {
           block_store_(std::move(block_store)),
           connection_(std::move(connection)),
           factory_(std::move(factory)),
+          notifier_(notifier_lifetime_),
           converter_(std::move(converter)),
           perm_converter_(std::move(perm_converter)),
           block_storage_factory_(std::move(block_storage_factory)),
@@ -546,6 +547,7 @@ namespace iroha {
     }
 
     StorageImpl::~StorageImpl() {
+      notifier_lifetime_.unsubscribe();
       freeConnections();
     }
 

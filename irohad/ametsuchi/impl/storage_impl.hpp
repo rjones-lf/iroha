@@ -160,6 +160,7 @@ namespace iroha {
 
       std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
 
+      rxcpp::composite_subscription notifier_lifetime_;
       rxcpp::subjects::subject<
           std::shared_ptr<const shared_model::interface::Block>>
           notifier_;

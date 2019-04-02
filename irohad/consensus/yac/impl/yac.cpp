@@ -50,9 +50,17 @@ namespace iroha {
           std::shared_ptr<YacCryptoProvider> crypto,
           std::shared_ptr<Timer> timer,
           ClusterOrdering order,
+          Round round,
+          rxcpp::observe_on_one_worker worker,
           logger::LoggerPtr log) {
-        return std::make_shared<Yac>(
-            vote_storage, network, crypto, timer, order, std::move(log));
+        return std::make_shared<Yac>(vote_storage,
+                                     network,
+                                     crypto,
+                                     timer,
+                                     order,
+                                     round,
+                                     worker,
+                                     std::move(log));
       }
 
       Yac::Yac(YacVoteStorage vote_storage,
@@ -60,13 +68,22 @@ namespace iroha {
                std::shared_ptr<YacCryptoProvider> crypto,
                std::shared_ptr<Timer> timer,
                ClusterOrdering order,
+               Round round,
+               rxcpp::observe_on_one_worker worker,
                logger::LoggerPtr log)
-          : vote_storage_(std::move(vote_storage)),
+          : worker_(worker),
+            notifier_(worker_, notifier_lifetime_),
+            vote_storage_(std::move(vote_storage)),
             network_(std::move(network)),
             crypto_(std::move(crypto)),
             timer_(std::move(timer)),
             cluster_order_(order),
+            round_(round),
             log_(std::move(log)) {}
+
+      Yac::~Yac() {
+        notifier_lifetime_.unsubscribe();
+      }
 
       // ------|Hash gate|------
 
@@ -75,7 +92,10 @@ namespace iroha {
                    logger::to_string(order.getPeers(),
                                      [](auto val) { return val->address(); }));
 
+        std::unique_lock<std::mutex> lock(mutex_);
         cluster_order_ = order;
+        round_ = hash.vote_round;
+        lock.unlock();
         auto vote = crypto_->getVote(hash);
         // TODO 10.06.2018 andrei: IR-1407 move YAC propagation strategy to a
         // separate entity
@@ -135,6 +155,8 @@ namespace iroha {
       // ------|Private interface|------
 
       void Yac::votingStep(VoteMessage vote) {
+        std::unique_lock<std::mutex> lock(mutex_);
+
         auto committed = vote_storage_.isCommitted(vote.hash.vote_round);
         if (committed) {
           return;
@@ -150,13 +172,17 @@ namespace iroha {
 
         network_->sendState(current_leader, {vote});
         cluster_order_.switchToNext();
-        if (cluster_order_.hasNext()) {
+        auto has_next = cluster_order_.hasNext();
+        lock.unlock();
+        if (has_next) {
           timer_->invokeAfterDelay([this, vote] { this->votingStep(vote); });
         }
       }
 
-      void Yac::closeRound() {
-        timer_->deny();
+      void Yac::closeRound(Round round) {
+        if (round_ <= round) {
+          timer_->deny();
+        }
       }
 
       boost::optional<std::shared_ptr<shared_model::interface::Peer>>
@@ -218,7 +244,7 @@ namespace iroha {
                 case ProposalState::kSentNotProcessed:
                   vote_storage_.nextProcessingState(proposal_round);
                   log_->info("Pass outcome for {} to pipeline", proposal_round);
-                  this->closeRound();
+                  this->closeRound(proposal_round);
                   notifier_.get_subscriber().on_next(answer);
                   break;
                 case ProposalState::kSentProcessed:

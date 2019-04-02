@@ -17,19 +17,23 @@
 namespace {
 
   spdlog::level::level_enum getSpdlogLogLevel(logger::LogLevel level) {
-    static const std::map<logger::LogLevel, const spdlog::level::level_enum>
-        kSpdLogLevels = {
-            {logger::LogLevel::kTrace, spdlog::level::trace},
-            {logger::LogLevel::kDebug, spdlog::level::debug},
-            {logger::LogLevel::kInfo, spdlog::level::info},
-            {logger::LogLevel::kWarn, spdlog::level::warn},
-            {logger::LogLevel::kError, spdlog::level::err},
-            {logger::LogLevel::kCritical, spdlog::level::critical}};
-    const auto it = kSpdLogLevels.find(level);
-    BOOST_ASSERT_MSG(it != kSpdLogLevels.end(), "Unknown log level!");
-    return it == kSpdLogLevels.end()
-        ? kSpdLogLevels.at(logger::kDefaultLogLevel)
-        : it->second;
+    switch (level) {
+      case logger::LogLevel::kTrace:
+        return spdlog::level::trace;
+      case logger::LogLevel::kDebug:
+        return spdlog::level::debug;
+      case logger::LogLevel::kInfo:
+        return spdlog::level::info;
+      case logger::LogLevel::kWarn:
+        return spdlog::level::warn;
+      case logger::LogLevel::kError:
+        return spdlog::level::err;
+      case logger::LogLevel::kCritical:
+        return spdlog::level::critical;
+      default:
+        BOOST_ASSERT_MSG(false, "Unknown log level!");
+        return getSpdlogLogLevel(logger::kDefaultLogLevel);
+    }
   }
 
   std::shared_ptr<spdlog::logger> getOrCreateLogger(const std::string tag) {
