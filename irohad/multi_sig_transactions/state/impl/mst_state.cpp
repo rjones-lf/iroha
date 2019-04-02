@@ -95,18 +95,6 @@ namespace iroha {
     return MstState(this->completer_, difference, log_);
   }
 
-  bool MstState::operator==(const MstState &rhs) const {
-    return boost::size(batches_) == boost::size(rhs.batches_)
-        and boost::algorithm::all_of(
-                boost::combine(batches_.right, rhs.batches_.right),
-                [](const auto &two_rels) {
-                  const auto &r1 = boost::get<0>(two_rels);
-                  const auto &r2 = boost::get<1>(two_rels);
-                  return r1.second == r2.second
-                      and r1.first->reducedHash() == r2.first->reducedHash();
-                });
-  }
-
   bool MstState::isEmpty() const {
     return batches_.empty();
   }

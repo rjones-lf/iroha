@@ -129,13 +129,6 @@ namespace iroha {
     bool isEmpty() const;
 
     /**
-     * Compares two different MstState's
-     * @param rhs - MstState to compare
-     * @return true is rhs equal to this or false otherwise
-     */
-    bool operator==(const MstState &rhs) const;
-
-    /**
      * @return the batches from the state
      */
     std::unordered_set<DataType,
