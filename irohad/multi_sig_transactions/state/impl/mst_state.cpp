@@ -5,14 +5,30 @@
 
 #include "multi_sig_transactions/state/mst_state.hpp"
 
+#include <algorithm>
 #include <utility>
 
+#include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/find.hpp>
 #include <boost/range/combine.hpp>
 #include "common/set.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/transaction.hpp"
 #include "logger/logger.hpp"
+
+namespace {
+  shared_model::interface::types::TimestampType oldestTimestamp(
+      const iroha::BatchPtr &batch) {
+    auto timestamps =
+        batch->transactions()
+        | boost::adaptors::transformed(
+              +[](const std::shared_ptr<shared_model::interface::Transaction>
+                      &tx) { return tx->createdTime(); });
+    const auto min_it = std::min_element(timestamps.begin(), timestamps.end());
+    assert(min_it != timestamps.end());
+    return min_it == timestamps.end() ? 0 : *min_it;
+  }
+}  // namespace
 
 namespace iroha {
 
@@ -34,13 +50,9 @@ namespace iroha {
 
   bool DefaultCompleter::operator()(const DataType &batch,
                                     const TimeType &time) const {
-    return std::any_of(batch->transactions().begin(),
-                       batch->transactions().end(),
-                       [&](const auto &tx) {
-                         return tx->createdTime()
-                             + expiration_time_ / std::chrono::milliseconds(1)
-                             < time;
-                       });
+    return oldestTimestamp(batch)
+        + expiration_time_ / std::chrono::milliseconds(1)
+        < time;
   }
 
   // ------------------------------| public api |-------------------------------
@@ -108,8 +120,7 @@ namespace iroha {
 
   bool MstState::Less::operator()(const DataType &left,
                                   const DataType &right) const {
-    return left->transactions().at(0)->createdTime()
-        < right->transactions().at(0)->createdTime();
+    return oldestTimestamp(left) < oldestTimestamp(right);
   }
 
   /**
