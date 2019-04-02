@@ -180,7 +180,8 @@ namespace iroha {
     if ((*completer_)(found)) {
       // state already has completed transaction,
       // remove from state and return it
-      internal_state_.erase(internal_state_.find(found));
+      internal_state_.erase(found);
+      index_.right.erase(found);
       state_update.completed_state_->rawInsert(found);
       return;
     }
