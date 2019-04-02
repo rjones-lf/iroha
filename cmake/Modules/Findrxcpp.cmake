@@ -1,6 +1,7 @@
 add_library(rxcpp INTERFACE IMPORTED)
 
-find_path(rxcpp_INCLUDE_DIR rxcpp/rx.hpp)
+# TODO 2019-04-02 lebdron: IR-346 Update Rx commit
+#find_path(rxcpp_INCLUDE_DIR rxcpp/rx.hpp)
 mark_as_advanced(rxcpp_INCLUDE_DIR)
 
 find_package_handle_standard_args(rxcpp DEFAULT_MSG
@@ -9,19 +10,18 @@ find_package_handle_standard_args(rxcpp DEFAULT_MSG
 
 
 set(URL https://github.com/Reactive-Extensions/rxcpp.git)
-# this version is chosen, because it fixes 100% node overload [IR-1736] bug
-set(VERSION a7d5856385f126e874db6010d9dbfd37290c61de)
+set(VERSION 7c79c18ab252eb37bcf122c75070f8d557868c08)
 set_target_description(rxcpp "Library for reactive programming" ${URL} ${VERSION})
 
 
-if (NOT rxcpp_FOUND)
+#if (NOT rxcpp_FOUND)
   externalproject_add(reactive_extensions_rxcpp
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
       CONFIGURE_COMMAND ""
       BUILD_COMMAND ""
+      PATCH_COMMAND ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR}/patch/synchronize-lock-recursion-thread-safety.patch
       INSTALL_COMMAND "" # remove install step
-      UPDATE_COMMAND "" # remove update step
       TEST_COMMAND "" # remove test step
       )
   externalproject_get_property(reactive_extensions_rxcpp source_dir)
@@ -29,7 +29,7 @@ if (NOT rxcpp_FOUND)
   file(MAKE_DIRECTORY ${rxcpp_INCLUDE_DIR})
 
   add_dependencies(rxcpp reactive_extensions_rxcpp)
-endif ()
+#endif ()
 
 set_target_properties(rxcpp PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES ${rxcpp_INCLUDE_DIR}
