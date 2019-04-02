@@ -14,6 +14,7 @@
 #include <boost/bimap.hpp>
 #include <boost/bimap/multiset_of.hpp>
 #include <boost/bimap/unordered_set_of.hpp>
+#include <boost/range/any_range.hpp>
 #include "logger/logger_fwd.hpp"
 #include "multi_sig_transactions/hash.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
@@ -83,6 +84,9 @@ namespace iroha {
   class MstState {
    public:
     // -----------------------------| public api |------------------------------
+
+    using BatchesForwardCollectionType = boost::
+        any_range<BatchPtr, boost::forward_traversal_tag, const BatchPtr &>;
 
     /**
      * Create empty state
@@ -162,12 +166,7 @@ namespace iroha {
       bool operator()(const DataType &left, const DataType &right) const;
     };
 
-    using InternalStateType =
-        std::unordered_set<DataType,
-                           iroha::model::PointerBatchHasher,
-                           BatchHashEquality>;
-
-    using IndexType = boost::bimap<
+    using BatchesBimap = boost::bimap<
         boost::bimaps::multiset_of<
             shared_model::interface::types::TimestampType>,
         boost::bimaps::unordered_set_of<DataType,
@@ -177,7 +176,7 @@ namespace iroha {
     MstState(const CompleterType &completer, logger::LoggerPtr log);
 
     MstState(const CompleterType &completer,
-             const InternalStateType &transactions,
+             const BatchesForwardCollectionType &batches,
              logger::LoggerPtr log);
 
     /**
@@ -198,9 +197,7 @@ namespace iroha {
 
     CompleterType completer_;
 
-    InternalStateType internal_state_;
-
-    IndexType index_;
+    BatchesBimap batches_;
 
     logger::LoggerPtr log_;
   };

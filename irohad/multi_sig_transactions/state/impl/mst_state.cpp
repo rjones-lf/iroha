@@ -7,7 +7,10 @@
 
 #include <algorithm>
 #include <utility>
+#include <vector>
 
+#include <boost/algorithm/cxx11/all_of.hpp>
+#include <boost/range/adaptor/map.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/find.hpp>
 #include <boost/range/combine.hpp>
@@ -74,44 +77,56 @@ namespace iroha {
     auto state_update = StateUpdateResult{
         std::make_shared<MstState>(MstState::empty(log_, completer_)),
         std::make_shared<MstState>(MstState::empty(log_, completer_))};
-    for (auto &&rhs_tx : rhs.internal_state_) {
+    for (auto &&rhs_tx : rhs.batches_.right | boost::adaptors::map_keys) {
       insertOne(state_update, rhs_tx);
     }
     return state_update;
   }
 
   MstState MstState::operator-(const MstState &rhs) const {
-    return MstState(this->completer_,
-                    set_difference(this->internal_state_, rhs.internal_state_),
-                    log_);
+    const auto &my_batches = batches_.right | boost::adaptors::map_keys;
+    std::vector<DataType> difference;
+    difference.reserve(boost::size(batches_));
+    for (const auto &batch : my_batches) {
+      if (rhs.batches_.right.find(batch) == rhs.batches_.right.end()) {
+        difference.push_back(batch);
+      }
+    }
+    return MstState(this->completer_, difference, log_);
   }
 
   bool MstState::operator==(const MstState &rhs) const {
-    return std::all_of(
-        internal_state_.begin(), internal_state_.end(), [&rhs](auto &i) {
-          return rhs.internal_state_.find(i) != rhs.internal_state_.end();
-        });
+    return boost::size(batches_) == boost::size(rhs.batches_)
+        and boost::algorithm::all_of(boost::combine(batches_.right,
+                                                    rhs.batches_.right),
+                                     [](const auto &two_rels) {
+                                       const auto &r1 = boost::get<0>(two_rels);
+                                       const auto &r2 = boost::get<1>(two_rels);
+                                       return r1.second == r2.second
+                                           and r1.first->reducedHash()
+                                           == r2.first->reducedHash();
+                                     });
   }
 
   bool MstState::isEmpty() const {
-    return internal_state_.empty();
+    return batches_.empty();
   }
 
   std::unordered_set<DataType,
                      iroha::model::PointerBatchHasher,
                      BatchHashEquality>
   MstState::getBatches() const {
-    return {internal_state_.begin(), internal_state_.end()};
+    const auto batches_range = batches_.right | boost::adaptors::map_keys;
+    return {batches_range.begin(), batches_range.end()};
   }
 
   MstState MstState::eraseByTime(const TimeType &time) {
     MstState out = MstState::empty(log_, completer_);
-    for (auto it = index_.left.begin();
-         it != index_.left.end() and (*completer_)(it->second, time);) {
+    for (auto it = batches_.left.begin();
+         it != batches_.left.end() and (*completer_)(it->second, time);) {
       out += it->second;
-      internal_state_.erase(it->second);
-      it = index_.left.erase(it);
-      assert(it == index_.left.begin());
+      it = batches_.left.erase(it);
+      assert(it == batches_.left.begin());
     }
     return out;
   }
@@ -149,39 +164,36 @@ namespace iroha {
   }
 
   MstState::MstState(const CompleterType &completer, logger::LoggerPtr log)
-      : MstState(completer, InternalStateType{}, std::move(log)) {}
+      : MstState(completer, std::vector<DataType>{}, std::move(log)) {}
 
   MstState::MstState(const CompleterType &completer,
-                     const InternalStateType &batches,
+                     const BatchesForwardCollectionType &batches,
                      logger::LoggerPtr log)
-      : completer_(completer),
-        internal_state_(batches.begin(), batches.end()),
-        log_(std::move(log)) {
-          for (const auto &batch : batches) {
-            index_.insert(IndexType::value_type(oldestTimestamp(batch), batch));
-          }
-        }
+      : completer_(completer), log_(std::move(log)) {
+    for (const auto &batch : batches) {
+      batches_.insert(BatchesBimap::value_type(oldestTimestamp(batch), batch));
+    }
+  }
 
   void MstState::insertOne(StateUpdateResult &state_update,
                            const DataType &rhs_batch) {
     log_->info("batch: {}", *rhs_batch);
-    auto corresponding = internal_state_.find(rhs_batch);
-    if (corresponding == internal_state_.end()) {
+    auto corresponding = batches_.right.find(rhs_batch);
+    if (corresponding == batches_.right.end()) {
       // when state does not contain transaction
       rawInsert(rhs_batch);
       state_update.updated_state_->rawInsert(rhs_batch);
       return;
     }
 
-    DataType found = *corresponding;
+    DataType found = corresponding->first;
     // Append new signatures to the existing state
     auto inserted_new_signatures = mergeSignaturesInBatch(found, rhs_batch);
 
     if ((*completer_)(found)) {
       // state already has completed transaction,
       // remove from state and return it
-      internal_state_.erase(found);
-      index_.right.erase(found);
+      batches_.right.erase(found);
       state_update.completed_state_->rawInsert(found);
       return;
     }
@@ -194,12 +206,12 @@ namespace iroha {
   }
 
   void MstState::rawInsert(const DataType &rhs_batch) {
-    internal_state_.insert(rhs_batch);
-    index_.insert(IndexType::value_type(oldestTimestamp(rhs_batch), rhs_batch));
+    batches_.insert(
+        BatchesBimap::value_type(oldestTimestamp(rhs_batch), rhs_batch));
   }
 
   bool MstState::contains(const DataType &element) const {
-    return internal_state_.find(element) != internal_state_.end();
+    return batches_.right.find(element) != batches_.right.end();
   }
 
 }  // namespace iroha
