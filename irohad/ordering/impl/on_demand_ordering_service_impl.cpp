@@ -158,11 +158,6 @@ void OnDemandOrderingServiceImpl::packNextProposals(
    *
    * (1,0) - current round. The diagram is similar to the initial case.
    */
-  detail::BatchSetType current_round_batches;
-  {
-    std::lock_guard<std::shared_timed_mutex> lock(batches_mutex_);
-    current_round_batches.swap(current_round_batches_);
-  }
 
   size_t discarded_txs_quantity;
   auto now = iroha::time::now();
@@ -191,6 +186,7 @@ void OnDemandOrderingServiceImpl::packNextProposals(
   }
 
   if (round.reject_round == kFirstRejectRound) {
+    std::lock_guard<std::shared_timed_mutex> lock(batches_mutex_);
     pending_batches_.clear();
   }
 }

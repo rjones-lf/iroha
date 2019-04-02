@@ -110,7 +110,7 @@ namespace iroha {
       detail::BatchSetType pending_batches_;
 
       /**
-       * Read and write mutexes for public methods
+       * Batches and proposal collection mutexes for public methods
        */
       std::shared_timed_mutex batches_mutex_, proposals_mutex_;
 
