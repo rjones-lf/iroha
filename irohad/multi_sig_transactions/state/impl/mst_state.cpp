@@ -111,6 +111,7 @@ namespace iroha {
       out += it->second;
       internal_state_.erase(it->second);
       it = index_.left.erase(it);
+      assert(it == index_.left.begin());
     }
     return out;
   }

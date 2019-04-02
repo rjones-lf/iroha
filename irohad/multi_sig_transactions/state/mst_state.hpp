@@ -12,7 +12,8 @@
 #include <vector>
 
 #include <boost/bimap.hpp>
-#include <boost/bimap/unordered_multiset_of.hpp>
+#include <boost/bimap/multiset_of.hpp>
+#include <boost/bimap/unordered_set_of.hpp>
 #include "logger/logger_fwd.hpp"
 #include "multi_sig_transactions/hash.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
@@ -167,10 +168,11 @@ namespace iroha {
                            BatchHashEquality>;
 
     using IndexType = boost::bimap<
-        shared_model::interface::types::TimestampType,
-        boost::bimaps::unordered_multiset_of<DataType,
-                                             iroha::model::PointerBatchHasher,
-                                             BatchHashEquality>>;
+        boost::bimaps::multiset_of<
+            shared_model::interface::types::TimestampType>,
+        boost::bimaps::unordered_set_of<DataType,
+                                        iroha::model::PointerBatchHasher,
+                                        BatchHashEquality>>;
 
     MstState(const CompleterType &completer, logger::LoggerPtr log);
 
