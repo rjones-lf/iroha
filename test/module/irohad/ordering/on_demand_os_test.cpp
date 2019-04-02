@@ -197,8 +197,11 @@ TEST_F(OnDemandOsTest, DISABLED_ConcurrentInsert) {
 
 /**
  * @given initialized on-demand OS
- * @when  insert commit round and then proposal_limit reject rounds
+ * @when  insert commit round and then proposal_limit + 2 reject rounds
  * @then  first proposal still not expired
+ *
+ * proposal_limit + 2 reject rounds are required in order to trigger deletion in
+ * tryErase
  */
 TEST_F(OnDemandOsTest, Erase) {
   generateTransactionsAndInsert({1, 2});
@@ -207,11 +210,11 @@ TEST_F(OnDemandOsTest, Erase) {
   ASSERT_TRUE(os->onRequestProposal(
       {commit_round.block_round + 1, commit_round.reject_round}));
 
-  for (auto i = commit_round.reject_round;
-       i < commit_round.reject_round + proposal_limit;
+  for (auto i = commit_round.reject_round + 1;
+       i < (commit_round.reject_round + 1) + (proposal_limit + 2);
        ++i) {
     generateTransactionsAndInsert({1, 2});
-    os->onCollaborationOutcome({commit_round.block_round + 1, i});
+    os->onCollaborationOutcome({commit_round.block_round, i});
   }
   ASSERT_TRUE(os->onRequestProposal(
       {commit_round.block_round + 1, commit_round.reject_round}));
@@ -363,4 +366,29 @@ TEST_F(OnDemandOsTest, DuplicateTxTest) {
   auto proposal = os->onRequestProposal(target_round);
 
   ASSERT_EQ(1, boost::size((*proposal)->transactions()));
+}
+
+/**
+ * @given initialized on-demand OS with a batch in collection
+ * @when two batches sequentially arrives in two reject rounds
+ * @then both of them are used for the next proposal
+ */
+TEST_F(OnDemandOsTest, RejectCommit) {
+  auto now = iroha::time::now();
+  auto txs1 = generateTransactions({1, 2}, now);
+  os->onBatches(txs1);
+  os->onCollaborationOutcome(
+      {initial_round.block_round, initial_round.reject_round + 1});
+
+  auto txs2 = generateTransactions({1, 2}, now + 1);
+  os->onBatches(txs2);
+  os->onCollaborationOutcome(
+      {initial_round.block_round, initial_round.reject_round + 2});
+  auto proposal = os->onRequestProposal(
+      {initial_round.block_round, initial_round.reject_round + 3});
+
+  ASSERT_EQ(2, boost::size((*proposal)->transactions()));
+
+  proposal = os->onRequestProposal(commit_round);
+  ASSERT_EQ(2, boost::size((*proposal)->transactions()));
 }
