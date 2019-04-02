@@ -15,6 +15,7 @@
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
 #include "logger/logger_manager.hpp"
+#include "network/impl/grpc_channel_builder.hpp"
 
 using namespace iroha::consensus::yac;
 
@@ -109,6 +110,9 @@ namespace iroha {
 
         consensus_network_ = std::make_shared<NetworkImpl>(
             async_call,
+            [](const shared_model::interface::Peer &peer) {
+              return network::createClient<proto::Yac>(peer.address());
+            },
             consensus_log_manager->getChild("Network")->getLogger());
 
         auto yac = createYac(peer_orderer->getInitialOrdering().value(),

@@ -19,6 +19,7 @@
 #include "main/server_runner.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "network/impl/async_grpc_client.hpp"
+#include "network/impl/grpc_channel_builder.hpp"
 
 using namespace shared_model::crypto;
 using namespace framework::expected;
@@ -92,6 +93,10 @@ namespace integration_framework {
             mst_log_manager_->getChild("Transport")->getLogger())),
         yac_transport_(std::make_shared<YacTransport>(
             async_call_,
+            [](const shared_model::interface::Peer &peer) {
+              return iroha::network::createClient<
+                  iroha::consensus::yac::proto::Yac>(peer.address());
+            },
             consensus_log_manager_->getChild("Transport")->getLogger())),
         yac_network_notifier_(std::make_shared<YacNetworkNotifier>()),
         yac_crypto_(std::make_shared<iroha::consensus::yac::CryptoProviderImpl>(
