@@ -22,9 +22,10 @@ namespace iroha {
     return updateOwnStateImpl(tx);
   }
 
-  MstState MstStorage::getExpiredTransactions(const TimeType &current_time) {
+  MstState MstStorage::extractExpiredTransactions(
+      const TimeType &current_time) {
     std::lock_guard<std::mutex> lock{this->mutex_};
-    return getExpiredTransactionsImpl(current_time);
+    return extractExpiredTransactionsImpl(current_time);
   }
 
   MstState MstStorage::getDiffState(
