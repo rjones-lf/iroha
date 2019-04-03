@@ -31,6 +31,15 @@ Iroha is _Byzantine Fault Tolerant_ and has its own consensus algorithm - [YAC](
 Our documentation is hosted at ReadTheDocs service here: [http://iroha.readthedocs.io](http://iroha.readthedocs.io).
 We have documentation in several languages available and you are welcome to contribute on [POEditor website](https://poeditor.com/join/project/SFpZw7o33o)!
 
+#### Here is the build status of different translations
+<center>
+ 
+| Build Status | **English** <br> [![Documentation Status](https://readthedocs.org/projects/iroha/badge/?version=latest)](https://iroha.readthedocs.io/en/latest/?badge=latest) </br> | **German** <br> [![Documentation Status](https://readthedocs.org/projects/iroha-de/badge/?version=master)](https://iroha.readthedocs.io/de/master/?badge=master) </br> | **Spanish** <br> [![Documentation Status](https://readthedocs.org/projects/iroha-es/badge/?version=latest)](https://iroha.readthedocs.io/es/latest/?badge=latest) </br> | **French** <br> [![Documentation Status](https://readthedocs.org/projects/iroha-fr/badge/?version=latest)](https://iroha.readthedocs.io/fr/latest/?badge=latest) </br> | **Japanese** <br> [![Documentation Status](https://readthedocs.org/projects/iroha-ja/badge/?version=latest)](https://iroha.readthedocs.io/ja/latest/?badge=latest) </br> |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Korean** <br> [![Documentation Status](https://readthedocs.org/projects/iroha-ko/badge/?version=latest)](https://iroha.readthedocs.io/ko/latest/?badge=latest) </br> | **Dutch** <br> [![Documentation Status](https://readthedocs.org/projects/iroha-nl/badge/?version=latest)](https://iroha.readthedocs.io/nl/latest/?badge=latest) </br> | **Portuguese** <br> [![Documentation Status](https://readthedocs.org/projects/iroha-pt/badge/?version=latest)](https://iroha.readthedocs.io/pt/latest/?badge=latest) </br> | **Russian** <br> [![Documentation Status](https://readthedocs.org/projects/iroha-ru/badge/?version=latest)](https://iroha.readthedocs.io/ru/latest/?badge=latest) </br> | **Ukrainian** <br> [![Documentation Status](https://readthedocs.org/projects/iroha-uk/badge/?version=latest)](https://iroha.readthedocs.io/uk/latest/?badge=latest) </br> | **Simplified Chinese** <br> [![Documentation Status](https://readthedocs.org/projects/iroha-zh/badge/?version=latest)](https://iroha.readthedocs.io/zh_CN/latest/?badge=latest) </br> |
+
+</center>
+ 
 ### How to explore Iroha really fast?
 
 Check [getting started](http://iroha.readthedocs.io/en/latest/getting_started/) section in your version of localized docs to start exploring the system.
