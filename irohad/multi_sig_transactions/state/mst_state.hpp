@@ -159,14 +159,6 @@ namespace iroha {
    private:
     // --------------------------| private api |------------------------------
 
-    /**
-     * Class provides operator < for batches
-     */
-    class Less {
-     public:
-      bool operator()(const DataType &left, const DataType &right) const;
-    };
-
     using BatchesBimap = boost::bimap<
         boost::bimaps::multiset_of<
             shared_model::interface::types::TimestampType>,

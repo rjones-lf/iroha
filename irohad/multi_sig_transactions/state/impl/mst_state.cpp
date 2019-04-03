@@ -22,6 +22,11 @@
 namespace {
   shared_model::interface::types::TimestampType oldestTimestamp(
       const iroha::BatchPtr &batch) {
+    const bool batch_is_empty = boost::empty(batch->transactions());
+    assert(not batch_is_empty);
+    if (batch_is_empty) {
+      return 0;
+    }
     auto timestamps =
         batch->transactions()
         | boost::adaptors::transformed(
@@ -118,11 +123,6 @@ namespace iroha {
   }
 
   // ------------------------------| private api |------------------------------
-
-  bool MstState::Less::operator()(const DataType &left,
-                                  const DataType &right) const {
-    return oldestTimestamp(left) < oldestTimestamp(right);
-  }
 
   /**
    * Merge signatures in batches
