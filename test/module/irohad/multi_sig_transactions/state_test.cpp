@@ -320,7 +320,7 @@ TEST(StateTest, TimeIndexInsertionByTx) {
 
   state += prepared_batch;
 
-  auto expired_state = state.eraseByTime(time + 1);
+  auto expired_state = state.extractExpired(time + 1);
   ASSERT_EQ(1, expired_state.getBatches().size());
   ASSERT_EQ(*prepared_batch, **expired_state.getBatches().begin());
   ASSERT_EQ(0, state.getBatches().size());
