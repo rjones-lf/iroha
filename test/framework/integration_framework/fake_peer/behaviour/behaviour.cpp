@@ -48,35 +48,35 @@ namespace integration_framework {
           getFakePeer().getMstStatesObservable().subscribe(
               [this, locker](const auto &message) {
                 if (auto protector = locker.protect()) {
-                  processMstMessage(message);
+                  this->processMstMessage(message);
                 }
               }));
       subscriptions_.emplace_back(
           getFakePeer().getYacStatesObservable().subscribe(
               [this, locker](const auto &message) {
                 if (auto protector = locker.protect()) {
-                  processYacMessage(message);
+                  this->processYacMessage(message);
                 }
               }));
       subscriptions_.emplace_back(
           getFakePeer().getOsBatchesObservable().subscribe(
               [this, locker](const auto &batch) {
                 if (auto protector = locker.protect()) {
-                  processOsBatch(batch);
+                  this->processOsBatch(batch);
                 }
               }));
       subscriptions_.emplace_back(
           getFakePeer().getOgProposalsObservable().subscribe(
               [this, locker](const auto &proposal) {
                 if (auto protector = locker.protect()) {
-                  processOgProposal(proposal);
+                  this->processOgProposal(proposal);
                 }
               }));
       subscriptions_.emplace_back(
           getFakePeer().getBatchesObservable().subscribe(
               [this, locker](const auto &batches) {
                 if (auto protector = locker.protect()) {
-                  processOrderingBatches(*batches);
+                  this->processOrderingBatches(*batches);
                 }
               }));
     }
