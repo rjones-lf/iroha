@@ -6,8 +6,9 @@
 #include "ametsuchi/impl/storage_impl.hpp"
 
 #include <soci/postgresql/soci-postgresql.h>
-#include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
+#include <boost/range/algorithm/replace_if.hpp>
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "ametsuchi/impl/mutable_storage_impl.hpp"
 #include "ametsuchi/impl/peer_query_wsv.hpp"
@@ -47,7 +48,7 @@ namespace {
 
   std::string formatPostgresMessage(const char *message) {
     std::string formatted_message(message);
-    boost::replace_all(formatted_message, "\n", " ");
+    boost::replace_if(formatted_message, boost::is_any_of("\r\n"), ' ');
     return formatted_message;
   }
 
