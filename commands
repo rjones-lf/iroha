@@ -1,0 +1,1 @@
+irohad --config config.docker --genesis_block genesis.block --keypair_name node0
