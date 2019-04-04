@@ -19,12 +19,15 @@
 #include "main/server_runner.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "network/impl/async_grpc_client.hpp"
+#include "network/impl/grpc_channel_builder.hpp"
 
 using namespace shared_model::crypto;
 using namespace framework::expected;
 
 using YacStateMessage =
     integration_framework::YacNetworkNotifier::StateMessagePtr;
+
+static constexpr size_t kMstStateTxLimit = 100;
 
 static std::shared_ptr<shared_model::interface::Peer> createPeer(
     const std::shared_ptr<shared_model::interface::CommonObjectsFactory>
@@ -87,11 +90,16 @@ namespace integration_framework {
             transaction_batch_factory,
             tx_presence_cache,
             std::make_shared<iroha::DefaultCompleter>(std::chrono::minutes(0)),
+            kMstStateTxLimit,
             keypair_->publicKey(),
             mst_log_manager_->getChild("State")->getLogger(),
             mst_log_manager_->getChild("Transport")->getLogger())),
         yac_transport_(std::make_shared<YacTransport>(
             async_call_,
+            [](const shared_model::interface::Peer &peer) {
+              return iroha::network::createClient<
+                  iroha::consensus::yac::proto::Yac>(peer.address());
+            },
             consensus_log_manager_->getChild("Transport")->getLogger())),
         yac_network_notifier_(std::make_shared<YacNetworkNotifier>()),
         yac_crypto_(std::make_shared<iroha::consensus::yac::CryptoProviderImpl>(

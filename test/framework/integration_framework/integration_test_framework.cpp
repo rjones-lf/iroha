@@ -134,6 +134,10 @@ namespace integration_framework {
         tx_presence_cache_(std::make_shared<AlwaysMissingTxPresenceCache>()),
         yac_transport_(std::make_shared<iroha::consensus::yac::NetworkImpl>(
             async_call_,
+            [](const shared_model::interface::Peer &peer) {
+              return iroha::network::createClient<
+                  iroha::consensus::yac::proto::Yac>(peer.address());
+            },
             log_manager_->getChild("ConsensusTransport")->getLogger())),
         cleanup_on_exit_(cleanup_on_exit) {}
 
