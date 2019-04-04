@@ -37,7 +37,7 @@ namespace iroha {
     completedBatchesNotify(*state_update.completed_state_);
     updatedBatchesNotify(*state_update.updated_state_);
     expiredBatchesNotify(
-        storage_->getExpiredTransactions(time_provider_->getCurrentTime()));
+        storage_->extractExpiredTransactions(time_provider_->getCurrentTime()));
   }
 
   auto FairMstProcessor::onStateUpdateImpl() const

@@ -83,20 +83,13 @@ namespace iroha {
     auto creators = batchCreators(*batch);
     auto hash = batch->reducedHash();
     std::unique_lock<std::shared_timed_mutex> lock(mutex_);
-    auto &batches = storage_.batches;
-    auto batch_it = batches.find(hash);
-    if (batches.end() != batch_it) {
-      batches.erase(batch_it);
-    }
+    storage_.batches.erase(hash);
     for (const auto &creator : creators) {
       auto &index = storage_.index;
       auto index_it = index.find(creator);
       if (index.end() != index_it) {
         auto &creator_set = index_it->second;
-        auto creator_it = creator_set.find(hash);
-        if (creator_set.end() != creator_it) {
-          creator_set.erase(creator_it);
-        }
+        creator_set.erase(hash);
       }
     }
   }

@@ -23,7 +23,7 @@ namespace iroha {
   DefaultCompleter::DefaultCompleter(std::chrono::minutes expiration_time)
       : expiration_time_(expiration_time) {}
 
-  bool DefaultCompleter::operator()(const DataType &batch) const {
+  bool DefaultCompleter::isCompleted(const DataType &batch) const {
     return std::all_of(batch->transactions().begin(),
                        batch->transactions().end(),
                        [](const auto &tx) {
@@ -31,14 +31,14 @@ namespace iroha {
                        });
   }
 
-  bool DefaultCompleter::operator()(const DataType &batch,
-                                    const TimeType &time) const {
+  bool DefaultCompleter::isExpired(const DataType &batch,
+                                   const TimeType &current_time) const {
     return std::any_of(batch->transactions().begin(),
                        batch->transactions().end(),
                        [&](const auto &tx) {
                          return tx->createdTime()
                              + expiration_time_ / std::chrono::milliseconds(1)
-                             < time;
+                             < current_time;
                        });
   }
 
@@ -91,16 +91,14 @@ namespace iroha {
     return {internal_state_.begin(), internal_state_.end()};
   }
 
-  MstState MstState::eraseByTime(const TimeType &time) {
+  MstState MstState::extractExpired(const TimeType &current_time) {
     MstState out = MstState::empty(log_, completer_);
-    while (not index_.empty() and (*completer_)(index_.top(), time)) {
-      auto iter = internal_state_.find(index_.top());
-
-      out += *iter;
-      internal_state_.erase(iter);
-      index_.pop();
-    }
+    extractExpiredImpl(current_time, out);
     return out;
+  }
+
+  void MstState::eraseExpired(const TimeType &current_time) {
+    extractExpiredImpl(current_time, boost::none);
   }
 
   // ------------------------------| private api |------------------------------
@@ -162,7 +160,7 @@ namespace iroha {
     // Append new signatures to the existing state
     auto inserted_new_signatures = mergeSignaturesInBatch(found, rhs_batch);
 
-    if ((*completer_)(found)) {
+    if (completer_->isCompleted(found)) {
       // state already has completed transaction,
       // remove from state and return it
       internal_state_.erase(internal_state_.find(found));
@@ -184,6 +182,21 @@ namespace iroha {
 
   bool MstState::contains(const DataType &element) const {
     return internal_state_.find(element) != internal_state_.end();
+  }
+
+  void MstState::extractExpiredImpl(const TimeType &current_time,
+                                    boost::optional<MstState &> extracted) {
+    while (not index_.empty()
+           and completer_->isExpired(index_.top(), current_time)) {
+      auto iter = internal_state_.find(index_.top());
+      assert(iter != internal_state_.end());
+
+      if(extracted) {
+        *extracted += *iter;
+      }
+      internal_state_.erase(iter);
+      index_.pop();
+    }
   }
 
 }  // namespace iroha

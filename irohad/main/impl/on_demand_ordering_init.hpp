@@ -9,6 +9,7 @@
 #include <random>
 
 #include "ametsuchi/peer_query_factory.hpp"
+#include "ametsuchi/storage.hpp"
 #include "ametsuchi/tx_presence_cache.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "logger/logger_fwd.hpp"
@@ -142,9 +143,12 @@ namespace iroha {
       std::shared_ptr<ordering::proto::OnDemandOrdering::Service> service;
 
       /// commit notifier from peer communication service
+      rxcpp::subjects::subject<decltype(std::declval<PeerCommunicationService>()
+                                            .onSynchronization())::value_type>
+          sync_event_notifier;
       rxcpp::subjects::subject<decltype(
-          std::declval<PeerCommunicationService>().on_commit())::value_type>
-          notifier;
+          std::declval<iroha::ametsuchi::Storage>().on_commit())::value_type>
+          commit_notifier;
 
      private:
       logger::LoggerPtr log_;
