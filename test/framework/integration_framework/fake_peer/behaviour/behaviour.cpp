@@ -21,55 +21,62 @@ namespace integration_framework {
       // Hint: such calls would precede the derived class construction.
       fake_peer_wptr_ = fake_peer;
       log_ = std::move(log);
-      std::weak_ptr<Behaviour> weak_this = shared_from_this();
+
+      // Stores weak pointers. Tries to lock them at once.
+      class Locker {
+        std::weak_ptr<Behaviour> weak_behaviour_;
+        std::weak_ptr<FakePeer> weak_fake_peer_;
+
+       public:
+        using Protected =
+            std::tuple<std::shared_ptr<Behaviour>, std::shared_ptr<FakePeer>>;
+
+        Locker(std::weak_ptr<Behaviour> weak_behaviour,
+               std::weak_ptr<FakePeer> weak_fake_peer)
+            : weak_behaviour_(std::move(weak_behaviour)),
+              weak_fake_peer_(std::move(weak_fake_peer)) {}
+
+        boost::optional<Protected> protect() const {
+          Protected p{weak_behaviour_.lock(), weak_fake_peer_.lock()};
+          return boost::make_optional(std::get<0>(p) and std::get<1>(p), p);
+        }
+      };
+      Locker locker(shared_from_this(), fake_peer);
+
       // subscribe for all messages
       subscriptions_.emplace_back(
           getFakePeer().getMstStatesObservable().subscribe(
-              [weak_this,
-               weak_fake_peer = fake_peer_wptr_](const auto &message) {
-                auto me_alive = weak_this.lock();
-                auto fake_peer_is_alive = weak_fake_peer.lock();
-                if (me_alive and fake_peer_is_alive) {
-                  me_alive->processMstMessage(message);
+              [this, locker](const auto &message) {
+                if (auto protector = locker.protect()) {
+                  processMstMessage(message);
                 }
               }));
       subscriptions_.emplace_back(
           getFakePeer().getYacStatesObservable().subscribe(
-              [weak_this,
-               weak_fake_peer = fake_peer_wptr_](const auto &message) {
-                auto me_alive = weak_this.lock();
-                auto fake_peer_is_alive = weak_fake_peer.lock();
-                if (me_alive and fake_peer_is_alive) {
-                  me_alive->processYacMessage(message);
+              [this, locker](const auto &message) {
+                if (auto protector = locker.protect()) {
+                  processYacMessage(message);
                 }
               }));
       subscriptions_.emplace_back(
           getFakePeer().getOsBatchesObservable().subscribe(
-              [weak_this, weak_fake_peer = fake_peer_wptr_](const auto &batch) {
-                auto me_alive = weak_this.lock();
-                auto fake_peer_is_alive = weak_fake_peer.lock();
-                if (me_alive and fake_peer_is_alive) {
-                  me_alive->processOsBatch(batch);
+              [this, locker](const auto &batch) {
+                if (auto protector = locker.protect()) {
+                  processOsBatch(batch);
                 }
               }));
       subscriptions_.emplace_back(
           getFakePeer().getOgProposalsObservable().subscribe(
-              [weak_this,
-               weak_fake_peer = fake_peer_wptr_](const auto &proposal) {
-                auto me_alive = weak_this.lock();
-                auto fake_peer_is_alive = weak_fake_peer.lock();
-                if (me_alive and fake_peer_is_alive) {
-                  me_alive->processOgProposal(proposal);
+              [this, locker](const auto &proposal) {
+                if (auto protector = locker.protect()) {
+                  processOgProposal(proposal);
                 }
               }));
       subscriptions_.emplace_back(
           getFakePeer().getBatchesObservable().subscribe(
-              [weak_this,
-               weak_fake_peer = fake_peer_wptr_](const auto &batches) {
-                auto me_alive = weak_this.lock();
-                auto fake_peer_is_alive = weak_fake_peer.lock();
-                if (me_alive and fake_peer_is_alive) {
-                  me_alive->processOrderingBatches(*batches);
+              [this, locker](const auto &batches) {
+                if (auto protector = locker.protect()) {
+                  processOrderingBatches(*batches);
                 }
               }));
     }
