@@ -42,7 +42,7 @@ namespace iroha {
     }
 
     rxcpp::observable<synchronizer::SynchronizationEvent>
-    PeerCommunicationServiceImpl::on_commit() const {
+    PeerCommunicationServiceImpl::onSynchronization() const {
       return synchronizer_->on_commit_chain();
     }
   }  // namespace network

@@ -82,6 +82,10 @@ namespace integration_framework {
       return status_bus_;
     }
 
+    const auto &getStorage() {
+      return storage;
+    }
+
     void terminate() {
       if (internal_server) {
         internal_server->shutdown();
