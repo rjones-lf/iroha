@@ -14,7 +14,7 @@ using namespace shared_model;
 using namespace integration_framework;
 using namespace shared_model::interface::permissions;
 
-using BlockType = std::shared_ptr<shared_model::interface::Block>;
+using BlockType = std::shared_ptr<const shared_model::interface::Block>;
 
 /**
  * @return a functor that verifies that query response contains specific error

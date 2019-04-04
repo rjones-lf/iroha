@@ -509,7 +509,7 @@ void Irohad::initPeerCommunicationService() {
     log_->info("~~~~~~~~~| PROPOSAL ^_^ |~~~~~~~~~ ");
   });
 
-  pcs->on_commit().subscribe([this](const auto &event) {
+  pcs->onSynchronization().subscribe([this](const auto &event) {
     using iroha::synchronizer::SynchronizationOutcomeType;
     switch (event.sync_outcome) {
       case SynchronizationOutcomeType::kCommit:
@@ -702,9 +702,14 @@ Irohad::RunResult Irohad::run() {
                 std::shared_ptr<shared_model::interface::Block>>>(&block_var)
                              ->value;
 
-            pcs->on_commit().subscribe(ordering_init.notifier.get_subscriber());
+            pcs->onSynchronization().subscribe(
+                ordering_init.sync_event_notifier.get_subscriber());
+            storage->on_commit().subscribe(
+                ordering_init.commit_notifier.get_subscriber());
 
-            ordering_init.notifier.get_subscriber().on_next(
+            ordering_init.commit_notifier.get_subscriber().on_next(block);
+
+            ordering_init.sync_event_notifier.get_subscriber().on_next(
                 synchronizer::SynchronizationEvent{
                     rxcpp::observable<>::just(block),
                     SynchronizationOutcomeType::kCommit,

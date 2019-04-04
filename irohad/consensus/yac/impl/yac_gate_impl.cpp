@@ -128,32 +128,37 @@ namespace iroha {
         }
 
         current_hash_ = hash;
-
-        if (hash.vote_hashes.proposal_hash.empty()) {
-          // if consensus agreed on nothing for commit
-          log_->info("Consensus skipped round, voted for nothing");
-          current_block_ = boost::none;
-          return rxcpp::observable<>::just<GateObject>(
-              AgreementOnNone{current_hash_.vote_round});
-        }
-
-        log_->info("Voted for another block, waiting for sync");
-        current_block_ = boost::none;
         auto public_keys = boost::copy_range<
             shared_model::interface::types::PublicKeyCollectionType>(
             msg.votes | boost::adaptors::transformed([](auto &vote) {
               return vote.signature->publicKey();
             }));
+
+        if (hash.vote_hashes.proposal_hash.empty()) {
+          // if consensus agreed on nothing for commit
+          log_->info("Consensus skipped round, voted for nothing");
+          current_block_ = boost::none;
+          return rxcpp::observable<>::just<GateObject>(AgreementOnNone{
+              std::move(public_keys), current_hash_.vote_round});
+        }
+
+        log_->info("Voted for another block, waiting for sync");
+        current_block_ = boost::none;
         auto model_hash = hash_provider_->toModelHash(hash);
         return rxcpp::observable<>::just<GateObject>(
             VoteOther{std::move(public_keys),
-                      std::move(model_hash),
-                      current_hash_.vote_round});
+                      current_hash_.vote_round,
+                      std::move(model_hash)});
       }
 
       rxcpp::observable<YacGateImpl::GateObject> YacGateImpl::handleReject(
           const RejectMessage &msg) {
         const auto hash = getHash(msg.votes).value();
+        auto public_keys = boost::copy_range<
+            shared_model::interface::types::PublicKeyCollectionType>(
+            msg.votes | boost::adaptors::transformed([](auto &vote) {
+              return vote.signature->publicKey();
+            }));
         if (hash.vote_round < current_hash_.vote_round) {
           log_->info(
               "Current round {} is greater than reject round {}, skipped",
@@ -172,11 +177,11 @@ namespace iroha {
         if (not has_same_proposals) {
           log_->info("Proposal reject since all hashes are different");
           return rxcpp::observable<>::just<GateObject>(
-              ProposalReject{current_hash_.vote_round});
+              ProposalReject{std::move(public_keys), current_hash_.vote_round});
         }
         log_->info("Block reject since proposal hashes match");
         return rxcpp::observable<>::just<GateObject>(
-            BlockReject{current_hash_.vote_round});
+            BlockReject{std::move(public_keys), current_hash_.vote_round});
       }
     }  // namespace yac
   }    // namespace consensus

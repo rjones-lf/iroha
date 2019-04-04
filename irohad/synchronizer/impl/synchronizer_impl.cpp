@@ -37,47 +37,33 @@ namespace iroha {
 
     void SynchronizerImpl::processOutcome(consensus::GateObject object) {
       log_->info("processing consensus outcome");
+
       visit_in_place(
           object,
           [this](const consensus::PairValid &msg) { this->processNext(msg); },
           [this](const consensus::VoteOther &msg) {
-            this->processDifferent(msg);
+            this->processDifferent(msg, SynchronizationOutcomeType::kCommit);
           },
           [this](const consensus::ProposalReject &msg) {
-            // TODO: nickaleks IR-147 18.01.19 add peers
-            // list from GateObject when it has one
-            notifier_.get_subscriber().on_next(SynchronizationEvent{
-                rxcpp::observable<>::empty<
-                    std::shared_ptr<shared_model::interface::Block>>(),
-                SynchronizationOutcomeType::kReject,
-                msg.round});
+            this->processDifferent(msg, SynchronizationOutcomeType::kReject);
           },
           [this](const consensus::BlockReject &msg) {
-            // TODO: nickaleks IR-147 18.01.19 add peers
-            // list from GateObject when it has one
-            notifier_.get_subscriber().on_next(SynchronizationEvent{
-                rxcpp::observable<>::empty<
-                    std::shared_ptr<shared_model::interface::Block>>(),
-                SynchronizationOutcomeType::kReject,
-                msg.round});
+            this->processDifferent(msg, SynchronizationOutcomeType::kReject);
           },
           [this](const consensus::AgreementOnNone &msg) {
-            // TODO: nickaleks IR-147 18.01.19 add peers
-            // list from GateObject when it has one
-            notifier_.get_subscriber().on_next(SynchronizationEvent{
-                rxcpp::observable<>::empty<
-                    std::shared_ptr<shared_model::interface::Block>>(),
-                SynchronizationOutcomeType::kNothing,
-                msg.round});
+            this->processDifferent(msg, SynchronizationOutcomeType::kNothing);
           });
     }
 
     boost::optional<SynchronizationEvent>
     SynchronizerImpl::downloadMissingBlocks(
-        const consensus::VoteOther &msg,
-        const shared_model::interface::types::HeightType height) {
-      auto expected_height = msg.round.block_round;
-
+        const consensus::Synchronizable &msg,
+        const shared_model::interface::types::HeightType top_block_height,
+        const SynchronizationOutcomeType alternative_outcome) {
+      const shared_model::interface::types::HeightType expected_height =
+          SynchronizationOutcomeType ::kCommit == alternative_outcome
+          ? msg.round.block_round
+          : msg.round.block_round - 1;
       // TODO mboldyrev 21.03.2019 IR-423 Allow consensus outcome update
       while (true) {
         // TODO andrei 17.10.18 IR-1763 Add delay strategy for loading blocks
@@ -89,7 +75,7 @@ namespace iroha {
 
           std::vector<std::shared_ptr<shared_model::interface::Block>> blocks;
           auto network_chain =
-              block_loader_->retrieveBlocks(height, public_key)
+              block_loader_->retrieveBlocks(top_block_height, public_key)
                   .tap([&blocks](std::shared_ptr<shared_model::interface::Block>
                                      block) {
                     blocks.push_back(std::move(block));
@@ -102,16 +88,18 @@ namespace iroha {
                 blocks, rxcpp::identity_immediate());
 
             auto ledger_state = mutable_factory_->commit(std::move(storage));
+            auto actual_height = blocks.back()->height();
+            bool higher_than_expected = actual_height > expected_height;
 
             if (ledger_state) {
               return SynchronizationEvent{
                   chain,
-                  SynchronizationOutcomeType::kCommit,
-                  blocks.back()->height() > expected_height
-                      // TODO 07.03.19 andrei: IR-387 Remove reject round
-                      ? consensus::Round{blocks.back()->height(), 0}
-                      : msg.round,
+                  higher_than_expected ? SynchronizationOutcomeType::kCommit
+                                       : alternative_outcome,
+                  higher_than_expected ? consensus::Round{actual_height, 0}
+                                       : msg.round,
                   std::move(*ledger_state)};
+              // TODO 07.03.19 andrei: IR-387 Remove reject round
             } else {
               return boost::none;
             }
@@ -168,26 +156,53 @@ namespace iroha {
       }
     }
 
-    void SynchronizerImpl::processDifferent(const consensus::VoteOther &msg) {
-      log_->info("at handleDifferent");
-
-      shared_model::interface::types::HeightType top_block_height{0};
+    boost::optional<shared_model::interface::types::HeightType>
+    SynchronizerImpl::getTopBlockHeight() const {
+      decltype(getTopBlockHeight()) top_block_height;
       if (auto block_query = block_query_factory_->createBlockQuery()) {
         top_block_height = (*block_query)->getTopBlockHeight();
       } else {
         log_->error(
             "Unable to create block query and retrieve top block height");
+      }
+      return top_block_height;
+    }
+
+    void SynchronizerImpl::processDifferent(
+        const consensus::Synchronizable &msg,
+        SynchronizationOutcomeType alternative_outcome) {
+      log_->info("at handleDifferent");
+
+      auto top_block_height = getTopBlockHeight();
+      if (not top_block_height) {
+        log_->error("Unable to continue without knowing top block height");
         return;
       }
 
-      if (top_block_height >= msg.round.block_round) {
+      int64_t height_diff = msg.round.block_round - *top_block_height;
+      if (height_diff < 0) {
         log_->info(
             "Storage is already in synchronized state. Top block height is {}",
-            top_block_height);
+            *top_block_height);
         return;
       }
 
-      auto result = downloadMissingBlocks(msg, top_block_height);
+      if (SynchronizationOutcomeType::kCommit != alternative_outcome
+          and (0 == height_diff or 1 == height_diff)) {
+        notifier_.get_subscriber().on_next(
+            // TODO: nickaleks IR-147 18.01.19 add peers
+            // list from GateObject when it has one
+            SynchronizationEvent{
+                rxcpp::observable<>::empty<
+                    std::shared_ptr<shared_model::interface::Block>>(),
+                alternative_outcome,
+                msg.round,
+                nullptr /* this is going to be fixed in PR-2066 (IR-147) */});
+        return;
+      }
+
+      auto result =
+          downloadMissingBlocks(msg, *top_block_height, alternative_outcome);
       if (result) {
         notifier_.get_subscriber().on_next(*result);
       }

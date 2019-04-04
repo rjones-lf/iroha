@@ -44,7 +44,9 @@ namespace iroha {
   namespace network {
 
     OnDemandOrderingInit::OnDemandOrderingInit(logger::LoggerPtr log)
-        : notifier(notifier_lifetime_), log_(std::move(log)) {}
+        : sync_event_notifier(sync_event_notifier_lifetime_),
+          commit_notifier(commit_notifier_lifetime_),
+          log_(std::move(log)) {}
 
     auto OnDemandOrderingInit::createNotificationFactory(
         std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
@@ -68,16 +70,13 @@ namespace iroha {
         std::chrono::milliseconds delay,
         std::vector<shared_model::interface::types::HashType> initial_hashes,
         const logger::LoggerManagerTreePtr &ordering_log_manager) {
-      // since top block will be the first in notifier observable, hashes of
-      // two previous blocks are prepended
+      // since top block will be the first in commit_notifier observable,
+      // hashes of two previous blocks are prepended
       const size_t kBeforePreviousTop = 0, kPreviousTop = 1;
 
       // flat map hashes from committed blocks
-      auto all_hashes = notifier.get_observable()
-                            .flat_map([](auto commit) {
-                              return commit.synced_blocks.map(
-                                  [](auto block) { return block->hash(); });
-                            })
+      auto all_hashes = commit_notifier.get_observable()
+                            .map([](auto block) { return block->hash(); })
                             // prepend hashes for the first two rounds
                             .start_with(initial_hashes.at(kBeforePreviousTop),
                                         initial_hashes.at(kPreviousTop));
@@ -100,7 +99,7 @@ namespace iroha {
         auto on_blocks = [this,
                           peer_query_factory,
                           current_hashes,
-                          &current_round](const auto &commit) {
+                          &current_round](const auto & /*commit*/) {
           current_round = ordering::nextCommitRound(current_round);
 
           // retrieve peer list from database
@@ -186,7 +185,7 @@ namespace iroha {
         return peers;
       };
 
-      auto peers = notifier.get_observable()
+      auto peers = sync_event_notifier.get_observable()
                        .with_latest_from(latest_hashes)
                        .map(map_peers);
 
@@ -210,45 +209,57 @@ namespace iroha {
             const synchronizer::SynchronizationEvent &)> delay_func,
         size_t max_number_of_transactions,
         const logger::LoggerManagerTreePtr &ordering_log_manager) {
-      auto map = [](auto commit) {
-        return matchEvent(
-            commit,
-            [](const auto &commit)
-                -> ordering::OnDemandOrderingGate::BlockRoundEventType {
-              ordering::cache::OrderingGateCache::HashesSetType hashes;
-              commit.synced_blocks.as_blocking().subscribe(
-                  [&hashes](const auto &block) {
-                    const auto &committed = block->transactions();
-                    std::transform(committed.begin(),
-                                   committed.end(),
-                                   std::inserter(hashes, hashes.end()),
-                                   [](const auto &transaction) {
-                                     return transaction.hash();
-                                   });
-                    const auto &rejected =
-                        block->rejected_transactions_hashes();
-                    std::copy(rejected.begin(),
-                              rejected.end(),
-                              std::inserter(hashes, hashes.end()));
-                  });
-              return ordering::OnDemandOrderingGate::BlockEvent{
-                  ordering::nextCommitRound(commit.round), hashes};
-            },
-            [](const auto &nothing)
-                -> ordering::OnDemandOrderingGate::BlockRoundEventType {
-              return ordering::OnDemandOrderingGate::EmptyEvent{
-                  ordering::nextRejectRound(nothing.round)};
-            });
-      };
-
       return std::make_shared<ordering::OnDemandOrderingGate>(
           std::move(ordering_service),
           std::move(network_client),
-          notifier.get_observable()
+          commit_notifier.get_observable().map(
+              [this](auto block)
+                  -> std::shared_ptr<
+                      const ordering::cache::OrderingGateCache::HashesSetType> {
+                // take committed & rejected transaction hashes from committed
+                // block
+                log_->debug("Committed block handle: height {}.",
+                            block->height());
+                auto hashes = std::make_shared<
+                    ordering::cache::OrderingGateCache::HashesSetType>();
+                const auto &committed = block->transactions();
+                std::transform(
+                    committed.begin(),
+                    committed.end(),
+                    std::inserter(*hashes, hashes->end()),
+                    [](const auto &transaction) { return transaction.hash(); });
+                const auto &rejected = block->rejected_transactions_hashes();
+                std::copy(rejected.begin(),
+                          rejected.end(),
+                          std::inserter(*hashes, hashes->end()));
+                return hashes;
+              }),
+          sync_event_notifier.get_observable()
               .lift<iroha::synchronizer::SynchronizationEvent>(
                   iroha::makeDelay<iroha::synchronizer::SynchronizationEvent>(
                       delay_func, rxcpp::identity_current_thread()))
-              .map(map),
+              .map([log = log_](const auto &event) {
+                consensus::Round current_round;
+                switch (event.sync_outcome) {
+                  case iroha::synchronizer::SynchronizationOutcomeType::kCommit:
+                    log->debug("Sync event on {}: commit.", event.round);
+                    current_round = ordering::nextCommitRound(event.round);
+                    break;
+                  case iroha::synchronizer::SynchronizationOutcomeType::kReject:
+                    log->debug("Sync event on {}: reject.", event.round);
+                    current_round = ordering::nextRejectRound(event.round);
+                    break;
+                  case iroha::synchronizer::SynchronizationOutcomeType::
+                      kNothing:
+                    log->debug("Sync event on {}: nothing.", event.round);
+                    current_round = ordering::nextRejectRound(event.round);
+                    break;
+                  default:
+                    log->error("unknown SynchronizationOutcomeType");
+                    assert(false);
+                }
+                return current_round;
+              }),
           std::move(cache),
           std::move(proposal_factory),
           std::move(tx_cache),
@@ -270,7 +281,8 @@ namespace iroha {
     }
 
     OnDemandOrderingInit::~OnDemandOrderingInit() {
-      notifier_lifetime_.unsubscribe();
+      sync_event_notifier_lifetime_.unsubscribe();
+      commit_notifier_lifetime_.unsubscribe();
     }
 
     std::shared_ptr<iroha::network::OrderingGate>
