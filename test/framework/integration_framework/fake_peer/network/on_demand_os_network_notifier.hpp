@@ -8,6 +8,8 @@
 
 #include <rxcpp/rx.hpp>
 
+#include <mutex>
+
 #include "consensus/round.hpp"
 #include "framework/integration_framework/fake_peer/types.hpp"
 #include "ordering/on_demand_os_transport.hpp"
@@ -34,8 +36,10 @@ namespace integration_framework {
      private:
       std::weak_ptr<FakePeer> fake_peer_wptr_;
       rxcpp::subjects::subject<iroha::consensus::Round> rounds_subject_;
+      std::mutex rounds_subject_mutex_;
       rxcpp::subjects::subject<std::shared_ptr<BatchesCollection>>
           batches_subject_;
+      std::mutex batches_subject_mutex_;
     };
 
   }  // namespace fake_peer

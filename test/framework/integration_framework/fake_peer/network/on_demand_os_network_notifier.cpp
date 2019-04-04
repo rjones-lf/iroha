@@ -18,6 +18,7 @@ namespace integration_framework {
         : fake_peer_wptr_(fake_peer) {}
 
     void OnDemandOsNetworkNotifier::onBatches(CollectionType batches) {
+      std::lock_guard<std::mutex> guard(batches_subject_mutex_);
       batches_subject_.get_subscriber().on_next(
           std::make_shared<BatchesCollection>(std::move(batches)));
     }
@@ -26,7 +27,10 @@ namespace integration_framework {
         std::shared_ptr<const OnDemandOsNetworkNotifier::ProposalType>>
     OnDemandOsNetworkNotifier::onRequestProposal(
         iroha::consensus::Round round) {
-      rounds_subject_.get_subscriber().on_next(round);
+      {
+        std::lock_guard<std::mutex> guard(rounds_subject_mutex_);
+        rounds_subject_.get_subscriber().on_next(round);
+      }
       auto fake_peer = fake_peer_wptr_.lock();
       BOOST_ASSERT_MSG(fake_peer, "Fake peer shared pointer is not set!");
       const auto behaviour = fake_peer->getBehaviour();

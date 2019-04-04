@@ -14,6 +14,7 @@ namespace integration_framework {
 
     void OsNetworkNotifier::onBatch(std::unique_ptr<TransactionBatch> batch) {
       std::shared_ptr<TransactionBatch> batch_ptr = std::move(batch);
+      std::lock_guard<std::mutex> guard(batches_subject_mutex_);
       batches_subject_.get_subscriber().on_next(std::move(batch_ptr));
     }
 

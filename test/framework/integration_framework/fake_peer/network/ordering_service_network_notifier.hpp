@@ -8,6 +8,8 @@
 
 #include "network/ordering_service_transport.hpp"
 
+#include <mutex>
+
 #include <rxcpp/rx.hpp>
 #include "framework/integration_framework/fake_peer/types.hpp"
 
@@ -28,6 +30,7 @@ namespace integration_framework {
       rxcpp::subjects::subject<
           std::shared_ptr<shared_model::interface::TransactionBatch>>
           batches_subject_;
+      std::mutex batches_subject_mutex_;
     };
 
   }  // namespace fake_peer

@@ -8,6 +8,8 @@
 
 #include "network/mst_transport.hpp"
 
+#include <mutex>
+
 #include <rxcpp/rx.hpp>
 #include "framework/integration_framework/fake_peer/network/mst_message.hpp"
 #include "framework/integration_framework/fake_peer/types.hpp"
@@ -25,6 +27,7 @@ namespace integration_framework {
 
      private:
       rxcpp::subjects::subject<std::shared_ptr<MstMessage>> mst_subject_;
+      std::mutex mst_subject_mutex_;
     };
 
   }  // namespace fake_peer

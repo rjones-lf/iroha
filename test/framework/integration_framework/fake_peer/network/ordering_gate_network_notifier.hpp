@@ -8,8 +8,9 @@
 
 #include "network/ordering_gate_transport.hpp"
 
-#include <rxcpp/rx.hpp>
+#include <mutex>
 
+#include <rxcpp/rx.hpp>
 #include "framework/integration_framework/fake_peer/types.hpp"
 
 namespace integration_framework {
@@ -28,6 +29,7 @@ namespace integration_framework {
       rxcpp::subjects::subject<
           std::shared_ptr<shared_model::interface::Proposal>>
           proposals_subject_;
+      std::mutex proposals_subject_mutex_;
     };
 
   }  // namespace fake_peer

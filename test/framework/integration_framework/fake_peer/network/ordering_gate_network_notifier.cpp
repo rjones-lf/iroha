@@ -12,6 +12,7 @@ namespace integration_framework {
 
     void OgNetworkNotifier::onProposal(
         std::shared_ptr<shared_model::interface::Proposal> proposal) {
+      std::lock_guard<std::mutex> guard(proposals_subject_mutex_);
       proposals_subject_.get_subscriber().on_next(std::move(proposal));
     }
 

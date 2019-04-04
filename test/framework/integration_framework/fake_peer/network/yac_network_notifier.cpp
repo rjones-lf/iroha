@@ -14,6 +14,7 @@ namespace integration_framework {
 
     void YacNetworkNotifier::onState(YacNetworkNotifier::StateMessage state) {
       auto state_ptr = std::make_shared<const StateMessage>(std::move(state));
+      std::lock_guard<std::mutex> guard(votes_subject_mutex_);
       votes_subject_.get_subscriber().on_next(state_ptr);
     }
 
