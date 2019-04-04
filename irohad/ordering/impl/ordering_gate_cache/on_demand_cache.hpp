@@ -31,14 +31,20 @@ namespace iroha {
 
         void remove(const HashesSetType &hashes) override;
 
-        virtual const BatchesSetType &head() const override;
+        virtual const BatchesSetType &front() const override;
 
-        virtual const BatchesSetType &tail() const override;
+        virtual const BatchesSetType &back() const override;
+
+        virtual void rotate() override;
 
        private:
         const uint64_t max_cache_size_;
         mutable std::shared_timed_mutex mutex_;
-        using CacheElementType = std::pair<uint64_t, BatchesSetType>;
+        using CacheElementType =
+            std::pair<uint64_t /* a number of transactions over all elements
+                                  from the second part of that pair */
+                      ,
+                      BatchesSetType>;
         using BatchesQueueType = boost::circular_buffer<CacheElementType>;
         BatchesQueueType circ_buffer{3, CacheElementType{}};
       };

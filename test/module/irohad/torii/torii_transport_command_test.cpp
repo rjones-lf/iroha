@@ -39,6 +39,15 @@ using ::testing::StrEq;
 using namespace iroha::torii;
 using namespace std::chrono_literals;
 
+auto getMockedBatch(
+    const shared_model::interface::types::SharedTxsCollectionType &transactions)
+    -> shared_model::interface::TransactionBatchFactory::FactoryResult<
+        std::unique_ptr<shared_model::interface::TransactionBatch>> {
+  return iroha::expected::makeValue<
+      std::unique_ptr<shared_model::interface::TransactionBatch>>(
+      createUniqueMockBatchWithTransactions(transactions, "batch_hash"));
+}
+
 class CommandServiceTransportGrpcTest : public testing::Test {
  private:
   using ProtoTxTransportFactory = shared_model::proto::ProtoTransportFactory<
@@ -162,17 +171,7 @@ TEST_F(CommandServiceTransportGrpcTest, ListTorii) {
       createTransactionBatch(
           A<const shared_model::interface::types::SharedTxsCollectionType &>()))
       .Times(kTimes)
-      .WillRepeatedly(Invoke(
-          [](const shared_model::interface::types::SharedTxsCollectionType
-                 &transactions)
-              -> shared_model::interface::TransactionBatchFactory::
-                  FactoryResult<std::unique_ptr<
-                      shared_model::interface::TransactionBatch>> {
-                    return iroha::expected::makeValue<std::unique_ptr<
-                        shared_model::interface::TransactionBatch>>(
-                        createUniqueMockBatchWithTransactions(transactions,
-                                                              "batch_hash"));
-                  }));
+      .WillRepeatedly(Invoke(getMockedBatch));
 
   EXPECT_CALL(*command_service, handleTransactionBatch(_)).Times(kTimes);
   transport_grpc->ListTorii(&context, &request, &response);
@@ -244,17 +243,7 @@ TEST_F(CommandServiceTransportGrpcTest, ListToriiPartialInvalid) {
       createTransactionBatch(
           A<const shared_model::interface::types::SharedTxsCollectionType &>()))
       .Times(kTimes - 1)
-      .WillRepeatedly(Invoke(
-          [](const shared_model::interface::types::SharedTxsCollectionType
-                 &transactions)
-              -> shared_model::interface::TransactionBatchFactory::
-                  FactoryResult<std::unique_ptr<
-                      shared_model::interface::TransactionBatch>> {
-                    return iroha::expected::makeValue<std::unique_ptr<
-                        shared_model::interface::TransactionBatch>>(
-                        createUniqueMockBatchWithTransactions(transactions,
-                                                              "batch_hash"));
-                  }));
+      .WillRepeatedly(Invoke(getMockedBatch));
 
   EXPECT_CALL(*command_service, handleTransactionBatch(_)).Times(kTimes - 1);
   EXPECT_CALL(*status_bus, publish(_)).WillOnce(Invoke([&kError](auto status) {

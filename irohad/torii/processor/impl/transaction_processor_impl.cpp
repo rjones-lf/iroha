@@ -111,7 +111,6 @@ namespace iroha {
       mst_processor_->onPreparedBatches().subscribe([this](auto &&batch) {
         log_->info("MST batch prepared");
         this->publishEnoughSignaturesStatus(batch->transactions());
-        log_->critical("BATCH {}", batch);
         if (not this->pcs_->propagate_batch(batch)) {
           log_->error("PCS was unable to serve the batch received from MST {}",
                       batch->toString());
@@ -132,22 +131,16 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::TransactionBatch>
             transaction_batch) const {
       log_->info("handle batch");
-      bool batch_passed_for_further_processing(true);
       if (transaction_batch->hasAllSignatures()
           and not mst_processor_->batchInStorage(transaction_batch)) {
         log_->info("propagating batch to PCS");
         this->publishEnoughSignaturesStatus(transaction_batch->transactions());
-        log_->critical("BATCH {}", transaction_batch);
-        if (not(batch_passed_for_further_processing =
-                    pcs_->propagate_batch(transaction_batch))) {
-          log_->info("PCS was unable to serve the batch {}",
-                     transaction_batch->toString());
-        }
+        return pcs_->propagate_batch(transaction_batch);
       } else {
         log_->info("propagating batch to MST");
         mst_processor_->propagateBatch(transaction_batch);
       }
-      return batch_passed_for_further_processing;
+      return true;
     }
 
     void TransactionProcessorImpl::publishStatus(

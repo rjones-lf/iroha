@@ -32,7 +32,7 @@ OnDemandCache::OnDemandCache(uint64_t max_cache_size)
 
 bool OnDemandCache::addToBack(
     const OrderingGateCache::BatchesSetType &batches) {
-  std::unique_lock<std::shared_timed_mutex> lock(mutex_);
+  std::lock_guard<std::shared_timed_mutex> lock(mutex_);
   const uint64_t input_size = countTransactions(batches);
 
   if (circ_buffer.back().first + input_size > max_cache_size_) {
@@ -44,7 +44,7 @@ bool OnDemandCache::addToBack(
 }
 
 void OnDemandCache::remove(const OrderingGateCache::HashesSetType &hashes) {
-  std::unique_lock<std::shared_timed_mutex> lock(mutex_);
+  std::lock_guard<std::shared_timed_mutex> lock(mutex_);
   for (auto &batches : circ_buffer) {
     for (auto it = batches.second.begin(); it != batches.second.end();) {
       if (std::any_of(it->get()->transactions().begin(),
@@ -54,7 +54,7 @@ void OnDemandCache::remove(const OrderingGateCache::HashesSetType &hashes) {
                       })) {
         // returns iterator following the last removed element
         // hence there is no increment in loop iteration_expression
-        batches.first -= countTransactions(batches.second);
+        batches.first -= boost::size((*it)->transactions());
         it = batches.second.erase(it);
       } else {
         ++it;
@@ -64,7 +64,7 @@ void OnDemandCache::remove(const OrderingGateCache::HashesSetType &hashes) {
 }
 
 OrderingGateCache::BatchesSetType OnDemandCache::pop() {
-  std::unique_lock<std::shared_timed_mutex> lock(mutex_);
+  std::lock_guard<std::shared_timed_mutex> lock(mutex_);
   BatchesSetType res;
   std::swap(res, circ_buffer.front().second);
   // push empty set to remove front element
@@ -72,12 +72,18 @@ OrderingGateCache::BatchesSetType OnDemandCache::pop() {
   return res;
 }
 
-const OrderingGateCache::BatchesSetType &OnDemandCache::head() const {
+const OrderingGateCache::BatchesSetType &OnDemandCache::front() const {
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
   return circ_buffer.front().second;
 }
 
-const OrderingGateCache::BatchesSetType &OnDemandCache::tail() const {
+const OrderingGateCache::BatchesSetType &OnDemandCache::back() const {
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
   return circ_buffer.back().second;
+}
+
+void OnDemandCache::rotate() {
+  std::lock_guard<std::shared_timed_mutex> lock(mutex_);
+  auto second_element_it = boost::next(circ_buffer.begin());
+  circ_buffer.rotate(second_element_it);
 }

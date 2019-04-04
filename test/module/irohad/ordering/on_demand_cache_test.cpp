@@ -42,7 +42,7 @@ TEST_F(OnDemandCacheTest, TestAddToBack) {
 
   cache.addToBack({batch1, batch2});
 
-  ASSERT_THAT(cache.tail(), UnorderedElementsAre(batch1, batch2));
+  ASSERT_THAT(cache.back(), UnorderedElementsAre(batch1, batch2));
 }
 
 /**
@@ -137,7 +137,7 @@ TEST_F(OnDemandCacheTest, Remove) {
    * 2.
    * 3.
    */
-  ASSERT_THAT(cache.head(), UnorderedElementsAre(batch1, batch2));
+  ASSERT_THAT(cache.front(), UnorderedElementsAre(batch1, batch2));
 
   cache.remove({hash1});
   /**
@@ -145,5 +145,36 @@ TEST_F(OnDemandCacheTest, Remove) {
    * 2.
    * 3.
    */
-  ASSERT_THAT(cache.head(), ElementsAre(batch2));
+  ASSERT_THAT(cache.front(), ElementsAre(batch2));
+}
+
+/**
+ * @given a cache with maximum size 3 and all the 3 elements are inside
+ * @when an element is removed from the cache
+ * @then only one element is possible to add to the cache
+ */
+TEST_F(OnDemandCacheTest, InternalStateCorrectness) {
+  OnDemandCache cache(3);
+  shared_model::interface::types::HashType hash1("hash1");
+  shared_model::interface::types::HashType hash2("hash2");
+  shared_model::interface::types::HashType hash3("hash3");
+  shared_model::interface::types::HashType hash4("hash4");
+  shared_model::interface::types::HashType hash5("hash5");
+
+  auto tx1 = createMockTransactionWithHash(hash1);
+  auto tx2 = createMockTransactionWithHash(hash2);
+  auto tx3 = createMockTransactionWithHash(hash3);
+  auto tx4 = createMockTransactionWithHash(hash4);
+  auto tx5 = createMockTransactionWithHash(hash5);
+
+  auto batch1 = createMockBatchWithTransactions({tx1}, "first");
+  auto batch2 = createMockBatchWithTransactions({tx2}, "second");
+  auto batch3 = createMockBatchWithTransactions({tx3}, "third");
+  auto batch4 = createMockBatchWithTransactions({tx4}, "fourth");
+  auto batch5 = createMockBatchWithTransactions({tx5}, "fifth");
+
+  ASSERT_TRUE(cache.addToBack({batch1, batch2, batch3}));
+  cache.remove({hash1});
+  ASSERT_TRUE(cache.addToBack({batch4}));
+  ASSERT_FALSE(cache.addToBack({batch5}));
 }
