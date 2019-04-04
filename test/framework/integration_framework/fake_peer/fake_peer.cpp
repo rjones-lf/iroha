@@ -184,22 +184,8 @@ namespace integration_framework {
       return boost::none;
     }
 
-    FakePeer &FakePeer::setProposalStorage(
-        std::shared_ptr<ProposalStorage> proposal_storage) {
-      proposal_storage_ = std::move(proposal_storage);
-      return *this;
-    }
-
-    FakePeer &FakePeer::removeProposalStorage() {
-      proposal_storage_.reset();
-      return *this;
-    }
-
-    boost::optional<ProposalStorage &> FakePeer::getProposalStorage() const {
-      if (proposal_storage_) {
-        return *proposal_storage_;
-      }
-      return boost::none;
+    ProposalStorage &FakePeer::getProposalStorage() {
+      return proposal_storage_;
     }
 
     void FakePeer::run() {

@@ -9,7 +9,6 @@
 #include "framework/integration_framework/fake_peer/behaviour/honest.hpp"
 #include "framework/integration_framework/fake_peer/block_storage.hpp"
 #include "framework/integration_framework/fake_peer/fake_peer.hpp"
-#include "framework/integration_framework/fake_peer/proposal_storage.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/test_logger.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
@@ -307,16 +306,12 @@ TEST_F(FakePeerExampleFixture,
       baseTx(kAdminId).transferAsset(kAdminId, kUserId, kAssetId, "tx1", "1.0"),
       kAdminKeypair);
 
-  auto proposal_storage = std::make_shared<fake_peer::ProposalStorage>();
-
   createFakePeers(1);
-  fake_peers_.front()->setProposalStorage(proposal_storage);
 
   auto &itf = prepareState();
 
   // provide the proposal
-  proposal_storage->addTransactions({clone(tx)});
-
+  fake_peers_.front()->getProposalStorage().addTransactions({clone(tx)});
 
   // watch the proposal requests to fake peer
   constexpr std::chrono::seconds kCommitWaitingTime(20);

@@ -66,15 +66,8 @@ namespace integration_framework {
     OrderingProposalRequestResult
     HonestBehaviour::processOrderingProposalRequest(
         const OrderingProposalRequest &request) {
-      const auto proposal_storage = getFakePeer().getProposalStorage();
-      if (!proposal_storage) {
-        getLogger()->debug(
-            "Got an OnDemandOrderingService.GetProposal call for round {}, "
-            "but have no proposal storage! NOT returning a proposal.",
-            request.toString());
-        return boost::none;
-      }
-      auto opt_proposal = proposal_storage->getProposal(request);
+      auto opt_proposal =
+          getFakePeer().getProposalStorage().getProposal(request);
       getLogger()->debug(
           "Got an OnDemandOrderingService.GetProposal call for round {}, "
           "{}returning a proposal.",
@@ -92,16 +85,6 @@ namespace integration_framework {
         return;
       }
       auto &fake_peer = getFakePeer();
-      auto proposal_storage = fake_peer.getProposalStorage();
-      if (!proposal_storage) {
-        getLogger()->debug(
-            "Got an OnDemandOrderingService.SendBatches call, but have no "
-            "proposal storage to store the incoming batches! Creating one.");
-        fake_peer.setProposalStorage(std::make_shared<ProposalStorage>());
-        proposal_storage = fake_peer.getProposalStorage();
-        BOOST_ASSERT_MSG(proposal_storage,
-                         "Failed to create a proposal storage!");
-      }
       getLogger()->debug(
           "Got an OnDemandOrderingService.SendBatches call, storing the "
           "following batches: {}",
@@ -111,7 +94,7 @@ namespace integration_framework {
               }),
               ",\n"));
 
-      proposal_storage->addBatches(batches);
+      fake_peer.getProposalStorage().addBatches(batches);
     }
 
   }  // namespace fake_peer

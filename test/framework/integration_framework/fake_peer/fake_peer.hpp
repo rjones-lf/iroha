@@ -12,6 +12,7 @@
 #include <boost/core/noncopyable.hpp>
 #include <rxcpp/rx.hpp>
 #include "framework/integration_framework/fake_peer/network/mst_message.hpp"
+#include "framework/integration_framework/fake_peer/proposal_storage.hpp"
 #include "framework/integration_framework/fake_peer/types.hpp"
 #include "interfaces/iroha_internal/abstract_transport_factory.hpp"
 #include "logger/logger_fwd.hpp"
@@ -91,12 +92,7 @@ namespace integration_framework {
       /// Get the block storage previously assigned to this peer, if any.
       boost::optional<const BlockStorage &> getBlockStorage() const;
 
-      FakePeer &setProposalStorage(
-          std::shared_ptr<ProposalStorage> proposal_storage);
-
-      FakePeer &removeProposalStorage();
-
-      boost::optional<ProposalStorage &> getProposalStorage() const;
+      ProposalStorage &getProposalStorage();
 
       /// Start the fake peer.
       void run();
@@ -254,7 +250,7 @@ namespace integration_framework {
 
       std::shared_ptr<Behaviour> behaviour_;
       std::shared_ptr<BlockStorage> block_storage_;
-      std::shared_ptr<ProposalStorage> proposal_storage_;
+      ProposalStorage proposal_storage_;
     };
 
   }  // namespace fake_peer
