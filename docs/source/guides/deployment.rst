@@ -5,7 +5,7 @@ Hyperledger Iroha can be deployed in different ways, depending on the perspectiv
 There can be either a single node deployed, or multiple nodes running in several containers on a local machine or spread across the network — so pick any case you need.
 This page describes different scenarios and is intended to act as a how-to guide for users, primarily trying out Iroha for the first time.
 
-Running single instance  
+Running single instance
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 Generally, people want to run Iroha locally in order to try out the API and explore the capabilities.
@@ -56,7 +56,7 @@ In case of valid assumptions, the only thing that remains is to launch the daemo
 
 .. Attention:: Specifying a new genesis block using `--genesis_block` with blocks already present in ledger requires `--overwrite_ledger` flag to be set. The daemon will fail otherwise.
 
-An example of shell command, running Iroha daemon is 
+An example of shell command, running Iroha daemon is
 
 .. code-block:: shell
 
@@ -74,7 +74,7 @@ In order to run Iroha peer as a single instance in Docker, you should pull the i
 
     docker pull hyperledger/iroha:latest
 
-.. Hint:: Use *latest* tag for latest stable release, and *develop* for latest development version  
+.. Hint:: Use *latest* tag for latest stable release, and *develop* for latest development version
 
 Then, you have to create an enviroment for the image to run without problems:
 
@@ -95,9 +95,9 @@ Similarly, run postgres server, attaching it to the network you have created bef
 
 .. code-block:: shell
 
-    docker run --name some-postgres \
+    docker run --name iroha-postgres \
     -e POSTGRES_USER=postgres \
-    -e POSTGRES_PASSWORD=mysecretpassword \
+    -e POSTGRES_PASSWORD=postgres \
     -p 5432:5432 \
     --network=iroha-network \
     -d postgres:9.5
@@ -132,9 +132,9 @@ If they are met, you can move forward with the following command:
     # Blockstore volume
     -v blockstore:/tmp/block_store \
     # Postgres settings
-    -e POSTGRES_HOST='some-postgres' \
+    -e POSTGRES_HOST='iroha-postgres' \
     -e POSTGRES_PORT='5432' \
-    -e POSTGRES_PASSWORD='mysecretpassword' \
+    -e POSTGRES_PASSWORD='postgres' \
     -e POSTGRES_USER='postgres' \
     # Node keypair name
     -e KEY='node0' \
@@ -185,7 +185,7 @@ Do not have a keypair for a peer
 --------------------------------
 
 In order to create a keypair for an account or a peer, use iroha-cli binary by passing the name of the peer with `--new_account` option.
-For example: 
+For example:
 
 .. code-block:: shell
 

@@ -28,7 +28,7 @@ docker rm -f $pgname 2>/dev/null 1>&2
 
 # vars
 user=postgres
-password=mysecretpassword
+password=postgres
 pgport=5432
 
 # run postgres

@@ -4,7 +4,7 @@ PG_CONTAINER_NAME="postgres"
 PG_IMAGE_NAME="postgres:9.5"
 PG_CONTAINER_DATA="/var/lib/postgresql/data"
 PG_USER="iroha"
-PG_PASS="mysecretpassword"
+PG_PASS="postgres"
 PG_PORT="5432"
 
 G_ID=$(id -g)

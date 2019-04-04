@@ -48,9 +48,9 @@ have created before, and expose ports for communication:
 
 .. code-block:: shell
 
-  docker run --name some-postgres \
+  docker run --name iroha-postgres \
   -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=mysecretpassword \
+  -e POSTGRES_PASSWORD=postgres \
   -p 5432:5432 \
   --network=iroha-network \
   -d postgres:9.5

@@ -12,7 +12,7 @@ namespace integration_framework {
   std::string getPostgresCredsOrDefault(const std::string &default_conn =
                                             "host=localhost port=5432 "
                                             "user=postgres "
-                                            "password=mysecretpassword");
+                                            "password=postgres");
 }  // namespace integration_framework
 
 #endif  // IROHA_CONFIG_HELPER_HPP
