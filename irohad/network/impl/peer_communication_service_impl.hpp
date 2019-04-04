@@ -39,7 +39,7 @@ namespace iroha {
       rxcpp::observable<simulator::VerifiedProposalCreatorEvent>
       onVerifiedProposal() const override;
 
-      rxcpp::observable<synchronizer::SynchronizationEvent> on_commit()
+      rxcpp::observable<synchronizer::SynchronizationEvent> onSynchronization()
           const override;
 
      private:

@@ -294,7 +294,7 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
   });
 
   gate_outcome.get_subscriber().on_next(
-      consensus::VoteOther{public_keys, hash, consensus::Round{kHeight, 1}});
+      consensus::VoteOther{public_keys, consensus::Round{kHeight, 1}, hash});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -332,7 +332,7 @@ TEST_F(SynchronizerTest, ValidWhenValidChainMultipleBlocks) {
   });
 
   gate_outcome.get_subscriber().on_next(
-      consensus::VoteOther{public_keys, hash, consensus::Round{kHeight, 1}});
+      consensus::VoteOther{public_keys, consensus::Round{kHeight, 1}, hash});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -371,7 +371,7 @@ TEST_F(SynchronizerTest, ExactlyThreeRetrievals) {
   wrapper.subscribe();
 
   gate_outcome.get_subscriber().on_next(
-      consensus::VoteOther{public_keys, hash, consensus::Round{kHeight, 1}});
+      consensus::VoteOther{public_keys, consensus::Round{kHeight, 1}, hash});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -419,7 +419,7 @@ TEST_F(SynchronizerTest, RetrieveBlockSeveralFailures) {
   });
 
   gate_outcome.get_subscriber().on_next(
-      consensus::VoteOther{public_keys, hash, consensus::Round{kHeight, 1}});
+      consensus::VoteOther{public_keys, consensus::Round{kHeight, 1}, hash});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -444,7 +444,7 @@ TEST_F(SynchronizerTest, ProposalRejectOutcome) {
   EXPECT_CALL(*chain_validator, validateAndApply(_, _)).Times(0);
 
   gate_outcome.get_subscriber().on_next(
-      consensus::ProposalReject{consensus::Round{kHeight, 1}});
+      consensus::ProposalReject{public_keys, consensus::Round{kHeight, 1}});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -469,7 +469,7 @@ TEST_F(SynchronizerTest, BlockRejectOutcome) {
   EXPECT_CALL(*chain_validator, validateAndApply(_, _)).Times(0);
 
   gate_outcome.get_subscriber().on_next(
-      consensus::BlockReject{consensus::Round{kHeight, 1}});
+      consensus::BlockReject{public_keys, consensus::Round{kHeight, 1}});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -494,7 +494,7 @@ TEST_F(SynchronizerTest, NoneOutcome) {
   EXPECT_CALL(*chain_validator, validateAndApply(_, _)).Times(0);
 
   gate_outcome.get_subscriber().on_next(
-      consensus::AgreementOnNone{consensus::Round{kHeight, 1}});
+      consensus::AgreementOnNone{public_keys, consensus::Round{kHeight, 1}});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -566,7 +566,7 @@ TEST_F(SynchronizerTest, VotedForOtherCommitPrepared) {
   });
 
   gate_outcome.get_subscriber().on_next(
-      consensus::VoteOther{public_keys, hash, consensus::Round{kHeight, 1}});
+      consensus::VoteOther{public_keys, consensus::Round{kHeight, 1}, hash});
 }
 
 /**
@@ -644,7 +644,45 @@ TEST_F(SynchronizerTest, CommitFailureVoteOther) {
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 0);
 
   gate_outcome.get_subscriber().on_next(
-      consensus::VoteOther{public_keys, hash, consensus::Round{kHeight, 1}});
+      consensus::VoteOther{public_keys, consensus::Round{kHeight, 1}, hash});
+
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given Peers top block height is kHeight - 1
+ * @when arrives AgreementOnNone with kHeight + 1 round
+ * @then synchronizer has to download missing block with height = kHeight
+ */
+TEST_F(SynchronizerTest, OneRoundDifference) {
+  DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
+      SetFactory(&createMockMutableStorage);
+
+  EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
+
+  EXPECT_CALL(*mutable_factory, commit_(_))
+      .WillOnce(Return(ByMove(std::make_unique<LedgerState>(ledger_peers))));
+  EXPECT_CALL(*chain_validator, validateAndApply(ChainEq({commit_message}), _))
+      .WillOnce(Return(true));
+  EXPECT_CALL(*block_loader, retrieveBlocks(_, _))
+      .WillOnce(Return(rxcpp::observable<>::just(commit_message)));
+
+  auto wrapper =
+      make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
+  wrapper.subscribe([this](auto commit_event) {
+    EXPECT_EQ(*this->ledger_peers, *commit_event.ledger_state->ledger_peers);
+    auto block_wrapper =
+        make_test_subscriber<CallExact>(commit_event.synced_blocks, 1);
+    block_wrapper.subscribe([this](auto block) {
+      // Check synchronized block
+      ASSERT_EQ(block->height(), commit_message->height());
+    });
+    ASSERT_EQ(commit_event.sync_outcome, SynchronizationOutcomeType::kNothing);
+    ASSERT_TRUE(block_wrapper.validate());
+  });
+
+  gate_outcome.get_subscriber().on_next(consensus::AgreementOnNone{
+      public_keys, consensus::Round{kHeight + 1, 1}});
 
   ASSERT_TRUE(wrapper.validate());
 }
