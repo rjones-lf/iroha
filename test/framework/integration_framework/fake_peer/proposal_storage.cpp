@@ -117,17 +117,14 @@ namespace integration_framework {
     }
 
     ProposalStorage &ProposalStorage::setDefaultProvider(DefaultProvider provider) {
-      std::atomic_store_explicit(
-          &default_provider_,
-          std::make_shared<DefaultProvider>(std::move(provider)),
-          std::memory_order_release);
+      std::atomic_store(&default_provider_,
+                        std::make_shared<DefaultProvider>(std::move(provider)));
       return *this;
     }
 
     OrderingProposalRequestResult ProposalStorage::getDefaultProposal(
         const Round &round) const {
-      auto default_provider = std::atomic_load_explicit(
-          &default_provider_, std::memory_order_acquire);
+      auto default_provider = std::atomic_load(&default_provider_);
       if (default_provider) {
         return default_provider->operator()(round);
       }
