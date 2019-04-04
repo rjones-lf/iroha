@@ -41,28 +41,16 @@ namespace iroha {
           object,
           [this](const consensus::PairValid &msg) { this->processNext(msg); },
           [this](const consensus::VoteOther &msg) {
-            this->processDifferent(msg,
-                                   false,
-                                   msg.round.block_round,
-                                   SynchronizationOutcomeType::kCommit);
+            this->processDifferent(msg, SynchronizationOutcomeType::kCommit);
           },
           [this](const consensus::ProposalReject &msg) {
-            this->processDifferent(msg,
-                                   true,
-                                   msg.round.block_round - 1,
-                                   SynchronizationOutcomeType::kReject);
+            this->processDifferent(msg, SynchronizationOutcomeType::kReject);
           },
           [this](const consensus::BlockReject &msg) {
-            this->processDifferent(msg,
-                                   true,
-                                   msg.round.block_round - 1,
-                                   SynchronizationOutcomeType::kReject);
+            this->processDifferent(msg, SynchronizationOutcomeType::kReject);
           },
           [this](const consensus::AgreementOnNone &msg) {
-            this->processDifferent(msg,
-                                   true,
-                                   msg.round.block_round - 1,
-                                   SynchronizationOutcomeType::kNothing);
+            this->processDifferent(msg, SynchronizationOutcomeType::kNothing);
           });
     }
 
@@ -70,8 +58,11 @@ namespace iroha {
     SynchronizerImpl::downloadMissingBlocks(
         const consensus::Synchronizable &msg,
         const shared_model::interface::types::HeightType top_block_height,
-        const shared_model::interface::types::HeightType expected_height,
         const SynchronizationOutcomeType alternative_outcome) {
+      const shared_model::interface::types::HeightType expected_height =
+          SynchronizationOutcomeType ::kCommit == alternative_outcome
+          ? msg.round.block_round
+          : msg.round.block_round - 1;
       // TODO mboldyrev 21.03.2019 IR-423 Allow consensus outcome update
       while (true) {
         // TODO andrei 17.10.18 IR-1763 Add delay strategy for loading blocks
@@ -178,8 +169,6 @@ namespace iroha {
 
     void SynchronizerImpl::processDifferent(
         const consensus::Synchronizable &msg,
-        bool process_small_height_difference,
-        shared_model::interface::types::HeightType expected_height,
         SynchronizationOutcomeType alternative_outcome) {
       log_->info("at handleDifferent");
 
@@ -197,7 +186,7 @@ namespace iroha {
         return;
       }
 
-      if (process_small_height_difference
+      if (SynchronizationOutcomeType::kCommit != alternative_outcome
           and (0 == height_diff or 1 == height_diff)) {
         notifier_.get_subscriber().on_next(
             // TODO: nickaleks IR-147 18.01.19 add peers
@@ -211,8 +200,8 @@ namespace iroha {
         return;
       }
 
-      auto result = downloadMissingBlocks(
-          msg, *top_block_height, expected_height, alternative_outcome);
+      auto result =
+          downloadMissingBlocks(msg, *top_block_height, alternative_outcome);
       if (result) {
         notifier_.get_subscriber().on_next(*result);
       }
