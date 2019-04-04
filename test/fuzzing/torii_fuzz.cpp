@@ -56,7 +56,7 @@ struct CommandFixture {
     pcs_ = std::make_shared<iroha::network::MockPeerCommunicationService>();
     EXPECT_CALL(*pcs_, onProposal())
         .WillRepeatedly(Return(prop_notifier_.get_observable()));
-    EXPECT_CALL(*pcs_, on_commit())
+    EXPECT_CALL(*pcs_, onSynchronization())
         .WillRepeatedly(Return(sync_event_notifier_.get_observable()));
     EXPECT_CALL(*pcs_, onVerifiedProposal())
         .WillRepeatedly(Return(vprop_notifier_.get_observable()));
