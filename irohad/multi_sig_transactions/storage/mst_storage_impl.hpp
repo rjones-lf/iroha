@@ -37,8 +37,8 @@ namespace iroha {
     auto updateOwnStateImpl(const DataType &tx)
         -> decltype(updateOwnState(tx)) override;
 
-    auto getExpiredTransactionsImpl(const TimeType &current_time)
-        -> decltype(getExpiredTransactions(current_time)) override;
+    auto extractExpiredTransactionsImpl(const TimeType &current_time)
+        -> decltype(extractExpiredTransactions(current_time)) override;
 
     auto getDiffStateImpl(
         const shared_model::crypto::PublicKey &target_peer_key,
