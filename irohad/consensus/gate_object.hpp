@@ -27,26 +27,39 @@ namespace iroha {
       consensus::Round round;
     };
 
-    /// Network votes for another pair and round
-    struct VoteOther {
+    struct Synchronizable {
       shared_model::interface::types::PublicKeyCollectionType public_keys;
-      shared_model::interface::types::HashType hash;
       consensus::Round round;
+      Synchronizable(
+          shared_model::interface::types::PublicKeyCollectionType _public_keys,
+          consensus::Round _round)
+          : public_keys(std::move(_public_keys)), round(std::move(_round)) {}
+    };
+
+    /// Network votes for another pair and round
+    struct VoteOther : public Synchronizable {
+      shared_model::interface::types::HashType hash;
+      VoteOther(
+          shared_model::interface::types::PublicKeyCollectionType _public_keys,
+          consensus::Round _round,
+          shared_model::interface::types::HashType _hash)
+          : Synchronizable(std::move(_public_keys), std::move(_round)),
+            hash(std::move(_hash)) {}
     };
 
     /// Reject on proposal
-    struct ProposalReject {
-      consensus::Round round;
+    struct ProposalReject : public Synchronizable {
+      using Synchronizable::Synchronizable;
     };
 
     /// Reject on block
-    struct BlockReject {
-      consensus::Round round;
+    struct BlockReject : public Synchronizable {
+      using Synchronizable::Synchronizable;
     };
 
     /// Agreement on <None, None>
-    struct AgreementOnNone {
-      consensus::Round round;
+    struct AgreementOnNone : public Synchronizable {
+      using Synchronizable::Synchronizable;
     };
 
     using GateObject = boost::variant<PairValid,
