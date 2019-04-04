@@ -66,7 +66,7 @@ def doDebugBuild(coverageEnabled=false) {
     + " -v /tmp/${GIT_COMMIT}-${BUILD_NUMBER}:/tmp/${GIT_COMMIT}") {
 
     def scmVars = checkout scm
-    def cmakeOptions = ""
+    def cmakeOptions = "-DCMAKE_CXX_COMPILER=${WORKSPACE}/.jenkinsci/helpers/build.sh"
     if ( coverageEnabled ) {
       cmakeOptions += " -DCOVERAGE=ON "
     }
@@ -95,7 +95,7 @@ def doDebugBuild(coverageEnabled=false) {
         -DIROHA_VERSION=${env.IROHA_VERSION} \
         ${cmakeOptions}
     """
-    sh "cmake --build build -- -j${parallelism}"
+    sh "cmake --build build -- -j${parallelism} | sponge buildTimeResult.txt"
     sh "ccache --show-stats"
     if ( coverageEnabled ) {
       sh "cmake --build build --target coverage.init.info"

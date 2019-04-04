@@ -145,7 +145,8 @@ node ('master') {
   coverage = false
   coverage_mac = false
   doxygen = false
-
+  buildTimeGraph = true
+  
   build_type = 'Debug'
   packageBuild = false
   pushDockerTag = 'not-supposed-to-be-pushed'
@@ -262,9 +263,12 @@ node ('master') {
       parallelism==0 ?x64LinuxWorker.cpusAvailable : parallelism, x64linux_compiler_list, 'Release', specialBranch, false,
       false , testList, false, false, false, true, false, false, false, environmentList)}]
     }
+    if (build_scenario == 'Before merge to trunk') {
+      buildTimeGraph = false
+    }
     x64LinuxPostSteps = new Builder.PostSteps(
       always: [{x64LinuxBuildScript.alwaysPostSteps(environmentList)}],
-      success: [{x64LinuxBuildScript.successPostSteps(scmVars, packagePush, pushDockerTag, environmentList)}])
+      success: [{x64LinuxBuildScript.successPostSteps(scmVars, packagePush, pushDockerTag, environmentList, buildTimeGraph)}])
   }
   def x64MacBuildSteps
   def x64MacBuildPostSteps = new Builder.PostSteps()

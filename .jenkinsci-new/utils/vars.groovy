@@ -9,11 +9,11 @@
 //
 
 def compilerMapping () {
-  return ['gcc5': ['cxx_compiler':'g++-5', 'cc_compiler':'gcc-5'],
-          'gcc7' : ['cxx_compiler':'g++-7', 'cc_compiler':'gcc-7'],
-          'clang6': ['cxx_compiler':'clang++-6.0', 'cc_compiler':'clang-6.0'],
-          'clang7': ['cxx_compiler':'clang++-7', 'cc_compiler':'clang-7'],
-          'appleclang': ['cxx_compiler':'clang++', 'cc_compiler':'clang'],
+  return ['gcc5': ['cxx_compiler':"${WORKSPACE}/.jenkinsci-new/helpers/compilers/g++-5.sh", 'cc_compiler':'gcc-5'],
+          'gcc7' : ['cxx_compiler':"${WORKSPACE}/.jenkinsci-new/helpers/compilers/g++-7.sh", 'cc_compiler':'gcc-7',],
+          'clang6': ['cxx_compiler':"${WORKSPACE}/.jenkinsci-new/helpers/compilers/clang++-6.0.sh", 'cc_compiler':'clang-6.0'],
+          'clang7': ['cxx_compiler':"${WORKSPACE}/.jenkinsci-new/helpers/compilers/clang++-7.sh", 'cc_compiler':'clang-7'],
+          'appleclang': ['cxx_compiler':"${WORKSPACE}/.jenkinsci-new/helpers/compilers/clang++.sh", 'cc_compiler':'clang'],
          ]
   }
 

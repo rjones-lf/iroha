@@ -131,9 +131,23 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
   }
 }
 
-def successPostSteps(scmVars, boolean packagePush, String dockerTag, List environment) {
+def successPostSteps(scmVars, boolean packagePush, String dockerTag, List environment, boolean buildTimeGraph) {
   stage('Linux success PostSteps') {
     withEnv(environment) {
+
+      // handling build time results
+      if (buildTimeGraph) {
+        sh(".jenkinsci-new/helpers/exportBuildTime.py buildTimeResult.txt")
+        zip archive: true, dir: '', glob: 'buildTimeResult.csv', zipFile: 'buildTimeMeasurement.zip'
+        archiveArtifacts artifacts: 'buildTimeMeasurement.zip'
+
+        copyArtifacts(projectName: 'develop', filter: 'buildTimeMeasurement.zip', target: 'buildTimeMeasurement-develop');
+        unzip zipFile: 'buildTimeMeasurement-develop/buildTimeMeasurement.zip', dir: 'buildTimeMeasurement-develop'
+        sh ".jenkinsci-new/helpers/analyzeBuildTime.py buildTimeMeasurement-develop/buildTimeResult.csv buildTimeResult.csv"
+        zip archive: true, dir: '', glob: 'diff.csv', zipFile: 'diff.zip'
+        archiveArtifacts artifacts: 'diff.zip'
+      }
+
       if (packagePush) {
         def artifacts = load ".jenkinsci-new/artifacts.groovy"
         def utils = load ".jenkinsci-new/utils/utils.groovy"

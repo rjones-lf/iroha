@@ -3,6 +3,7 @@ def linuxPostStep() {
     try {
       // stop write core dumps
       sh "ulimit -c 0"
+
       // handling coredumps (if tests crashed)
       if (currentBuild.currentResult != "SUCCESS" && params.coredump) {
         def dumpsFileName = sprintf('coredumps-%1$s.bzip2',
@@ -16,6 +17,20 @@ def linuxPostStep() {
           echo "Build is not SUCCESS! See core dumps at: https://nexus.iroha.tech/repository/artifacts/iroha/coredumps/${dumpsFileName}"
         }
       }
+
+      // handling build time results
+      if (currentBuild.currentResult == "SUCCESS" && !params.fuzzing) {
+        sh(".jenkinsci/helpers/exportBuildTime.py buildTimeResult.txt")
+        zip archive: true, dir: '', glob: 'buildTimeResult.csv', zipFile: 'buildTimeMeasurement.zip'
+        archiveArtifacts artifacts: 'buildTimeMeasurement.zip'
+
+        copyArtifacts(projectName: 'develop', filter: 'buildTimeMeasurement.zip', target: 'buildTimeMeasurement-develop');
+        unzip zipFile: 'buildTimeMeasurement-develop/buildTimeMeasurement.zip', dir: 'buildTimeMeasurement-develop'
+        sh ".jenkinsci/helpers/analyzeBuildTime.py buildTimeMeasurement-develop/buildTimeResult.csv buildTimeResult.csv"
+        zip archive: true, dir: '', glob: 'diff.csv', zipFile: 'diff.zip'
+        archiveArtifacts artifacts: 'diff.zip'
+      }
+      
       if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
         def artifacts = load ".jenkinsci/artifacts.groovy"
         def commit = env.GIT_COMMIT

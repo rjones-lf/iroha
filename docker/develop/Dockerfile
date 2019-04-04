@@ -9,7 +9,7 @@ ENV IROHA_HOME /opt/iroha
 ENV IROHA_BUILD /opt/iroha/build
 
 RUN apt-get update && \
-    apt-get -y --no-install-recommends install apt-utils software-properties-common wget; \
+    apt-get -y --no-install-recommends install apt-utils software-properties-common wget time moreutils; \
     apt-get -y clean
 
 # add repos

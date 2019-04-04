@@ -13,7 +13,7 @@ def cmakeConfigure(String buildDir, String cmakeOptions, String sourceTreeDir=".
 }
 
 def cmakeBuild(String buildDir, String cmakeOptions, int parallelism) {
-  sh "cmake --build ${buildDir} ${cmakeOptions} -- -j${parallelism}"
+  sh "cmake --build ${buildDir} ${cmakeOptions} -- -j${parallelism} | sponge buildTimeResult.txt"
   sh "ccache --show-stats"
 }
 
