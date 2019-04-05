@@ -16,6 +16,8 @@
 
 using namespace std::chrono_literals;
 
+static constexpr std::chrono::milliseconds kMstEmissionPeriod = 100ms;
+
 namespace integration_framework {
 
   IrohaInstance::IrohaInstance(bool mst_support,
@@ -39,7 +41,12 @@ namespace integration_framework {
         // amount of minutes in a day
         mst_expiration_time_(std::chrono::minutes(24 * 60)),
         opt_mst_gossip_params_(boost::make_optional(
-            mst_support, iroha::GossipPropagationStrategyParams{})),
+            mst_support,
+            [] {
+              iroha::GossipPropagationStrategyParams params;
+              params.emission_period = kMstEmissionPeriod;
+              return params;
+            }())),
         max_rounds_delay_(0ms),
         stale_stream_max_rounds_(2),
         irohad_log_manager_(std::move(irohad_log_manager)),
