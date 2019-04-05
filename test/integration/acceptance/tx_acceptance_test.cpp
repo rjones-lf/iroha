@@ -23,7 +23,7 @@ class AcceptanceTest : public AcceptanceFixture {
       checkProposal =
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); };
   const std::function<void(
-      const std::shared_ptr<shared_model::interface::Block> &)>
+      const std::shared_ptr<const shared_model::interface::Block> &)>
       checkStatefulValid =
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); };
 

@@ -115,6 +115,14 @@ int main(int argc, char *argv[]) {
   logger::LoggerManagerTreePtr log_manager;
   logger::LoggerPtr log;
 
+  // If the global log level override was set in the command line arguments,
+  // create a logger manager with the given log level for all subsystems:
+  if (FLAGS_verbosity != kLogSettingsFromConfigFile) {
+    logger::LoggerConfig cfg;
+    cfg.log_level = config_members::LogLevels.at(FLAGS_verbosity);
+    log_manager = std::make_shared<logger::LoggerManagerTree>(std::move(cfg));
+    log = log_manager->getChild("Init")->getLogger();
+  }
 
   // Check if validators are registered.
   if (not config_validator_registered
@@ -226,7 +234,7 @@ int main(int argc, char *argv[]) {
       // clear previous storage if any
       irohad.dropStorage();
 
-      irohad.storage->insertBlock(*block.value());
+      irohad.storage->insertBlock(block.value());
       log->info("Genesis block inserted, number of transactions: {}",
                 block.value()->transactions().size());
     }

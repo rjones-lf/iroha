@@ -79,7 +79,7 @@ namespace integration_framework {
    private:
     using VerifiedProposalType =
         std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>;
-    using BlockType = std::shared_ptr<shared_model::interface::Block>;
+    using BlockType = std::shared_ptr<const shared_model::interface::Block>;
     using TxResponseType =
         std::shared_ptr<shared_model::interface::TransactionResponse>;
 
@@ -364,7 +364,7 @@ namespace integration_framework {
     /**
      * Request next block from queue and serve it with custom handler
      * @param validation - callback that receives object of type \relates
-     * std::shared_ptr<shared_model::interface::Block> by reference
+     * std::shared_ptr<const shared_model::interface::Block> by reference
      * @return this
      */
     IntegrationTestFramework &checkBlock(

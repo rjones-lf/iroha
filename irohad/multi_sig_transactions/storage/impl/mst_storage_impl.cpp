@@ -43,10 +43,13 @@ namespace iroha {
     return own_state_ += tx;
   }
 
-  auto MstStorageStateImpl::getExpiredTransactionsImpl(
+  auto MstStorageStateImpl::extractExpiredTransactionsImpl(
       const TimeType &current_time)
-      -> decltype(getExpiredTransactions(current_time)) {
-    return own_state_.eraseByTime(current_time);
+      -> decltype(extractExpiredTransactions(current_time)) {
+    for (auto &peer_and_state : peer_states_) {
+      peer_and_state.second.eraseExpired(current_time);
+    }
+    return own_state_.extractExpired(current_time);
   }
 
   auto MstStorageStateImpl::getDiffStateImpl(
@@ -55,7 +58,7 @@ namespace iroha {
       -> decltype(getDiffState(target_peer_key, current_time)) {
     auto target_current_state_iter = getState(target_peer_key);
     auto new_diff_state = own_state_ - target_current_state_iter->second;
-    new_diff_state.eraseByTime(current_time);
+    new_diff_state.eraseExpired(current_time);
     return new_diff_state;
   }
 

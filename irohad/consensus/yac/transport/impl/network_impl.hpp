@@ -32,6 +32,8 @@ namespace iroha {
         explicit NetworkImpl(
             std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
                 async_call,
+            std::function<std::unique_ptr<proto::Yac::StubInterface>(
+                const shared_model::interface::Peer &)> client_creator,
             logger::LoggerPtr log);
 
         void subscribe(
@@ -75,6 +77,13 @@ namespace iroha {
          */
         std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
             async_call_;
+
+        /**
+         * Yac stub creator
+         */
+        std::function<std::unique_ptr<proto::Yac::StubInterface>(
+            const shared_model::interface::Peer &)>
+            client_creator_;
 
         logger::LoggerPtr log_;
       };

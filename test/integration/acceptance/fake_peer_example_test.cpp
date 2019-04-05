@@ -261,7 +261,7 @@ TEST_F(FakePeerExampleFixture, SynchronizeTheRightVersionOfForkedLedger) {
       ->getStorage()
       ->on_commit()
       .tap([&valid_block_storage](
-               const std::shared_ptr<shared_model::interface::Block>
+               const std::shared_ptr<const shared_model::interface::Block>
                    &committed_block) {
         const auto valid_hash =
             valid_block_storage->getBlockByHeight(committed_block->height())

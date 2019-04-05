@@ -13,6 +13,7 @@
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/iroha_internal/block.hpp"
+#include "interfaces/iroha_internal/block_json_converter.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
@@ -40,6 +41,7 @@ struct MockBlock : public shared_model::interface::Block {
   MOCK_METHOD2(addSignature,
                bool(const shared_model::crypto::Signed &,
                     const shared_model::crypto::PublicKey &));
+  MOCK_CONST_METHOD0(hash, const shared_model::interface::types::HashType &());
   MOCK_CONST_METHOD0(clone, MockBlock *());
 };
 
@@ -258,6 +260,20 @@ struct MockAccount : public shared_model::interface::Account {
   MOCK_CONST_METHOD0(quorum, shared_model::interface::types::QuorumType());
   MOCK_CONST_METHOD0(jsonData, shared_model::interface::types::JsonType &());
   MOCK_CONST_METHOD0(clone, MockAccount *());
+};
+
+struct MockBlockJsonConverter
+    : public shared_model::interface::BlockJsonConverter {
+  MOCK_CONST_METHOD1(
+      serialize,
+      iroha::expected::Result<shared_model::interface::types::JsonType,
+                              std::string>(
+          const shared_model::interface::Block &block));
+  MOCK_CONST_METHOD1(
+      deserialize,
+      iroha::expected::Result<std::unique_ptr<shared_model::interface::Block>,
+                              std::string>(
+          const shared_model::interface::types::JsonType &json));
 };
 
 #endif  // IROHA_SHARED_MODEL_INTERFACE_MOCKS_HPP

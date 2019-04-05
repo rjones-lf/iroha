@@ -83,7 +83,8 @@ namespace iroha {
        * @param blocks - block for insertion
        * @return true if all blocks are inserted
        */
-      bool insertBlock(const shared_model::interface::Block &block) override;
+      bool insertBlock(
+          std::shared_ptr<const shared_model::interface::Block> block) override;
 
       /**
        * Insert blocks without validation
@@ -104,13 +105,13 @@ namespace iroha {
           std::unique_ptr<MutableStorage> mutable_storage) override;
 
       boost::optional<std::unique_ptr<LedgerState>> commitPrepared(
-          const shared_model::interface::Block &block) override;
+          std::shared_ptr<const shared_model::interface::Block> block) override;
 
       std::shared_ptr<WsvQuery> getWsvQuery() const override;
 
       std::shared_ptr<BlockQuery> getBlockQuery() const override;
 
-      rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+      rxcpp::observable<std::shared_ptr<const shared_model::interface::Block>>
       on_commit() override;
 
       void prepareBlock(std::unique_ptr<TemporaryWsv> wsv) override;
@@ -150,7 +151,8 @@ namespace iroha {
       /**
        * add block to block storage
        */
-      bool storeBlock(const shared_model::interface::Block &block);
+      bool storeBlock(
+          std::shared_ptr<const shared_model::interface::Block> block);
 
       std::unique_ptr<KeyValueStorage> block_store_;
 
@@ -158,7 +160,8 @@ namespace iroha {
 
       std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
 
-      rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
+      rxcpp::subjects::subject<
+          std::shared_ptr<const shared_model::interface::Block>>
           notifier_;
 
       std::shared_ptr<shared_model::interface::BlockJsonConverter> converter_;

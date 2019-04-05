@@ -6,7 +6,9 @@
 #include "ametsuchi/impl/storage_impl.hpp"
 
 #include <soci/postgresql/soci-postgresql.h>
+#include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
+#include <boost/range/algorithm/replace_if.hpp>
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "ametsuchi/impl/mutable_storage_impl.hpp"
 #include "ametsuchi/impl/peer_query_wsv.hpp"
@@ -42,6 +44,17 @@ namespace {
     } catch (std::exception &e) {
       return false;
     }
+  }
+
+  std::string formatPostgresMessage(const char *message) {
+    std::string formatted_message(message);
+    boost::replace_if(formatted_message, boost::is_any_of("\r\n"), ' ');
+    return formatted_message;
+  }
+
+  void processPqNotice(void *arg, const char *message) {
+    auto *log = reinterpret_cast<logger::Logger *>(arg);
+    log->debug("{}", formatPostgresMessage(message));
   }
 
 }  // namespace
@@ -84,6 +97,14 @@ namespace iroha {
           block_is_prepared(false) {
       prepared_block_name_ =
           "prepared_block" + postgres_options_.dbname().value_or("");
+
+      for (size_t i = 0; i != pool_size_; i++) {
+        soci::session &session = connection_->at(i);
+        auto *backend = static_cast<soci::postgresql_session_backend *>(
+            session.get_backend());
+        PQsetNoticeProcessor(backend->conn_, &processPqNotice, log_.get());
+      }
+
       soci::session sql(*connection_);
       // rollback current prepared transaction
       // if there exists any since last session
@@ -194,7 +215,8 @@ namespace iroha {
               log_manager_->getChild("QueryExecutor")));
     }
 
-    bool StorageImpl::insertBlock(const shared_model::interface::Block &block) {
+    bool StorageImpl::insertBlock(
+        std::shared_ptr<const shared_model::interface::Block> block) {
       log_->info("create mutable storage");
       auto storageResult = createMutableStorage();
       bool inserted = false;
@@ -222,7 +244,7 @@ namespace iroha {
           [&](iroha::expected::Value<std::unique_ptr<MutableStorage>>
                   &mutableStorage) {
             std::for_each(blocks.begin(), blocks.end(), [&](auto block) {
-              inserted &= mutableStorage.value->apply(*block);
+              inserted &= mutableStorage.value->apply(block);
             });
             commit(std::move(mutableStorage.value));
           },
@@ -272,6 +294,10 @@ namespace iroha {
           log_->warn("Drop database was failed. Reason: {}", e.what());
         }
       } else {
+        // Clear all the tables first, as it takes much less time because the
+        // foreign key triggers are ignored.
+        soci::session(*connection_) << reset_;
+        // Empty tables can now be dropped very fast.
         soci::session(*connection_) << drop_;
       }
 
@@ -323,7 +349,8 @@ namespace iroha {
         return expected::makeValue(false);
       } catch (std::exception &e) {
         return expected::makeError<std::string>(
-            std::string("Connection to PostgreSQL broken: ") + e.what());
+            std::string("Connection to PostgreSQL broken: ")
+            + formatPostgresMessage(e.what()));
       }
     }
 
@@ -354,7 +381,7 @@ namespace iroha {
           session.open(*soci::factory_postgresql(), options_str);
         }
       } catch (const std::exception &e) {
-        return expected::makeError(e.what());
+        return expected::makeError(formatPostgresMessage(e.what()));
       }
       return expected::makeValue(pool);
     }
@@ -422,11 +449,13 @@ namespace iroha {
         std::unique_ptr<MutableStorage> mutable_storage) {
       auto storage = static_cast<MutableStorageImpl *>(mutable_storage.get());
 
-      storage->block_storage_->forEach(
-          [this](const auto &block) { this->storeBlock(*block); });
       try {
         *(storage->sql_) << "COMMIT";
         storage->committed = true;
+
+        storage->block_storage_->forEach(
+            [this](const auto &block) { this->storeBlock(block); });
+
         return PostgresWsvQuery(*(storage->sql_),
                                 factory_,
                                 log_manager_->getChild("WsvQuery")->getLogger())
@@ -444,7 +473,7 @@ namespace iroha {
     }
 
     boost::optional<std::unique_ptr<LedgerState>> StorageImpl::commitPrepared(
-        const shared_model::interface::Block &block) {
+        std::shared_ptr<const shared_model::interface::Block> block) {
       if (not prepared_blocks_enabled_) {
         log_->warn("prepared blocks are not enabled");
         return boost::none;
@@ -466,7 +495,7 @@ namespace iroha {
         sql << "COMMIT PREPARED '" + prepared_block_name_ + "';";
         PostgresBlockIndex block_index(
             sql, log_manager_->getChild("BlockIndex")->getLogger());
-        block_index.index(block);
+        block_index.index(*block);
         block_is_prepared = false;
         return PostgresWsvQuery(sql,
                                 factory_,
@@ -483,7 +512,7 @@ namespace iroha {
         };
       } catch (const std::exception &e) {
         log_->warn("failed to apply prepared block {}: {}",
-                   block.hash().hex(),
+                   block->hash().hex(),
                    e.what());
         return boost::none;
       }
@@ -514,7 +543,7 @@ namespace iroha {
           log_manager_->getChild("PostgresBlockQuery")->getLogger());
     }
 
-    rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+    rxcpp::observable<std::shared_ptr<const shared_model::interface::Block>>
     StorageImpl::on_commit() {
       return notifier_.get_observable();
     }
@@ -547,16 +576,17 @@ namespace iroha {
         sql << "ROLLBACK PREPARED '" + prepared_block_name_ + "';";
         block_is_prepared = false;
       } catch (const std::exception &e) {
-        log_->info(e.what());
+        log_->info("{}", formatPostgresMessage(e.what()));
       }
     }
 
-    bool StorageImpl::storeBlock(const shared_model::interface::Block &block) {
-      auto json_result = converter_->serialize(block);
+    bool StorageImpl::storeBlock(
+        std::shared_ptr<const shared_model::interface::Block> block) {
+      auto json_result = converter_->serialize(*block);
       return json_result.match(
           [this, &block](const expected::Value<std::string> &v) {
-            block_store_->add(block.height(), stringToBytes(v.value));
-            notifier_.get_subscriber().on_next(clone(block));
+            block_store_->add(block->height(), stringToBytes(v.value));
+            notifier_.get_subscriber().on_next(block);
             return true;
           },
           [this](const expected::Error<std::string> &e) {
@@ -583,25 +613,26 @@ DROP TABLE IF EXISTS tx_status_by_hash;
 DROP TABLE IF EXISTS height_by_account_set;
 DROP TABLE IF EXISTS index_by_creator_height;
 DROP TABLE IF EXISTS position_by_account_asset;
+DROP TABLE IF EXISTS position_by_hash;
 )";
 
     const std::string &StorageImpl::reset_ = R"(
-DELETE FROM account_has_signatory;
-DELETE FROM account_has_asset;
-DELETE FROM role_has_permissions CASCADE;
-DELETE FROM account_has_roles;
-DELETE FROM account_has_grantable_permissions CASCADE;
-DELETE FROM account;
-DELETE FROM asset;
-DELETE FROM domain;
-DELETE FROM signatory;
-DELETE FROM peer;
-DELETE FROM role;
-DELETE FROM position_by_hash;
-DELETE FROM tx_status_by_hash;
-DELETE FROM height_by_account_set;
-DELETE FROM index_by_creator_height;
-DELETE FROM position_by_account_asset;
+TRUNCATE TABLE account_has_signatory RESTART IDENTITY CASCADE;
+TRUNCATE TABLE account_has_asset RESTART IDENTITY CASCADE;
+TRUNCATE TABLE role_has_permissions RESTART IDENTITY CASCADE;
+TRUNCATE TABLE account_has_roles RESTART IDENTITY CASCADE;
+TRUNCATE TABLE account_has_grantable_permissions RESTART IDENTITY CASCADE;
+TRUNCATE TABLE account RESTART IDENTITY CASCADE;
+TRUNCATE TABLE asset RESTART IDENTITY CASCADE;
+TRUNCATE TABLE domain RESTART IDENTITY CASCADE;
+TRUNCATE TABLE signatory RESTART IDENTITY CASCADE;
+TRUNCATE TABLE peer RESTART IDENTITY CASCADE;
+TRUNCATE TABLE role RESTART IDENTITY CASCADE;
+TRUNCATE TABLE position_by_hash RESTART IDENTITY CASCADE;
+TRUNCATE TABLE tx_status_by_hash RESTART IDENTITY CASCADE;
+TRUNCATE TABLE height_by_account_set RESTART IDENTITY CASCADE;
+TRUNCATE TABLE index_by_creator_height RESTART IDENTITY CASCADE;
+TRUNCATE TABLE position_by_account_asset RESTART IDENTITY CASCADE;
 )";
 
     const std::string &StorageImpl::init_ =

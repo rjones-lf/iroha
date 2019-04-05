@@ -28,9 +28,6 @@ namespace iroha {
       virtual bool insert(
           std::shared_ptr<const shared_model::interface::Block> block) = 0;
 
-      [[deprecated("Use shared_ptr")]] virtual bool insert(
-          const shared_model::interface::Block &block) = 0;
-
       /**
        * Get block with given height
        * @return block if exists, boost::none otherwise

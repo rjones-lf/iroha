@@ -32,7 +32,8 @@ using ::testing::Truly;
 class ToriiQueryServiceTest : public ::testing::Test {
  public:
   virtual void SetUp() {
-    runner = std::make_unique<ServerRunner>(ip + ":0", getTestLogger("ServerRunner"));
+    runner = std::make_unique<ServerRunner>(ip + ":0",
+                                            getTestLogger("ServerRunner"));
 
     // ----------- Command Service --------------
     query_processor = std::make_shared<iroha::torii::MockQueryProcessor>();
@@ -41,7 +42,10 @@ class ToriiQueryServiceTest : public ::testing::Test {
     initQueryFactory();
     runner
         ->append(std::make_unique<iroha::torii::QueryService>(
-            query_processor, query_factory, getTestLogger("QueryService")))
+            query_processor,
+            query_factory,
+            blocks_query_factory,
+            getTestLogger("QueryService")))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {
@@ -67,11 +71,24 @@ class ToriiQueryServiceTest : public ::testing::Test {
         shared_model::interface::Query,
         shared_model::proto::Query>>(std::move(query_validator),
                                      std::move(proto_query_validator));
+
+    auto blocks_query_validator = std::make_unique<
+        shared_model::validation::DefaultSignedBlocksQueryValidator>();
+    auto proto_blocks_query_validator =
+        std::make_unique<shared_model::validation::ProtoBlocksQueryValidator>();
+    blocks_query_factory =
+        std::make_shared<shared_model::proto::ProtoTransportFactory<
+            shared_model::interface::BlocksQuery,
+            shared_model::proto::BlocksQuery>>(
+            std::move(blocks_query_validator),
+            std::move(proto_blocks_query_validator));
   }
 
   std::unique_ptr<ServerRunner> runner;
   std::shared_ptr<iroha::torii::MockQueryProcessor> query_processor;
   std::shared_ptr<iroha::torii::QueryService::QueryFactoryType> query_factory;
+  std::shared_ptr<iroha::torii::QueryService::BlocksQueryFactoryType>
+      blocks_query_factory;
 
   iroha::protocol::Block block;
 

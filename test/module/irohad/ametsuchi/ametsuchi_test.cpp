@@ -80,7 +80,8 @@ void validateAccount(W &&wsv,
  * @param block to apply
  */
 template <typename S>
-void apply(S &&storage, const shared_model::interface::Block &block) {
+void apply(S &&storage,
+           std::shared_ptr<const shared_model::interface::Block> block) {
   std::unique_ptr<MutableStorage> ms;
   auto storageResult = storage->createMutableStorage();
   storageResult.match(
@@ -99,11 +100,11 @@ TEST_F(AmetsuchiTest, GetBlocksCompletedWhenCalled) {
   ASSERT_TRUE(storage);
   auto blocks = storage->getBlockQuery();
 
-  auto block = TestBlockBuilder().height(1).prevHash(fake_hash).build();
+  auto block = createBlock({}, 1, fake_hash);
 
   apply(storage, block);
 
-  ASSERT_EQ(*blocks->getBlocks(1, 1)[0], block);
+  ASSERT_EQ(*blocks->getBlocks(1, 1)[0], *block);
 }
 
 TEST_F(AmetsuchiTest, SampleTest) {
@@ -125,11 +126,7 @@ TEST_F(AmetsuchiTest, SampleTest) {
           .createDomain(domain, "user")
           .createAccount(user1name, domain, fake_pubkey)
           .build());
-  auto block1 = TestBlockBuilder()
-                    .transactions(txs)
-                    .height(1)
-                    .prevHash(fake_hash)
-                    .build();
+  auto block1 = createBlock(txs, 1, fake_hash);
 
   apply(storage, block1);
 
@@ -145,11 +142,7 @@ TEST_F(AmetsuchiTest, SampleTest) {
           .addAssetQuantity(assetid, "150.0")
           .transferAsset(user1id, user2id, assetid, "Transfer asset", "100.0")
           .build());
-  auto block2 = TestBlockBuilder()
-                    .transactions(txs)
-                    .height(2)
-                    .prevHash(block1.hash())
-                    .build();
+  auto block2 = createBlock(txs, 2, block1->hash());
 
   apply(storage, block2);
   validateAccountAsset(
@@ -158,7 +151,7 @@ TEST_F(AmetsuchiTest, SampleTest) {
       sql_query, user2id, assetid, shared_model::interface::Amount("100.0"));
 
   // Block store tests
-  auto hashes = {block1.hash(), block2.hash()};
+  auto hashes = {block1->hash(), block2->hash()};
 
   auto stored_blocks = blocks->getBlocks(1, 2);
   ASSERT_EQ(2, stored_blocks.size());
@@ -175,7 +168,7 @@ TEST_F(AmetsuchiTest, PeerTest) {
                     .addPeer("192.168.9.1:50051", fake_pubkey)
                     .build());
 
-  auto block = TestBlockBuilder().transactions(txs).prevHash(fake_hash).build();
+  auto block = createBlock(txs, 1, fake_hash);
 
   apply(storage, block);
 
@@ -207,11 +200,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
           .createDomain("domain", "user")
           .createAccount("userone", "domain", pubkey1)
           .build());
-  auto block1 = TestBlockBuilder()
-                    .transactions(txs)
-                    .height(1)
-                    .prevHash(fake_hash)
-                    .build();
+  auto block1 = createBlock(txs, 1, fake_hash);
 
   apply(storage, block1);
 
@@ -235,11 +224,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
                     .addSignatory(user1id, pubkey2)
                     .build());
 
-  auto block2 = TestBlockBuilder()
-                    .transactions(txs)
-                    .height(2)
-                    .prevHash(block1.hash())
-                    .build();
+  auto block2 = createBlock(txs, 2, block1->hash());
 
   apply(storage, block2);
 
@@ -261,11 +246,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
                     .createAccount("usertwo", "domain", pubkey1)
                     .build());
 
-  auto block3 = TestBlockBuilder()
-                    .transactions(txs)
-                    .height(3)
-                    .prevHash(block2.hash())
-                    .build();
+  auto block3 = createBlock(txs, 3, block2->hash());
 
   apply(storage, block3);
 
@@ -295,11 +276,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
                     .removeSignatory(user1id, pubkey1)
                     .build());
 
-  auto block4 = TestBlockBuilder()
-                    .transactions(txs)
-                    .height(4)
-                    .prevHash(block3.hash())
-                    .build();
+  auto block4 = createBlock(txs, 4, block3->hash());
 
   apply(storage, block4);
 
@@ -328,11 +305,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
                     .setAccountQuorum(user2id, 2)
                     .build());
 
-  auto block5 = TestBlockBuilder()
-                    .transactions(txs)
-                    .height(5)
-                    .prevHash(block4.hash())
-                    .build();
+  auto block5 = createBlock(txs, 5, block4->hash());
 
   apply(storage, block5);
 
@@ -358,11 +331,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
                     .setAccountQuorum(user2id, 2)
                     .build());
 
-  auto block6 = TestBlockBuilder()
-                    .transactions(txs)
-                    .height(6)
-                    .prevHash(block5.hash())
-                    .build();
+  auto block6 = createBlock(txs, 6, block5->hash());
 
   apply(storage, block6);
 
@@ -375,18 +344,14 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   }
 }
 
-shared_model::proto::Block getBlock() {
+std::shared_ptr<const shared_model::interface::Block> getBlock() {
   std::vector<shared_model::proto::Transaction> txs;
   txs.push_back(TestTransactionBuilder()
                     .creatorAccountId("adminone")
                     .addPeer("192.168.0.0:10001", fake_pubkey)
                     .build());
 
-  auto block = TestBlockBuilder()
-                   .transactions(txs)
-                   .height(1)
-                   .prevHash(fake_hash)
-                   .build();
+  auto block = createBlock(txs, 1, fake_hash);
   return block;
 }
 
@@ -430,7 +395,7 @@ TEST_F(AmetsuchiTest, TestingStorageWhenCommitBlock) {
   static auto wrapper =
       make_test_subscriber<CallExact>(storage->on_commit(), 1);
   wrapper.subscribe([&expected_block](const auto &block) {
-    ASSERT_EQ(*block, expected_block);
+    ASSERT_EQ(block, expected_block);
   });
 
   std::unique_ptr<MutableStorage> mutable_storage;
@@ -479,13 +444,7 @@ TEST_F(AmetsuchiTest, TestRestoreWSV) {
                   generateKeypair())
           .finish());
 
-  auto genesis_block = TestBlockBuilder()
-                           .transactions(genesis_tx)
-                           .height(1)
-                           .prevHash(shared_model::crypto::Sha3_256::makeHash(
-                               shared_model::crypto::Blob("")))
-                           .createdTime(iroha::time::now())
-                           .build();
+  auto genesis_block = createBlock(genesis_tx);
 
   apply(storage, genesis_block);
 
@@ -511,6 +470,70 @@ TEST_F(AmetsuchiTest, TestRestoreWSV) {
   EXPECT_TRUE(res);
 }
 
+/**
+ * @given created storage
+ *        @and a subscribed observer on on_commit() event
+ * @when commit block
+ * @then the effect of transactions in the committed block can be verified with
+ * queries
+ */
+TEST_F(AmetsuchiTest, TestingWsvAfterCommitBlock) {
+  ASSERT_TRUE(storage);
+
+  shared_model::crypto::Keypair key{
+      shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()};
+
+  auto genesis_tx = shared_model::proto::TransactionBuilder()
+                        .creatorAccountId("admin@test")
+                        .createdTime(iroha::time::now())
+                        .quorum(1)
+                        .createRole("admin",
+                                    {Role::kCreateDomain,
+                                     Role::kCreateAccount,
+                                     Role::kAddAssetQty,
+                                     Role::kAddPeer,
+                                     Role::kReceive,
+                                     Role::kTransfer})
+                        .createDomain("test", "admin")
+                        .createAccount("admin", "test", key.publicKey())
+                        .createAccount("receiver", "test", key.publicKey())
+                        .createAsset("coin", "test", 2)
+                        .addAssetQuantity("coin#test", "20.00")
+                        .build()
+                        .signAndAddSignature(key)
+                        .finish();
+
+  auto genesis_block = createBlock({genesis_tx});
+  apply(storage, genesis_block);
+
+  auto add_ast_tx =
+      shared_model::proto::TransactionBuilder()
+          .creatorAccountId("admin@test")
+          .createdTime(iroha::time::now())
+          .quorum(1)
+          .transferAsset(
+              "admin@test", "receiver@test", "coin#test", "deal", "10.00")
+          .build()
+          .signAndAddSignature(key)
+          .finish();
+
+  auto expected_block = createBlock({add_ast_tx}, 1, genesis_block->hash());
+
+  static auto wrapper =
+      make_test_subscriber<CallExact>(storage->on_commit(), 1);
+  wrapper.subscribe([&](const auto &block) {
+    ASSERT_EQ(*block, *expected_block);
+    shared_model::interface::Amount resultingAmount("10.00");
+    validateAccountAsset(
+        sql_query, "receiver@test", "coin#test", resultingAmount);
+  });
+
+  apply(storage, expected_block);
+
+  ASSERT_TRUE(wrapper.validate());
+  wrapper.unsubscribe();
+}
+
 class PreparedBlockTest : public AmetsuchiTest {
  public:
   PreparedBlockTest()
@@ -526,17 +549,6 @@ class PreparedBlockTest : public AmetsuchiTest {
         .build()
         .signAndAddSignature(key)
         .finish();
-  }
-
-  shared_model::proto::Block createBlock(
-      std::initializer_list<shared_model::proto::Transaction> txs) {
-    return TestBlockBuilder()
-        .transactions(std::vector<shared_model::proto::Transaction>(txs))
-        .height(1)
-        .prevHash(shared_model::crypto::Sha3_256::makeHash(
-            shared_model::crypto::Blob("")))
-        .createdTime(iroha::time::now())
-        .build();
   }
 
   void SetUp() override {
@@ -560,9 +572,9 @@ class PreparedBlockTest : public AmetsuchiTest {
                   .build()
                   .signAndAddSignature(key)
                   .finish());
-    genesis_block = clone(createBlock({*genesis_tx}));
+    genesis_block = createBlock({*genesis_tx});
     initial_tx = clone(createAddAsset("5.00"));
-    apply(storage, *genesis_block);
+    apply(storage, genesis_block);
     using framework::expected::val;
     temp_wsv = std::move(val(storage->createTemporaryWsv())->value);
   }
@@ -572,7 +584,7 @@ class PreparedBlockTest : public AmetsuchiTest {
   std::string default_role{"admin"};
   std::unique_ptr<shared_model::proto::Transaction> genesis_tx;
   std::unique_ptr<shared_model::proto::Transaction> initial_tx;
-  std::unique_ptr<shared_model::proto::Block> genesis_block;
+  std::shared_ptr<const shared_model::interface::Block> genesis_block;
   std::unique_ptr<iroha::ametsuchi::TemporaryWsv> temp_wsv;
   shared_model::interface::Amount base_balance{"5.00"};
 };

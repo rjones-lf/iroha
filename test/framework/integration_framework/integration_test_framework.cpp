@@ -161,6 +161,10 @@ namespace integration_framework {
         tx_presence_cache_(std::make_shared<AlwaysMissingTxPresenceCache>()),
         yac_transport_(std::make_shared<iroha::consensus::yac::NetworkImpl>(
             async_call_,
+            [](const shared_model::interface::Peer &peer) {
+              return iroha::network::createClient<
+                  iroha::consensus::yac::proto::Yac>(peer.address());
+            },
             log_manager_->getChild("ConsensusTransport")->getLogger())),
         cleanup_on_exit_(cleanup_on_exit) {}
 
@@ -256,7 +260,7 @@ namespace integration_framework {
 
   IntegrationTestFramework &IntegrationTestFramework::setGenesisBlock(
       const shared_model::interface::Block &block) {
-    iroha_instance_->makeGenesis(block);
+    iroha_instance_->makeGenesis(clone(block));
     return *this;
   }
 
@@ -311,16 +315,18 @@ namespace integration_framework {
   void IntegrationTestFramework::subscribeQueuesAndRun() {
     // subscribing for components
 
-    auto proposals = iroha_instance_->getIrohaInstance()
-                         ->getPeerCommunicationService()
-                         ->onProposal();
+    auto requested_proposals = iroha_instance_->getIrohaInstance()
+                                   ->getPeerCommunicationService()
+                                   ->onProposal();
 
-    proposals.filter([](const auto &event) { return event.proposal; })
-        .subscribe([this](const auto &event) {
-          proposal_queue_.push(getProposalUnsafe(event));
-          log_->info("proposal");
-          queue_cond.notify_all();
-        });
+    auto received_proposals = requested_proposals.filter(
+        [](const auto &event) { return event.proposal; });
+
+    received_proposals.subscribe([this](const auto &event) {
+      proposal_queue_.push(getProposalUnsafe(event));
+      log_->info("proposal");
+      queue_cond.notify_all();
+    });
 
     auto proposal_flat_map =
         [](auto t) -> rxcpp::observable<std::tuple_element_t<0, decltype(t)>> {
@@ -333,7 +339,7 @@ namespace integration_framework {
     iroha_instance_->getIrohaInstance()
         ->getPeerCommunicationService()
         ->onVerifiedProposal()
-        .zip(proposals)
+        .zip(requested_proposals)
         .flat_map(proposal_flat_map)
         .subscribe([this](auto verified_proposal_and_errors) {
           verified_proposal_queue_.push(
@@ -343,17 +349,11 @@ namespace integration_framework {
         });
 
     iroha_instance_->getIrohaInstance()
-        ->getPeerCommunicationService()
+        ->getStorage()
         ->on_commit()
-        .zip(proposals)
-        .flat_map(proposal_flat_map)
-        .subscribe([this](auto commit_event) {
-          commit_event.synced_blocks.subscribe([this](auto committed_block) {
-            block_queue_.push(committed_block);
-            log_->info("block");
-            queue_cond.notify_all();
-          });
-          log_->info("commit");
+        .subscribe([this](auto committed_block) {
+          block_queue_.push(committed_block);
+          log_->info("block commit");
           queue_cond.notify_all();
         });
     iroha_instance_->getIrohaInstance()->getStatusBus()->statuses().subscribe(
@@ -405,7 +405,7 @@ namespace integration_framework {
   IntegrationTestFramework::getPcsOnCommitObservable() {
     return iroha_instance_->getIrohaInstance()
         ->getPeerCommunicationService()
-        ->on_commit();
+        ->onSynchronization();
   }
 
   IntegrationTestFramework &IntegrationTestFramework::getTxStatus(

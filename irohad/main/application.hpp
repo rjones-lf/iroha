@@ -8,6 +8,7 @@
 
 #include "consensus/consensus_block_cache.hpp"
 #include "cryptography/crypto_provider/abstract_crypto_model_signer.hpp"
+#include "interfaces/queries/blocks_query.hpp"
 #include "interfaces/queries/query.hpp"
 #include "logger/logger_fwd.hpp"
 #include "logger/logger_manager_fwd.hpp"
@@ -246,6 +247,12 @@ class Irohad {
       shared_model::interface::Query,
       iroha::protocol::Query>>
       query_factory;
+
+  // blocks query factory
+  std::shared_ptr<shared_model::interface::AbstractTransportFactory<
+      shared_model::interface::BlocksQuery,
+      iroha::protocol::BlocksQuery>>
+      blocks_query_factory;
 
   // persistent cache
   std::shared_ptr<iroha::ametsuchi::TxPresenceCache> persistent_cache;

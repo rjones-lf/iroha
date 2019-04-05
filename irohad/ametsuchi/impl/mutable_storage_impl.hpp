@@ -33,7 +33,8 @@ namespace iroha {
           std::unique_ptr<BlockStorage> block_storage,
           logger::LoggerManagerTreePtr log_manager);
 
-      bool apply(const shared_model::interface::Block &block) override;
+      bool apply(
+          std::shared_ptr<const shared_model::interface::Block> block) override;
 
       bool apply(rxcpp::observable<
                      std::shared_ptr<shared_model::interface::Block>> blocks,
@@ -54,7 +55,7 @@ namespace iroha {
        * Verifies whether the block is applicable using predicate, and applies
        * the block
        */
-      bool apply(const shared_model::interface::Block &block,
+      bool apply(std::shared_ptr<const shared_model::interface::Block> block,
                  MutableStoragePredicate predicate);
 
       shared_model::interface::types::HashType top_hash_;
