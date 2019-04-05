@@ -551,10 +551,14 @@ namespace iroha {
     void StorageImpl::prepareBlock(std::unique_ptr<TemporaryWsv> wsv) {
       auto &wsv_impl = static_cast<TemporaryWsvImpl &>(*wsv);
       if (not prepared_blocks_enabled_) {
-        log_->warn("prepared block are not enabled");
+        log_->warn("prepared blocks are not enabled");
         return;
       }
-      if (not block_is_prepared) {
+      if (block_is_prepared) {
+        log_->warn(
+            "Refusing to add new prepared state, because there already is one. "
+            "Multiple prepared states are not yet supported.");
+      } else {
         soci::session &sql = *wsv_impl.sql_;
         try {
           sql << "PREPARE TRANSACTION '" + prepared_block_name_ + "';";
@@ -585,12 +589,16 @@ namespace iroha {
       auto json_result = converter_->serialize(*block);
       return json_result.match(
           [this, &block](const expected::Value<std::string> &v) {
-            block_store_->add(block->height(), stringToBytes(v.value));
-            notifier_.get_subscriber().on_next(block);
-            return true;
+            if (block_store_->add(block->height(), stringToBytes(v.value))) {
+              notifier_.get_subscriber().on_next(block);
+              return true;
+            } else {
+              log_->error("Block insertion failed: {}", *block);
+              return false;
+            }
           },
-          [this](const expected::Error<std::string> &e) {
-            log_->error(e.error);
+          [this, &block](const expected::Error<std::string> &e) {
+            log_->error("Block serialization failed: {}: {}", *block, e.error);
             return false;
           });
     }
