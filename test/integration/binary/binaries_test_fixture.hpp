@@ -142,7 +142,7 @@ class BinaryTestFixture : public ::testing::Test {
    * @param result - Block object
    */
   static void blockWithTransactionValidation(
-      const std::shared_ptr<shared_model::interface::Block> &result) {
+      const std::shared_ptr<const shared_model::interface::Block> &result) {
     ASSERT_EQ(result->transactions().size(), 1);
   }
 

@@ -29,6 +29,7 @@
 #include "multi_sig_transactions/state/mst_state.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/mst_transport.hpp"
+#include "ordering/impl/on_demand_os_client_grpc.hpp"
 #include "torii/command_client.hpp"
 #include "torii/query_client.hpp"
 
@@ -50,10 +51,12 @@ namespace iroha {
       class YacNetwork;
       struct VoteMessage;
     }  // namespace yac
+    struct Round;
   }    // namespace consensus
   namespace network {
     class MstTransportGrpc;
-  }
+    class OrderingServiceTransport;
+  }  // namespace network
   namespace validation {
     struct VerifiedProposalAndErrors;
   }
@@ -61,25 +64,29 @@ namespace iroha {
 
 namespace integration_framework {
 
-  using std::chrono::milliseconds;
+  namespace fake_peer {
+    class FakePeer;
+  }
 
-  class FakePeer;
   class PortGuard;
+
+  using std::chrono::milliseconds;
 
   /// Get the default logger of ITF.
   logger::LoggerManagerTreePtr getDefaultItfLogManager();
 
   class IntegrationTestFramework {
    private:
-    using ProposalType =
-        std::shared_ptr<const shared_model::interface::Proposal>;
     using VerifiedProposalType =
         std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>;
-    using BlockType = std::shared_ptr<shared_model::interface::Block>;
+    using BlockType = std::shared_ptr<const shared_model::interface::Block>;
     using TxResponseType =
         std::shared_ptr<shared_model::interface::TransactionResponse>;
 
    public:
+    using TransactionBatchType = shared_model::interface::TransactionBatch;
+    using TransactionBatchSPtr = std::shared_ptr<TransactionBatchType>;
+
     /**
      * Construct test framework instance
      * @param maximum_proposal_size - Maximum number of transactions per
@@ -108,8 +115,14 @@ namespace integration_framework {
 
     ~IntegrationTestFramework();
 
-    std::future<std::shared_ptr<FakePeer>> addInitailPeer(
+    /// Add a fake peer with given key.
+    std::shared_ptr<fake_peer::FakePeer> addInitialPeer(
         const boost::optional<shared_model::crypto::Keypair> &key);
+
+    /// Add the given amount of fake peers with generated default keys and
+    /// "honest" behaviours.
+    std::vector<std::shared_ptr<fake_peer::FakePeer>> addInitialPeers(
+        size_t amount);
 
     /**
      * Construct default genesis block.
@@ -123,6 +136,13 @@ namespace integration_framework {
      */
     shared_model::proto::Block defaultBlock(
         const shared_model::crypto::Keypair &key) const;
+
+    /// Construct default genesis block using the my_key_ key.
+    shared_model::proto::Block defaultBlock() const;
+
+    /// Set the provided genesis block.
+    IntegrationTestFramework &setGenesisBlock(
+        const shared_model::interface::Block &block);
 
     /**
      * Initialize Iroha instance with default genesis block and provided signing
@@ -258,6 +278,31 @@ namespace integration_framework {
      */
     IntegrationTestFramework &sendQuery(const shared_model::proto::Query &qry);
 
+    /// Send proposal to this peer's ordering service.
+    IntegrationTestFramework &sendProposal(
+        std::unique_ptr<shared_model::interface::Proposal> proposal);
+
+    /// Send a batch of transactions to this peer's ordering service.
+    IntegrationTestFramework &sendBatch(const TransactionBatchSPtr &batch);
+
+    /**
+     * Send batches of transactions to this peer's on-demand ordering service.
+     * @param batches - the batch to send
+     * @return this
+     */
+    IntegrationTestFramework &sendBatches(
+        const std::vector<TransactionBatchSPtr> &batches);
+
+    /**
+     * Request a proposal from this peer's on-demand ordering service.
+     * @param round - the round for which to request a proposal
+     * @param timeout - the timeout for waiting the proposal
+     * @return the proposal if received one
+     */
+    boost::optional<std::shared_ptr<const shared_model::interface::Proposal>>
+    requestProposal(const iroha::consensus::Round &round,
+                    std::chrono::milliseconds timeout);
+
     /**
      * Send MST state message to this peer.
      * @param src_key - the key of the peer which the message appears to come
@@ -286,7 +331,9 @@ namespace integration_framework {
      * @return this
      */
     IntegrationTestFramework &checkProposal(
-        std::function<void(const ProposalType &)> validation);
+        std::function<void(
+            const std::shared_ptr<const shared_model::interface::Proposal> &)>
+            validation);
 
     /**
      * Request next proposal from queue and skip it
@@ -304,7 +351,9 @@ namespace integration_framework {
      *                IR-1822     VerifiedProposalType argument
      */
     IntegrationTestFramework &checkVerifiedProposal(
-        std::function<void(const ProposalType &)> validation);
+        std::function<void(
+            const std::shared_ptr<const shared_model::interface::Proposal> &)>
+            validation);
 
     /**
      * Request next verified proposal from queue and skip it
@@ -315,7 +364,7 @@ namespace integration_framework {
     /**
      * Request next block from queue and serve it with custom handler
      * @param validation - callback that receives object of type \relates
-     * std::shared_ptr<shared_model::interface::Block> by reference
+     * std::shared_ptr<const shared_model::interface::Block> by reference
      * @return this
      */
     IntegrationTestFramework &checkBlock(
@@ -337,8 +386,8 @@ namespace integration_framework {
     rxcpp::observable<iroha::network::ConsensusGate::GateObject>
     getYacOnCommitObservable();
 
-    IntegrationTestFramework &subscribeForAllMstNotifications(
-        std::shared_ptr<iroha::network::MstTransportNotification> notification);
+    rxcpp::observable<iroha::synchronizer::SynchronizationEvent>
+    getPcsOnCommitObservable();
 
     /**
      * Request next status of the transaction
@@ -360,6 +409,15 @@ namespace integration_framework {
      * Shutdown ITF instance
      */
     void done();
+
+    /// Get the controlled Iroha instance.
+    IrohaInstance &getIrohaInstance();
+
+    /// Set the ITF peer keypair and initialize irohad pipeline.
+    void initPipeline(const shared_model::crypto::Keypair &keypair);
+
+    /// Start the ITF.
+    void subscribeQueuesAndRun();
 
    protected:
     using AsyncCall = iroha::network::AsyncGrpcClient<google::protobuf::Empty>;
@@ -383,7 +441,9 @@ namespace integration_framework {
     /// Cleanup the resources
     void cleanup();
 
-    tbb::concurrent_queue<ProposalType> proposal_queue_;
+    tbb::concurrent_queue<
+        std::shared_ptr<const shared_model::interface::Proposal>>
+        proposal_queue_;
     tbb::concurrent_queue<VerifiedProposalType> verified_proposal_queue_;
     tbb::concurrent_queue<BlockType> block_queue_;
     std::map<std::string, tbb::concurrent_queue<TxResponseType>>
@@ -400,9 +460,6 @@ namespace integration_framework {
     torii_utils::QuerySyncClient query_client_;
 
     std::shared_ptr<AsyncCall> async_call_;
-
-    void initPipeline(const shared_model::crypto::Keypair &keypair);
-    void subscribeQueuesAndRun();
 
     // config area
 
@@ -428,22 +485,24 @@ namespace integration_framework {
         batch_parser_;
     std::shared_ptr<shared_model::interface::TransactionBatchFactory>
         transaction_batch_factory_;
+    std::shared_ptr<
+        iroha::ordering::transport::OnDemandOsClientGrpc::TransportFactoryType>
+        proposal_factory_;
     std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache_;
     std::shared_ptr<iroha::network::MstTransportGrpc> mst_transport_;
     std::shared_ptr<iroha::consensus::yac::YacNetwork> yac_transport_;
 
+    boost::optional<shared_model::crypto::Keypair> my_key_;
     std::shared_ptr<shared_model::interface::Peer> this_peer_;
 
    private:
-    void makeFakePeers();
-
     std::mutex queue_mu;
     std::condition_variable queue_cond;
     bool cleanup_on_exit_;
-    std::vector<std::pair<std::promise<std::shared_ptr<FakePeer>>,
+    std::vector<std::pair<std::promise<std::shared_ptr<fake_peer::FakePeer>>,
                           boost::optional<shared_model::crypto::Keypair>>>
         fake_peers_promises_;
-    std::vector<std::shared_ptr<FakePeer>> fake_peers_;
+    std::vector<std::shared_ptr<fake_peer::FakePeer>> fake_peers_;
   };
 
   template <typename Queue, typename ObjectType, typename WaitTime>
