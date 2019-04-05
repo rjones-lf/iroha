@@ -74,9 +74,8 @@ namespace iroha {
 
         /**
          * Erase temporary data of current round
-         * @param round received from the network
          */
-        void closeRound(Round round);
+        void closeRound();
 
         /**
          * Find corresponding peer in the ledger from vote message

@@ -102,7 +102,7 @@ namespace iroha {
       /**
        * Initializes on-demand ordering gate and ordering sevice components
        *
-       * @param max_number_of_transactions maximum number of transaction in a
+       * @param max_number_of_transactions maximum number of transactions in a
        * proposal
        * @param delay timeout for ordering service response on proposal request
        * @param initial_hashes seeds for peer list permutations for first k

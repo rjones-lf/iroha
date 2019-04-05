@@ -32,7 +32,7 @@ namespace {
         return spdlog::level::critical;
       default:
         BOOST_ASSERT_MSG(false, "Unknown log level!");
-        return getSpdlogLogLevel(logger::kDefaultLogLevel);
+        return spdlog::level::info;
     }
   }
 

@@ -179,10 +179,8 @@ namespace iroha {
         }
       }
 
-      void Yac::closeRound(Round round) {
-        if (round_ <= round) {
-          timer_->deny();
-        }
+      void Yac::closeRound() {
+        timer_->deny();
       }
 
       boost::optional<std::shared_ptr<shared_model::interface::Peer>>
@@ -244,7 +242,9 @@ namespace iroha {
                 case ProposalState::kSentNotProcessed:
                   vote_storage_.nextProcessingState(proposal_round);
                   log_->info("Pass outcome for {} to pipeline", proposal_round);
-                  this->closeRound(proposal_round);
+                  if (proposal_round >= round_) {
+                    this->closeRound();
+                  }
                   notifier_.get_subscriber().on_next(answer);
                   break;
                 case ProposalState::kSentProcessed:
