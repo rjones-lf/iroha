@@ -157,7 +157,7 @@ namespace iroha {
                      logger::LoggerPtr log)
       : completer_(completer), log_(std::move(log)) {
     for (const auto &batch : batches) {
-      batches_.insert(BatchesBimap::value_type(oldestTimestamp(batch), batch));
+      batches_.insert({oldestTimestamp(batch), batch});
     }
   }
 
@@ -192,8 +192,7 @@ namespace iroha {
   }
 
   void MstState::rawInsert(const DataType &rhs_batch) {
-    batches_.insert(
-        BatchesBimap::value_type(oldestTimestamp(rhs_batch), rhs_batch));
+    batches_.insert({oldestTimestamp(rhs_batch), rhs_batch});
   }
 
   bool MstState::contains(const DataType &element) const {

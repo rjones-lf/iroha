@@ -87,9 +87,6 @@ namespace iroha {
    public:
     // -----------------------------| public api |------------------------------
 
-    using BatchesForwardCollectionType = boost::
-        any_range<BatchPtr, boost::forward_traversal_tag, const BatchPtr &>;
-
     /**
      * Create empty state
      * @param log - the logger to use in the new object
@@ -158,6 +155,9 @@ namespace iroha {
 
    private:
     // --------------------------| private api |------------------------------
+
+    using BatchesForwardCollectionType = boost::
+        any_range<BatchPtr, boost::forward_traversal_tag, const BatchPtr &>;
 
     using BatchesBimap = boost::bimap<
         boost::bimaps::multiset_of<
