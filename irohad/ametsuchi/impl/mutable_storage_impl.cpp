@@ -21,12 +21,14 @@ namespace iroha {
   namespace ametsuchi {
     MutableStorageImpl::MutableStorageImpl(
         shared_model::interface::types::HashType top_hash,
+        shared_model::interface::types::HeightType top_height,
         std::shared_ptr<PostgresCommandExecutor> cmd_executor,
         std::unique_ptr<soci::session> sql,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
         std::unique_ptr<BlockStorage> block_storage,
         logger::LoggerManagerTreePtr log_manager)
-        : top_hash_(top_hash),
+        : top_hash_(std::move(top_hash)),
+          top_height_(top_height),
           sql_(std::move(sql)),
           peer_query_(
               std::make_unique<PeerQueryWsv>(std::make_shared<PostgresWsvQuery>(
@@ -70,6 +72,7 @@ namespace iroha {
                  block->height(),
                  block->hash().hex());
 
+      // TODO add height check to predicate
       auto block_applied = predicate(block, *peer_query_, top_hash_)
           and std::all_of(block->transactions().begin(),
                           block->transactions().end(),
@@ -79,6 +82,7 @@ namespace iroha {
         block_index_->index(*block);
 
         top_hash_ = block->hash();
+        top_height_ = block->height();
       }
 
       return block_applied;
@@ -121,6 +125,11 @@ namespace iroha {
             .as_blocking()
             .first();
       });
+    }
+
+    shared_model::interface::types::HeightType
+    MutableStorageImpl::getTopBlockHeight() const {
+      return top_height_;
     }
 
     MutableStorageImpl::~MutableStorageImpl() {

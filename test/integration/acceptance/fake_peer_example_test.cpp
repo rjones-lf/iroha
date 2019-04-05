@@ -315,12 +315,10 @@ TEST_F(FakePeerExampleFixture,
 
   // watch the proposal requests to fake peer
   constexpr std::chrono::seconds kCommitWaitingTime(20);
-  itf.getPcsOnCommitObservable()
-      .filter([](const auto &sync_event) {
-        return sync_event.sync_outcome
-            == iroha::synchronizer::SynchronizationOutcomeType::kCommit;
-      })
-      .flat_map([](const auto &sync_event) { return sync_event.synced_blocks; })
+  itf.getIrohaInstance()
+      .getIrohaInstance()
+      ->getStorage()
+      ->on_commit()
       .flat_map([](const auto &block) {
         std::vector<shared_model::interface::types::HashType> hashes;
         hashes.reserve(boost::size(block->transactions()));
