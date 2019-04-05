@@ -108,8 +108,9 @@ getTransactions(size_t requested_tx_amount,
   std::vector<std::shared_ptr<shared_model::interface::Transaction>> collection;
 
   auto it = batch_collection.begin();
-  for (;
-       it != batch_collection.end() and collection.size() < requested_tx_amount;
+  for (; it != batch_collection.end()
+       and collection.size() + boost::size((*it)->transactions())
+           <= requested_tx_amount;
        ++it) {
     collection.insert(std::end(collection),
                       std::begin((*it)->transactions()),
