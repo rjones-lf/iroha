@@ -233,6 +233,7 @@ namespace iroha {
 
               auto votes = [](const auto &state) { return state.votes; };
 
+              auto current_round = round_;
               switch (processing_state) {
                 case ProposalState::kNotSentNotProcessed:
                   vote_storage_.nextProcessingState(proposal_round);
@@ -243,7 +244,6 @@ namespace iroha {
                 case ProposalState::kSentNotProcessed:
                   vote_storage_.nextProcessingState(proposal_round);
                   log_->info("Pass outcome for {} to pipeline", proposal_round);
-                  auto current_round = round_;
                   lock.unlock();
                   if (proposal_round >= current_round) {
                     this->closeRound();
