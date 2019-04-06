@@ -6,6 +6,8 @@
 #ifndef IROHA_TIMER_IMPL_HPP
 #define IROHA_TIMER_IMPL_HPP
 
+#include <mutex>
+
 #include <rxcpp/rx.hpp>
 #include "consensus/yac/timer.hpp"
 
@@ -32,6 +34,7 @@ namespace iroha {
         ~TimerImpl() override;
 
        private:
+        std::mutex handle_mutex;
         std::function<rxcpp::observable<TimeoutType>()> invoke_delay_;
         rxcpp::composite_subscription handle_;
       };

@@ -137,7 +137,7 @@ namespace iroha {
       }
 
       void Yac::onState(std::vector<VoteMessage> state) {
-        std::lock_guard<std::mutex> guard(mutex_);
+        std::unique_lock<std::mutex> guard(mutex_);
 
         removeUnknownPeersVotes(state);
         if (state.empty()) {
@@ -146,7 +146,7 @@ namespace iroha {
         }
 
         if (crypto_->verify(state)) {
-          applyState(state);
+          applyState(state, guard);
         } else {
           log_->warn("{}", cryptoError(state));
         }
@@ -196,7 +196,8 @@ namespace iroha {
 
       // ------|Apply data|------
 
-      void Yac::applyState(const std::vector<VoteMessage> &state) {
+      void Yac::applyState(const std::vector<VoteMessage> &state,
+                           std::unique_lock<std::mutex> &lock) {
         auto answer =
             vote_storage_.store(state, cluster_order_.getNumberOfPeers());
 
@@ -242,7 +243,9 @@ namespace iroha {
                 case ProposalState::kSentNotProcessed:
                   vote_storage_.nextProcessingState(proposal_round);
                   log_->info("Pass outcome for {} to pipeline", proposal_round);
-                  if (proposal_round >= round_) {
+                  auto current_round = round_;
+                  lock.unlock();
+                  if (proposal_round >= current_round) {
                     this->closeRound();
                   }
                   notifier_.get_subscriber().on_next(answer);

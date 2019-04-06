@@ -15,12 +15,21 @@ namespace iroha {
 
       void TimerImpl::invokeAfterDelay(std::function<void()> handler) {
         deny();
-        handle_ = invoke_delay_().subscribe(
+        auto handle = invoke_delay_().subscribe(
             [handler{std::move(handler)}](auto) { handler(); });
+        {
+          std::lock_guard<std::mutex> lock(handle_mutex);
+          handle_ = handle;
+        }
       }
 
       void TimerImpl::deny() {
-        handle_.unsubscribe();
+        rxcpp::composite_subscription handle;
+        {
+          std::lock_guard<std::mutex> lock(handle_mutex);
+          handle = handle_;
+        }
+        handle.unsubscribe();
       }
 
       TimerImpl::~TimerImpl() {

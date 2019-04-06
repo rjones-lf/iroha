@@ -89,7 +89,8 @@ namespace iroha {
         void removeUnknownPeersVotes(std::vector<VoteMessage> &votes);
 
         // ------|Apply data|------
-        void applyState(const std::vector<VoteMessage> &state);
+        void applyState(const std::vector<VoteMessage> &state,
+                        std::unique_lock<std::mutex> &lock);
 
         // ------|Propagation|------
         void propagateState(const std::vector<VoteMessage> &msg);
