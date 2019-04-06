@@ -89,6 +89,10 @@ namespace iroha {
         void removeUnknownPeersVotes(std::vector<VoteMessage> &votes);
 
         // ------|Apply data|------
+        /**
+         * @pre lock is locked
+         * @post lock is unlocked
+         */
         void applyState(const std::vector<VoteMessage> &state,
                         std::unique_lock<std::mutex> &lock);
 

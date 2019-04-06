@@ -198,6 +198,7 @@ namespace iroha {
 
       void Yac::applyState(const std::vector<VoteMessage> &state,
                            std::unique_lock<std::mutex> &lock) {
+        assert(lock.owns_lock());
         auto answer =
             vote_storage_.store(state, cluster_order_.getNumberOfPeers());
 
@@ -257,6 +258,9 @@ namespace iroha {
             },
             // sent a state which didn't match with current one
             [&]() { this->tryPropagateBack(state); });
+        if (lock.owns_lock()) {
+          lock.unlock();
+        }
       }
 
       void Yac::tryPropagateBack(const std::vector<VoteMessage> &state) {
