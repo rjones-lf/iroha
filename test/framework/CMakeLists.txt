@@ -32,13 +32,15 @@ add_library(integration_framework
     integration_framework/port_guard.cpp
     )
 target_link_libraries(integration_framework
+    PRIVATE
+    yac_transport
+    PUBLIC
     application
     integration_framework_config_helper
     command_client
     common_test_constants
     query_client
     ordering_gate_common
-    yac_transport
     shared_model_cryptography_model
     server_runner
     mst_transport

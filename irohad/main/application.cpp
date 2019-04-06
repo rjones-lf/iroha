@@ -25,6 +25,7 @@
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "logger/logger.hpp"
 #include "logger/logger_manager.hpp"
+#include "main/impl/consensus_init.hpp"
 #include "main/server_runner.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
@@ -103,6 +104,7 @@ Irohad::Irohad(const std::string &block_store_dir,
       opt_mst_gossip_params_(opt_mst_gossip_params),
       keypair(keypair),
       ordering_init(logger_manager->getLogger()),
+      yac_init(std::make_unique<iroha::consensus::yac::YacInit>()),
       consensus_gate_objects(consensus_gate_objects_lifetime),
       log_manager_(std::move(logger_manager)),
       log_(log_manager_->getLogger()) {
@@ -462,18 +464,18 @@ void Irohad::initConsensusGate() {
           expected::Value<std::shared_ptr<shared_model::interface::Block>>>(
           &block_var)
           ->value;
-  consensus_gate =
-      yac_init.initConsensusGate({block->height(), ordering::kFirstRejectRound},
-                                 storage,
-                                 simulator,
-                                 block_loader,
-                                 keypair,
-                                 consensus_result_cache_,
-                                 vote_delay_,
-                                 async_call_,
-                                 common_objects_factory_,
-                                 kConsensusConsistencyModel,
-                                 log_manager_->getChild("Consensus"));
+  consensus_gate = yac_init->initConsensusGate(
+      {block->height(), ordering::kFirstRejectRound},
+      storage,
+      simulator,
+      block_loader,
+      keypair,
+      consensus_result_cache_,
+      vote_delay_,
+      async_call_,
+      common_objects_factory_,
+      kConsensusConsistencyModel,
+      log_manager_->getChild("Consensus"));
   consensus_gate->onOutcome().subscribe(
       consensus_gate_events_subscription,
       consensus_gate_objects.get_subscriber());
@@ -679,7 +681,7 @@ Irohad::RunResult Irohad::run() {
             }
             // Run internal server
             return internal_server->append(ordering_init.service)
-                .append(yac_init.getConsensusNetwork())
+                .append(yac_init->getConsensusNetwork())
                 .append(loader_init.service)
                 .run();
           })

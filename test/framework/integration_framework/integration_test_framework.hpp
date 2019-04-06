@@ -52,7 +52,7 @@ namespace iroha {
       struct VoteMessage;
     }  // namespace yac
     struct Round;
-  }    // namespace consensus
+  }  // namespace consensus
   namespace network {
     class MstTransportGrpc;
     class OrderingServiceTransport;
@@ -383,8 +383,7 @@ namespace integration_framework {
 
     rxcpp::observable<iroha::BatchPtr> getMstExpiredBatchesObservable();
 
-    rxcpp::observable<iroha::network::ConsensusGate::GateObject>
-    getYacOnCommitObservable();
+    rxcpp::observable<iroha::consensus::GateObject> getYacOnCommitObservable();
 
     rxcpp::observable<iroha::synchronizer::SynchronizationEvent>
     getPcsOnCommitObservable();

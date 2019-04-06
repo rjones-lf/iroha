@@ -7,13 +7,14 @@
 #define IROHA_APPLICATION_HPP
 
 #include "consensus/consensus_block_cache.hpp"
+#include "consensus/gate_object.hpp"
 #include "cryptography/crypto_provider/abstract_crypto_model_signer.hpp"
+#include "cryptography/keypair.hpp"
 #include "interfaces/queries/blocks_query.hpp"
 #include "interfaces/queries/query.hpp"
 #include "logger/logger_fwd.hpp"
 #include "logger/logger_manager_fwd.hpp"
 #include "main/impl/block_loader_init.hpp"
-#include "main/impl/consensus_init.hpp"
 #include "main/impl/on_demand_ordering_init.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy_params.hpp"
 
@@ -25,6 +26,11 @@ namespace iroha {
     class TxPresenceCache;
     class Storage;
   }  // namespace ametsuchi
+  namespace consensus {
+    namespace yac {
+      class YacInit;
+    }  // namespace yac
+  }    // namespace consensus
   namespace network {
     class BlockLoader;
     class ConsensusGate;
@@ -202,7 +208,7 @@ class Irohad {
  protected:
   // initialization objects
   iroha::network::OnDemandOrderingInit ordering_init;
-  iroha::consensus::yac::YacInit yac_init;
+  std::unique_ptr<iroha::consensus::yac::YacInit> yac_init;
   iroha::network::BlockLoaderInit loader_init;
 
   // common objects factory
