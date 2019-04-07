@@ -61,7 +61,8 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
         -DCOVERAGE=${cmakeBooleanOption[coverage]} \
         -DTESTING=${cmakeBooleanOption[testing]} \
         -DPACKAGE_TGZ=${cmakeBooleanOption[packagebuild]} \
-        -DUSE_BTF=${cmakeBooleanOption[useBTF]} ")
+        -DUSE_BTF=${cmakeBooleanOption[useBTF]} \
+        -DLIB_SUFFIX=64 ")
 
         build.cmakeBuild(buildDir, cmakeBuildOptions, parallelism)
       }
