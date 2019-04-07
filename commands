@@ -1,1 +1,3 @@
 irohad --config config.docker --genesis_block genesis.block --keypair_name node0
+
+REST exposes data as resources to be acted upon, whereas RPC exposes operations as a method for acting upon data
