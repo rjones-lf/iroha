@@ -15,7 +15,7 @@ externalproject_add(reactive_extensions_rxcpp
     GIT_TAG        ${VERSION}
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
-    PATCH_COMMAND ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR}/patch/rxcpp-synchronize-lock-recursion-thread-safety.patch
+    PATCH_COMMAND ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR}/patch/rxcpp/0001-Fix-synchronize-lock-and-recursion-data-race.patch
     INSTALL_COMMAND "" # remove install step
     TEST_COMMAND "" # remove test step
     )

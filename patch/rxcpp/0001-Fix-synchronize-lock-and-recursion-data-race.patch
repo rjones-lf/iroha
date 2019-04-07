@@ -1,3 +1,14 @@
+From 8b63f5da5ec3d918097afd0ae01dcf481917060b Mon Sep 17 00:00:00 2001
+From: Andrei Lebedev <lebdron@gmail.com>
+Date: Sun, 7 Apr 2019 10:22:32 +0300
+Subject: [PATCH] Fix synchronize lock and recursion data race
+
+Signed-off-by: Andrei Lebedev <lebdron@gmail.com>
+---
+ Rx/v2/src/rxcpp/rx-scheduler.hpp            | 6 +++---
+ Rx/v2/src/rxcpp/subjects/rx-synchronize.hpp | 1 +
+ 2 files changed, 4 insertions(+), 3 deletions(-)
+
 diff --git a/Rx/v2/src/rxcpp/rx-scheduler.hpp b/Rx/v2/src/rxcpp/rx-scheduler.hpp
 index fc68979..b6fd831 100644
 --- a/Rx/v2/src/rxcpp/rx-scheduler.hpp
@@ -27,14 +38,16 @@ index fc68979..b6fd831 100644
      recursion operator=(const recursion&);
  public:
 diff --git a/Rx/v2/src/rxcpp/subjects/rx-synchronize.hpp b/Rx/v2/src/rxcpp/subjects/rx-synchronize.hpp
-index 858eef3..8bce6fa 100644
+index 858eef3..88f33ca 100644
 --- a/Rx/v2/src/rxcpp/subjects/rx-synchronize.hpp
 +++ b/Rx/v2/src/rxcpp/subjects/rx-synchronize.hpp
-@@ -88,6 +88,7 @@ class synchronize_observer : public detail::multicast_observer<T>
-                     return;
+@@ -89,6 +89,7 @@ class synchronize_observer : public detail::multicast_observer<T>
                  }
 
-+                guard.unlock();
                  auto processor = coordinator.get_worker();
++                guard.unlock();
                  processor.schedule(lifetime, selectedDrain.get());
              }
+         }
+--
+2.20.1.windows.1
