@@ -37,3 +37,7 @@ cmake-build*
 /.gtm/
 
 *.deb
+
+deploy/tf/gke/*.terraform
+deploy/tf/gke/*.tfstate*
+deploy/tf/gke/k8s-ledger*.json
