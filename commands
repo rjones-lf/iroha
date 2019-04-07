@@ -1,3 +1,11 @@
 irohad --config config.docker --genesis_block genesis.block --keypair_name node0
 
 REST exposes data as resources to be acted upon, whereas RPC exposes operations as a method for acting upon data
+
+gcloud beta container clusters get-credentials iroha --region us-west2 --project k8s-ledger
+kubectl config --kubeconfig=gke_k8s-ledger_us-west2_iroha.config
+export KUBECONFIG=gke_k8s-ledger_us-west2_iroha.config
+kubectl create configmap iroha-config --from-file=deploy/ansible/roles/iroha-k8s/files/conf/
+kubectl get configmap iroha-config -oyaml
+kubectl create -f deploy/ansible/roles/iroha-k8s/files/k8s-peer-keys.yaml
+kubectl create -f deploy/ansible/roles/iroha-k8s/files/k8s-iroha.yaml
