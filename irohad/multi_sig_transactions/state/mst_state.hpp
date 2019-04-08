@@ -160,15 +160,15 @@ namespace iroha {
     template <typename Visitor>
     inline void iterateBatches(const Visitor &visitor) const {
       const auto batches_range = batches_.right | boost::adaptors::map_keys;
-      std::for_each(batches_range.cbegin(), batches_range.cend(), visitor);
+      std::for_each(batches_range.begin(), batches_range.end(), visitor);
     }
 
     /// Apply visitor to all transactions.
     template <typename Visitor>
     inline void iterateTransactions(const Visitor &visitor) const {
       for (const auto &batch : batches_.right | boost::adaptors::map_keys) {
-        std::for_each(batch->transactions().cbegin(),
-                      batch->transactions().cend(),
+        std::for_each(batch->transactions().begin(),
+                      batch->transactions().end(),
                       visitor);
       }
     }
