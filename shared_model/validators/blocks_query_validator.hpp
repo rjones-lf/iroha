@@ -18,12 +18,12 @@ namespace shared_model {
     template <typename FieldValidator>
     class BlocksQueryValidator
         : public AbstractValidator<interface::BlocksQuery> {
-      BlocksQueryValidator(const FieldValidator &field_validator)
-          : field_validator_(field_validator) {}
+      BlocksQueryValidator(FieldValidator field_validator)
+          : field_validator_(std::move(field_validator)) {}
 
      public:
       BlocksQueryValidator(std::shared_ptr<ValidatorsConfig> config)
-          : BlocksQueryValidator(FieldValidator(config)) {}
+          : BlocksQueryValidator(FieldValidator(std::move(config))) {}
 
       /**
        * Applies validation to given query

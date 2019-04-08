@@ -12,11 +12,10 @@ namespace shared_model {
   namespace validation {
 
     /**
-     * A class that contains configuration parameters for all validators.
+     * A struct that contains configuration parameters for all validators.
      * A validator may read only specific fields.
      */
-    class ValidatorsConfig {
-     public:
+    struct ValidatorsConfig {
       ValidatorsConfig(const uint64_t max_batch_size);
       /// Maximum allowed amount of transactions within a batch
       const uint64_t max_batch_size;

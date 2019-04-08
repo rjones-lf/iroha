@@ -34,7 +34,7 @@ namespace shared_model {
 
       explicit TransactionsCollectionValidator(
           std::shared_ptr<ValidatorsConfig> config,
-          const TransactionValidator &transactions_validator);
+          TransactionValidator transactions_validator);
 
      public:
       explicit TransactionsCollectionValidator(

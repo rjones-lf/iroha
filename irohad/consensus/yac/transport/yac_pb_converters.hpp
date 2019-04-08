@@ -96,7 +96,7 @@ namespace iroha {
           // We able to do this, because we don't have batches in consensus.
           static shared_model::proto::ProtoCommonObjectsFactory<
               shared_model::validation::FieldValidator>
-              factory_{
+              factory{
                   std::make_shared<shared_model::validation::ValidatorsConfig>(
                       kMaxBatchSize)};
 
@@ -104,7 +104,7 @@ namespace iroha {
 
           auto deserialize =
               [&](auto &pubkey, auto &signature, auto &val, const auto &msg) {
-                factory_
+                factory
                     .createSignature(shared_model::crypto::PublicKey(pubkey),
                                      shared_model::crypto::Signed(signature))
                     .match(

@@ -23,8 +23,8 @@ namespace shared_model {
       TransportBuilder<interface::TransactionSequence, SV>(
           SV stateless_validator,
           std::shared_ptr<validation::ValidatorsConfig> config)
-          : stateless_validator_(stateless_validator),
-            validators_config_(config) {}
+          : stateless_validator_(std::move(stateless_validator)),
+            validators_config_(std::move(config)) {}
 
      public:
       // we do such default initialization only because it is deprecated and
@@ -32,7 +32,7 @@ namespace shared_model {
       TransportBuilder<interface::TransactionSequence, SV>(
           std::shared_ptr<validation::ValidatorsConfig> config)
           : TransportBuilder<interface::TransactionSequence, SV>(
-                SV(iroha::test::kTestsValidatorsConfig), config) {}
+                SV(iroha::test::kTestsValidatorsConfig), std::move(config)) {}
 
       /**
        * Builds TransactionSequence from transport object

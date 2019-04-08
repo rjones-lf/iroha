@@ -26,8 +26,8 @@ namespace shared_model {
                                     CollectionCanBeEmpty>::
         TransactionsCollectionValidator(
             std::shared_ptr<ValidatorsConfig> config,
-            const TransactionValidator &transactions_validator)
-        : transaction_validator_(transactions_validator),
+            TransactionValidator transactions_validator)
+        : transaction_validator_(std::move(transactions_validator)),
           batch_validator_(std::make_shared<BatchValidator>(config)) {}
 
     template <typename TransactionValidator, bool CollectionCanBeEmpty>

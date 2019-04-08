@@ -35,6 +35,8 @@ namespace shared_model {
       using TimeFunction = std::function<iroha::ts64_t()>;
 
      public:
+      // todo igor-egorov 05.04.2018 IR-439 Remove ValidatorsConfig from
+      // FieldValidator
       FieldValidator(std::shared_ptr<ValidatorsConfig> config,
                      time_t future_gap = kDefaultFutureGap,
                      TimeFunction time_provider = [] {

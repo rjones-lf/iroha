@@ -35,12 +35,14 @@ namespace shared_model {
     template <typename FieldValidator>
     class QueryValidatorVisitor
         : public boost::static_visitor<ReasonsGroupType> {
-      QueryValidatorVisitor(const FieldValidator &validator)
-          : validator_(validator) {}
+      QueryValidatorVisitor(FieldValidator validator)
+          : validator_(std::move(validator)) {}
 
      public:
+      // todo igor-egorov 05.04.2018 IR-439 Remove ValidatorsConfig from
+      // FieldValidator => and from QueryValidatorVisitor too
       QueryValidatorVisitor(std::shared_ptr<ValidatorsConfig> config)
-          : QueryValidatorVisitor(FieldValidator{config}) {}
+          : QueryValidatorVisitor(FieldValidator{std::move(config)}) {}
 
       ReasonsGroupType operator()(const interface::GetAccount &qry) const {
         ReasonsGroupType reason;

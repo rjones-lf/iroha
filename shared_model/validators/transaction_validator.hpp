@@ -42,8 +42,8 @@ namespace shared_model {
     template <typename FieldValidator>
     class CommandValidatorVisitor
         : public boost::static_visitor<ReasonsGroupType> {
-      CommandValidatorVisitor(const FieldValidator &validator)
-          : validator_(validator) {}
+      CommandValidatorVisitor(FieldValidator validator)
+          : validator_(std::move(validator)) {}
 
      public:
       CommandValidatorVisitor(const CommandValidatorVisitor &) = delete;
@@ -51,7 +51,7 @@ namespace shared_model {
           delete;
 
       CommandValidatorVisitor(std::shared_ptr<ValidatorsConfig> config)
-          : CommandValidatorVisitor(FieldValidator{config}) {}
+          : CommandValidatorVisitor(FieldValidator{std::move(config)}) {}
 
       ReasonsGroupType operator()(
           const interface::AddAssetQuantity &aaq) const {

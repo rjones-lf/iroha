@@ -9,6 +9,7 @@
 #include "validators/abstract_validator.hpp"
 
 #include <gmock/gmock.h>
+#include "validators/validators_common.hpp"
 
 namespace shared_model {
   namespace validation {

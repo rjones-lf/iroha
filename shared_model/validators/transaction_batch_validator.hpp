@@ -7,6 +7,7 @@
 
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "validators/abstract_validator.hpp"
+#include "validators/validators_common.hpp"
 
 namespace shared_model {
   namespace validation {

@@ -19,6 +19,7 @@ namespace shared_model {
     namespace {
       // we use an unnamed namespace here because we don't want to add test as
       // include path for the shared_model_interfaces_factories target
+      // TODO igor-egorov 05.06.2018 IR-438 (Re)Move TransactionSequence classes
       const uint64_t kTestsMaxBatchSize(10000);
       const auto kValidatorsConfig =
           std::make_shared<validation::ValidatorsConfig>(kTestsMaxBatchSize);

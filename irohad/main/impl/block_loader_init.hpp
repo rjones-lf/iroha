@@ -12,6 +12,7 @@
 #include "logger/logger_manager_fwd.hpp"
 #include "network/impl/block_loader_impl.hpp"
 #include "network/impl/block_loader_service.hpp"
+#include "validators/validators_common.hpp"
 
 namespace iroha {
   namespace network {

@@ -7,7 +7,6 @@
 #define IROHA_ABSTRACT_VALIDATOR_HPP
 
 #include "validators/answer.hpp"
-#include "validators/validators_common.hpp"
 
 namespace shared_model {
   namespace validation {
