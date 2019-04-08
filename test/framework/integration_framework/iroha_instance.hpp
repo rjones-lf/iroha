@@ -66,6 +66,8 @@ namespace integration_framework {
 
     void run();
 
+    // TODO mboldyrev 09.11.2018 IrohaInstance::getIrohaInstance() looks weird,
+    //      IR-1885              refactoring requested.
     std::shared_ptr<TestIrohad> &getIrohaInstance();
 
     static std::string getPostgreCredsOrDefault(

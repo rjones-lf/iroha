@@ -12,7 +12,11 @@
 #include <unordered_set>
 #include <vector>
 
+#include <boost/bimap.hpp>
+#include <boost/bimap/multiset_of.hpp>
+#include <boost/bimap/unordered_set_of.hpp>
 #include <boost/optional/optional.hpp>
+#include <boost/range/any_range.hpp>
 #include "logger/logger_fwd.hpp"
 #include "multi_sig_transactions/hash.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
@@ -124,13 +128,6 @@ namespace iroha {
     bool isEmpty() const;
 
     /**
-     * Compares two different MstState's
-     * @param rhs - MstState to compare
-     * @return true is rhs equal to this or false otherwise
-     */
-    bool operator==(const MstState &rhs) const;
-
-    /**
      * @return the batches from the state
      */
     std::unordered_set<DataType,
@@ -177,26 +174,20 @@ namespace iroha {
    private:
     // --------------------------| private api |------------------------------
 
-    /**
-     * Class provides operator < for batches
-     */
-    class Less {
-     public:
-      bool operator()(const DataType &left, const DataType &right) const;
-    };
+    using BatchesForwardCollectionType = boost::
+        any_range<BatchPtr, boost::forward_traversal_tag, const BatchPtr &>;
 
-    using InternalStateType =
-        std::unordered_set<DataType,
-                           iroha::model::PointerBatchHasher,
-                           BatchHashEquality>;
-
-    using IndexType =
-        std::priority_queue<DataType, std::vector<DataType>, Less>;
+    using BatchesBimap = boost::bimap<
+        boost::bimaps::multiset_of<
+            shared_model::interface::types::TimestampType>,
+        boost::bimaps::unordered_set_of<DataType,
+                                        iroha::model::PointerBatchHasher,
+                                        BatchHashEquality>>;
 
     MstState(const CompleterType &completer, logger::LoggerPtr log);
 
     MstState(const CompleterType &completer,
-             const InternalStateType &transactions,
+             const BatchesForwardCollectionType &batches,
              logger::LoggerPtr log);
 
     /**
@@ -225,9 +216,7 @@ namespace iroha {
 
     CompleterType completer_;
 
-    InternalStateType internal_state_;
-
-    IndexType index_;
+    BatchesBimap batches_;
 
     logger::LoggerPtr log_;
   };
