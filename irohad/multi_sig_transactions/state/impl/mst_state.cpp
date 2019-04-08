@@ -10,7 +10,6 @@
 #include <vector>
 
 #include <boost/algorithm/cxx11/all_of.hpp>
-#include <boost/range/adaptor/map.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/find.hpp>
 #include <boost/range/combine.hpp>

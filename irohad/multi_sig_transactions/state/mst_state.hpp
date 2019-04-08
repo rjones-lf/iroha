@@ -16,11 +16,12 @@
 #include <boost/bimap/multiset_of.hpp>
 #include <boost/bimap/unordered_set_of.hpp>
 #include <boost/optional/optional.hpp>
+#include <boost/range/adaptor/map.hpp>
 #include <boost/range/any_range.hpp>
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "logger/logger_fwd.hpp"
 #include "multi_sig_transactions/hash.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
-#include "interfaces/iroha_internal/transaction_batch.hpp"
 
 namespace iroha {
 
@@ -158,13 +159,14 @@ namespace iroha {
     /// Apply visitor to all batches.
     template <typename Visitor>
     inline void iterateBatches(const Visitor &visitor) const {
-      std::for_each(internal_state_.cbegin(), internal_state_.cend(), visitor);
+      const auto batches_range = batches_.right | boost::adaptors::map_keys;
+      std::for_each(batches_range.cbegin(), batches_range.cend(), visitor);
     }
 
     /// Apply visitor to all transactions.
     template <typename Visitor>
     inline void iterateTransactions(const Visitor &visitor) const {
-      for (const auto &batch : internal_state_) {
+      for (const auto &batch : batches_.right | boost::adaptors::map_keys) {
         std::for_each(batch->transactions().cbegin(),
                       batch->transactions().cend(),
                       visitor);
