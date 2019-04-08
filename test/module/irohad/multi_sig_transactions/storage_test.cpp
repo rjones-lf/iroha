@@ -61,9 +61,10 @@ TEST_F(StorageTest, StorageWhenApplyOtherState) {
 TEST_F(StorageTest, StorageInsertOtherState) {
   log_->info("init fixture state => get expired state");
 
-  ASSERT_EQ(
-      3,
-      storage->getExpiredTransactions(creation_time + 1).getBatches().size());
+  ASSERT_EQ(3,
+            storage->extractExpiredTransactions(creation_time + 1)
+                .getBatches()
+                .size());
   ASSERT_EQ(0,
             storage->getDiffState(absent_peer_key, creation_time + 1)
                 .getBatches()

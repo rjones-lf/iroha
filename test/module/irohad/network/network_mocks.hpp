@@ -36,7 +36,8 @@ namespace iroha {
       MOCK_CONST_METHOD0(onProposal, rxcpp::observable<OrderingEvent>());
 
       MOCK_CONST_METHOD0(
-          on_commit, rxcpp::observable<synchronizer::SynchronizationEvent>());
+          onSynchronization,
+          rxcpp::observable<synchronizer::SynchronizationEvent>());
 
       MOCK_CONST_METHOD0(
           onVerifiedProposal,

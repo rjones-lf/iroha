@@ -123,6 +123,17 @@ cmd_description = """
       </ul>
    </li>
    <li>
+      <p><span style="color: #ff0000;"><strong>coredumps</strong></span> = true</p>
+      <ul>
+         <li>
+            <p>Collects coredumps for integration tets (linux only)</p>
+         </li>
+         <li>
+            <p>Ex:&nbsp;coredumps=true</p>
+         </li>
+      </ul>
+   </li>
+   <li>
       <p><span style="color: #ff0000;"><strong>sonar</strong></span> = false&nbsp;</p>
       <ul>
          <li>
