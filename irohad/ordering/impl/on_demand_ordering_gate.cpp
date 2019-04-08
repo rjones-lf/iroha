@@ -105,8 +105,8 @@ void OnDemandOrderingGate::sendCachedTransactions() {
   // TODO mboldyrev 22.03.2019 IR-425
   // make cache_->getBatchesForRound(current_round) that respects sync
 
+  auto batches = cache_->front();
   cache_->rotate();
-  auto batches = cache_->back();
 
   // get only transactions which fit to next proposal
   auto end_iterator = batches.begin();
