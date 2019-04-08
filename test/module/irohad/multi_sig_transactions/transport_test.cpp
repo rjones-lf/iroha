@@ -225,13 +225,11 @@ TEST_F(TransportTest, ReplayAttack) {
   proto_state.set_source_peer_key(
       shared_model::crypto::toBinaryString(my_key_.publicKey()));
 
-  for (const auto &batch : state.getBatches()) {
-    for (const auto &tx : batch->transactions()) {
-      *proto_state.add_transactions() =
-          std::static_pointer_cast<shared_model::proto::Transaction>(tx)
-              ->getTransport();
-    }
-  }
+  state.iterateTransactions([&proto_state](const auto &tx) {
+    *proto_state.add_transactions() =
+        std::static_pointer_cast<shared_model::proto::Transaction>(tx)
+            ->getTransport();
+  });
 
   grpc::ServerContext context;
   google::protobuf::Empty response;
