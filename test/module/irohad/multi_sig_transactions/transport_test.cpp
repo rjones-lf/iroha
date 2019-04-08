@@ -61,6 +61,11 @@ class TransportTest : public ::testing::Test {
       mst_notification_transport_;
 };
 
+static bool statesEqual(const iroha::MstState &a, const iroha::MstState &b) {
+  // treat them like sets of batches:
+  return (a - b).isEmpty() and (b - a).isEmpty();
+}
+
 /**
  * @brief Sends data over MstTransportGrpc (MstState and Peer objects) and
  * receives them. When received deserializes them end ensures that deserialized
@@ -149,7 +154,7 @@ TEST_F(TransportTest, SendAndReceive) {
           [this, &cv, &state](const auto &from_key, auto const &target_state) {
             EXPECT_EQ(this->my_key_.publicKey(), from_key);
 
-            EXPECT_EQ(state, target_state);
+            EXPECT_TRUE(statesEqual(state, target_state));
             cv.notify_one();
           }));
 

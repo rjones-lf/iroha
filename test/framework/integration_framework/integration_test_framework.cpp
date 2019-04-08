@@ -26,6 +26,7 @@
 #include "cryptography/default_hash_provider.hpp"
 #include "datetime/time.hpp"
 #include "framework/common_constants.hpp"
+#include "framework/integration_framework/fake_peer/behaviour/honest.hpp"
 #include "framework/integration_framework/fake_peer/fake_peer.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/port_guard.hpp"
@@ -46,8 +47,10 @@
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
+#include "ordering/impl/on_demand_os_client_grpc.hpp"
 #include "synchronizer/synchronizer_common.hpp"
 #include "torii/status_bus.hpp"
+#include "validators/protobuf/proto_proposal_validator.hpp"
 
 using namespace shared_model::crypto;
 using namespace std::literals::string_literals;
@@ -68,8 +71,12 @@ using AlwaysValidInterfaceTransactionValidator =
 using AlwaysValidProtoTransactionValidator =
     shared_model::validation::AlwaysValidModelValidator<
         iroha::protocol::Transaction>;
+using AlwaysValidProtoProposalValidator =
+    shared_model::validation::AlwaysValidModelValidator<
+        shared_model::interface::Proposal>;
 using AlwaysMissingTxPresenceCache = iroha::ametsuchi::TxPresenceCacheStub<
     iroha::ametsuchi::tx_cache_status_responses::Missing>;
+using FakePeer = integration_framework::fake_peer::FakePeer;
 
 namespace {
   std::string kLocalHost = "127.0.0.1";
@@ -137,6 +144,26 @@ namespace integration_framework {
             std::make_shared<
                 shared_model::interface::TransactionBatchFactoryImpl>(
                 batch_validator_)),
+        proposal_factory_([] {
+          std::shared_ptr<shared_model::validation::AbstractValidator<
+              iroha::protocol::Transaction>>
+              proto_transaction_validator =
+                  std::make_shared<AlwaysValidProtoTransactionValidator>();
+          std::unique_ptr<shared_model::validation::AbstractValidator<
+              shared_model::interface::Proposal>>
+              proposal_validator =
+                  std::make_unique<AlwaysValidProtoProposalValidator>();
+          std::unique_ptr<shared_model::validation::AbstractValidator<
+              iroha::protocol::Proposal>>
+              proto_proposal_validator = std::make_unique<
+                  shared_model::validation::ProtoProposalValidator>(
+                  std::move(proto_transaction_validator));
+          return std::make_shared<shared_model::proto::ProtoTransportFactory<
+              shared_model::interface::Proposal,
+              shared_model::proto::Proposal>>(
+              std::move(proposal_validator),
+              std::move(proto_proposal_validator));
+        }()),
         tx_presence_cache_(std::make_shared<AlwaysMissingTxPresenceCache>()),
         yac_transport_(std::make_shared<iroha::consensus::yac::NetworkImpl>(
             async_call_,
@@ -158,38 +185,37 @@ namespace integration_framework {
     }
   }
 
-  std::future<std::shared_ptr<FakePeer>>
-  IntegrationTestFramework::addInitailPeer(
+  std::shared_ptr<FakePeer> IntegrationTestFramework::addInitialPeer(
       const boost::optional<Keypair> &key) {
-    fake_peers_promises_.emplace_back(std::promise<std::shared_ptr<FakePeer>>(),
-                                      key);
-    return fake_peers_promises_.back().first.get_future();
+    BOOST_ASSERT_MSG(this_peer_, "Need to set the ITF peer key first!");
+    const auto port = port_guard_->getPort(kDefaultInternalPort);
+    auto fake_peer = std::make_shared<FakePeer>(
+        kLocalHost,
+        port,
+        key,
+        this_peer_,
+        common_objects_factory_,
+        transaction_factory_,
+        batch_parser_,
+        transaction_batch_factory_,
+        proposal_factory_,
+        tx_presence_cache_,
+        log_manager_->getChild("FakePeer")
+            ->getChild("at " + format_address(kLocalHost, port)));
+    fake_peer->initialize();
+    fake_peers_.emplace_back(fake_peer);
+    return fake_peer;
   }
 
-  void IntegrationTestFramework::makeFakePeers() {
-    if (fake_peers_promises_.size() == 0) {
-      return;
-    }
-    log_->info("creating fake iroha peers");
-    assert(this_peer_ && "this_peer_ is needed for fake peers initialization, "
-        "but not set");
-    for (auto &promise_and_key : fake_peers_promises_) {
-      const auto port = port_guard_->getPort(kDefaultInternalPort);
-      auto fake_peer = std::make_shared<FakePeer>(
-          kLocalHost,
-          port,
-          promise_and_key.second,
-          this_peer_,
-          common_objects_factory_,
-          transaction_factory_,
-          batch_parser_,
-          transaction_batch_factory_,
-          tx_presence_cache_,
-          log_manager_->getChild("FakePeer")
-              ->getChild("at " + format_address(kLocalHost, port)));
-      fake_peers_.emplace_back(fake_peer);
-      promise_and_key.first.set_value(fake_peer);
-    }
+  std::vector<std::shared_ptr<fake_peer::FakePeer>>
+  IntegrationTestFramework::addInitialPeers(size_t amount) {
+    std::vector<std::shared_ptr<fake_peer::FakePeer>> fake_peers;
+    std::generate_n(std::back_inserter(fake_peers), amount, [this] {
+      auto fake_peer = addInitialPeer({});
+      fake_peer->setBehaviour(std::make_shared<fake_peer::HonestBehaviour>());
+      return fake_peer;
+    });
+    return fake_peers;
   }
 
   shared_model::proto::Block IntegrationTestFramework::defaultBlock(
@@ -233,11 +259,21 @@ namespace integration_framework {
     return genesis_block;
   }
 
+  shared_model::proto::Block IntegrationTestFramework::defaultBlock() const {
+    BOOST_ASSERT_MSG(my_key_, "Need to set the ITF peer key first!");
+    return defaultBlock(*my_key_);
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::setGenesisBlock(
+      const shared_model::interface::Block &block) {
+    iroha_instance_->makeGenesis(clone(block));
+    return *this;
+  }
+
   IntegrationTestFramework &IntegrationTestFramework::setInitialState(
       const Keypair &keypair) {
     initPipeline(keypair);
-    iroha_instance_->makeGenesis(
-        clone(IntegrationTestFramework::defaultBlock(keypair)));
+    setGenesisBlock(defaultBlock(keypair));
     log_->info("added genesis block");
     subscribeQueuesAndRun();
     return *this;
@@ -254,7 +290,7 @@ namespace integration_framework {
   IntegrationTestFramework &IntegrationTestFramework::setInitialState(
       const Keypair &keypair, const shared_model::interface::Block &block) {
     initPipeline(keypair);
-    iroha_instance_->makeGenesis(clone(block));
+    setGenesisBlock(block);
     log_->info("added genesis block");
     subscribeQueuesAndRun();
     return *this;
@@ -271,28 +307,15 @@ namespace integration_framework {
   void IntegrationTestFramework::initPipeline(
       const shared_model::crypto::Keypair &keypair) {
     log_->info("init state");
-    // peer initialization
-    common_objects_factory_
-        ->createPeer(format_address(kLocalHost, internal_port_),
-                     keypair.publicKey())
-        .match(
-            [this](iroha::expected::Result<
-                   std::unique_ptr<shared_model::interface::Peer>,
-                   std::string>::ValueType &result) {
-              this->this_peer_ = std::move(result.value);
-            },
-            [](const iroha::expected::Result<
-                std::unique_ptr<shared_model::interface::Peer>,
-                std::string>::ErrorType &error) {
-              BOOST_THROW_EXCEPTION(std::runtime_error(
-                  "Failed to create peer object for current irohad instance. "
-                  + error.error));
-            });
-
+    my_key_ = keypair;
+    this_peer_ =
+        framework::expected::val(common_objects_factory_->createPeer(
+                                     format_address(kLocalHost, internal_port_),
+                                     keypair.publicKey()))
+            .value()
+            .value;
     iroha_instance_->initPipeline(keypair, maximum_proposal_size_);
     log_->info("created pipeline");
-
-    makeFakePeers();
   }
 
   void IntegrationTestFramework::subscribeQueuesAndRun() {
@@ -384,15 +407,11 @@ namespace integration_framework {
     return iroha_instance_->getIrohaInstance()->getConsensusGate()->onOutcome();
   }
 
-  IntegrationTestFramework &
-  IntegrationTestFramework::subscribeForAllMstNotifications(
-      std::shared_ptr<iroha::network::MstTransportNotification> notification) {
-    std::for_each(fake_peers_.cbegin(),
-                  fake_peers_.cend(),
-                  [&notification](const auto &fake_peer) {
-                    fake_peer->subscribeForMstNotifications(notification);
-                  });
-    return *this;
+  rxcpp::observable<iroha::synchronizer::SynchronizationEvent>
+  IntegrationTestFramework::getPcsOnCommitObservable() {
+    return iroha_instance_->getIrohaInstance()
+        ->getPeerCommunicationService()
+        ->onSynchronization();
   }
 
   IntegrationTestFramework &IntegrationTestFramework::getTxStatus(
@@ -567,6 +586,37 @@ namespace integration_framework {
     return *this;
   }
 
+  IntegrationTestFramework &IntegrationTestFramework::sendBatches(
+      const std::vector<TransactionBatchSPtr> &batches) {
+    auto on_demand_os_transport =
+        iroha::ordering::transport::OnDemandOsClientGrpcFactory(
+            async_call_,
+            proposal_factory_,
+            [] { return std::chrono::system_clock::now(); },
+            std::chrono::milliseconds(0),  // the proposal waiting timeout is
+                                           // only used when waiting a response
+                                           // for a proposal request, which our
+                                           // client does not do
+            log_manager_->getChild("OrderingClientTransport")->getLogger())
+            .create(*this_peer_);
+    on_demand_os_transport->onBatches(batches);
+    return *this;
+  }
+
+  boost::optional<std::shared_ptr<const shared_model::interface::Proposal>>
+  IntegrationTestFramework::requestProposal(
+      const iroha::consensus::Round &round, std::chrono::milliseconds timeout) {
+    auto on_demand_os_transport =
+        iroha::ordering::transport::OnDemandOsClientGrpcFactory(
+            async_call_,
+            proposal_factory_,
+            [] { return std::chrono::system_clock::now(); },
+            timeout,
+            log_manager_->getChild("OrderingClientTransport")->getLogger())
+            .create(*this_peer_);
+    return on_demand_os_transport->onRequestProposal(round);
+  }
+
   IntegrationTestFramework &IntegrationTestFramework::sendMstState(
       const shared_model::crypto::PublicKey &src_key,
       const iroha::MstState &mst_state) {
@@ -582,10 +632,12 @@ namespace integration_framework {
   }
 
   IntegrationTestFramework &IntegrationTestFramework::checkProposal(
-      std::function<void(const ProposalType &)> validation) {
+      std::function<void(
+          const std::shared_ptr<const shared_model::interface::Proposal> &)>
+          validation) {
     log_->info("check proposal");
     // fetch first proposal from proposal queue
-    ProposalType proposal;
+    std::shared_ptr<const shared_model::interface::Proposal> proposal;
     fetchFromQueue(
         proposal_queue_, proposal, proposal_waiting, "missed proposal");
     validation(proposal);
@@ -598,7 +650,9 @@ namespace integration_framework {
   }
 
   IntegrationTestFramework &IntegrationTestFramework::checkVerifiedProposal(
-      std::function<void(const ProposalType &)> validation) {
+      std::function<void(
+          const std::shared_ptr<const shared_model::interface::Proposal> &)>
+          validation) {
     log_->info("check verified proposal");
     // fetch first proposal from proposal queue
     VerifiedProposalType verified_proposal_and_errors;
@@ -606,9 +660,7 @@ namespace integration_framework {
                    verified_proposal_and_errors,
                    proposal_waiting,
                    "missed verified proposal");
-    ProposalType verified_proposal =
-        std::move(verified_proposal_and_errors->verified_proposal);
-    validation(verified_proposal);
+    validation(verified_proposal_and_errors->verified_proposal);
     return *this;
   }
 
@@ -663,6 +715,10 @@ namespace integration_framework {
       iroha_instance_->getIrohaInstance()->storage->dropStorage();
       boost::filesystem::remove_all(iroha_instance_->block_store_dir_);
     }
+  }
+
+  IrohaInstance &IntegrationTestFramework::getIrohaInstance() {
+    return *iroha_instance_;
   }
 
   logger::LoggerManagerTreePtr getDefaultItfLogManager() {

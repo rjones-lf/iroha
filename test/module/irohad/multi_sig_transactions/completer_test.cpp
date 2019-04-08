@@ -99,11 +99,11 @@ TEST(CompleterTest, BatchExpirationTestExpired) {
   auto completer = std::make_shared<DefaultCompleter>(std::chrono::minutes(1));
   auto time = iroha::time::now();
   auto tx1 = std::make_shared<MockTransaction>();
-  EXPECT_CALL(*tx1, createdTime()).WillOnce(Return(time));
+  EXPECT_CALL(*tx1, createdTime()).WillRepeatedly(Return(time));
   auto tx2 = std::make_shared<MockTransaction>();
-  EXPECT_CALL(*tx2, createdTime()).Times(0);
+  EXPECT_CALL(*tx2, createdTime()).WillRepeatedly(Return(time));
   auto tx3 = std::make_shared<MockTransaction>();
-  EXPECT_CALL(*tx3, createdTime()).Times(0);
+  EXPECT_CALL(*tx3, createdTime()).WillRepeatedly(Return(time));
   auto batch = createMockBatchWithTransactions({tx1, tx2, tx3}, "");
   ASSERT_TRUE(completer->isExpired(
       batch, time + std::chrono::minutes(2) / std::chrono::milliseconds(1)));
@@ -121,15 +121,15 @@ TEST(CompleterTest, BatchExpirationTestNoExpired) {
   auto time = iroha::time::now();
   auto tx1 = std::make_shared<MockTransaction>();
   EXPECT_CALL(*tx1, createdTime())
-      .WillOnce(Return(
+      .WillRepeatedly(Return(
           time + std::chrono::minutes(2) / std::chrono::milliseconds(1)));
   auto tx2 = std::make_shared<MockTransaction>();
   EXPECT_CALL(*tx2, createdTime())
-      .WillOnce(Return(
+      .WillRepeatedly(Return(
           time + std::chrono::minutes(3) / std::chrono::milliseconds(1)));
   auto tx3 = std::make_shared<MockTransaction>();
   EXPECT_CALL(*tx3, createdTime())
-      .WillOnce(Return(
+      .WillRepeatedly(Return(
           time + std::chrono::minutes(4) / std::chrono::milliseconds(1)));
   auto batch = createMockBatchWithTransactions({tx1, tx2, tx3}, "");
   ASSERT_FALSE(completer->isExpired(batch, time));
