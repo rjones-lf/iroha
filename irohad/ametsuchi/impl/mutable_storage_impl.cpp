@@ -14,6 +14,8 @@
 #include "interfaces/commands/command.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "interfaces/iroha_internal/block.hpp"
+#include "logger/logger.hpp"
+#include "logger/logger_manager.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -22,20 +24,27 @@ namespace iroha {
         std::shared_ptr<PostgresCommandExecutor> cmd_executor,
         std::unique_ptr<soci::session> sql,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
-        logger::Logger log)
+        std::unique_ptr<BlockStorage> block_storage,
+        logger::LoggerManagerTreePtr log_manager)
         : top_hash_(top_hash),
           sql_(std::move(sql)),
-          peer_query_(std::make_unique<PeerQueryWsv>(
-              std::make_shared<PostgresWsvQuery>(*sql_, std::move(factory)))),
-          block_index_(std::make_unique<PostgresBlockIndex>(*sql_)),
+          peer_query_(
+              std::make_unique<PeerQueryWsv>(std::make_shared<PostgresWsvQuery>(
+                  *sql_,
+                  std::move(factory),
+                  log_manager->getChild("WsvQuery")->getLogger()))),
+          block_index_(std::make_unique<PostgresBlockIndex>(
+              *sql_, log_manager->getChild("PostgresBlockIndex")->getLogger())),
           command_executor_(std::move(cmd_executor)),
+          block_storage_(std::move(block_storage)),
           committed(false),
-          log_(std::move(log)) {
+          log_(log_manager->getLogger()) {
       *sql_ << "BEGIN";
     }
 
-    bool MutableStorageImpl::apply(const shared_model::interface::Block &block,
-                                   MutableStoragePredicate predicate) {
+    bool MutableStorageImpl::apply(
+        std::shared_ptr<const shared_model::interface::Block> block,
+        MutableStoragePredicate predicate) {
       auto execute_transaction = [this](auto &transaction) {
         command_executor_->setCreatorAccountId(transaction.creatorAccountId());
         command_executor_->doValidation(false);
@@ -58,18 +67,18 @@ namespace iroha {
       };
 
       log_->info("Applying block: height {}, hash {}",
-                 block.height(),
-                 block.hash().hex());
+                 block->height(),
+                 block->hash().hex());
 
       auto block_applied = predicate(block, *peer_query_, top_hash_)
-          and std::all_of(block.transactions().begin(),
-                          block.transactions().end(),
+          and std::all_of(block->transactions().begin(),
+                          block->transactions().end(),
                           execute_transaction);
       if (block_applied) {
-        block_store_.insert(std::make_pair(block.height(), clone(block)));
-        block_index_->index(block);
+        block_storage_->insert(block);
+        block_index_->index(*block);
 
-        top_hash_ = block.hash();
+        top_hash_ = block->hash();
       }
 
       return block_applied;
@@ -95,7 +104,7 @@ namespace iroha {
     }
 
     bool MutableStorageImpl::apply(
-        const shared_model::interface::Block &block) {
+        std::shared_ptr<const shared_model::interface::Block> block) {
       return withSavepoint([&] {
         return this->apply(
             block, [](const auto &, auto &, const auto &) { return true; });
@@ -108,7 +117,7 @@ namespace iroha {
         MutableStoragePredicate predicate) {
       return withSavepoint([&] {
         return blocks
-            .all([&](auto block) { return this->apply(*block, predicate); })
+            .all([&](auto block) { return this->apply(block, predicate); })
             .as_blocking()
             .first();
       });

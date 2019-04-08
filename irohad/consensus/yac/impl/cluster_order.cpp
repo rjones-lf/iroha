@@ -39,14 +39,15 @@ namespace iroha {
         return *this;
       }
 
-      std::vector<std::shared_ptr<shared_model::interface::Peer>>
-      ClusterOrdering::getPeers() const {
+      const std::vector<std::shared_ptr<shared_model::interface::Peer>>
+          &ClusterOrdering::getPeers() const {
         return order_;
       }
 
       size_t ClusterOrdering::getNumberOfPeers() const {
         return order_.size();
       }
+
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha

@@ -14,6 +14,7 @@
 #include <boost/range/adaptor/transformed.hpp>
 #include "common/result.hpp"
 #include "interfaces/iroha_internal/batch_meta.hpp"
+#include "logger/logger.hpp"
 #include "validation/utils.hpp"
 
 namespace iroha {
@@ -46,7 +47,6 @@ namespace iroha {
      * @param txs to be validated
      * @param temporary_wsv to apply transactions on
      * @param transactions_errors_log to write errors to
-     * @param log to write errors to console
      * @param batch_parser to parse batches from transaction range
      * @return range of transactions, which passed stateful validation
      */
@@ -54,7 +54,6 @@ namespace iroha {
         const shared_model::interface::types::TransactionsCollectionType &txs,
         ametsuchi::TemporaryWsv &temporary_wsv,
         validation::TransactionsErrors &transactions_errors_log,
-        const logger::Logger &log,
         const shared_model::interface::TransactionBatchParser &batch_parser) {
       std::vector<bool> validation_results;
       validation_results.reserve(boost::size(txs));
@@ -117,7 +116,7 @@ namespace iroha {
         std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory,
         std::shared_ptr<shared_model::interface::TransactionBatchParser>
             batch_parser,
-        logger::Logger log)
+        logger::LoggerPtr log)
         : factory_(std::move(factory)),
           batch_parser_(std::move(batch_parser)),
           log_(std::move(log)) {}
@@ -134,7 +133,6 @@ namespace iroha {
           validateTransactions(proposal.transactions(),
                                temporaryWsv,
                                validation_result->rejected_transactions,
-                               log_,
                                *batch_parser_);
 
       // Since proposal came from ordering gate it was already validated.

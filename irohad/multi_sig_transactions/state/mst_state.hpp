@@ -6,11 +6,13 @@
 #ifndef IROHA_MST_STATE_HPP
 #define IROHA_MST_STATE_HPP
 
+#include <chrono>
 #include <queue>
 #include <unordered_set>
 #include <vector>
 
-#include "logger/logger.hpp"
+#include <boost/optional/optional.hpp>
+#include "logger/logger_fwd.hpp"
 #include "multi_sig_transactions/hash.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
 
@@ -27,16 +29,16 @@ namespace iroha {
      * @param batch - target object for verification
      * @return true, if complete
      */
-    virtual bool operator()(const DataType &batch) const = 0;
+    virtual bool isCompleted(const DataType &batch) const = 0;
 
     /**
-     * Operator checks whether the batch has expired
+     * Check whether the batch has expired
      * @param batch - object for validation
-     * @param time - current time
+     * @param current_time - current time
      * @return true, if the batch has expired
      */
-    virtual bool operator()(const DataType &batch,
-                            const TimeType &time) const = 0;
+    virtual bool isExpired(const DataType &batch,
+                           const TimeType &current_time) const = 0;
 
     virtual ~Completer() = default;
   };
@@ -59,16 +61,17 @@ namespace iroha {
    * Expired if at least one transaction is expired.
    */
   class DefaultCompleter : public Completer {
+   public:
     /**
      * Creates new Completer with a given expiration time for transactions
      * @param expiration_time - expiration time in minutes
      */
-   public:
     explicit DefaultCompleter(std::chrono::minutes expiration_time);
 
-    bool operator()(const DataType &batch) const override;
+    bool isCompleted(const DataType &batch) const override;
 
-    bool operator()(const DataType &tx, const TimeType &time) const override;
+    bool isExpired(const DataType &tx,
+                   const TimeType &current_time) const override;
 
    private:
     std::chrono::minutes expiration_time_;
@@ -82,10 +85,12 @@ namespace iroha {
 
     /**
      * Create empty state
+     * @param log - the logger to use in the new object
      * @param completer - strategy for determine completed and expired batches
      * @return empty mst state
      */
-    static MstState empty(const CompleterType &completer);
+    static MstState empty(logger::LoggerPtr log,
+                          const CompleterType &completer);
 
     /**
      * Add batch to current state
@@ -132,11 +137,17 @@ namespace iroha {
     getBatches() const;
 
     /**
-     * Erase expired batches
-     * @param time - current time
+     * Erase and return expired batches
+     * @param current_time - current time
      * @return state with expired batches
      */
-    MstState eraseByTime(const TimeType &time);
+    MstState extractExpired(const TimeType &current_time);
+
+    /**
+     * Erase expired batches
+     * @param current_time - current time
+     */
+    void eraseExpired(const TimeType &current_time);
 
     /**
      * Check, if this MST state contains that element
@@ -164,12 +175,11 @@ namespace iroha {
     using IndexType =
         std::priority_queue<DataType, std::vector<DataType>, Less>;
 
-    explicit MstState(const CompleterType &completer,
-                      logger::Logger log = logger::log("MstState"));
+    MstState(const CompleterType &completer, logger::LoggerPtr log);
 
     MstState(const CompleterType &completer,
              const InternalStateType &transactions,
-             logger::Logger log = logger::log("MstState"));
+             logger::LoggerPtr log);
 
     /**
      * Insert batch in own state and push it in out_completed_state or
@@ -185,6 +195,14 @@ namespace iroha {
      */
     void rawInsert(const DataType &rhs_tx);
 
+    /**
+     * Erase expired batches, optionally returning them.
+     * @param current_time - current time
+     * @param extracted - optional storage for extracted batches.
+     */
+    void extractExpiredImpl(const TimeType &current_time,
+                            boost::optional<MstState &> extracted);
+
     // -----------------------------| fields |------------------------------
 
     CompleterType completer_;
@@ -193,7 +211,7 @@ namespace iroha {
 
     IndexType index_;
 
-    logger::Logger log_;
+    logger::LoggerPtr log_;
   };
 
 }  // namespace iroha

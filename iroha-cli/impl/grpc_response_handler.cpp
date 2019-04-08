@@ -5,12 +5,16 @@
 
 #include "grpc_response_handler.hpp"
 #include "logger/logger.hpp"
+#include "logger/logger_manager.hpp"
 
 using namespace grpc;
 namespace iroha_cli {
 
-  GrpcResponseHandler::GrpcResponseHandler(logger::Logger log)
-      : log_(std::move(log)) {
+  GrpcResponseHandler::GrpcResponseHandler(
+      logger::LoggerManagerTreePtr log_manager)
+      : tx_handler_(log_manager->getChild("Transaction")->getLogger()),
+        query_handler_(log_manager->getChild("Query")->getLogger()),
+        log_(log_manager->getChild("Grpc")->getLogger()) {
     handler_map_[CANCELLED] = "Operation canceled";
     handler_map_[UNKNOWN] = "Unknown error";
     handler_map_[INVALID_ARGUMENT] = "INVALID_ARGUMENT";

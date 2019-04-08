@@ -40,15 +40,6 @@ namespace iroha {
        */
       virtual rxcpp::observable<OrderingEvent> onProposal() = 0;
 
-      /**
-       * Set peer communication service for commit notification
-       * @param pcs - const reference for PeerCommunicationService
-       * design notes: pcs passed by const reference because of cyclic linking
-       * between OG and PCS in the implementation. Same reasons to move the pcs
-       * dependency not in ctor but make the setter method.
-       */
-      virtual void setPcs(const PeerCommunicationService &pcs) = 0;
-
       virtual ~OrderingGate() = default;
     };
   }  // namespace network

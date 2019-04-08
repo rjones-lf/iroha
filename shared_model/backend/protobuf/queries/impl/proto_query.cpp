@@ -51,14 +51,14 @@ namespace shared_model {
       TransportType proto_;
 
       ProtoQueryVariantType variant_{[this] {
-        const auto &ar = proto_;
+        auto &ar = proto_;
         int which = ar.payload()
                         .GetDescriptor()
                         ->FindFieldByNumber(ar.payload().query_case())
                         ->index_in_oneof();
-        return shared_model::detail::variant_impl<ProtoQueryListType>::
-            template load<ProtoQueryVariantType>(std::forward<decltype(ar)>(ar),
-                                                 which);
+        return shared_model::detail::variant_impl<
+            ProtoQueryListType>::template load<ProtoQueryVariantType>(ar,
+                                                                      which);
       }()};
 
       QueryVariantType ivariant_{variant_};
@@ -74,6 +74,8 @@ namespace shared_model {
         }
         return set;
       }()};
+
+      interface::types::HashType hash_ = makeHash(payload_);
     };
 
     Query::Query(const Query &o) : Query(o.impl_->proto_) {}
@@ -125,6 +127,10 @@ namespace shared_model {
       impl_->signatures_ =
           SignatureSetType<proto::Signature>{proto::Signature{*sig}};
       return true;
+    }
+
+    const interface::types::HashType &Query::hash() const {
+      return impl_->hash_;
     }
 
     interface::types::TimestampType Query::createdTime() const {

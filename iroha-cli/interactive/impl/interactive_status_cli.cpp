@@ -36,8 +36,12 @@ namespace iroha_cli {
              "Transaction has collected all signatures."}};
 
     InteractiveStatusCli::InteractiveStatusCli(
-        const std::string &default_peer_ip, int default_port)
-        : default_peer_ip_(default_peer_ip), default_port_(default_port) {
+        const std::string &default_peer_ip,
+        int default_port,
+        logger::LoggerPtr pb_qry_factory_log)
+        : default_peer_ip_(default_peer_ip),
+          default_port_(default_port),
+          pb_qry_factory_log_(std::move(pb_qry_factory_log)) {
       createActionsMenu();
       createResultMenu();
     }
@@ -138,7 +142,9 @@ namespace iroha_cli {
       auto status = iroha::protocol::TxStatus::NOT_RECEIVED;
       iroha::protocol::ToriiResponse answer;
       if (iroha::hexstringToBytestring(txHash_)) {
-        answer = CliClient(address.value().first, address.value().second)
+        answer = CliClient(address.value().first,
+                           address.value().second,
+                           pb_qry_factory_log_)
                      .getTxStatus(txHash_)
                      .answer;
         status = answer.tx_status();

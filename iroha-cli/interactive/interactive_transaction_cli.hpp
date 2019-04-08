@@ -9,15 +9,16 @@
 #include <unordered_map>
 
 #include "interactive/interactive_common_cli.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
+#include "logger/logger_manager_fwd.hpp"
 #include "model/generators/transaction_generator.hpp"
 
 namespace iroha {
   namespace model {
     struct Command;
     class ModelCryptoProvider;
-  }
-}
+  }  // namespace model
+}  // namespace iroha
 
 namespace iroha_cli {
   namespace interactive {
@@ -29,12 +30,18 @@ namespace iroha_cli {
        * @param default_peer_ip of Iroha peer
        * @param default_port of Iroha peer
        * @param provider for signing transactions
+       * @param response_handler_log_manager for ResponseHandler messages
+       * @param pb_qry_factory_log for PbQueryFactory mesages
+       * @param log for internal messages
        */
       InteractiveTransactionCli(
           const std::string &creator_account,
           const std::string &default_peer_ip,
           int default_port,
-          const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider);
+          const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider,
+          logger::LoggerManagerTreePtr response_handler_log_manager,
+          logger::LoggerPtr pb_qry_factory_log,
+          logger::LoggerPtr log);
       /**
        * Run interactive query command line
        */
@@ -172,14 +179,20 @@ namespace iroha_cli {
       // Commands to be formed
       std::vector<std::shared_ptr<iroha::model::Command>> commands_;
 
-      // Logger
-      logger::Logger log_;
-
       // Crypto provider
       std::shared_ptr<iroha::model::ModelCryptoProvider> provider_;
 
       // Transaction generator
       iroha::model::generators::TransactionGenerator tx_generator_;
+
+      /// Logger manager for ResponseHandler
+      logger::LoggerManagerTreePtr response_handler_log_manager_;
+
+      /// Logger for PbQueryFactory
+      logger::LoggerPtr pb_qry_factory_log_;
+
+      /// Internal logger
+      logger::LoggerPtr log_;
     };
   }  // namespace interactive
 }  // namespace iroha_cli

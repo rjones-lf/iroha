@@ -9,7 +9,7 @@
 #include <grpc++/grpc++.h>
 #include <grpc++/impl/codegen/service_type.h>
 #include "common/result.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 
 /**
  * Class runs Torii server for handling queries and commands.
@@ -19,12 +19,12 @@ class ServerRunner {
   /**
    * Constructor. Initialize a new instance of ServerRunner class.
    * @param address - the address the server will be bind to in URI form
-   * @param reuse - allow multiple sockets to bind to the same port
    * @param log to print progress to
+   * @param reuse - allow multiple sockets to bind to the same port
    */
   explicit ServerRunner(const std::string &address,
-                        bool reuse = true,
-                        logger::Logger log = logger::log("ServerRunner"));
+                        logger::LoggerPtr log,
+                        bool reuse = true);
 
   /**
    * Adds a new grpc service to be run.
@@ -55,7 +55,7 @@ class ServerRunner {
   void shutdown(const std::chrono::system_clock::time_point &deadline);
 
  private:
-  logger::Logger log_;
+  logger::LoggerPtr log_;
 
   std::unique_ptr<grpc::Server> serverInstance_;
   std::mutex waitForServer_;

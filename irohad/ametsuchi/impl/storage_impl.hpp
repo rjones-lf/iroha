@@ -14,13 +14,14 @@
 
 #include <soci/soci.h>
 #include <boost/optional.hpp>
-
+#include "ametsuchi/block_storage_factory.hpp"
 #include "ametsuchi/impl/postgres_options.hpp"
 #include "ametsuchi/key_value_storage.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "interfaces/iroha_internal/block_json_converter.hpp"
 #include "interfaces/permission_to_string.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
+#include "logger/logger_manager_fwd.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -40,7 +41,7 @@ namespace iroha {
           const std::string &options_str_without_dbname);
 
       static expected::Result<ConnectionContext, std::string> initConnections(
-          std::string block_store_dir);
+          std::string block_store_dir, logger::LoggerPtr log);
 
       static expected::Result<std::shared_ptr<soci::connection_pool>,
                               std::string>
@@ -56,6 +57,8 @@ namespace iroha {
               converter,
           std::shared_ptr<shared_model::interface::PermissionToString>
               perm_converter,
+          std::unique_ptr<BlockStorageFactory> block_storage_factory,
+          logger::LoggerManagerTreePtr log_manager,
           size_t pool_size = 10);
 
       expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
@@ -80,7 +83,8 @@ namespace iroha {
        * @param blocks - block for insertion
        * @return true if all blocks are inserted
        */
-      bool insertBlock(const shared_model::interface::Block &block) override;
+      bool insertBlock(
+          std::shared_ptr<const shared_model::interface::Block> block) override;
 
       /**
        * Insert blocks without validation
@@ -98,16 +102,16 @@ namespace iroha {
       void freeConnections() override;
 
       boost::optional<std::unique_ptr<LedgerState>> commit(
-          std::unique_ptr<MutableStorage> mutableStorage) override;
+          std::unique_ptr<MutableStorage> mutable_storage) override;
 
       boost::optional<std::unique_ptr<LedgerState>> commitPrepared(
-          const shared_model::interface::Block &block) override;
+          std::shared_ptr<const shared_model::interface::Block> block) override;
 
       std::shared_ptr<WsvQuery> getWsvQuery() const override;
 
       std::shared_ptr<BlockQuery> getBlockQuery() const override;
 
-      rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+      rxcpp::observable<std::shared_ptr<const shared_model::interface::Block>>
       on_commit() override;
 
       void prepareBlock(std::unique_ptr<TemporaryWsv> wsv) override;
@@ -125,9 +129,10 @@ namespace iroha {
                       converter,
                   std::shared_ptr<shared_model::interface::PermissionToString>
                       perm_converter,
+                  std::unique_ptr<BlockStorageFactory> block_storage_factory,
                   size_t pool_size,
                   bool enable_prepared_blocks,
-                  logger::Logger log = logger::log("StorageImpl"));
+                  logger::LoggerManagerTreePtr log_manager);
 
       /**
        * Folder with raw blocks
@@ -146,7 +151,8 @@ namespace iroha {
       /**
        * add block to block storage
        */
-      bool storeBlock(const shared_model::interface::Block &block);
+      bool storeBlock(
+          std::shared_ptr<const shared_model::interface::Block> block);
 
       std::unique_ptr<KeyValueStorage> block_store_;
 
@@ -154,7 +160,8 @@ namespace iroha {
 
       std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
 
-      rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
+      rxcpp::subjects::subject<
+          std::shared_ptr<const shared_model::interface::Block>>
           notifier_;
 
       std::shared_ptr<shared_model::interface::BlockJsonConverter> converter_;
@@ -162,7 +169,10 @@ namespace iroha {
       std::shared_ptr<shared_model::interface::PermissionToString>
           perm_converter_;
 
-      logger::Logger log_;
+      std::unique_ptr<BlockStorageFactory> block_storage_factory_;
+
+      logger::LoggerManagerTreePtr log_manager_;
+      logger::LoggerPtr log_;
 
       mutable std::shared_timed_mutex drop_mutex;
 

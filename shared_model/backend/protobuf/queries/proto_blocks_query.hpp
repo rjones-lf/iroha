@@ -38,6 +38,8 @@ namespace shared_model {
       bool addSignature(const crypto::Signed &signed_blob,
                         const crypto::PublicKey &public_key) override;
 
+      const interface::types::HashType &hash() const override;
+
       interface::types::TimestampType createdTime() const override;
 
      private:
@@ -47,6 +49,8 @@ namespace shared_model {
       const interface::types::BlobType payload_;
 
       SignatureSetType<proto::Signature> signatures_;
+
+      interface::types::HashType hash_;
     };
   }  // namespace proto
 }  // namespace shared_model

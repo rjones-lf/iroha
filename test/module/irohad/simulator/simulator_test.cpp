@@ -13,6 +13,7 @@
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "datetime/time.hpp"
+#include "framework/test_logger.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/mock_block_query.hpp"
 #include "module/irohad/ametsuchi/mock_block_query_factory.hpp"
@@ -71,7 +72,8 @@ class SimulatorTest : public ::testing::Test {
                                             factory,
                                             block_query_factory,
                                             crypto_signer,
-                                            std::move(block_factory));
+                                            std::move(block_factory),
+                                            getTestLogger("Simulator"));
 
     auto peer = makePeer("127.0.0.1", shared_model::crypto::PublicKey("111"));
     auto ledger_peers = std::make_shared<PeerList>(PeerList{peer});

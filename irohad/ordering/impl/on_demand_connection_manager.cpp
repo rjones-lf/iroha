@@ -7,6 +7,7 @@
 
 #include <boost/range/combine.hpp>
 #include "interfaces/iroha_internal/proposal.hpp"
+#include "logger/logger.hpp"
 #include "ordering/impl/on_demand_common.hpp"
 
 using namespace iroha;
@@ -15,21 +16,17 @@ using namespace iroha::ordering;
 OnDemandConnectionManager::OnDemandConnectionManager(
     std::shared_ptr<transport::OdOsNotificationFactory> factory,
     rxcpp::observable<CurrentPeers> peers,
-    logger::Logger log)
+    logger::LoggerPtr log)
     : log_(std::move(log)),
       factory_(std::move(factory)),
-      subscription_(peers.subscribe([this](const auto &peers) {
-        // exclusive lock
-        std::lock_guard<std::shared_timed_mutex> lock(mutex_);
-
-        this->initializeConnections(peers);
-      })) {}
+      subscription_(peers.subscribe(
+          [this](const auto &peers) { this->initializeConnections(peers); })) {}
 
 OnDemandConnectionManager::OnDemandConnectionManager(
     std::shared_ptr<transport::OdOsNotificationFactory> factory,
     rxcpp::observable<CurrentPeers> peers,
     CurrentPeers initial_peers,
-    logger::Logger log)
+    logger::LoggerPtr log)
     : OnDemandConnectionManager(std::move(factory), peers, std::move(log)) {
   // using start_with(initial_peers) results in deadlock
   initializeConnections(initial_peers);
@@ -39,36 +36,29 @@ OnDemandConnectionManager::~OnDemandConnectionManager() {
   subscription_.unsubscribe();
 }
 
-void OnDemandConnectionManager::onBatches(consensus::Round round,
-                                          CollectionType batches) {
-  std::shared_lock<std::shared_timed_mutex> lock(mutex_);
-
+void OnDemandConnectionManager::onBatches(CollectionType batches) {
   /*
    * Transactions are always sent to the round after the next round (+2)
-   * There are 3 possibilities - next reject in the current round, first reject
-   * in the next round, and first commit in the round after the next round
-   * This can be visualised as a diagram, where:
-   * o - current round, x - next round, v - target round
+   * There are 4 possibilities - all combinations of commits and rejects in the
+   * following two rounds. This can be visualised as a diagram, where: o -
+   * current round, x - next round, v - target round
    *
-   *   0 1 2
-   * 0 o x v
-   * 1 x v .
-   * 2 v . .
+   *    0 1 2         0 1 2         0 1 2         0 1 2
+   *  0 o x v       0 o . .       0 o x .       0 o . .
+   *  1 . . .       1 x v .       1 v . .       1 x . .
+   *  2 . . .       2 . . .       2 . . .       2 v . .
+   * RejectReject  CommitReject  RejectCommit  CommitCommit
    */
 
-  auto propagate = [this, batches](PeerType type, consensus::Round round) {
-    log_->debug("onBatches, {}", round);
-
-    connections_.peers[type]->onBatches(round, batches);
+  auto propagate = [&](auto consumer) {
+    std::shared_lock<std::shared_timed_mutex> lock(mutex_);
+    connections_.peers[consumer]->onBatches(batches);
   };
 
-  propagate(
-      kCurrentRoundRejectConsumer,
-      {round.block_round, currentRejectRoundConsumer(round.reject_round)});
-  propagate(kNextRoundRejectConsumer,
-            {round.block_round + 1, kNextRejectRoundConsumer});
-  propagate(kNextRoundCommitConsumer,
-            {round.block_round + 2, kNextCommitRoundConsumer});
+  propagate(kRejectRejectConsumer);
+  propagate(kRejectCommitConsumer);
+  propagate(kCommitRejectConsumer);
+  propagate(kCommitCommitConsumer);
 }
 
 boost::optional<std::shared_ptr<const OnDemandConnectionManager::ProposalType>>
@@ -83,6 +73,7 @@ OnDemandConnectionManager::onRequestProposal(consensus::Round round) {
 void OnDemandConnectionManager::initializeConnections(
     const CurrentPeers &peers) {
   auto create_assign = [this](auto &ptr, auto &peer) {
+    std::lock_guard<std::shared_timed_mutex> lock(mutex_);
     ptr = factory_->create(*peer);
   };
 

@@ -9,6 +9,7 @@
 #include "backend/protobuf/proposal.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/transaction.hpp"
+#include "framework/test_logger.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "module/irohad/ordering/mock_on_demand_os_notification.hpp"
@@ -50,7 +51,8 @@ struct OnDemandOsServerGrpcTest : public ::testing::Test {
         std::make_shared<OnDemandOsServerGrpc>(notification,
                                                std::move(transaction_factory),
                                                std::move(batch_parser),
-                                               batch_factory);
+                                               batch_factory,
+                                               getTestLogger("OdOsServerGrpc"));
   }
 
   std::shared_ptr<MockOdOsNotification> notification;
@@ -62,8 +64,8 @@ struct OnDemandOsServerGrpcTest : public ::testing::Test {
 /**
  * Separate action required because CollectionType is non-copyable
  */
-ACTION_P(SaveArg1Move, var) {
-  *var = std::move(arg1);
+ACTION_P(SaveArg0Move, var) {
+  *var = std::move(arg0);
 }
 
 /**
@@ -91,11 +93,8 @@ TEST_F(OnDemandOsServerGrpcTest, SendBatches) {
                             shared_model::interface::TransactionBatchImpl>(
                             cand));
                   }));
-  EXPECT_CALL(*notification, onBatches(round, _))
-      .WillOnce(SaveArg1Move(&collection));
+  EXPECT_CALL(*notification, onBatches(_)).WillOnce(SaveArg0Move(&collection));
   proto::BatchesRequest request;
-  request.mutable_round()->set_block_round(round.block_round);
-  request.mutable_round()->set_reject_round(round.reject_round);
   request.add_transactions()
       ->mutable_payload()
       ->mutable_reduced_payload()

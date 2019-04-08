@@ -16,6 +16,8 @@ add_library(on_demand_ordering_service
 target_link_libraries(on_demand_ordering_service
     on_demand_common
     tbb
+    mst_hash
+    mst_state
     shared_model_interfaces
     consensus_round
     logger

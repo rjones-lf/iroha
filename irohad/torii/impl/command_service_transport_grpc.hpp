@@ -12,7 +12,7 @@
 #include "endpoint.pb.h"
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
 #include "interfaces/iroha_internal/abstract_transport_factory.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 
 namespace iroha {
   namespace torii {
@@ -65,7 +65,7 @@ namespace iroha {
               transaction_batch_factory,
           rxcpp::observable<ConsensusGateEvent> consensus_gate_objects,
           int maximum_rounds_without_update,
-          logger::Logger log = logger::log("CommandServiceTransportGrpc"));
+          logger::LoggerPtr log);
 
       /**
        * Torii call via grpc
@@ -132,7 +132,7 @@ namespace iroha {
           batch_parser_;
       std::shared_ptr<shared_model::interface::TransactionBatchFactory>
           batch_factory_;
-      logger::Logger log_;
+      logger::LoggerPtr log_;
 
       rxcpp::observable<ConsensusGateEvent> consensus_gate_objects_;
       const int maximum_rounds_without_update_;

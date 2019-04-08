@@ -10,7 +10,7 @@
 
 #include "ametsuchi/mutable_factory.hpp"
 #include "ametsuchi/peer_query_factory.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
 #include "validation/chain_validator.hpp"
@@ -31,7 +31,7 @@ namespace iroha {
           std::shared_ptr<ametsuchi::MutableFactory> mutable_factory,
           std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
           std::shared_ptr<network::BlockLoader> block_loader,
-          logger::Logger log = logger::log("Synchronizer"));
+          logger::LoggerPtr log);
 
       ~SynchronizerImpl() override;
 
@@ -40,21 +40,33 @@ namespace iroha {
 
      private:
       /**
-       * Iterate through the peers which signed the commit_message, load and
+       * Iterate through the peers which signed the commit message, load and
        * apply the missing blocks
-       * @param commit_message - the commit that triggered synchronization
-       * @param storage - mutable storage to apply downloaded commits from other
-       * peers
-       * @param height - the top block height of a peer that needs to be
-       * synchronized
+       * @param msg - the commit message that triggered synchronization
+       * @param top_block_height - the top block height of a peer that needs to
+       * be synchronized
+       * @param alternative_outcome - that kind of outcome will be propagated to
+       * subscribers when block store height after synchronization is less than
+       * expected
        */
       boost::optional<SynchronizationEvent> downloadMissingBlocks(
-          const consensus::VoteOther &msg,
-          std::unique_ptr<ametsuchi::MutableStorage> storage,
-          const shared_model::interface::types::HeightType height);
+          const consensus::Synchronizable &msg,
+          const shared_model::interface::types::HeightType top_block_height,
+          const SynchronizationOutcomeType alternative_outcome);
 
       void processNext(const consensus::PairValid &msg);
-      void processDifferent(const consensus::VoteOther &msg);
+
+      /**
+       * Performs synchronization on rejects
+       * @param msg - consensus gate message with a list of peers and a round
+       * @param alternative_outcome - synchronization outcome when block store
+       * height is equal to expected height after synchronization
+       */
+      void processDifferent(const consensus::Synchronizable &msg,
+                            SynchronizationOutcomeType alternative_outcome);
+
+      boost::optional<shared_model::interface::types::HeightType>
+      getTopBlockHeight() const;
 
       boost::optional<std::unique_ptr<ametsuchi::MutableStorage>> getStorage();
 
@@ -67,7 +79,7 @@ namespace iroha {
       rxcpp::subjects::subject<SynchronizationEvent> notifier_;
       rxcpp::composite_subscription subscription_;
 
-      logger::Logger log_;
+      logger::LoggerPtr log_;
     };
 
   }  // namespace synchronizer

@@ -10,13 +10,21 @@
 #include <gflags/gflags.h>
 #include <grpc++/grpc++.h>
 #include "ametsuchi/storage.hpp"
+#include "common/irohad_version.hpp"
 #include "common/result.hpp"
 #include "crypto/keys_manager_impl.hpp"
+#include "logger/logger.hpp"
+#include "logger/logger_manager.hpp"
 #include "main/application.hpp"
+#include "main/iroha_conf_literals.hpp"
 #include "main/iroha_conf_loader.hpp"
 #include "main/raw_block_loader.hpp"
 
 static const std::string kListenIp = "0.0.0.0";
+static const std::string kLogSettingsFromConfigFile = "config_file";
+static const uint32_t kMstExpirationTimeDefault = 1440;
+static const uint32_t kMaxRoundsDelayDefault = 3000;
+static const uint32_t kStaleStreamMaxRoundsDefault = 2;
 
 /**
  * Gflag validator.
@@ -70,46 +78,74 @@ DEFINE_validator(keypair_name, &validate_keypair_name);
  */
 DEFINE_bool(overwrite_ledger, false, "Overwrite ledger data if existing");
 
-static bool validateVerbosity(const char *flagname, int32_t val) {
-  if (val >= 0 && val <= 6)
+static bool validateVerbosity(const char *flagname, const std::string &val) {
+  if (val == kLogSettingsFromConfigFile) {
     return true;
-
-  std::cout << "Invalid value for " << flagname << ": should be in range [0, 6]"
-            << std::endl;
-  return false;
+  }
+  const auto it = config_members::LogLevels.find(val);
+  if (it == config_members::LogLevels.end()) {
+    std::cerr << "Invalid value for " << flagname << ": should be one of '"
+              << kLogSettingsFromConfigFile;
+    for (const auto &level : config_members::LogLevels) {
+      std::cerr << "', '" << level.first;
+    }
+    std::cerr << "'." << std::endl;
+    return false;
+  }
+  return true;
 }
 
 /// Verbosity flag for spdlog configuration
-DEFINE_int32(verbosity, spdlog::level::info, "Log verbosity");
-DEFINE_validator(verbosity, validateVerbosity);
+DEFINE_string(verbosity, kLogSettingsFromConfigFile, "Log verbosity");
+DEFINE_validator(verbosity, &validateVerbosity);
 
 std::promise<void> exit_requested;
 
+logger::LoggerManagerTreePtr getDefaultLogManager() {
+  return std::make_shared<logger::LoggerManagerTree>(logger::LoggerConfig{
+      logger::LogLevel::kInfo, logger::getDefaultLogPatterns()});
+}
+
 int main(int argc, char *argv[]) {
+  gflags::SetVersionString(iroha::kGitPrettyVersion);
+
   // Parsing command line arguments
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  spdlog::set_level(spdlog::level::level_enum(FLAGS_verbosity));
+  logger::LoggerManagerTreePtr log_manager;
+  logger::LoggerPtr log;
 
-  auto log = logger::log("MAIN");
-  log->info("start");
+  // If the global log level override was set in the command line arguments,
+  // create a logger manager with the given log level for all subsystems:
+  if (FLAGS_verbosity != kLogSettingsFromConfigFile) {
+    logger::LoggerConfig cfg;
+    cfg.log_level = config_members::LogLevels.at(FLAGS_verbosity);
+    log_manager = std::make_shared<logger::LoggerManagerTree>(std::move(cfg));
+    log = log_manager->getChild("Init")->getLogger();
+  }
 
   // Check if validators are registered.
   if (not config_validator_registered
       or not keypair_name_validator_registered) {
     // Abort execution if not
-    log->error("Flag validator is not registered");
+    if (log) {
+      log->error("Flag validator is not registered");
+    }
     return EXIT_FAILURE;
   }
 
-  namespace mbr = config_members;
-
   // Reading iroha configuration file
-  auto config = parse_iroha_config(FLAGS_config);
+  const auto config = parse_iroha_config(FLAGS_config);
+  if (not log_manager) {
+    log_manager = config.logger_manager.value_or(getDefaultLogManager());
+    log = log_manager->getChild("Init")->getLogger();
+  }
+  log->info("Irohad version: {}", iroha::kGitPrettyVersion);
   log->info("config initialized");
 
   // Reading public and private key files
-  iroha::KeysManagerImpl keysManager(FLAGS_keypair_name);
+  iroha::KeysManagerImpl keysManager(
+      FLAGS_keypair_name, log_manager->getChild("KeysManager")->getLogger());
   auto keypair = keysManager.loadKeys();
   // Check if both keys are read properly
   if (not keypair) {
@@ -120,20 +156,23 @@ int main(int argc, char *argv[]) {
 
   // Configuring iroha daemon
   Irohad irohad(
-      config[mbr::BlockStorePath].GetString(),
-      config[mbr::PgOpt].GetString(),
+      config.block_store_path,
+      config.pg_opt,
       kListenIp,  // TODO(mboldyrev) 17/10/2018: add a parameter in
                   // config file and/or command-line arguments?
-      config[mbr::ToriiPort].GetUint(),
-      config[mbr::InternalPort].GetUint(),
-      config[mbr::MaxProposalSize].GetUint(),
-      std::chrono::milliseconds(config[mbr::ProposalDelay].GetUint()),
-      std::chrono::milliseconds(config[mbr::VoteDelay].GetUint()),
-      std::chrono::minutes(config[mbr::MstExpirationTime].GetUint()),
+      config.torii_port,
+      config.internal_port,
+      config.max_proposal_size,
+      std::chrono::milliseconds(config.proposal_delay),
+      std::chrono::milliseconds(config.vote_delay),
+      std::chrono::minutes(
+          config.mst_expiration_time.value_or(kMstExpirationTimeDefault)),
       *keypair,
-      std::chrono::milliseconds(config[mbr::MaxRoundsDelay].GetUint()),
-      config[mbr::StaleStreamMaxRounds].GetUint(),
-      boost::make_optional(config[mbr::MstSupport].GetBool(),
+      std::chrono::milliseconds(
+          config.max_round_delay_ms.value_or(kMaxRoundsDelayDefault)),
+      config.stale_stream_max_rounds.value_or(kStaleStreamMaxRoundsDefault),
+      log_manager->getChild("Irohad"),
+      boost::make_optional(config.mst_support,
                            iroha::GossipPropagationStrategyParams{}));
 
   // Check if iroha daemon storage was successfully initialized
@@ -176,7 +215,8 @@ int main(int argc, char *argv[]) {
           "Passed genesis block will be ignored without --overwrite_ledger "
           "flag. Restoring existing state.");
     } else {
-      iroha::main::BlockLoader loader;
+      iroha::main::BlockLoader loader(
+          log_manager->getChild("GenesisBlockLoader")->getLogger());
       auto file = loader.loadFile(FLAGS_genesis_block);
       auto block = loader.parseBlock(file.value());
 
@@ -194,7 +234,7 @@ int main(int argc, char *argv[]) {
       // clear previous storage if any
       irohad.dropStorage();
 
-      irohad.storage->insertBlock(*block.value());
+      irohad.storage->insertBlock(block.value());
       log->info("Genesis block inserted, number of transactions: {}",
                 block.value()->transactions().size());
     }

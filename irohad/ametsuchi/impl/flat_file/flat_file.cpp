@@ -14,9 +14,11 @@
 #include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/algorithm/find_if.hpp>
 #include "common/files.hpp"
+#include "logger/logger.hpp"
 
 using namespace iroha::ametsuchi;
 using Identifier = FlatFile::Identifier;
+using BlockIdCollectionType = FlatFile::BlockIdCollectionType;
 
 // ----------| public API |----------
 
@@ -26,30 +28,45 @@ std::string FlatFile::id_to_name(Identifier id) {
   return os.str();
 }
 
-boost::optional<std::unique_ptr<FlatFile>> FlatFile::create(
-    const std::string &path) {
-  auto log_ = logger::log("FlatFile::create()");
+boost::optional<Identifier> FlatFile::name_to_id(const std::string &name) {
+  if (name.size() != FlatFile::DIGIT_CAPACITY) {
+    return boost::none;
+  }
+  try {
+    auto id = std::stoul(name);
+    return boost::make_optional<Identifier>(id);
+  } catch (const std::exception &e) {
+    return boost::none;
+  }
+}
 
+boost::optional<std::unique_ptr<FlatFile>> FlatFile::create(
+    const std::string &path, logger::LoggerPtr log) {
   boost::system::error_code err;
   if (not boost::filesystem::is_directory(path, err)
       and not boost::filesystem::create_directory(path, err)) {
-    log_->error("Cannot create storage dir: {}\n{}", path, err.message());
+    log->error("Cannot create storage dir: {}\n{}", path, err.message());
     return boost::none;
   }
 
-  auto res = FlatFile::check_consistency(path);
-  return std::make_unique<FlatFile>(*res, path, private_tag{});
+  BlockIdCollectionType files_found;
+  for (auto it = boost::filesystem::directory_iterator{path};
+       it != boost::filesystem::directory_iterator{};
+       ++it) {
+    if (auto id = FlatFile::name_to_id(it->path().filename().string())) {
+      files_found.insert(*id);
+    } else {
+      boost::filesystem::remove(it->path());
+    }
+  }
+
+  return std::make_unique<FlatFile>(
+      path, std::move(files_found), private_tag{}, std::move(log));
 }
 
 bool FlatFile::add(Identifier id, const Bytes &block) {
   // TODO(x3medima17): Change bool to generic Result return type
 
-  if (id != current_id_ + 1) {
-    log_->warn("Cannot append non-consecutive block");
-    return false;
-  }
-
-  auto next_id = id;
   const auto file_name = boost::filesystem::path{dump_dir_} / id_to_name(id);
 
   // Write block to binary file
@@ -71,8 +88,7 @@ bool FlatFile::add(Identifier id, const Bytes &block) {
   file.write(reinterpret_cast<const char *>(block.data()),
              block.size() * val_size);
 
-  // Update internals, release lock
-  current_id_ = next_id;
+  available_blocks_.insert(id);
   return true;
 }
 
@@ -100,52 +116,24 @@ std::string FlatFile::directory() const {
 }
 
 Identifier FlatFile::last_id() const {
-  return current_id_.load();
+  return (available_blocks_.empty()) ? 0 : *available_blocks_.rbegin();
 }
 
 void FlatFile::dropAll() {
-  iroha::remove_dir_contents(dump_dir_);
-  auto res = FlatFile::check_consistency(dump_dir_);
-  current_id_.store(*res);
+  iroha::remove_dir_contents(dump_dir_, log_);
+  available_blocks_.clear();
+}
+
+const BlockIdCollectionType &FlatFile::blockIdentifiers() const {
+  return available_blocks_;
 }
 
 // ----------| private API |----------
 
-FlatFile::FlatFile(Identifier current_id,
-                   const std::string &path,
+FlatFile::FlatFile(std::string path,
+                   BlockIdCollectionType existing_files,
                    FlatFile::private_tag,
-                   logger::Logger log)
-    : dump_dir_(path), log_{std::move(log)} {
-  current_id_.store(current_id);
-}
-
-boost::optional<Identifier> FlatFile::check_consistency(
-    const std::string &dump_dir) {
-  auto log = logger::log("FLAT_FILE");
-
-  if (dump_dir.empty()) {
-    log->error("check_consistency({}), not directory", dump_dir);
-    return boost::none;
-  }
-
-  auto const files = [&dump_dir] {
-    std::vector<boost::filesystem::path> ps;
-    std::copy(boost::filesystem::directory_iterator{dump_dir},
-              boost::filesystem::directory_iterator{},
-              std::back_inserter(ps));
-    std::sort(ps.begin(), ps.end(), std::less<boost::filesystem::path>());
-    return ps;
-  }();
-
-  auto const missing = boost::range::find_if(
-      files | boost::adaptors::indexed(1), [](const auto &it) {
-        return FlatFile::id_to_name(it.index()) != it.value().filename();
-      });
-
-  std::for_each(
-      missing.get(), files.cend(), [](const boost::filesystem::path &p) {
-        boost::filesystem::remove(p);
-      });
-
-  return missing.get() - files.cbegin();
-}
+                   logger::LoggerPtr log)
+    : dump_dir_(std::move(path)),
+      available_blocks_(std::move(existing_files)),
+      log_{std::move(log)} {}

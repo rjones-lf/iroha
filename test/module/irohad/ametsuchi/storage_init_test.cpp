@@ -3,17 +3,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "ametsuchi/impl/storage_impl.hpp"
+
 #include <gtest/gtest.h>
 #include <soci/postgresql/soci-postgresql.h>
 #include <soci/soci.h>
 #include <boost/filesystem.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include "ametsuchi/impl/storage_impl.hpp"
+#include "ametsuchi/impl/in_memory_block_storage_factory.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
 #include "backend/protobuf/proto_permission_to_string.hpp"
 #include "framework/config_helper.hpp"
+#include "framework/test_logger.hpp"
+#include "logger/logger_manager.hpp"
 #include "validators/field_validator.hpp"
 
 using namespace iroha::ametsuchi;
@@ -49,6 +53,10 @@ class StorageInitTest : public ::testing::Test {
 
   std::shared_ptr<shared_model::interface::PermissionToString> perm_converter_ =
       std::make_shared<shared_model::proto::ProtoPermissionToString>();
+
+  std::unique_ptr<BlockStorageFactory> block_storage_factory_ =
+      std::make_unique<InMemoryBlockStorageFactory>();
+
   void SetUp() override {
     ASSERT_FALSE(boost::filesystem::exists(block_store_path))
         << "Temporary block store " << block_store_path
@@ -61,6 +69,9 @@ class StorageInitTest : public ::testing::Test {
     sql << query;
     boost::filesystem::remove_all(block_store_path);
   }
+
+  logger::LoggerManagerTreePtr storage_log_manager_{
+      getTestLoggerManager()->getChild("Storage")};
 };
 
 /**
@@ -70,8 +81,13 @@ class StorageInitTest : public ::testing::Test {
  */
 TEST_F(StorageInitTest, CreateStorageWithDatabase) {
   std::shared_ptr<StorageImpl> storage;
-  StorageImpl::create(
-      block_store_path, pgopt_, factory, converter, perm_converter_)
+  StorageImpl::create(block_store_path,
+                      pgopt_,
+                      factory,
+                      converter,
+                      perm_converter_,
+                      std::move(block_storage_factory_),
+                      storage_log_manager_)
       .match(
           [&storage](const Value<std::shared_ptr<StorageImpl>> &value) {
             storage = value.value;
@@ -95,8 +111,13 @@ TEST_F(StorageInitTest, CreateStorageWithDatabase) {
 TEST_F(StorageInitTest, CreateStorageWithInvalidPgOpt) {
   std::string pg_opt =
       "host=localhost port=5432 users=nonexistinguser dbname=test";
-  StorageImpl::create(
-      block_store_path, pg_opt, factory, converter, perm_converter_)
+  StorageImpl::create(block_store_path,
+                      pg_opt,
+                      factory,
+                      converter,
+                      perm_converter_,
+                      std::move(block_storage_factory_),
+                      storage_log_manager_)
       .match(
           [](const Value<std::shared_ptr<StorageImpl>> &) {
             FAIL() << "storage created, but should not";

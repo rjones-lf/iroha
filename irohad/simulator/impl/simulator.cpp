@@ -9,6 +9,7 @@
 #include "common/bind.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace simulator {
@@ -21,7 +22,7 @@ namespace iroha {
         std::shared_ptr<CryptoSignerType> crypto_signer,
         std::unique_ptr<shared_model::interface::UnsafeBlockFactory>
             block_factory,
-        logger::Logger log)
+        logger::LoggerPtr log)
         : validator_(std::move(statefulValidator)),
           ametsuchi_factory_(std::move(factory)),
           block_query_factory_(block_query_factory),
@@ -150,6 +151,9 @@ namespace iroha {
                                             proposal->transactions(),
                                             rejected_hashes);
       crypto_signer_->sign(*block);
+
+      // TODO 2019-03-15 andrei: IR-404 Make last_block an explicit dependency
+      last_block.reset();
 
       return block;
     }

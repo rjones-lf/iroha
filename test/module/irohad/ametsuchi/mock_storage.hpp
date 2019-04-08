@@ -39,8 +39,9 @@ namespace iroha {
                        MutableStorage *storage));
       MOCK_METHOD1(commitPrepared,
                    boost::optional<std::unique_ptr<LedgerState>>(
-                       const shared_model::interface::Block &));
-      MOCK_METHOD1(insertBlock, bool(const shared_model::interface::Block &));
+                       std::shared_ptr<const shared_model::interface::Block>));
+      MOCK_METHOD1(insertBlock,
+                   bool(std::shared_ptr<const shared_model::interface::Block>));
       MOCK_METHOD1(insertBlocks,
                    bool(const std::vector<
                         std::shared_ptr<shared_model::interface::Block>> &));
@@ -54,7 +55,7 @@ namespace iroha {
         prepareBlock_(wsv);
       }
 
-      rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+      rxcpp::observable<std::shared_ptr<const shared_model::interface::Block>>
       on_commit() override {
         return notifier.get_observable();
       }
@@ -62,7 +63,8 @@ namespace iroha {
           std::unique_ptr<MutableStorage> storage) override {
         return doCommit(storage.get());
       }
-      rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
+      rxcpp::subjects::subject<
+          std::shared_ptr<const shared_model::interface::Block>>
           notifier;
     };
 

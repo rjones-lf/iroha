@@ -34,6 +34,8 @@
 #include "interfaces/queries/get_transactions.hpp"
 #include "interfaces/queries/query.hpp"
 #include "interfaces/queries/tx_pagination_meta.hpp"
+#include "logger/logger.hpp"
+#include "logger/logger_manager.hpp"
 
 using namespace shared_model::interface::permissions;
 
@@ -275,7 +277,7 @@ namespace iroha {
             response_factory,
         std::shared_ptr<shared_model::interface::PermissionToString>
             perm_converter,
-        logger::Logger log)
+        logger::LoggerManagerTreePtr log_manager)
         : sql_(std::move(sql)),
           block_store_(block_store),
           pending_txs_storage_(std::move(pending_txs_storage)),
@@ -284,9 +286,10 @@ namespace iroha {
                    pending_txs_storage_,
                    std::move(converter),
                    response_factory,
-                   perm_converter),
+                   perm_converter,
+                   log_manager->getChild("Visitor")->getLogger()),
           query_response_factory_{std::move(response_factory)},
-          log_(std::move(log)) {}
+          log_(log_manager->getLogger()) {}
 
     QueryExecutorResult PostgresQueryExecutor::validateAndExecute(
         const shared_model::interface::Query &query,
@@ -348,7 +351,7 @@ namespace iroha {
             response_factory,
         std::shared_ptr<shared_model::interface::PermissionToString>
             perm_converter,
-        logger::Logger log)
+        logger::LoggerPtr log)
         : sql_(sql),
           block_store_(block_store),
           pending_txs_storage_(std::move(pending_txs_storage)),
@@ -398,7 +401,7 @@ namespace iroha {
           break;
       }
 
-      log_->error(error);
+      log_->error("{}", error);
       return query_response_factory_->createErrorQueryResponse(
           error_type, error, error_code, query_hash_);
     }

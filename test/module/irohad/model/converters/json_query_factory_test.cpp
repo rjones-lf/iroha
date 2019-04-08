@@ -4,8 +4,11 @@
  */
 
 #include "model/converters/json_query_factory.hpp"
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include "framework/test_logger.hpp"
 #include "model/converters/json_common.hpp"
 #include "model/generators/query_generator.hpp"
 #include "model/generators/signature_generator.hpp"
@@ -18,8 +21,10 @@ using namespace iroha::model;
 using namespace iroha::model::converters;
 using namespace iroha::model::generators;
 
+const auto json_query_factory_logger = getTestLogger("JsonQueryFactory");
+
 void runQueryTest(std::shared_ptr<Query> val) {
-  JsonQueryFactory queryFactory;
+  JsonQueryFactory queryFactory(json_query_factory_logger);
   auto json = queryFactory.serialize(val);
   auto ser_val = queryFactory.deserialize(json);
   ASSERT_TRUE(ser_val);
@@ -28,7 +33,7 @@ void runQueryTest(std::shared_ptr<Query> val) {
 }
 
 TEST(QuerySerializerTest, ClassHandlerTest) {
-  JsonQueryFactory factory;
+  JsonQueryFactory factory(json_query_factory_logger);
   std::vector<std::shared_ptr<Query>> commands = {
       std::make_shared<GetAccount>(),
       std::make_shared<GetAccountAssets>(),
@@ -43,7 +48,7 @@ TEST(QuerySerializerTest, ClassHandlerTest) {
 }
 
 TEST(QuerySerializerTest, DeserializeGetAccountWhenValid) {
-  JsonQueryFactory querySerializer;
+  JsonQueryFactory querySerializer(json_query_factory_logger);
 
   auto json_query = R"({
     "signature":{
@@ -62,7 +67,7 @@ TEST(QuerySerializerTest, DeserializeGetAccountWhenValid) {
 }
 
 TEST(QuerySerializerTest, DeserializeGetAccountWhenInvalid) {
-  JsonQueryFactory querySerializer;
+  JsonQueryFactory querySerializer(json_query_factory_logger);
   auto json_query = R"({
     "created_ts":0,
     "creator_account_id":"123",
@@ -74,7 +79,7 @@ TEST(QuerySerializerTest, DeserializeGetAccountWhenInvalid) {
 }
 
 TEST(QuerySerializerTest, DeserializeGetAccountAssetsWhenValid) {
-  JsonQueryFactory querySerializer;
+  JsonQueryFactory querySerializer(json_query_factory_logger);
   auto json_query = R"({
     "signature":{
         "pubkey":"2323232323232323232323232323232323232323232323232323232323232323",
@@ -98,7 +103,7 @@ TEST(QuerySerializerTest, DeserializeGetAccountAssetsWhenValid) {
  * @then Validate the invalid hash is skipped and the only valid deserialized.
  */
 TEST(QuerySerializerTest, DeserializeGetAccountDetailWhenValid) {
-  JsonQueryFactory querySerializer;
+  JsonQueryFactory querySerializer(json_query_factory_logger);
   auto json_query = R"({
     "signature":{
         "pubkey":"2323232323232323232323232323232323232323232323232323232323232323",
@@ -117,7 +122,7 @@ TEST(QuerySerializerTest, DeserializeGetAccountDetailWhenValid) {
 }
 
 TEST(QuerySerializerTest, DeserializeWhenUnknownType) {
-  JsonQueryFactory querySerializer;
+  JsonQueryFactory querySerializer(json_query_factory_logger);
   auto json_query = R"(
     "signature":{
         "pubkey":"2323232323232323232323232323232323232323232323232323232323232323",
@@ -140,7 +145,7 @@ TEST(QuerySerializerTest, DeserializeWhenUnknownType) {
  * @then Validate the invalid hash is skipped and the only valid deserialized.
  */
 TEST(QuerySerialzierTest, DeserializeGetTransactionsWithInvalidHash) {
-  JsonQueryFactory queryFactory;
+  JsonQueryFactory queryFactory(json_query_factory_logger);
   iroha::hash256_t valid_size_hash{};
   valid_size_hash[0] = 1;
   QueryGenerator queryGenerator;
@@ -174,7 +179,7 @@ TEST(QuerySerialzierTest, DeserializeGetTransactionsWithInvalidHash) {
 }
 
 TEST(QuerySerializerTest, SerializeGetAccount) {
-  JsonQueryFactory queryFactory;
+  JsonQueryFactory queryFactory(json_query_factory_logger);
   QueryGenerator queryGenerator;
   auto val = queryGenerator.generateGetAccount(0, "123", 0, "test");
   auto json = queryFactory.serialize(val);
@@ -185,7 +190,7 @@ TEST(QuerySerializerTest, SerializeGetAccount) {
 }
 
 TEST(QuerySerializerTest, SerializeGetAccountAssets) {
-  JsonQueryFactory queryFactory;
+  JsonQueryFactory queryFactory(json_query_factory_logger);
   QueryGenerator queryGenerator;
   auto val =
       queryGenerator.generateGetAccountAssets(0, "123", 0, "test", "coin");
@@ -197,7 +202,7 @@ TEST(QuerySerializerTest, SerializeGetAccountAssets) {
 }
 
 TEST(QuerySerializerTest, SerializeGetAccountTransactions) {
-  JsonQueryFactory queryFactory;
+  JsonQueryFactory queryFactory(json_query_factory_logger);
   QueryGenerator queryGenerator;
   auto val = queryGenerator.generateGetAccountTransactions(0, "123", 0, "test");
   auto json = queryFactory.serialize(val);
@@ -217,7 +222,7 @@ TEST(QuerySerializerTest, SerialiizeGetTransactions) {
 }
 
 TEST(QuerySerializerTest, SerializeGetSignatories) {
-  JsonQueryFactory queryFactory;
+  JsonQueryFactory queryFactory(json_query_factory_logger);
   QueryGenerator queryGenerator;
   auto val = queryGenerator.generateGetSignatories(0, "123", 0, "test");
   auto json = queryFactory.serialize(val);

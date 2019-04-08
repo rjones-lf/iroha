@@ -60,26 +60,50 @@ if(COVERAGE)
   add_custom_target(coverage.info
       COMMAND ${LCOV_PROGRAM} --config-file ${LCOV_CONFIG_FILE} -o ${PROJECT_BINARY_DIR}/reports/coverage.info -c -d ${PROJECT_BINARY_DIR}
       COMMAND ${LCOV_PROGRAM} --config-file ${LCOV_CONFIG_FILE} -o ${PROJECT_BINARY_DIR}/reports/coverage.info -a ${PROJECT_BINARY_DIR}/reports/coverage.init.info -a ${PROJECT_BINARY_DIR}/reports/coverage.info
-      COMMAND ${LCOV_PROGRAM} --config-file ${LCOV_CONFIG_FILE} -o ${PROJECT_BINARY_DIR}/reports/coverage.info -r ${PROJECT_BINARY_DIR}/reports/coverage.info '/usr*' '${CMAKE_SOURCE_DIR}/external/*' '${CMAKE_SOURCE_DIR}/schema/*'
+      COMMAND ${LCOV_PROGRAM} --config-file ${LCOV_CONFIG_FILE} -o ${PROJECT_BINARY_DIR}/reports/coverage.info -r ${PROJECT_BINARY_DIR}/reports/coverage.info '/usr*' '/Library/Developer/CommandLineTools/*' '${PROJECT_BINARY_DIR}/*' '${CMAKE_BINARY_DIR}/*' '${CMAKE_SOURCE_DIR}/test/*'
       )
   set(REPORT_DIR ${CMAKE_BINARY_DIR}/reports)
   file(MAKE_DIRECTORY ${REPORT_DIR})
   include(cmake/analysis.cmake)
 endif()
 
+include(cmake/functions.cmake)
+
+if(SANITIZE_THREAD)
+  append_build_flags(-fsanitize=thread)
+endif()
+if(SANITIZE_ADDRESS)
+  append_build_flags(-fsanitize=address -fno-omit-frame-pointer)
+endif()
+if(SANITIZE_MEMORY)
+  append_build_flags(-fsanitize=memory -fsanitize-memory-track-origins)
+endif()
+if(SANITIZE_UNDEFINED)
+  append_build_flags(-fsanitize=undefined)
+endif()
+set(DEPS_CMAKE_ARGS
+    -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+    -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+    -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+    -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS})
+
 SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 
-option(BENCHMARKING "Build benchmarks"               OFF)
-option(TESTING      "Build tests"                    ON )
-option(USE_BTF      "Build Binary Testing Framework" OFF)
-option(COVERAGE     "Enable coverage"                OFF)
-option(FUZZING      "Build fuzzing binaries"         OFF)
-option(PACKAGE_ZIP  "Create ZIP package"             OFF)
-option(PACKAGE_TGZ  "Create TGZ package"             OFF)
-option(PACKAGE_RPM  "Create RPM package"             OFF)
-option(PACKAGE_DEB  "Create DEB package"             OFF)
-option(ENABLE_LIBS_PACKAGING "Enable libs packaging" ON)
-option(USE_LIBIROHA "Use external model library"     OFF)
+option(BENCHMARKING          "Build benchmarks"                         OFF)
+option(TESTING               "Build tests"                              ON )
+option(USE_BTF               "Build Binary Testing Framework"           OFF)
+option(COVERAGE              "Enable coverage"                          OFF)
+option(FUZZING               "Build fuzzing binaries"                   OFF)
+option(PACKAGE_ZIP           "Create ZIP package"                       OFF)
+option(PACKAGE_TGZ           "Create TGZ package"                       OFF)
+option(PACKAGE_RPM           "Create RPM package"                       OFF)
+option(PACKAGE_DEB           "Create DEB package"                       OFF)
+option(ENABLE_LIBS_PACKAGING "Enable libs packaging"                    ON)
+option(USE_LIBIROHA          "Use external model library"               OFF)
+option(SANITIZE_THREAD       "Build with thread sanitizer"              OFF)
+option(SANITIZE_ADDRESS      "Build with address sanitizer"             OFF)
+option(SANITIZE_MEMORY       "Build with memory sanitizer"              OFF)
+option(SANITIZE_UNDEFINED    "Build with undefined behaviour sanitizer" OFF)
 
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -112,6 +136,10 @@ message(STATUS "-DPACKAGE_TGZ=${PACKAGE_TGZ}")
 message(STATUS "-DPACKAGE_RPM=${PACKAGE_RPM}")
 message(STATUS "-DPACKAGE_DEB=${PACKAGE_DEB}")
 message(STATUS "-DENABLE_LIBS_PACKAGING=${ENABLE_LIBS_PACKAGING}")
+message(STATUS "-DSANITIZE_THREAD=${SANITIZE_THREAD}")
+message(STATUS "-DSANITIZE_ADDRESS=${SANITIZE_ADDRESS}")
+message(STATUS "-DSANITIZE_MEMORY=${SANITIZE_MEMORY}")
+message(STATUS "-DSANITIZE_UNDEFINED=${SANITIZE_UNDEFINED}")
 
 set(IROHA_SCHEMA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/schema")
 set(SM_SCHEMA_DIR "${PROJECT_SOURCE_DIR}/shared_model/schema")
@@ -134,7 +162,6 @@ SET(IROHA_ROOT_PROJECT ON)
 add_definitions(-DBOOST_NO_RTTI)
 
 include(FeatureSummary)
-include(cmake/functions.cmake)
 include(cmake/dependencies.cmake)
 include(cmake/clang-cxx-dev-tools.cmake)
 

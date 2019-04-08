@@ -12,6 +12,7 @@
 #include "interfaces/commands/command_variant.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
 #include "interfaces/iroha_internal/block.hpp"
+#include "logger/logger.hpp"
 
 namespace {
   // Return transfer asset if command contains it
@@ -119,7 +120,7 @@ namespace {
 namespace iroha {
   namespace ametsuchi {
     PostgresBlockIndex::PostgresBlockIndex(soci::session &sql,
-                                           logger::Logger log)
+                                           logger::LoggerPtr log)
         : sql_(sql), log_(std::move(log)) {}
 
     void PostgresBlockIndex::index(

@@ -9,6 +9,7 @@
 #include "backend/protobuf/transaction.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "logger/logger.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
 
 using namespace iroha;
@@ -22,7 +23,7 @@ OnDemandOsClientGrpc::OnDemandOsClientGrpc(
     std::shared_ptr<TransportFactoryType> proposal_factory,
     std::function<TimepointType()> time_provider,
     std::chrono::milliseconds proposal_request_timeout,
-    logger::Logger log)
+    logger::LoggerPtr log)
     : log_(std::move(log)),
       stub_(std::move(stub)),
       async_call_(std::move(async_call)),
@@ -30,11 +31,8 @@ OnDemandOsClientGrpc::OnDemandOsClientGrpc(
       time_provider_(std::move(time_provider)),
       proposal_request_timeout_(proposal_request_timeout) {}
 
-void OnDemandOsClientGrpc::onBatches(consensus::Round round,
-                                     CollectionType batches) {
+void OnDemandOsClientGrpc::onBatches(CollectionType batches) {
   proto::BatchesRequest request;
-  request.mutable_round()->set_block_round(round.block_round);
-  request.mutable_round()->set_reject_round(round.reject_round);
   for (auto &batch : batches) {
     for (auto &transaction : batch->transactions()) {
       *request.add_transactions() = std::move(
@@ -86,11 +84,13 @@ OnDemandOsClientGrpcFactory::OnDemandOsClientGrpcFactory(
         async_call,
     std::shared_ptr<TransportFactoryType> proposal_factory,
     std::function<OnDemandOsClientGrpc::TimepointType()> time_provider,
-    OnDemandOsClientGrpc::TimeoutType proposal_request_timeout)
+    OnDemandOsClientGrpc::TimeoutType proposal_request_timeout,
+    logger::LoggerPtr client_log)
     : async_call_(std::move(async_call)),
       proposal_factory_(std::move(proposal_factory)),
       time_provider_(time_provider),
-      proposal_request_timeout_(proposal_request_timeout) {}
+      proposal_request_timeout_(proposal_request_timeout),
+      client_log_(std::move(client_log)) {}
 
 std::unique_ptr<OdOsNotification> OnDemandOsClientGrpcFactory::create(
     const shared_model::interface::Peer &to) {
@@ -100,5 +100,5 @@ std::unique_ptr<OdOsNotification> OnDemandOsClientGrpcFactory::create(
       proposal_factory_,
       time_provider_,
       proposal_request_timeout_,
-      logger::log("OnDemandOsClientGrpc"));
+      client_log_);
 }

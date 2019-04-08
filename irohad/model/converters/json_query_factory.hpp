@@ -8,7 +8,7 @@
 
 #include <typeindex>
 #include <unordered_map>
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 #include "model/common.hpp"
 #include "model/converters/json_common.hpp"
 #include "model/query.hpp"
@@ -19,8 +19,7 @@ namespace iroha {
     namespace converters {
       class JsonQueryFactory {
        public:
-        explicit JsonQueryFactory(
-            logger::Logger log = logger::log("JsonQueryFactory"));
+        explicit JsonQueryFactory(logger::LoggerPtr log);
 
         /**
          * get query from string json
@@ -99,7 +98,7 @@ namespace iroha {
             std::shared_ptr<const model::Query> query);
 
         // Logger
-        std::shared_ptr<spdlog::logger> log_;
+        logger::LoggerPtr log_;
       };
     }  // namespace converters
   }    // namespace model

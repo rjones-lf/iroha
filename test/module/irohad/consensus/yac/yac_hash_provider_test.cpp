@@ -51,6 +51,9 @@ TEST(YacHashProviderTest, MakeYacHashTest) {
   EXPECT_CALL(*block, payload())
       .WillRepeatedly(
           ReturnRefOfCopy(shared_model::crypto::Blob(std::string())));
+  EXPECT_CALL(*block, hash())
+      .WillRepeatedly(
+          testing::ReturnRefOfCopy(shared_model::crypto::Hash("hash")));
 
   EXPECT_CALL(*block, signatures())
       .WillRepeatedly(
@@ -93,6 +96,9 @@ TEST(YacHashProviderTest, ToModelHashTest) {
                          std::shared_ptr<shared_model::interface::Signature>>>(
                          1, signature()))
                  | boost::adaptors::indirected));
+  EXPECT_CALL(*block, hash())
+      .WillRepeatedly(
+          testing::ReturnRefOfCopy(shared_model::crypto::Hash("hash")));
 
   auto yac_hash = hash_provider.makeHash(iroha::simulator::BlockCreatorEvent{
       iroha::simulator::RoundData{proposal, block}, round, ledger_state});

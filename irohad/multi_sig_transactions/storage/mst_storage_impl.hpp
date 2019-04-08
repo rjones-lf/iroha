@@ -7,6 +7,7 @@
 #define IROHA_MST_STORAGE_IMPL_HPP
 
 #include <unordered_map>
+#include "logger/logger_fwd.hpp"
 #include "multi_sig_transactions/hash.hpp"
 #include "multi_sig_transactions/storage/mst_storage.hpp"
 
@@ -25,7 +26,9 @@ namespace iroha {
 
    public:
     // ----------------------------| interface API |----------------------------
-    explicit MstStorageStateImpl(const CompleterType &completer);
+    MstStorageStateImpl(const CompleterType &completer,
+                        logger::LoggerPtr mst_state_logger,
+                        logger::LoggerPtr log);
 
     auto applyImpl(const shared_model::crypto::PublicKey &target_peer_key,
                    const MstState &new_state)
@@ -34,8 +37,8 @@ namespace iroha {
     auto updateOwnStateImpl(const DataType &tx)
         -> decltype(updateOwnState(tx)) override;
 
-    auto getExpiredTransactionsImpl(const TimeType &current_time)
-        -> decltype(getExpiredTransactions(current_time)) override;
+    auto extractExpiredTransactionsImpl(const TimeType &current_time)
+        -> decltype(extractExpiredTransactions(current_time)) override;
 
     auto getDiffStateImpl(
         const shared_model::crypto::PublicKey &target_peer_key,
@@ -56,6 +59,9 @@ namespace iroha {
                        iroha::model::BlobHasher>
         peer_states_;
     MstState own_state_;
+
+    logger::LoggerPtr mst_state_logger_;  ///< Logger for created MstState
+                                          ///< objects.
   };
 }  // namespace iroha
 
