@@ -10,12 +10,13 @@
 #include <vector>
 
 #include <boost/optional.hpp>
-#include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "consensus/yac/storage/storage_result.hpp"
 #include "consensus/yac/storage/yac_block_storage.hpp"
 #include "consensus/yac/storage/yac_common.hpp"
+#include "consensus/yac/supermajority_checker.hpp"
 #include "consensus/yac/yac_types.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
+#include "logger/logger_manager_fwd.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -45,8 +46,8 @@ namespace iroha {
         YacProposalStorage(
             Round store_round,
             PeersNumberType peers_in_round,
-            std::shared_ptr<SupermajorityChecker> supermajority_checker =
-                std::make_shared<SupermajorityCheckerImpl>());
+            std::shared_ptr<SupermajorityChecker> supermajority_checker,
+            logger::LoggerManagerTreePtr log_manager);
 
         /**
          * Try to insert vote to storage
@@ -134,9 +135,14 @@ namespace iroha {
         std::shared_ptr<SupermajorityChecker> supermajority_checker_;
 
         /**
+         * Storage logger manager
+         */
+        logger::LoggerManagerTreePtr log_manager_;
+
+        /**
          * Storage logger
          */
-        logger::Logger log_;
+        logger::LoggerPtr log_;
       };
     }  // namespace yac
   }    // namespace consensus

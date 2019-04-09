@@ -8,7 +8,7 @@
 #include "multi_sig_transactions/storage/mst_storage.hpp"
 
 namespace iroha {
-  MstStorage::MstStorage(logger::Logger log) : log_{std::move(log)} {}
+  MstStorage::MstStorage(logger::LoggerPtr log) : log_{std::move(log)} {}
 
   StateUpdateResult MstStorage::apply(
       const shared_model::crypto::PublicKey &target_peer_key,
@@ -22,9 +22,10 @@ namespace iroha {
     return updateOwnStateImpl(tx);
   }
 
-  MstState MstStorage::getExpiredTransactions(const TimeType &current_time) {
+  MstState MstStorage::extractExpiredTransactions(
+      const TimeType &current_time) {
     std::lock_guard<std::mutex> lock{this->mutex_};
-    return getExpiredTransactionsImpl(current_time);
+    return extractExpiredTransactionsImpl(current_time);
   }
 
   MstState MstStorage::getDiffState(

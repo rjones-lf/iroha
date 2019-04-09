@@ -9,6 +9,7 @@
 #include "interactive/interactive_query_cli.hpp"
 #include "interactive/interactive_status_cli.hpp"
 #include "interactive/interactive_transaction_cli.hpp"
+#include "logger/logger_manager_fwd.hpp"
 
 namespace iroha_cli {
   namespace interactive {
@@ -22,13 +23,21 @@ namespace iroha_cli {
        * @param default_port default port of peer's Iroha Torii
        * @param qry_counter synchronized nonce for sending queries
        * @param provider crypto provider to make signatures
+       * @param response_handler_log_manager for ResponseHandler messages
+       * @param pb_qry_factory_log for PbQueryFactory mesages
+       * @param json_qry_factory_log for JsonQueryFactory mesages
+       * @param log_manager log manager for interactive CLIs
        */
       InteractiveCli(
           const std::string &account_name,
           const std::string &default_peer_ip,
           int default_port,
           uint64_t qry_counter,
-          const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider);
+          const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider,
+          logger::LoggerManagerTreePtr response_handler_log_manager,
+          logger::LoggerPtr pb_qry_factory_log,
+          logger::LoggerPtr json_qry_factory_log,
+          logger::LoggerManagerTreePtr log_manager);
       /**
        * Run interactive cli. Print menu and parse commands
        */

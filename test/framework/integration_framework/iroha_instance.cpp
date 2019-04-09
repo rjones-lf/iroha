@@ -12,8 +12,11 @@
 #include "cryptography/keypair.hpp"
 #include "framework/config_helper.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
+#include "logger/logger.hpp"
 
 using namespace std::chrono_literals;
+
+static constexpr std::chrono::milliseconds kMstEmissionPeriod = 100ms;
 
 namespace integration_framework {
 
@@ -22,6 +25,8 @@ namespace integration_framework {
                                const std::string &listen_ip,
                                size_t torii_port,
                                size_t internal_port,
+                               logger::LoggerManagerTreePtr irohad_log_manager,
+                               logger::LoggerPtr log,
                                const boost::optional<std::string> &dbname)
       : block_store_dir_(block_store_path),
         pg_conn_(getPostgreCredsOrDefault(dbname)),
@@ -35,19 +40,27 @@ namespace integration_framework {
         vote_delay_(0ms),
         // amount of minutes in a day
         mst_expiration_time_(std::chrono::minutes(24 * 60)),
+        opt_mst_gossip_params_(boost::make_optional(
+            mst_support,
+            [] {
+              iroha::GossipPropagationStrategyParams params;
+              params.emission_period = kMstEmissionPeriod;
+              return params;
+            }())),
         max_rounds_delay_(0ms),
         stale_stream_max_rounds_(2),
-        opt_mst_gossip_params_(boost::make_optional(
-            mst_support, iroha::GossipPropagationStrategyParams{})) {}
+        irohad_log_manager_(std::move(irohad_log_manager)),
+        log_(std::move(log)) {}
 
-  void IrohaInstance::makeGenesis(const shared_model::interface::Block &block) {
+  void IrohaInstance::makeGenesis(
+      std::shared_ptr<const shared_model::interface::Block> block) {
     instance_->storage->reset();
     rawInsertBlock(block);
     instance_->init();
   }
 
   void IrohaInstance::rawInsertBlock(
-      const shared_model::interface::Block &block) {
+      std::shared_ptr<const shared_model::interface::Block> block) {
     instance_->storage->insertBlock(block);
   }
 
@@ -77,6 +90,8 @@ namespace integration_framework {
                                              key_pair,
                                              max_rounds_delay_,
                                              stale_stream_max_rounds_,
+                                             irohad_log_manager_,
+                                             log_,
                                              opt_mst_gossip_params_);
   }
 

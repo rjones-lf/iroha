@@ -323,14 +323,15 @@ shared_model::proto::ProtoQueryResponseFactory::createRolePermissionsResponse(
 
 std::unique_ptr<shared_model::interface::BlockQueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createBlockQueryResponse(
-    std::unique_ptr<shared_model::interface::Block> block) const {
+    std::shared_ptr<const shared_model::interface::Block> block) const {
   return createQueryResponse([block = std::move(block)](
                                  iroha::protocol::BlockQueryResponse
                                      &protocol_query_response) {
     iroha::protocol::BlockResponse *protocol_specific_response =
         protocol_query_response.mutable_block_response();
     *protocol_specific_response->mutable_block()->mutable_block_v1() =
-        static_cast<shared_model::proto::Block *>(block.get())->getTransport();
+        static_cast<const shared_model::proto::Block *>(block.get())
+            ->getTransport();
   });
 }
 

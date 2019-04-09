@@ -19,7 +19,12 @@ namespace shared_model {
 
     TransactionBatchImpl::TransactionBatchImpl(
         types::SharedTxsCollectionType transactions)
-        : transactions_(std::move(transactions)) {}
+        : transactions_(std::move(transactions)) {
+      reduced_hash_ = TransactionBatchHelpers::calculateReducedBatchHash(
+          transactions_ | boost::adaptors::transformed([](const auto &tx) {
+            return tx->reducedHash();
+          }));
+    }
 
     const types::SharedTxsCollectionType &TransactionBatchImpl::transactions()
         const {
@@ -27,13 +32,7 @@ namespace shared_model {
     }
 
     const types::HashType &TransactionBatchImpl::reducedHash() const {
-      if (not reduced_hash_) {
-        reduced_hash_ = TransactionBatchHelpers::calculateReducedBatchHash(
-            transactions_ | boost::adaptors::transformed([](const auto &tx) {
-              return tx->reducedHash();
-            }));
-      }
-      return reduced_hash_.value();
+      return reduced_hash_;
     }
 
     bool TransactionBatchImpl::hasAllSignatures() const {

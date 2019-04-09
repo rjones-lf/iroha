@@ -5,6 +5,7 @@
 
 #include "model/converters/json_query_factory.hpp"
 
+#include "logger/logger.hpp"
 #include "model/queries/get_account.hpp"
 #include "model/queries/get_account_assets.hpp"
 #include "model/queries/get_account_detail.hpp"
@@ -18,7 +19,7 @@ using namespace rapidjson;
 namespace iroha {
   namespace model {
     namespace converters {
-      JsonQueryFactory::JsonQueryFactory(logger::Logger log)
+      JsonQueryFactory::JsonQueryFactory(logger::LoggerPtr log)
           : log_{std::move(log)} {
         deserializers_ = {
             {"GetAccount", &JsonQueryFactory::deserializeGetAccount},

@@ -31,6 +31,7 @@ add_library(application
     )
 target_link_libraries(application
     logger
+    logger_manager
     yac
     yac_transport
     server_runner
@@ -62,6 +63,21 @@ target_link_libraries(irohad
     rapidjson
     keys_manager
     common
+    iroha_conf_loader
+    logger
+    logger_manager
+    irohad_version
     )
+
+add_library(iroha_conf_loader iroha_conf_loader.cpp)
+target_link_libraries(iroha_conf_loader
+    iroha_conf_literals
+    logger_manager
+    rapidjson
+)
+
+add_library(iroha_conf_literals iroha_conf_literals.cpp)
+add_dependencies(iroha_conf_literals logger)
+target_include_directories(iroha_conf_literals PUBLIC ${fmt_INCLUDE_DIR})
 
 add_install_step_for_bin(irohad)

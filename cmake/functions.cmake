@@ -125,7 +125,7 @@ endmacro()
 macro(add_install_step_for_bin target)
   install(TARGETS ${target}
       RUNTIME DESTINATION bin
-      CONFIGURATIONS Release
+      CONFIGURATIONS ${CMAKE_BUILD_TYPE}
       COMPONENT binaries)
 endmacro()
 
@@ -137,7 +137,7 @@ macro(add_install_step_for_lib libpath)
 
   install(FILES ${lib_major_minor_patch}
       DESTINATION lib
-      CONFIGURATIONS Release
+      CONFIGURATIONS ${CMAKE_BUILD_TYPE}
       COMPONENT libraries)
 endmacro()
 
@@ -154,4 +154,10 @@ macro(get_git_revision commit)
       OUTPUT_VARIABLE ${commit}
       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
   )
+endmacro()
+
+macro(append_build_flags)
+  string(REPLACE ";" " " SPACE_ARGS "${ARGN}")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${SPACE_ARGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SPACE_ARGS}")
 endmacro()

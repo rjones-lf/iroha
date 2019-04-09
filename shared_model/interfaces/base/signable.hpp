@@ -84,12 +84,7 @@ namespace shared_model {
         return this->hash() == rhs.hash();
       }
 
-      virtual const types::HashType &hash() const {
-        if (hash_ == boost::none) {
-          hash_.emplace(HashProvider::makeHash(payload()));
-        }
-        return *hash_;
-      }
+      virtual const types::HashType &hash() const = 0;
 
       // ------------------------| Primitive override |-------------------------
 
@@ -139,8 +134,10 @@ namespace shared_model {
       using SignatureSetType =
           std::unordered_set<T, SignatureSetTypeOps, SignatureSetTypeOps>;
 
-     private:
-      mutable boost::optional<types::HashType> hash_;
+     protected:
+      static auto makeHash(const types::BlobType &payload) {
+        return HashProvider::makeHash(payload);
+      }
     };
 
   }  // namespace interface

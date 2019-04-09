@@ -12,6 +12,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include "ametsuchi/impl/in_memory_block_storage_factory.hpp"
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
@@ -19,7 +20,9 @@
 #include "common/files.hpp"
 #include "framework/config_helper.hpp"
 #include "framework/sql_query.hpp"
+#include "framework/test_logger.hpp"
 #include "logger/logger.hpp"
+#include "logger/logger_manager.hpp"
 #include "validators/field_validator.hpp"
 
 namespace iroha {
@@ -40,8 +43,15 @@ namespace iroha {
             std::make_shared<shared_model::proto::ProtoPermissionToString>();
         auto converter =
             std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
-        StorageImpl::create(
-            block_store_path, pgopt_, factory, converter, perm_converter_)
+        auto block_storage_factory =
+            std::make_unique<InMemoryBlockStorageFactory>();
+        StorageImpl::create(block_store_path,
+                            pgopt_,
+                            factory,
+                            converter,
+                            perm_converter_,
+                            std::move(block_storage_factory),
+                            getTestLoggerManager()->getChild("Storage"))
             .match([&](iroha::expected::Value<std::shared_ptr<StorageImpl>>
                            &_storage) { storage = _storage.value; },
                    [](iroha::expected::Error<std::string> &error) {
@@ -70,6 +80,13 @@ namespace iroha {
           shared_model::validation::FieldValidator>>
           factory;
 
+      /*  Since
+       *  - both the storage and the logger config it uses are static
+       *  - storage uses the logger at destruction
+       *  we need to ensure the static logger config is destroyed after the
+       *  static storage
+       */
+      static logger::LoggerPtr storage_logger_;
       static std::shared_ptr<StorageImpl> storage;
       static std::unique_ptr<framework::ametsuchi::SqlQuery> sql_query;
 
@@ -193,6 +210,9 @@ CREATE TABLE IF NOT EXISTS index_by_id_height_asset (
         AmetsuchiTest::perm_converter_ = nullptr;
 
     std::shared_ptr<soci::session> AmetsuchiTest::sql = nullptr;
+    // hold the storage static logger while the static storage is alive
+    logger::LoggerPtr AmetsuchiTest::storage_logger_ =
+        getTestLoggerManager()->getChild("Storage")->getLogger();
     std::shared_ptr<StorageImpl> AmetsuchiTest::storage = nullptr;
     std::unique_ptr<framework::ametsuchi::SqlQuery> AmetsuchiTest::sql_query =
         nullptr;

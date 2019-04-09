@@ -3,22 +3,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "logger/logger.hpp"
+#include "logger/logger_manager.hpp"
 #include <gtest/gtest.h>
 
 #include <vector>
 
-TEST(LoggerTest, getLoggerTest) {
-  auto one_logger = logger::log("one_logger");
-  one_logger->info("one logger");
-
-  auto another_logger = logger::log("another_logger");
-  another_logger->warn("another logger");
-  another_logger->info("temporal output {}, {}", 123, "string param");
-  another_logger->info(logger::red("color output"));
-  another_logger->info(
-      logger::yellow("color args output {} // note: require char *").c_str(),
-      "=^._.^=");
+TEST(LoggerTest, basicStandaloneLoggerTest) {
+  logger::LoggerConfig config;
+  config.log_level = logger::LogLevel::kInfo;
+  logger::LoggerManagerTree manager(
+      std::make_unique<const logger::LoggerConfig>(std::move(config)));
+  auto a_logger = manager.getChild("test info logger")->getLogger();
+  a_logger->trace("testing a standalone logger: trace");
+  a_logger->info("testing a standalone logger: info");
+  a_logger->error("testing a standalone logger: error");
 }
 
 TEST(LoggerTest, boolReprTest) {

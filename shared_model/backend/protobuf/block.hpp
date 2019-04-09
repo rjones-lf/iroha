@@ -36,6 +36,8 @@ namespace shared_model {
       bool addSignature(const crypto::Signed &signed_blob,
                         const crypto::PublicKey &public_key) override;
 
+      const interface::types::HashType &hash() const override;
+
       interface::types::TimestampType createdTime() const override;
 
       interface::types::TransactionsNumberType txsNumber() const override;

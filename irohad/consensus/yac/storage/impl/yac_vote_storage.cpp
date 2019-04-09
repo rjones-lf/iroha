@@ -9,7 +9,9 @@
 #include <utility>
 
 #include "common/bind.hpp"
+#include "consensus/yac/consistency_model.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
+#include "logger/logger_manager.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -17,12 +19,29 @@ namespace iroha {
 
       // --------| private api |--------
 
+      namespace {
+        /**
+         * Find storage with corresponding key
+         * @tparam T - storage type
+         * @param storage - ref or const ref for the storage
+         * @param round - required round
+         * @return iterator for the storage
+         */
+        template <typename T>
+        auto findStorage(T &storage, const Round &round) {
+          return std::find_if(
+              storage.begin(), storage.end(), [&round](const auto &storage) {
+                return storage.getStorageKey() == round;
+              });
+        }
+      }  // namespace
+
       auto YacVoteStorage::getProposalStorage(const Round &round) {
-        return std::find_if(proposal_storages_.begin(),
-                            proposal_storages_.end(),
-                            [&round](const auto &storage) {
-                              return storage.getStorageKey() == round;
-                            });
+        return findStorage(proposal_storages_, round);
+      }
+
+      auto YacVoteStorage::getProposalStorage(const Round &round) const {
+        return findStorage(proposal_storages_, round);
       }
 
       boost::optional<std::vector<YacProposalStorage>::iterator>
@@ -38,7 +57,8 @@ namespace iroha {
               proposal_storages_.end(),
               msg.hash.vote_round,
               peers_in_round,
-              std::make_shared<SupermajorityCheckerImpl>());
+              supermajority_checker_,
+              log_manager_->getChild("ProposalStorage"));
         } else {
           return boost::none;
         }
@@ -58,17 +78,26 @@ namespace iroha {
       // --------| public api |--------
 
       YacVoteStorage::YacVoteStorage(
-          std::shared_ptr<CleanupStrategy> cleanup_strategy)
-          : strategy_(std::move(cleanup_strategy)) {}
+          std::shared_ptr<CleanupStrategy> cleanup_strategy,
+          std::unique_ptr<SupermajorityChecker> supermajority_checker,
+          logger::LoggerManagerTreePtr log_manager)
+          : strategy_(std::move(cleanup_strategy)),
+            supermajority_checker_(std::move(supermajority_checker)),
+            log_manager_(std::move(log_manager)) {}
 
       boost::optional<Answer> YacVoteStorage::store(
           std::vector<VoteMessage> state, PeersNumberType peers_in_round) {
+        if (state.empty()) {
+          return boost::none;
+        }
         return findProposalStorage(state.at(0), peers_in_round) |
             [this, &state](auto &&storage) {
               const auto &round = storage->getStorageKey();
               return storage->insert(state) |
                          [this, &round](
                              auto &&insert_outcome) -> boost::optional<Answer> {
+
+                last_round_ = std::max(last_round_.value_or(round), round);
                 this->strategy_->finalize(round, insert_outcome) |
                     [this](auto &&remove) {
                       std::for_each(
@@ -104,6 +133,20 @@ namespace iroha {
             break;
           case ProposalState::kSentProcessed:
             break;
+        }
+      }
+
+      boost::optional<Round> YacVoteStorage::getLastFinalizedRound() const {
+        return last_round_;
+      }
+
+      boost::optional<Answer> YacVoteStorage::getState(
+          const Round &round) const {
+        auto proposal_storage = getProposalStorage(round);
+        if (proposal_storage != proposal_storages_.end()) {
+          return proposal_storage->getState();
+        } else {
+          return boost::none;
         }
       }
 

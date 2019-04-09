@@ -9,7 +9,7 @@
 #include <mutex>
 
 #include "cryptography/public_key.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
 
@@ -48,7 +48,7 @@ namespace iroha {
      * @return State with expired transactions
      * General note: implementation of method covered by lock
      */
-    MstState getExpiredTransactions(const TimeType &current_time);
+    MstState extractExpiredTransactions(const TimeType &current_time);
 
     /**
      * Make state based on diff of own and target states.
@@ -83,7 +83,7 @@ namespace iroha {
     /**
      * Constructor provide initialization of protected fields, such as logger.
      */
-    explicit MstStorage(logger::Logger log = logger::log("MstStorage"));
+    explicit MstStorage(logger::LoggerPtr log);
 
    private:
     virtual auto applyImpl(
@@ -94,8 +94,8 @@ namespace iroha {
     virtual auto updateOwnStateImpl(const DataType &tx)
         -> decltype(updateOwnState(tx)) = 0;
 
-    virtual auto getExpiredTransactionsImpl(const TimeType &current_time)
-        -> decltype(getExpiredTransactions(current_time)) = 0;
+    virtual auto extractExpiredTransactionsImpl(const TimeType &current_time)
+        -> decltype(extractExpiredTransactions(current_time)) = 0;
 
     virtual auto getDiffStateImpl(
         const shared_model::crypto::PublicKey &target_peer_key,
@@ -112,7 +112,7 @@ namespace iroha {
     mutable std::mutex mutex_;
 
    protected:
-    logger::Logger log_;
+    logger::LoggerPtr log_;
   };
 }  // namespace iroha
 #endif  // IROHA_MST_STORAGE_HPP

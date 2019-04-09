@@ -15,6 +15,7 @@
 #include "cryptography/public_key.hpp"
 #include "interfaces/common_objects/signature.hpp"
 #include "interfaces/iroha_internal/block.hpp"
+#include "logger/logger.hpp"
 #include "simulator/block_creator.hpp"
 
 namespace iroha {
@@ -28,7 +29,7 @@ namespace iroha {
           std::shared_ptr<simulator::BlockCreator> block_creator,
           std::shared_ptr<consensus::ConsensusResultCache>
               consensus_result_cache,
-          logger::Logger log)
+          logger::LoggerPtr log)
           : hash_gate_(std::move(hash_gate)),
             orderer_(std::move(orderer)),
             hash_provider_(std::move(hash_provider)),
@@ -54,6 +55,11 @@ namespace iroha {
 
         if (not event.round_data) {
           current_block_ = boost::none;
+          // previous block is committed to block storage, it is safe to clear
+          // the cache
+          // TODO 2019-03-15 andrei: IR-405 Subscribe BlockLoaderService to
+          // BlockCreator::onBlock
+          consensus_result_cache_->release();
           log_->debug("Agreed on nothing to commit");
         } else {
           current_block_ = event.round_data->block;
@@ -117,32 +123,37 @@ namespace iroha {
         }
 
         current_hash_ = hash;
-
-        if (hash.vote_hashes.proposal_hash.empty()) {
-          // if consensus agreed on nothing for commit
-          log_->info("Consensus skipped round, voted for nothing");
-          current_block_ = boost::none;
-          return rxcpp::observable<>::just<GateObject>(
-              AgreementOnNone{current_hash_.vote_round});
-        }
-
-        log_->info("Voted for another block, waiting for sync");
-        current_block_ = boost::none;
         auto public_keys = boost::copy_range<
             shared_model::interface::types::PublicKeyCollectionType>(
             msg.votes | boost::adaptors::transformed([](auto &vote) {
               return vote.signature->publicKey();
             }));
+
+        if (hash.vote_hashes.proposal_hash.empty()) {
+          // if consensus agreed on nothing for commit
+          log_->info("Consensus skipped round, voted for nothing");
+          current_block_ = boost::none;
+          return rxcpp::observable<>::just<GateObject>(AgreementOnNone{
+              std::move(public_keys), current_hash_.vote_round});
+        }
+
+        log_->info("Voted for another block, waiting for sync");
+        current_block_ = boost::none;
         auto model_hash = hash_provider_->toModelHash(hash);
         return rxcpp::observable<>::just<GateObject>(
             VoteOther{std::move(public_keys),
-                      std::move(model_hash),
-                      current_hash_.vote_round});
+                      current_hash_.vote_round,
+                      std::move(model_hash)});
       }
 
       rxcpp::observable<YacGateImpl::GateObject> YacGateImpl::handleReject(
           const RejectMessage &msg) {
         const auto hash = getHash(msg.votes).value();
+        auto public_keys = boost::copy_range<
+            shared_model::interface::types::PublicKeyCollectionType>(
+            msg.votes | boost::adaptors::transformed([](auto &vote) {
+              return vote.signature->publicKey();
+            }));
         if (hash.vote_round < current_hash_.vote_round) {
           log_->info(
               "Current round {} is greater than reject round {}, skipped",
@@ -161,11 +172,11 @@ namespace iroha {
         if (not has_same_proposals) {
           log_->info("Proposal reject since all hashes are different");
           return rxcpp::observable<>::just<GateObject>(
-              ProposalReject{current_hash_.vote_round});
+              ProposalReject{std::move(public_keys), current_hash_.vote_round});
         }
         log_->info("Block reject since proposal hashes match");
         return rxcpp::observable<>::just<GateObject>(
-            BlockReject{current_hash_.vote_round});
+            BlockReject{std::move(public_keys), current_hash_.vote_round});
       }
     }  // namespace yac
   }    // namespace consensus

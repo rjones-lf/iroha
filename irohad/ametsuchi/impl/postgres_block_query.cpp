@@ -11,6 +11,7 @@
 
 #include "ametsuchi/impl/soci_utils.hpp"
 #include "common/byteutils.hpp"
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -19,7 +20,7 @@ namespace iroha {
         KeyValueStorage &file_store,
         std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
             converter,
-        logger::Logger log)
+        logger::LoggerPtr log)
         : sql_(sql),
           block_store_(file_store),
           converter_(std::move(converter)),
@@ -30,7 +31,7 @@ namespace iroha {
         KeyValueStorage &file_store,
         std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
             converter,
-        logger::Logger log)
+        logger::LoggerPtr log)
         : psql_(std::move(sql)),
           sql_(*psql_),
           block_store_(file_store),

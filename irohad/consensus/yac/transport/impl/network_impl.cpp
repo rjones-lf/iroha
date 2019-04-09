@@ -13,7 +13,6 @@
 #include "consensus/yac/vote_message.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "logger/logger.hpp"
-#include "network/impl/grpc_channel_builder.hpp"
 #include "yac.pb.h"
 
 namespace iroha {
@@ -23,8 +22,13 @@ namespace iroha {
 
       NetworkImpl::NetworkImpl(
           std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
-              async_call)
-          : async_call_(async_call) {}
+              async_call,
+          std::function<std::unique_ptr<proto::Yac::StubInterface>(
+              const shared_model::interface::Peer &)> client_creator,
+          logger::LoggerPtr log)
+          : async_call_(async_call),
+            client_creator_(client_creator),
+            log_(std::move(log)) {}
 
       void NetworkImpl::subscribe(
           std::shared_ptr<YacNetworkNotifications> handler) {
@@ -45,7 +49,7 @@ namespace iroha {
           return peers_.at(to.address())->AsyncSendState(context, request, cq);
         });
 
-        async_call_->log_->info(
+        log_->info(
             "Send votes bundle[size={}] to {}", state.size(), to.address());
       }
 
@@ -55,23 +59,26 @@ namespace iroha {
           ::google::protobuf::Empty *response) {
         std::vector<VoteMessage> state;
         for (const auto &pb_vote : request->votes()) {
-          auto vote = *PbConverters::deserializeVote(pb_vote);
+          auto vote = *PbConverters::deserializeVote(pb_vote, log_);
           state.push_back(vote);
         }
+        if (state.empty()) {
+          log_->info("Received an empty votes collection");
+          return grpc::Status::CANCELLED;
+        }
         if (not sameKeys(state)) {
-          async_call_->log_->info(
-              "Votes are stateless invalid: proposals are different, or empty "
-              "collection");
+          log_->info(
+              "Votes are statelessly invalid: proposal rounds are different");
           return grpc::Status::CANCELLED;
         }
 
-        async_call_->log_->info(
-            "Receive votes[size={}] from {}", state.size(), context->peer());
+        log_->info(
+            "Received votes[size={}] from {}", state.size(), context->peer());
 
         if (auto notifications = handler_.lock()) {
           notifications->onState(std::move(state));
         } else {
-          async_call_->log_->error("Unable to lock the subscriber");
+          log_->error("Unable to lock the subscriber");
         }
         return grpc::Status::OK;
       }
@@ -79,8 +86,7 @@ namespace iroha {
       void NetworkImpl::createPeerConnection(
           const shared_model::interface::Peer &peer) {
         if (peers_.count(peer.address()) == 0) {
-          peers_[peer.address()] =
-              network::createClient<proto::Yac>(peer.address());
+          peers_[peer.address()] = client_creator_(peer);
         }
       }
 

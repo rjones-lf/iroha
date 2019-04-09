@@ -5,6 +5,7 @@
 
 #include <utility>
 
+#include "logger/logger.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
 
 namespace iroha {
@@ -13,14 +14,16 @@ namespace iroha {
       std::shared_ptr<iroha::network::MstTransport> transport,
       std::shared_ptr<MstStorage> storage,
       std::shared_ptr<PropagationStrategy> strategy,
-      std::shared_ptr<MstTimeProvider> time_provider)
-      : MstProcessor(logger::log("FairMstProcessor")),
+      std::shared_ptr<MstTimeProvider> time_provider,
+      logger::LoggerPtr log)
+      : MstProcessor(log),  // use the same logger in base class
         transport_(std::move(transport)),
         storage_(std::move(storage)),
         strategy_(std::move(strategy)),
         time_provider_(std::move(time_provider)),
         propagation_subscriber_(strategy_->emitter().subscribe(
-            [this](auto data) { this->onPropagate(data); })) {}
+            [this](auto data) { this->onPropagate(data); })),
+        log_(std::move(log)) {}
 
   FairMstProcessor::~FairMstProcessor() {
     propagation_subscriber_.unsubscribe();
@@ -34,7 +37,7 @@ namespace iroha {
     completedBatchesNotify(*state_update.completed_state_);
     updatedBatchesNotify(*state_update.updated_state_);
     expiredBatchesNotify(
-        storage_->getExpiredTransactions(time_provider_->getCurrentTime()));
+        storage_->extractExpiredTransactions(time_provider_->getCurrentTime()));
   }
 
   auto FairMstProcessor::onStateUpdateImpl() const
@@ -55,12 +58,9 @@ namespace iroha {
   // TODO [IR-1687] Akvinikym 10.09.18: three methods below should be one
   void FairMstProcessor::completedBatchesNotify(ConstRefState state) const {
     if (not state.isEmpty()) {
-      auto completed_batches = state.getBatches();
-      std::for_each(completed_batches.begin(),
-                    completed_batches.end(),
-                    [this](const auto &batch) {
-                      batches_subject_.get_subscriber().on_next(batch);
-                    });
+      state.iterateBatches([this](const auto &batch) {
+        batches_subject_.get_subscriber().on_next(batch);
+      });
     }
   }
 
@@ -73,12 +73,9 @@ namespace iroha {
 
   void FairMstProcessor::expiredBatchesNotify(ConstRefState state) const {
     if (not state.isEmpty()) {
-      auto expired_batches = state.getBatches();
-      std::for_each(expired_batches.begin(),
-                    expired_batches.end(),
-                    [this](const auto &batch) {
-                      expired_subject_.get_subscriber().on_next(batch);
-                    });
+      state.iterateBatches([this](const auto &batch) {
+        expired_subject_.get_subscriber().on_next(batch);
+      });
     }
   }
 

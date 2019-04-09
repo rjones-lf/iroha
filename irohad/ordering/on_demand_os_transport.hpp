@@ -48,11 +48,9 @@ namespace iroha {
 
         /**
          * Callback on receiving transactions
-         * @param round - expected proposal round
          * @param batches - vector of passed transaction batches
          */
-        virtual void onBatches(consensus::Round round,
-                               CollectionType batches) = 0;
+        virtual void onBatches(CollectionType batches) = 0;
 
         /**
          * Callback on request about proposal
