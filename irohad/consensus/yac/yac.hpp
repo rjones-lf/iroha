@@ -90,19 +90,20 @@ namespace iroha {
                                     const std::vector<VoteMessage> &msg);
         void tryPropagateBack(const std::vector<VoteMessage> &state);
 
-        // ------|Fields|------
-        YacVoteStorage vote_storage_;
-        std::shared_ptr<YacNetwork> network_;
-        std::shared_ptr<YacCryptoProvider> crypto_;
-        std::shared_ptr<Timer> timer_;
-        rxcpp::subjects::subject<Answer> notifier_;
+        // ------|Logger|------
+        logger::LoggerPtr log_;
+
         std::mutex mutex_;
 
         // ------|One round|------
         ClusterOrdering cluster_order_;
 
-        // ------|Logger|------
-        logger::LoggerPtr log_;
+        // ------|Fields|------
+        rxcpp::subjects::subject<Answer> notifier_;
+        YacVoteStorage vote_storage_;
+        std::shared_ptr<YacNetwork> network_;
+        std::shared_ptr<YacCryptoProvider> crypto_;
+        std::shared_ptr<Timer> timer_;
       };
     }  // namespace yac
   }    // namespace consensus

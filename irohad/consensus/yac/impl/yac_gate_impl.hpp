@@ -53,19 +53,18 @@ namespace iroha {
         rxcpp::observable<GateObject> handleCommit(const CommitMessage &msg);
         rxcpp::observable<GateObject> handleReject(const RejectMessage &msg);
 
-        std::shared_ptr<HashGate> hash_gate_;
-        std::shared_ptr<YacPeerOrderer> orderer_;
-        std::shared_ptr<YacHashProvider> hash_provider_;
-        std::shared_ptr<simulator::BlockCreator> block_creator_;
-
-        std::shared_ptr<consensus::ConsensusResultCache>
-            consensus_result_cache_;
-
         logger::LoggerPtr log_;
 
         boost::optional<std::shared_ptr<shared_model::interface::Block>>
             current_block_;
         YacHash current_hash_;
+
+        std::shared_ptr<YacPeerOrderer> orderer_;
+        std::shared_ptr<YacHashProvider> hash_provider_;
+        std::shared_ptr<simulator::BlockCreator> block_creator_;
+        std::shared_ptr<consensus::ConsensusResultCache>
+            consensus_result_cache_;
+        std::shared_ptr<HashGate> hash_gate_;
       };
 
     }  // namespace yac

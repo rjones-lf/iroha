@@ -95,7 +95,7 @@ namespace integration_framework {
       ProposalStorage &getProposalStorage();
 
       /// Start the fake peer.
-      void run();
+      std::unique_ptr<ServerRunner> run();
 
       /// Get the address:port string of this peer.
       std::string getAddress() const;
@@ -243,8 +243,6 @@ namespace integration_framework {
       std::shared_ptr<OsNetworkNotifier> os_network_notifier_;
       std::shared_ptr<OgNetworkNotifier> og_network_notifier_;
       std::shared_ptr<OnDemandOsNetworkNotifier> od_os_network_notifier_;
-
-      std::unique_ptr<ServerRunner> internal_server_;
 
       std::shared_ptr<iroha::consensus::yac::YacCryptoProvider> yac_crypto_;
 

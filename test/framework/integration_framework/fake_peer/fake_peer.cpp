@@ -192,13 +192,15 @@ namespace integration_framework {
       return proposal_storage_;
     }
 
-    void FakePeer::run() {
+    std::unique_ptr<ServerRunner> FakePeer::run() {
       ensureInitialized();
       // start instance
       log_->info("starting listening server");
-      internal_server_ = std::make_unique<ServerRunner>(
-          getAddress(), log_manager_->getChild("InternalServer")->getLogger());
-      internal_server_->append(yac_transport_)
+      auto internal_server = std::make_unique<ServerRunner>(
+          getAddress(),
+          log_manager_->getChild("InternalServer")->getLogger(),
+          false);
+      internal_server->append(yac_transport_)
           .append(mst_transport_)
           .append(od_os_transport_)
           .append(synchronizer_transport_)
@@ -215,8 +217,9 @@ namespace integration_framework {
                         .c_str());
               },
               [this](const auto &err) {
-                log_->error("coul not start server!");
+                log_->error("could not start server!");
               });
+      return internal_server;
     }
 
     std::string FakePeer::getAddress() const {

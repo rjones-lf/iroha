@@ -107,14 +107,8 @@ class ConsensusSunnyDayTest : public ::testing::Test {
         },
         getTestLogger("YacNetwork"));
     crypto = std::make_shared<FixedCryptoProvider>(my_pub_key);
-    timer = std::make_shared<TimerImpl>([this] {
-      // static factory with a single thread
-      // see YacInit::createTimer in consensus_init.cpp
-      static rxcpp::observe_on_one_worker coordination(
-          rxcpp::observe_on_new_thread().create_coordinator().get_scheduler());
-      return rxcpp::observable<>::timer(std::chrono::milliseconds(delay),
-                                        coordination);
-    });
+    timer = std::make_shared<TimerImpl>(std::chrono::milliseconds(delay),
+                                        rxcpp::observe_on_new_thread());
     auto order = ClusterOrdering::create(default_peers);
     ASSERT_TRUE(order);
 

@@ -37,6 +37,17 @@ if(WIN32)
     endif()
 endif()
 
+# workaround to prevent user-installed dependencies having higher precedence
+# than the ones downloaded with externalproject
+if(UNIX)
+  list(APPEND CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES
+    /usr/local/include
+    )
+  list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES
+    /usr/local/include
+    )
+endif()
+
 if(COVERAGE)
   find_program(LCOV_PROGRAM lcov)
   if(NOT LCOV_PROGRAM)
