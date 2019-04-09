@@ -186,11 +186,11 @@ namespace iroha {
       if (ledger_state) {
         new_height = (*ledger_state)->height;
       } else {
-        const auto opt_new_heigt = getTopBlockHeight();
-        BOOST_ASSERT_MSG(opt_new_heigt,
+        const auto opt_new_height = getTopBlockHeight();
+        BOOST_ASSERT_MSG(opt_new_height,
                          "Could not get height after blocks applied!");
-        if (opt_new_heigt) {
-          new_height = *opt_new_heigt;
+        if (opt_new_height) {
+          new_height = *opt_new_height;
         } else {
           log_->critical(
               "Could not get height after blocks applied! "
