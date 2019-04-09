@@ -6,6 +6,7 @@
 #ifndef IROHA_MST_STATE_HPP
 #define IROHA_MST_STATE_HPP
 
+#include <algorithm>  // std::for_each
 #include <chrono>
 #include <queue>
 #include <unordered_set>
@@ -15,7 +16,9 @@
 #include <boost/bimap/multiset_of.hpp>
 #include <boost/bimap/unordered_set_of.hpp>
 #include <boost/optional/optional.hpp>
+#include <boost/range/adaptor/map.hpp>
 #include <boost/range/any_range.hpp>
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "logger/logger_fwd.hpp"
 #include "multi_sig_transactions/hash.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
@@ -152,6 +155,23 @@ namespace iroha {
      * @return true, if state contains the element, false otherwise
      */
     bool contains(const DataType &element) const;
+
+    /// Apply visitor to all batches.
+    template <typename Visitor>
+    inline void iterateBatches(const Visitor &visitor) const {
+      const auto batches_range = batches_.right | boost::adaptors::map_keys;
+      std::for_each(batches_range.begin(), batches_range.end(), visitor);
+    }
+
+    /// Apply visitor to all transactions.
+    template <typename Visitor>
+    inline void iterateTransactions(const Visitor &visitor) const {
+      for (const auto &batch : batches_.right | boost::adaptors::map_keys) {
+        std::for_each(batch->transactions().begin(),
+                      batch->transactions().end(),
+                      visitor);
+      }
+    }
 
    private:
     // --------------------------| private api |------------------------------

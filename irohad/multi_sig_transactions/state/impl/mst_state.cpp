@@ -10,12 +10,10 @@
 #include <vector>
 
 #include <boost/algorithm/cxx11/all_of.hpp>
-#include <boost/range/adaptor/map.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/find.hpp>
 #include <boost/range/combine.hpp>
 #include "common/set.hpp"
-#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/transaction.hpp"
 #include "logger/logger.hpp"
 
