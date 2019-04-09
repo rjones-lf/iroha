@@ -21,7 +21,6 @@ namespace iroha {
     LedgerState(std::shared_ptr<PeerList> peers,
                 shared_model::interface::types::HeightType height)
         : ledger_peers(std::move(peers)), height(height) {}
-    LedgerState() = default;
   };
 }  // namespace iroha
 

@@ -72,7 +72,7 @@ namespace iroha {
                  block->height(),
                  block->hash().hex());
 
-      // TODO add height check to predicate
+      // TODO 09.04.2019 mboldyrev IR-440 add height check to predicate
       auto block_applied = predicate(block, *peer_query_, top_hash_)
           and std::all_of(block->transactions().begin(),
                           block->transactions().end(),
