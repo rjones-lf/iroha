@@ -323,3 +323,35 @@ TEST_F(MstProcessorTest, emptyStatePropagation) {
       another_peer};
   propagation_subject.get_subscriber().on_next(peers);
 }
+
+/**
+ * @given initialised mst processor with 10 as transactions limit
+ *
+ * @when two batches of 6 transactions are propagated via mst processor
+ *
+ * @then only one batch is accepted due to a limit of transactions
+ */
+TEST_F(MstProcessorTest, MstRespectsTransactionsLimit) {
+  auto batch1 =
+      addSignaturesFromKeyPairs(makeTestBatch(txBuilder(1, time_now),
+                                              txBuilder(1, time_now + 1),
+                                              txBuilder(1, time_now + 2),
+                                              txBuilder(1, time_now + 3),
+                                              txBuilder(1, time_now + 4),
+                                              txBuilder(1, time_now + 5)),
+                                0,
+                                makeKey());
+
+  auto batch2 =
+      addSignaturesFromKeyPairs(makeTestBatch(txBuilder(1, time_now + 6),
+                                              txBuilder(1, time_now + 7),
+                                              txBuilder(1, time_now + 8),
+                                              txBuilder(1, time_now + 9),
+                                              txBuilder(1, time_now + 10),
+                                              txBuilder(1, time_now + 11)),
+                                0,
+                                makeKey());
+
+  ASSERT_TRUE(mst_processor->propagateBatch(batch1));
+  ASSERT_FALSE(mst_processor->propagateBatch(batch2));
+}

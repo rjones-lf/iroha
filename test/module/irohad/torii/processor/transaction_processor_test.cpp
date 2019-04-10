@@ -475,3 +475,20 @@ TEST_F(TransactionProcessorTest, MultisigExpired) {
   mst_expired_notifier.get_subscriber().on_next(
       framework::batch::createBatchFromSingleTransaction(tx));
 }
+//
+///**
+// * @given batch one transaction with quorum 2
+// * AND one signature
+// * @when transaction_processor handle the batch
+// * @then checks that batch is relayed to MST
+// */
+TEST_F(TransactionProcessorTest, MstCannotProcessTheBatch) {
+  auto &&tx = addSignaturesFromKeyPairs(baseTestTx(2), makeKey());
+
+  auto &&after_mst = framework::batch::createBatchFromSingleTransaction(
+      std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
+
+  EXPECT_CALL(*mst, propagateBatchImpl(_)).Times(1).WillOnce(Return(false));
+  bool result = tp->batchHandle(std::move(after_mst));
+  ASSERT_FALSE(result);
+}
