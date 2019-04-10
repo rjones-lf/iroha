@@ -74,8 +74,10 @@ namespace iroha {
       }
 
       auto YacInit::createTimer(std::chrono::milliseconds delay_milliseconds) {
-        return std::make_shared<TimerImpl>(delay_milliseconds,
-                                           rxcpp::observe_on_new_thread());
+        return std::make_shared<TimerImpl>(
+            delay_milliseconds,
+            // TODO 2019-04-10 andrei: IR-441 Share a thread between MST and YAC
+            rxcpp::observe_on_new_thread());
       }
 
       std::shared_ptr<YacGate> YacInit::initConsensusGate(
