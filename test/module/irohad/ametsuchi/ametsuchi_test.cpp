@@ -517,7 +517,7 @@ TEST_F(AmetsuchiTest, TestingWsvAfterCommitBlock) {
           .signAndAddSignature(key)
           .finish();
 
-  auto expected_block = createBlock({add_ast_tx}, 1, genesis_block->hash());
+  auto expected_block = createBlock({add_ast_tx}, 2, genesis_block->hash());
 
   static auto wrapper =
       make_test_subscriber<CallExact>(storage->on_commit(), 1);
@@ -614,9 +614,9 @@ TEST_F(PreparedBlockTest, PrepareBlockNoStateChanged) {
  * @then state of the ledger is changed
  */
 TEST_F(PreparedBlockTest, CommitPreparedStateChanged) {
-  shared_model::interface::Amount added_amount{"5.00"};
+  auto other_tx = createAddAsset("5.00");
 
-  auto block = createBlock({*initial_tx});
+  auto block = createBlock({other_tx}, 2);
 
   auto result = temp_wsv->apply(*initial_tx);
   ASSERT_FALSE(framework::expected::err(result));
@@ -641,7 +641,7 @@ TEST_F(PreparedBlockTest, PrepareBlockCommitDifferentBlock) {
   // tx which actually gets commited
   auto other_tx = createAddAsset("10.00");
 
-  auto block = createBlock({other_tx});
+  auto block = createBlock({other_tx}, 2);
 
   auto result = temp_wsv->apply(*initial_tx);
   ASSERT_TRUE(framework::expected::val(result));
@@ -665,7 +665,7 @@ TEST_F(PreparedBlockTest, CommitPreparedFailsAfterCommit) {
   // tx which actually gets commited
   auto other_tx = createAddAsset("10.00");
 
-  auto block = createBlock({other_tx});
+  auto block = createBlock({other_tx}, 2);
 
   auto result = temp_wsv->apply(*initial_tx);
   ASSERT_FALSE(framework::expected::err(result));
