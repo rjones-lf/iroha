@@ -11,6 +11,7 @@
 #include "framework/result_fixture.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 
@@ -188,9 +189,13 @@ namespace framework {
             batch_type, "account" + std::to_string(i) + "@domain"));
       }
 
+      auto batch_validator =
+          std::make_shared<shared_model::validation::BatchValidator>(
+              iroha::test::kTestsValidatorsConfig);
       std::shared_ptr<shared_model::interface::TransactionBatchFactory>
           batch_factory = std::make_shared<
-              shared_model::interface::TransactionBatchFactoryImpl>();
+              shared_model::interface::TransactionBatchFactoryImpl>(
+              batch_validator);
       auto txs =
           createBatchOneSignTransactions(transaction_fields, created_time);
       auto result_batch = batch_factory->createTransactionBatch(txs);
@@ -205,8 +210,12 @@ namespace framework {
      */
     inline auto createBatchFromSingleTransaction(
         std::shared_ptr<shared_model::interface::Transaction> tx) {
+      auto batch_validator =
+          std::make_shared<shared_model::validation::BatchValidator>(
+              iroha::test::kTestsValidatorsConfig);
       auto batch_factory = std::make_shared<
-          shared_model::interface::TransactionBatchFactoryImpl>();
+          shared_model::interface::TransactionBatchFactoryImpl>(
+          batch_validator);
       return batch_factory->createTransactionBatch(std::move(tx))
           .match(
               [](iroha::expected::Value<std::unique_ptr<

@@ -20,6 +20,7 @@
 #include "interfaces/query_responses/signatories_response.hpp"
 #include "interfaces/query_responses/transactions_page_response.hpp"
 #include "interfaces/query_responses/transactions_response.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "validators/field_validator.hpp"
@@ -36,7 +37,8 @@ class ProtoQueryResponseFactoryTest : public ::testing::Test {
   std::shared_ptr<ProtoQueryResponseFactory> response_factory =
       std::make_shared<ProtoQueryResponseFactory>();
   std::shared_ptr<ProtoCommonObjectsFactory<FieldValidator>> objects_factory =
-      std::make_shared<ProtoCommonObjectsFactory<FieldValidator>>();
+      std::make_shared<ProtoCommonObjectsFactory<FieldValidator>>(
+          iroha::test::kTestsValidatorsConfig);
 
   /**
    * Get value of Result<unique_ptr<_>, _>; throws exception, if there's error

@@ -12,6 +12,7 @@
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
 #include "module/shared_model/interface_mocks.hpp"
@@ -34,7 +35,11 @@ class TransportTest : public ::testing::Test {
       : async_call_(std::make_shared<AsyncGrpcClient<google::protobuf::Empty>>(
             getTestLogger("AsyncClient"))),
         parser_(std::make_shared<TransactionBatchParserImpl>()),
-        batch_factory_(std::make_shared<TransactionBatchFactoryImpl>()),
+        batch_validator_(
+            std::make_shared<shared_model::validation::BatchValidator>(
+                iroha::test::kTestsValidatorsConfig)),
+        batch_factory_(
+            std::make_shared<TransactionBatchFactoryImpl>(batch_validator_)),
         tx_presence_cache_(
             std::make_shared<iroha::ametsuchi::MockTxPresenceCache>()),
         my_key_(makeKey()),
@@ -45,6 +50,9 @@ class TransportTest : public ::testing::Test {
 
   std::shared_ptr<AsyncGrpcClient<google::protobuf::Empty>> async_call_;
   std::shared_ptr<TransactionBatchParserImpl> parser_;
+  std::shared_ptr<shared_model::validation::AbstractValidator<
+      shared_model::interface::TransactionBatch>>
+      batch_validator_;
   std::shared_ptr<TransactionBatchFactoryImpl> batch_factory_;
   std::shared_ptr<iroha::ametsuchi::MockTxPresenceCache> tx_presence_cache_;
   shared_model::crypto::Keypair my_key_;

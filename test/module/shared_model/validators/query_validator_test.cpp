@@ -6,9 +6,12 @@
 #include "module/shared_model/validators/validators_fixture.hpp"
 
 #include "builders/protobuf/queries.hpp"
+#include "module/irohad/common/validators_config.hpp"
 
 class QueryValidatorTest : public ValidatorsTest {
  public:
+  QueryValidatorTest() : query_validator(iroha::test::kTestsValidatorsConfig) {}
+
   shared_model::validation::DefaultUnsignedQueryValidator query_validator;
 };
 

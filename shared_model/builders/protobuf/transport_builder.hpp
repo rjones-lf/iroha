@@ -7,6 +7,7 @@
 #define IROHA_TRANSPORT_BUILDER_HPP
 
 #include "common/result.hpp"
+#include "validators/validators_common.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -19,9 +20,11 @@ namespace shared_model {
      */
     template <typename T, typename SV>
     class [[deprecated]] TransportBuilder {
+      TransportBuilder(const SV &validator) : stateless_validator_(validator) {}
+
      public:
-      TransportBuilder(const SV &validator = SV())
-          : stateless_validator_(validator) {}
+      TransportBuilder(std::shared_ptr<validation::ValidatorsConfig> config)
+          : TransportBuilder(SV(config)) {}
 
       /**
        * Builds result from transport object

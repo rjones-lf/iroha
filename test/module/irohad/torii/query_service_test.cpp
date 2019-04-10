@@ -9,6 +9,7 @@
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "framework/test_logger.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "module/irohad/torii/processor/mock_query_processor.hpp"
 #include "utils/query_error_response_visitor.hpp"
 #include "validators/protobuf/proto_query_validator.hpp"
@@ -43,7 +44,8 @@ class QueryServiceTest : public ::testing::Test {
     std::unique_ptr<shared_model::validation::AbstractValidator<
         shared_model::interface::Query>>
         query_validator = std::make_unique<
-            shared_model::validation::DefaultSignedQueryValidator>();
+            shared_model::validation::DefaultSignedQueryValidator>(
+            iroha::test::kTestsValidatorsConfig);
     std::unique_ptr<
         shared_model::validation::AbstractValidator<iroha::protocol::Query>>
         proto_query_validator =
@@ -54,7 +56,8 @@ class QueryServiceTest : public ::testing::Test {
                                      std::move(proto_query_validator));
 
     auto blocks_query_validator = std::make_unique<
-        shared_model::validation::DefaultSignedBlocksQueryValidator>();
+        shared_model::validation::DefaultSignedBlocksQueryValidator>(
+        iroha::test::kTestsValidatorsConfig);
     auto proto_blocks_query_validator =
         std::make_unique<shared_model::validation::ProtoBlocksQueryValidator>();
 

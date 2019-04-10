@@ -11,6 +11,7 @@
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
 #include "interfaces/permissions.hpp"
+#include "module/irohad/common/validators_config.hpp"
 
 using namespace shared_model;
 using namespace common_constants;
@@ -145,7 +146,10 @@ class BatchPipelineTest
       const interface::types::SharedTxsCollectionType &txs) {
     auto transaction_sequence_result =
         interface::TransactionSequenceFactory::createTransactionSequence(
-            txs, validation::DefaultUnsignedTransactionsValidator());
+            txs,
+            validation::DefaultUnsignedTransactionsValidator(
+                iroha::test::kTestsValidatorsConfig),
+            validation::FieldValidator(iroha::test::kTestsValidatorsConfig));
 
     auto transaction_sequence_value =
         framework::expected::val(transaction_sequence_result);

@@ -13,6 +13,7 @@
 #include "common/result.hpp"
 #include "datetime/time.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "validators/default_validator.hpp"
 
 namespace integration_framework {
@@ -21,7 +22,8 @@ namespace integration_framework {
     ProposalStorage::ProposalStorage()
         : proposal_factory_(
               std::make_unique<shared_model::proto::ProtoProposalFactory<
-                  shared_model::validation::DefaultProposalValidator>>()) {
+                  shared_model::validation::DefaultProposalValidator>>(
+                  iroha::test::kTestsValidatorsConfig)) {
       setDefaultProvider([](auto &) { return boost::none; });
     }
 
@@ -114,9 +116,10 @@ namespace integration_framework {
         return left_tx->reducedHash() == right_tx->reducedHash();
       }
 
-    }
+    }  // namespace detail
 
-    ProposalStorage &ProposalStorage::setDefaultProvider(DefaultProvider provider) {
+    ProposalStorage &ProposalStorage::setDefaultProvider(
+        DefaultProvider provider) {
       std::atomic_store(&default_provider_,
                         std::make_shared<DefaultProvider>(std::move(provider)));
       return *this;

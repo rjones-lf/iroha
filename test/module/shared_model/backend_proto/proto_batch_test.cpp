@@ -10,6 +10,7 @@
 #include "framework/result_fixture.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
+#include "module/irohad/common/validators_config.hpp"
 
 using namespace shared_model;
 using ::testing::_;
@@ -19,6 +20,14 @@ using ::testing::Truly;
 
 class TransactionBatchTest : public Test {
  public:
+  TransactionBatchTest() {
+    auto batch_validator =
+        std::make_shared<shared_model::validation::BatchValidator>(
+            iroha::test::kTestsValidatorsConfig);
+    factory_ = std::make_shared<interface::TransactionBatchFactoryImpl>(
+        batch_validator);
+  }
+
   /**
    * Creates valid unsigned transaction
    * @param created_time assigned to transactions
@@ -93,8 +102,7 @@ class TransactionBatchTest : public Test {
         "user@test", created_time, quorum);
   }
 
-  std::shared_ptr<interface::TransactionBatchFactory> factory_ =
-      std::make_shared<interface::TransactionBatchFactoryImpl>();
+  std::shared_ptr<interface::TransactionBatchFactory> factory_;
 };
 
 /**
