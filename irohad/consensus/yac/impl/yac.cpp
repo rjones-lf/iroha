@@ -61,12 +61,12 @@ namespace iroha {
                std::shared_ptr<Timer> timer,
                ClusterOrdering order,
                logger::LoggerPtr log)
-          : vote_storage_(std::move(vote_storage)),
+          : log_(std::move(log)),
+            cluster_order_(order),
+            vote_storage_(std::move(vote_storage)),
             network_(std::move(network)),
             crypto_(std::move(crypto)),
-            timer_(std::move(timer)),
-            cluster_order_(order),
-            log_(std::move(log)) {}
+            timer_(std::move(timer)) {}
 
       // ------|Hash gate|------
 

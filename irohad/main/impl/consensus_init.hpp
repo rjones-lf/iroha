@@ -51,14 +51,6 @@ namespace iroha {
        private:
         auto createTimer(std::chrono::milliseconds delay_milliseconds);
 
-        // coordinator has a worker, and a factory for coordinated
-        // observables, subscribers and schedulable functions.
-        //
-        // A new thread scheduler is created
-        // by calling .create_coordinator().get_scheduler()
-        rxcpp::observe_on_one_worker coordination_{
-            rxcpp::observe_on_new_thread()};
-
         bool initialized_{false};
         std::shared_ptr<NetworkImpl> consensus_network_;
       };

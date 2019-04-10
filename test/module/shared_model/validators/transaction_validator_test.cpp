@@ -5,29 +5,35 @@
 
 #include "module/shared_model/validators/validators_fixture.hpp"
 
+#include <type_traits>
+
 #include <gtest/gtest.h>
 #include <boost/range/irange.hpp>
-
-#include <type_traits>
 #include "builders/protobuf/transaction.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 using namespace shared_model;
 
 class TransactionValidatorTest : public ValidatorsTest {
+ public:
+  TransactionValidatorTest()
+      : transaction_validator(iroha::test::kTestsValidatorsConfig) {}
+
  protected:
   iroha::protocol::Transaction generateEmptyTransaction() {
     std::string creator_account_id = "admin@test";
 
     TestTransactionBuilder builder;
     auto tx = builder.creatorAccountId(creator_account_id)
-        .createdTime(created_time)
-        .quorum(1)
-        .build()
-        .getTransport();
+                  .createdTime(created_time)
+                  .quorum(1)
+                  .build()
+                  .getTransport();
     return tx;
   }
-  shared_model::validation::DefaultUnsignedTransactionValidator transaction_validator;
+  shared_model::validation::DefaultUnsignedTransactionValidator
+      transaction_validator;
 };
 
 /**
@@ -141,14 +147,15 @@ TEST_F(TransactionValidatorTest, BatchValidTest) {
 
   TestTransactionBuilder builder;
   auto tx = builder.creatorAccountId(creator_account_id)
-      .createdTime(created_time)
-      .quorum(1)
-      .batchMeta(interface::types::BatchType::ATOMIC,
-                 std::vector<interface::types::HashType>())
-      .createDomain("test", "test")
-      .build()
-      .getTransport();
-  shared_model::validation::DefaultUnsignedTransactionValidator transaction_validator;
+                .createdTime(created_time)
+                .quorum(1)
+                .batchMeta(interface::types::BatchType::ATOMIC,
+                           std::vector<interface::types::HashType>())
+                .createDomain("test", "test")
+                .build()
+                .getTransport();
+  shared_model::validation::DefaultUnsignedTransactionValidator
+      transaction_validator(iroha::test::kTestsValidatorsConfig);
   auto result = proto::Transaction(iroha::protocol::Transaction(tx));
   auto answer = transaction_validator.validate(result);
 
@@ -156,4 +163,3 @@ TEST_F(TransactionValidatorTest, BatchValidTest) {
   ASSERT_EQ(tx.payload().batch().type(),
             static_cast<int>(interface::types::BatchType::ATOMIC));
 }
-

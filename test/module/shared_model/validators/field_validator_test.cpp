@@ -22,6 +22,7 @@
 #include "backend/protobuf/queries/proto_tx_pagination_meta.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "module/shared_model/validators/validators_fixture.hpp"
 #include "validators/field_validator.hpp"
 #include "validators/permissions.hpp"
@@ -64,7 +65,7 @@ class FieldValidatorTest : public ValidatorsTest {
   }
 
  public:
-  FieldValidatorTest() {
+  FieldValidatorTest() : field_validator(iroha::test::kTestsValidatorsConfig) {
     field_validators.insert(makeTransformValidator(
         "public_key",
         &FieldValidator::validatePubkey,

@@ -89,15 +89,22 @@ namespace iroha {
 
         static boost::optional<VoteMessage> deserializeVote(
             const proto::Vote &pb_vote, logger::LoggerPtr log) {
+          // TODO IR-428 igor-egorov refactor PbConverters - do the class
+          // instantiable
+          static const uint64_t kMaxBatchSize{0};
+          // This is a workaround for the following ProtoCommonObjectsFactory.
+          // We able to do this, because we don't have batches in consensus.
           static shared_model::proto::ProtoCommonObjectsFactory<
               shared_model::validation::FieldValidator>
-              factory_;
+              factory{
+                  std::make_shared<shared_model::validation::ValidatorsConfig>(
+                      kMaxBatchSize)};
 
           auto vote = deserealizeRoundAndHashes(pb_vote);
 
           auto deserialize =
               [&](auto &pubkey, auto &signature, auto &val, const auto &msg) {
-                factory_
+                factory
                     .createSignature(shared_model::crypto::PublicKey(pubkey),
                                      shared_model::crypto::Signed(signature))
                     .match(

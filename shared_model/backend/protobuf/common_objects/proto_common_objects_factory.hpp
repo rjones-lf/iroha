@@ -18,6 +18,7 @@
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "primitive.pb.h"
 #include "validators/answer.hpp"
+#include "validators/validators_common.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -29,6 +30,10 @@ namespace shared_model {
     template <typename Validator>
     class ProtoCommonObjectsFactory : public interface::CommonObjectsFactory {
      public:
+      ProtoCommonObjectsFactory(
+          std::shared_ptr<validation::ValidatorsConfig> config)
+          : validator_(config) {}
+
       FactoryResult<std::unique_ptr<interface::Peer>> createPeer(
           const interface::types::AddressType &address,
           const interface::types::PubkeyType &public_key) override {

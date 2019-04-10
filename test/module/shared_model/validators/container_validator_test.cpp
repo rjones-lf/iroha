@@ -5,6 +5,7 @@
 
 #include <gtest/gtest.h>
 #include "cryptography/default_hash_provider.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
@@ -68,7 +69,8 @@ struct ContainerValidatorTest : public ::testing::Test {
  * @then no errors are returned
  */
 TEST_F(ContainerValidatorTest, OldProposal) {
-  shared_model::validation::DefaultProposalValidator validator;
+  shared_model::validation::DefaultProposalValidator validator(
+      iroha::test::kTestsValidatorsConfig);
   auto proposal = makeProposal(old_timestamp, makeTransaction(old_timestamp));
 
   auto result = validator.validate(proposal);
@@ -82,7 +84,8 @@ TEST_F(ContainerValidatorTest, OldProposal) {
  * @then no errors are returned
  */
 TEST_F(ContainerValidatorTest, OldBlock) {
-  shared_model::validation::DefaultSignedBlockValidator validator;
+  shared_model::validation::DefaultSignedBlockValidator validator(
+      iroha::test::kTestsValidatorsConfig);
   auto block = makeBlock(old_timestamp, makeTransaction(old_timestamp));
 
   auto result = validator.validate(block);
@@ -96,7 +99,8 @@ TEST_F(ContainerValidatorTest, OldBlock) {
  * @then an error with "sent from future" is returned
  */
 TEST_F(ContainerValidatorTest, OldProposalNewTransaction) {
-  shared_model::validation::DefaultProposalValidator validator;
+  shared_model::validation::DefaultProposalValidator validator(
+      iroha::test::kTestsValidatorsConfig);
   auto proposal =
       makeProposal(old_timestamp, makeTransaction(current_timestamp));
 
@@ -113,7 +117,8 @@ TEST_F(ContainerValidatorTest, OldProposalNewTransaction) {
  * @then an error with "sent from future" is returned
  */
 TEST_F(ContainerValidatorTest, OldBlockNewTransaction) {
-  shared_model::validation::DefaultSignedBlockValidator validator;
+  shared_model::validation::DefaultSignedBlockValidator validator(
+      iroha::test::kTestsValidatorsConfig);
   auto block = makeBlock(old_timestamp, makeTransaction(current_timestamp));
 
   auto result = validator.validate(block);

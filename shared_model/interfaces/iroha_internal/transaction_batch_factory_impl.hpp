@@ -17,6 +17,10 @@ namespace shared_model {
       using FactoryImplResult =
           FactoryResult<std::unique_ptr<TransactionBatch>>;
 
+      TransactionBatchFactoryImpl(
+          std::shared_ptr<validation::AbstractValidator<TransactionBatch>>
+              batch_validator);
+
       FactoryImplResult createTransactionBatch(
           const types::SharedTxsCollectionType &transactions) const override;
 
@@ -24,7 +28,8 @@ namespace shared_model {
           std::shared_ptr<Transaction> transaction) const override;
 
      private:
-      validation::BatchValidator batch_validator_;
+      std::shared_ptr<validation::AbstractValidator<TransactionBatch>>
+          batch_validator_;
     };
 
   }  // namespace interface
