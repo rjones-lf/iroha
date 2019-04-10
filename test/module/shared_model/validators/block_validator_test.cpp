@@ -7,6 +7,7 @@
 
 #include <gtest/gtest.h>
 
+#include "module/irohad/common/validators_config.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "validators/default_validator.hpp"
@@ -16,6 +17,8 @@ using namespace shared_model::validation;
 
 class BlockValidatorTest : public ValidatorsTest {
  public:
+  BlockValidatorTest() : validator_(iroha::test::kTestsValidatorsConfig) {}
+
   /**
    * Create a simple transaction
    * @param valid - transaction will be valid, if this flag is set to true,

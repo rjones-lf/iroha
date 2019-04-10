@@ -34,6 +34,7 @@
 #include "interfaces/query_responses/transactions_page_response.hpp"
 #include "interfaces/query_responses/transactions_response.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "module/irohad/pending_txs_storage/pending_txs_storage_mock.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
@@ -137,7 +138,8 @@ namespace iroha {
 
         auto factory =
             std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
-                shared_model::validation::FieldValidator>>();
+                shared_model::validation::FieldValidator>>(
+                iroha::test::kTestsValidatorsConfig);
         query_executor = storage;
         PostgresCommandExecutor::prepareStatements(*sql);
         executor =
@@ -1047,7 +1049,8 @@ namespace iroha {
             std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
         auto factory =
             std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
-                shared_model::validation::FieldValidator>>();
+                shared_model::validation::FieldValidator>>(
+                iroha::test::kTestsValidatorsConfig);
         auto block_store =
             FlatFile::create(block_store_dir, getTestLogger("FlatFile"));
         ASSERT_TRUE(block_store);

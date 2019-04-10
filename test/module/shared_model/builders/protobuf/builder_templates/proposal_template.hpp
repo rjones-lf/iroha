@@ -8,6 +8,7 @@
 
 #include "backend/protobuf/proposal.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "validators/default_validator.hpp"
 
 #include "proposal.pb.h"
@@ -53,9 +54,14 @@ namespace shared_model {
         return copy;
       }
 
-     public:
-      TemplateProposalBuilder(const SV &validator = SV())
+      TemplateProposalBuilder(const SV &validator)
           : stateless_validator_(validator){};
+
+     public:
+      // we do such default initialization only because it is deprecated and
+      // used only in tests
+      TemplateProposalBuilder()
+          : TemplateProposalBuilder(SV(iroha::test::kTestsValidatorsConfig)) {}
 
       auto height(const interface::types::HeightType height) const {
         return transform<Height>(
@@ -72,8 +78,8 @@ namespace shared_model {
         });
       }
 
-      auto createdTime(
-          const interface::types::TimestampType created_time) const {
+      auto createdTime(const interface::types::TimestampType created_time)
+          const {
         return transform<CreatedTime>(
             [&](auto &proposal) { proposal.set_created_time(created_time); });
       }

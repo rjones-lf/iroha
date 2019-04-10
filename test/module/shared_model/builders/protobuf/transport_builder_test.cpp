@@ -16,6 +16,7 @@
 #include "framework/result_fixture.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "module/shared_model/builders/protobuf/block.hpp"
 #include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
@@ -171,8 +172,9 @@ class TransportBuilderTest : public ::testing::Test {
                      FailCase &&failCase) {
     auto proto_model = orig_model.getTransport();
 
-    auto built_model =
-        TransportBuilder<ObjectOriginalModel, Validator>().build(proto_model);
+    auto built_model = TransportBuilder<ObjectOriginalModel, Validator>(
+                           iroha::test::kTestsValidatorsConfig)
+                           .build(proto_model);
 
     built_model.match(successCase, failCase);
   }
@@ -331,8 +333,9 @@ TEST_F(TransportBuilderTest, DISABLED_EmptyProposalCreationTest) {
  */
 TEST_F(TransportBuilderTest, TransactionSequenceEmpty) {
   iroha::protocol::TxList tx_list;
-  auto val =
-      framework::expected::val(TransactionSequenceBuilder().build(tx_list));
+  auto val = framework::expected::val(
+      TransactionSequenceBuilder(iroha::test::kTestsValidatorsConfig)
+          .build(tx_list));
   ASSERT_FALSE(val);
 }
 
@@ -380,8 +383,9 @@ TEST_F(TransportBuilderTest, TransactionSequenceCorrect) {
   new (tx_list.add_transactions())
       iroha::protocol::Transaction(createTransaction().getTransport());
 
-  auto val =
-      framework::expected::val(TransactionSequenceBuilder().build(tx_list));
+  auto val = framework::expected::val(
+      TransactionSequenceBuilder(iroha::test::kTestsValidatorsConfig)
+          .build(tx_list));
 
   val | [](auto &seq) { EXPECT_EQ(boost::size(seq.value.transactions()), 24); };
 }
@@ -408,8 +412,9 @@ TEST_F(TransportBuilderTest, DISABLED_TransactionInteraptedBatch) {
         std::static_pointer_cast<proto::Transaction>(tx)->getTransport());
   });
 
-  auto error =
-      framework::expected::err(TransactionSequenceBuilder().build(tx_list));
+  auto error = framework::expected::err(
+      TransactionSequenceBuilder(iroha::test::kTestsValidatorsConfig)
+          .build(tx_list));
   ASSERT_TRUE(error);
 }
 
@@ -430,7 +435,8 @@ TEST_F(TransportBuilderTest, BatchWrongOrder) {
     new (tx_list.add_transactions()) iroha::protocol::Transaction(
         std::static_pointer_cast<proto::Transaction>(tx)->getTransport());
   });
-  auto error =
-      framework::expected::err(TransactionSequenceBuilder().build(tx_list));
+  auto error = framework::expected::err(
+      TransactionSequenceBuilder(iroha::test::kTestsValidatorsConfig)
+          .build(tx_list));
   ASSERT_TRUE(error);
 }

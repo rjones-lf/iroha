@@ -106,6 +106,9 @@ Irohad::Irohad(const std::string &block_store_dir,
       log_manager_(std::move(logger_manager)),
       log_(log_manager_->getLogger()) {
   log_->info("created");
+  validators_config_ =
+      std::make_shared<shared_model::validation::ValidatorsConfig>(
+          max_proposal_size_);
   // Initializing storage at this point in order to insert genesis block before
   // initialization of iroha daemon
   initStorage();
@@ -158,7 +161,7 @@ void Irohad::dropStorage() {
 void Irohad::initStorage() {
   common_objects_factory_ =
       std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
-          shared_model::validation::FieldValidator>>();
+          shared_model::validation::FieldValidator>>(validators_config_);
   auto perm_converter =
       std::make_shared<shared_model::proto::ProtoPermissionToString>();
   auto block_converter =
@@ -218,7 +221,7 @@ void Irohad::initBatchParser() {
  */
 void Irohad::initValidators() {
   auto factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
-      shared_model::validation::DefaultProposalValidator>>();
+      shared_model::validation::DefaultProposalValidator>>(validators_config_);
   auto validators_log_manager = log_manager_->getChild("Validators");
   stateful_validator = std::make_shared<StatefulValidatorImpl>(
       std::move(factory),
@@ -248,8 +251,9 @@ void Irohad::initFactories() {
           shared_model::validation::ProtoTransactionValidator>();
   std::unique_ptr<shared_model::validation::AbstractValidator<
       shared_model::interface::Proposal>>
-      proposal_validator = std::make_unique<
-          shared_model::validation::DefaultProposalValidator>();
+      proposal_validator =
+          std::make_unique<shared_model::validation::DefaultProposalValidator>(
+              validators_config_);
   std::unique_ptr<
       shared_model::validation::AbstractValidator<iroha::protocol::Proposal>>
       proto_proposal_validator =
@@ -261,15 +265,19 @@ void Irohad::initFactories() {
           shared_model::proto::Proposal>>(std::move(proposal_validator),
                                           std::move(proto_proposal_validator));
 
+  auto batch_validator =
+      std::make_shared<shared_model::validation::BatchValidator>(
+          validators_config_);
   // transaction factories
   transaction_batch_factory_ =
-      std::make_shared<shared_model::interface::TransactionBatchFactoryImpl>();
+      std::make_shared<shared_model::interface::TransactionBatchFactoryImpl>(
+          batch_validator);
 
   std::unique_ptr<shared_model::validation::AbstractValidator<
       shared_model::interface::Transaction>>
-      transaction_validator =
-          std::make_unique<shared_model::validation::
-                               DefaultOptionalSignedTransactionValidator>();
+      transaction_validator = std::make_unique<
+          shared_model::validation::DefaultOptionalSignedTransactionValidator>(
+          validators_config_);
   transaction_factory =
       std::make_shared<shared_model::proto::ProtoTransportFactory<
           shared_model::interface::Transaction,
@@ -284,7 +292,8 @@ void Irohad::initFactories() {
   std::unique_ptr<shared_model::validation::AbstractValidator<
       shared_model::interface::Query>>
       query_validator = std::make_unique<
-          shared_model::validation::DefaultSignedQueryValidator>();
+          shared_model::validation::DefaultSignedQueryValidator>(
+          validators_config_);
   std::unique_ptr<
       shared_model::validation::AbstractValidator<iroha::protocol::Query>>
       proto_query_validator =
@@ -295,7 +304,8 @@ void Irohad::initFactories() {
       std::move(query_validator), std::move(proto_query_validator));
 
   auto blocks_query_validator = std::make_unique<
-      shared_model::validation::DefaultSignedBlocksQueryValidator>();
+      shared_model::validation::DefaultSignedBlocksQueryValidator>(
+      validators_config_);
   auto proto_blocks_query_validator =
       std::make_unique<shared_model::validation::ProtoBlocksQueryValidator>();
 
@@ -345,7 +355,7 @@ void Irohad::initOrderingGate() {
       });
 
   auto factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
-      shared_model::validation::DefaultProposalValidator>>();
+      shared_model::validation::DefaultProposalValidator>>(validators_config_);
 
   const uint64_t kCounter = 0, kMaxLocalCounter = 2;
   // reject_delay and local_counter are local mutable variables of lambda
@@ -403,8 +413,8 @@ void Irohad::initSimulator() {
       //  not required to validate signatures of transactions here because they
       //  are validated in the ordering gate, where they are received from the
       //  ordering service.
-      std::make_unique<
-          shared_model::validation::DefaultUnsignedBlockValidator>(),
+      std::make_unique<shared_model::validation::DefaultUnsignedBlockValidator>(
+          validators_config_),
       std::make_unique<shared_model::validation::ProtoBlockValidator>());
   simulator = std::make_shared<Simulator>(
       ordering_gate,
@@ -435,6 +445,7 @@ void Irohad::initBlockLoader() {
       loader_init.initBlockLoader(storage,
                                   storage,
                                   consensus_result_cache_,
+                                  validators_config_,
                                   log_manager_->getChild("BlockLoader"));
 
   log_->info("[Init] => block loader");

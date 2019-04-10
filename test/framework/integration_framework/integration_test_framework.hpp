@@ -483,6 +483,9 @@ namespace integration_framework {
         transaction_factory_;
     std::shared_ptr<shared_model::interface::TransactionBatchParser>
         batch_parser_;
+    std::shared_ptr<shared_model::validation::AbstractValidator<
+        shared_model::interface::TransactionBatch>>
+        batch_validator_;
     std::shared_ptr<shared_model::interface::TransactionBatchFactory>
         transaction_batch_factory_;
     std::shared_ptr<

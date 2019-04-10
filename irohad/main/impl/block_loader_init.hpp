@@ -12,6 +12,7 @@
 #include "logger/logger_manager_fwd.hpp"
 #include "network/impl/block_loader_impl.hpp"
 #include "network/impl/block_loader_service.hpp"
+#include "validators/validators_common.hpp"
 
 namespace iroha {
   namespace network {
@@ -36,11 +37,14 @@ namespace iroha {
        * Create block loader for loading blocks from given peer factory by top
        * block
        * @param peer_query_factory - factory for peer query component creation
+       * @param validators_config - a config for underlying validators
        * @param loader_log - the log of the loader subsystem
        * @return initialized loader
        */
       auto createLoader(
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
+          std::shared_ptr<shared_model::validation::ValidatorsConfig>
+              validators_config,
           logger::LoggerPtr loader_log);
 
      public:
@@ -49,6 +53,7 @@ namespace iroha {
        * @param peer_query_factory - factory to peer query component
        * @param block_query_factory - factory to block query component
        * @param block_cache used to retrieve last block put by consensus
+       * @param validators_config - a config for underlying validators
        * @param loader_log - the log of the loader subsystem
        * @return initialized service
        */
@@ -56,6 +61,8 @@ namespace iroha {
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
           std::shared_ptr<consensus::ConsensusResultCache> block_cache,
+          std::shared_ptr<shared_model::validation::ValidatorsConfig>
+              validators_config,
           const logger::LoggerManagerTreePtr &loader_log_manager);
 
       std::shared_ptr<BlockLoaderImpl> loader;

@@ -11,6 +11,7 @@
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/queries/blocks_query.hpp"
 #include "interfaces/transaction.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "queries.pb.h"
 #include "validators/default_validator.hpp"
 
@@ -63,9 +64,15 @@ namespace shared_model {
         return copy;
       }
 
-     public:
-      TemplateBlocksQueryBuilder(const SV &validator = SV())
+      TemplateBlocksQueryBuilder(const SV &validator)
           : stateless_validator_(validator) {}
+
+     public:
+      // we do such default initialization only because it is deprecated and
+      // used only in tests
+      TemplateBlocksQueryBuilder()
+          : TemplateBlocksQueryBuilder(
+                SV(iroha::test::kTestsValidatorsConfig)) {}
 
       auto createdTime(interface::types::TimestampType created_time) const {
         return transform<CreatedTime>([&](auto &qry) {

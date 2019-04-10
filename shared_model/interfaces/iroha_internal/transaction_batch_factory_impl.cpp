@@ -11,12 +11,18 @@
 
 namespace shared_model {
   namespace interface {
+
+    TransactionBatchFactoryImpl::TransactionBatchFactoryImpl(
+        std::shared_ptr<validation::AbstractValidator<TransactionBatch>>
+            batch_validator)
+        : batch_validator_(std::move(batch_validator)) {}
+
     TransactionBatchFactoryImpl::FactoryImplResult
     TransactionBatchFactoryImpl::createTransactionBatch(
         const types::SharedTxsCollectionType &transactions) const {
       std::unique_ptr<TransactionBatch> batch_ptr =
           std::make_unique<TransactionBatchImpl>(transactions);
-      if (auto answer = batch_validator_.validate(*batch_ptr)) {
+      if (auto answer = batch_validator_->validate(*batch_ptr)) {
         return iroha::expected::makeError(answer.reason());
       }
       return iroha::expected::makeValue(std::move(batch_ptr));
