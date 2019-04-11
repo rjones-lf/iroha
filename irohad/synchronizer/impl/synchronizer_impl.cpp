@@ -183,20 +183,15 @@ namespace iroha {
           *top_block_height, required_height, msg.public_keys);
 
       shared_model::interface::types::HeightType new_height;
+      // TODO 11.04.2019 mboldyrev IR-442 use storage commit status type
+      BOOST_ASSERT_MSG(ledger_state, "Commit failed!");
       if (ledger_state) {
         new_height = (*ledger_state)->height;
       } else {
-        const auto opt_new_height = getTopBlockHeight();
-        BOOST_ASSERT_MSG(opt_new_height,
-                         "Could not get height after blocks applied!");
-        if (opt_new_height) {
-          new_height = *opt_new_height;
-        } else {
-          log_->critical(
-              "Could not get height after blocks applied! "
-              "SynchronizationEvent will not be sent!");
-          return;
-        }
+        log_->critical(
+            "Synchronization cancelled because "
+            "downloaded blocks commit failed!");
+        return;
       }
 
       const bool higher_than_expected = new_height > required_height;
