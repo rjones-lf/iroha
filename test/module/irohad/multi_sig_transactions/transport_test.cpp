@@ -8,9 +8,11 @@
 #include <gtest/gtest.h>
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
+#include "framework/test_logger.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
 #include "module/shared_model/interface_mocks.hpp"
@@ -30,10 +32,14 @@ using ::testing::Invoke;
 class TransportTest : public ::testing::Test {
  public:
   TransportTest()
-      : async_call_(
-            std::make_shared<AsyncGrpcClient<google::protobuf::Empty>>()),
+      : async_call_(std::make_shared<AsyncGrpcClient<google::protobuf::Empty>>(
+            getTestLogger("AsyncClient"))),
         parser_(std::make_shared<TransactionBatchParserImpl>()),
-        batch_factory_(std::make_shared<TransactionBatchFactoryImpl>()),
+        batch_validator_(
+            std::make_shared<shared_model::validation::BatchValidator>(
+                iroha::test::kTestsValidatorsConfig)),
+        batch_factory_(
+            std::make_shared<TransactionBatchFactoryImpl>(batch_validator_)),
         tx_presence_cache_(
             std::make_shared<iroha::ametsuchi::MockTxPresenceCache>()),
         my_key_(makeKey()),
@@ -44,6 +50,9 @@ class TransportTest : public ::testing::Test {
 
   std::shared_ptr<AsyncGrpcClient<google::protobuf::Empty>> async_call_;
   std::shared_ptr<TransactionBatchParserImpl> parser_;
+  std::shared_ptr<shared_model::validation::AbstractValidator<
+      shared_model::interface::TransactionBatch>>
+      batch_validator_;
   std::shared_ptr<TransactionBatchFactoryImpl> batch_factory_;
   std::shared_ptr<iroha::ametsuchi::MockTxPresenceCache> tx_presence_cache_;
   shared_model::crypto::Keypair my_key_;
@@ -51,6 +60,11 @@ class TransportTest : public ::testing::Test {
   std::shared_ptr<iroha::MockMstTransportNotification>
       mst_notification_transport_;
 };
+
+static bool statesEqual(const iroha::MstState &a, const iroha::MstState &b) {
+  // treat them like sets of batches:
+  return (a - b).isEmpty() and (b - a).isEmpty();
+}
 
 /**
  * @brief Sends data over MstTransportGrpc (MstState and Peer objects) and
@@ -95,14 +109,16 @@ TEST_F(TransportTest, SendAndReceive) {
                                          std::move(batch_factory_),
                                          std::move(tx_presence_cache_),
                                          completer_,
-                                         my_key_.publicKey());
+                                         my_key_.publicKey(),
+                                         getTestLogger("MstState"),
+                                         getTestLogger("MstTransportGrpc"));
   transport->subscribe(mst_notification_transport_);
 
   std::mutex mtx;
   std::condition_variable cv;
 
   auto time = iroha::time::now();
-  auto state = iroha::MstState::empty(completer_);
+  auto state = iroha::MstState::empty(getTestLogger("MstState"), completer_);
   state += addSignaturesFromKeyPairs(
       makeTestBatch(txBuilder(1, time)), 0, makeKey());
   state += addSignaturesFromKeyPairs(
@@ -138,7 +154,7 @@ TEST_F(TransportTest, SendAndReceive) {
           [this, &cv, &state](const auto &from_key, auto const &target_state) {
             EXPECT_EQ(this->my_key_.publicKey(), from_key);
 
-            EXPECT_EQ(state, target_state);
+            EXPECT_TRUE(statesEqual(state, target_state));
             cv.notify_one();
           }));
 
@@ -174,18 +190,21 @@ TEST_F(TransportTest, ReplayAttack) {
       shared_model::proto::Transaction>>(std::move(interface_tx_validator),
                                          std::move(proto_tx_validator));
 
-  auto transport = std::make_shared<MstTransportGrpc>(std::move(async_call_),
-                                                      std::move(tx_factory),
-                                                      std::move(parser_),
-                                                      std::move(batch_factory_),
-                                                      tx_presence_cache_,
-                                                      completer_,
-                                                      my_key_.publicKey());
+  auto transport =
+      std::make_shared<MstTransportGrpc>(std::move(async_call_),
+                                         std::move(tx_factory),
+                                         std::move(parser_),
+                                         std::move(batch_factory_),
+                                         tx_presence_cache_,
+                                         completer_,
+                                         my_key_.publicKey(),
+                                         getTestLogger("MstState"),
+                                         getTestLogger("MstTransportGrpc"));
 
   transport->subscribe(mst_notification_transport_);
 
   auto batch = makeTestBatch(txBuilder(1), txBuilder(2));
-  auto state = iroha::MstState::empty(completer_);
+  auto state = iroha::MstState::empty(getTestLogger("MstState"), completer_);
   state += addSignaturesFromKeyPairs(
       addSignaturesFromKeyPairs(batch, 0, makeKey()), 1, makeKey());
 
@@ -214,13 +233,11 @@ TEST_F(TransportTest, ReplayAttack) {
   proto_state.set_source_peer_key(
       shared_model::crypto::toBinaryString(my_key_.publicKey()));
 
-  for (const auto &batch : state.getBatches()) {
-    for (const auto &tx : batch->transactions()) {
-      *proto_state.add_transactions() =
-          std::static_pointer_cast<shared_model::proto::Transaction>(tx)
-              ->getTransport();
-    }
-  }
+  state.iterateTransactions([&proto_state](const auto &tx) {
+    *proto_state.add_transactions() =
+        std::static_pointer_cast<shared_model::proto::Transaction>(tx)
+            ->getTransport();
+  });
 
   grpc::ServerContext context;
   google::protobuf::Empty response;

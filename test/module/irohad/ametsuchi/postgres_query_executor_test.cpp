@@ -20,6 +20,7 @@
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "datetime/time.hpp"
 #include "framework/result_fixture.hpp"
+#include "framework/test_logger.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/permissions.hpp"
 #include "interfaces/query_responses/account_asset_response.hpp"
@@ -33,6 +34,7 @@
 #include "interfaces/query_responses/transactions_page_response.hpp"
 #include "interfaces/query_responses/transactions_response.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "module/irohad/pending_txs_storage/pending_txs_storage_mock.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
@@ -136,7 +138,8 @@ namespace iroha {
 
         auto factory =
             std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
-                shared_model::validation::FieldValidator>>();
+                shared_model::validation::FieldValidator>>(
+                iroha::test::kTestsValidatorsConfig);
         query_executor = storage;
         PostgresCommandExecutor::prepareStatements(*sql);
         executor =
@@ -799,16 +802,13 @@ namespace iroha {
         auto prev_hash = shared_model::crypto::Hash(zero_string);
         for (decltype(number_of_blocks) i = 1; i < number_of_blocks; ++i) {
           auto block =
-              TestBlockBuilder()
-                  .transactions(std::vector<shared_model::proto::Transaction>{
-                      TestTransactionBuilder()
-                          .creatorAccountId(account_id)
-                          .createAsset(std::to_string(i), domain_id, 1)
-                          .build()})
-                  .height(i)
-                  .prevHash(prev_hash)
-                  .build();
-          prev_hash = block.hash();
+              createBlock({TestTransactionBuilder()
+                               .creatorAccountId(account_id)
+                               .createAsset(std::to_string(i), domain_id, 1)
+                               .build()},
+                          i,
+                          prev_hash);
+          prev_hash = block->hash();
 
           if (not ms->apply(block)) {
             FAIL() << "could not apply block to the storage";
@@ -1049,8 +1049,10 @@ namespace iroha {
             std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
         auto factory =
             std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
-                shared_model::validation::FieldValidator>>();
-        auto block_store = FlatFile::create(block_store_dir);
+                shared_model::validation::FieldValidator>>(
+                iroha::test::kTestsValidatorsConfig);
+        auto block_store =
+            FlatFile::create(block_store_dir, getTestLogger("FlatFile"));
         ASSERT_TRUE(block_store);
         this->block_store = std::move(block_store.get());
         createDefaultAccount();
@@ -1064,7 +1066,8 @@ namespace iroha {
        * @param block to apply
        */
       template <typename S>
-      void apply(S &&storage, const shared_model::interface::Block &block) {
+      void apply(S &&storage,
+                 std::shared_ptr<const shared_model::interface::Block> block) {
         std::unique_ptr<MutableStorage> ms;
         auto storageResult = storage->createMutableStorage();
         storageResult.match(
@@ -1078,7 +1081,6 @@ namespace iroha {
       }
 
       void commitBlocks() {
-        auto fake_hash = shared_model::crypto::Hash(zero_string);
         auto fake_pubkey = shared_model::crypto::PublicKey(zero_string);
 
         std::vector<shared_model::proto::Transaction> txs1;
@@ -1097,11 +1099,7 @@ namespace iroha {
                            .createRole("user2", {})
                            .build());
 
-        auto block1 = TestBlockBuilder()
-                          .transactions(txs1)
-                          .height(1)
-                          .prevHash(fake_hash)
-                          .build();
+        auto block1 = createBlock(txs1, 1);
 
         apply(storage, block1);
 
@@ -1116,11 +1114,7 @@ namespace iroha {
                            .createRole("user3", {})
                            .build());
 
-        auto block2 = TestBlockBuilder()
-                          .transactions(txs2)
-                          .height(2)
-                          .prevHash(block1.hash())
-                          .build();
+        auto block2 = createBlock(txs2, 2, block1->hash());
 
         apply(storage, block2);
 
@@ -1130,7 +1124,6 @@ namespace iroha {
       }
 
       const std::string asset_id = "coin#domain";
-      shared_model::crypto::Hash fake_hash{zero_string};
       shared_model::crypto::PublicKey fake_pubkey{zero_string};
       shared_model::crypto::Hash hash1;
       shared_model::crypto::Hash hash2;
@@ -1157,11 +1150,7 @@ namespace iroha {
           initial_txs.emplace_back(std::move(tx));
         }
 
-        auto block = TestBlockBuilder()
-                         .transactions(initial_txs)
-                         .height(1)
-                         .prevHash(fake_hash)
-                         .build();
+        auto block = createBlock(initial_txs, 1);
 
         apply(storage, block);
       }

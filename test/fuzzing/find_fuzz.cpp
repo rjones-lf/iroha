@@ -10,6 +10,7 @@
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "libfuzzer/libfuzzer_macro.h"
+#include "logger/dummy_logger.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/pending_txs_storage/pending_txs_storage_mock.hpp"
@@ -22,7 +23,7 @@ using testing::_;
 using testing::Return;
 
 struct QueryFixture {
-  std::shared_ptr<torii::QueryService> service_;
+  std::shared_ptr<iroha::torii::QueryService> service_;
   std::shared_ptr<iroha::torii::QueryProcessorImpl> qry_processor_;
   std::shared_ptr<iroha::ametsuchi::MockStorage> storage_;
   std::shared_ptr<iroha::MockPendingTransactionStorage> pending_transactions_;
@@ -40,7 +41,11 @@ struct QueryFixture {
     auto query_response_factory_ =
         std::make_shared<shared_model::proto::ProtoQueryResponseFactory>();
     qry_processor_ = std::make_shared<iroha::torii::QueryProcessorImpl>(
-        storage_, storage_, pending_transactions_, query_response_factory_);
+        storage_,
+        storage_,
+        pending_transactions_,
+        query_response_factory_,
+        logger::getDummyLoggerPtr());
 
     std::unique_ptr<shared_model::validation::AbstractValidator<
         shared_model::interface::Query>>
@@ -55,8 +60,23 @@ struct QueryFixture {
             shared_model::interface::Query,
             shared_model::proto::Query>>(std::move(query_validator),
                                          std::move(proto_query_validator));
-    service_ =
-        std::make_shared<torii::QueryService>(qry_processor_, query_factory);
+
+    auto blocks_query_validator = std::make_unique<
+        shared_model::validation::DefaultSignedBlocksQueryValidator>();
+    auto proto_blocks_query_validator =
+        std::make_unique<shared_model::validation::ProtoBlocksQueryValidator>();
+    auto blocks_query_factory =
+        std::make_shared<shared_model::proto::ProtoTransportFactory<
+            shared_model::interface::BlocksQuery,
+            shared_model::proto::BlocksQuery>>(
+            std::move(blocks_query_validator),
+            std::move(proto_blocks_query_validator));
+
+    service_ = std::make_shared<iroha::torii::QueryService>(
+        qry_processor_,
+        query_factory,
+        blocks_query_factory,
+        logger::getDummyLoggerPtr());
   }
 };
 

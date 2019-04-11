@@ -27,7 +27,7 @@ namespace iroha {
 
       MOCK_METHOD1(commitPrepared,
                    boost::optional<std::unique_ptr<LedgerState>>(
-                       const shared_model::interface::Block &));
+                       std::shared_ptr<const shared_model::interface::Block>));
       MOCK_METHOD1(commit_,
                    boost::optional<std::unique_ptr<LedgerState>>(
                        std::unique_ptr<MutableStorage> &));

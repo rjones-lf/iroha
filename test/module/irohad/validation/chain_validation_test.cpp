@@ -6,6 +6,7 @@
 #include "validation/impl/chain_validator_impl.hpp"
 
 #include <boost/range/adaptor/indirected.hpp>
+#include "framework/test_logger.hpp"
 #include "module/irohad/ametsuchi/mock_mutable_storage.hpp"
 #include "module/irohad/ametsuchi/mock_peer_query.hpp"
 #include "module/irohad/consensus/yac/mock_yac_supermajority_checker.hpp"
@@ -28,7 +29,8 @@ using ::testing::SaveArg;
 class ChainValidationTest : public ::testing::Test {
  public:
   void SetUp() override {
-    validator = std::make_shared<ChainValidatorImpl>(supermajority_checker);
+    validator = std::make_shared<ChainValidatorImpl>(
+        supermajority_checker, getTestLogger("ChainValidato"));
     storage = std::make_shared<MockMutableStorage>();
     query = std::make_shared<MockPeerQuery>();
     peers = std::vector<std::shared_ptr<shared_model::interface::Peer>>();
@@ -51,6 +53,9 @@ class ChainValidationTest : public ::testing::Test {
         .WillRepeatedly(Return(signatures | boost::adaptors::indirected));
     EXPECT_CALL(*block, payload())
         .WillRepeatedly(ReturnRefOfCopy(shared_model::crypto::Blob{"blob"}));
+    EXPECT_CALL(*block, hash())
+        .WillRepeatedly(
+            testing::ReturnRefOfCopy(shared_model::crypto::Hash("hash")));
   }
 
   std::shared_ptr<iroha::consensus::yac::MockSupermajorityChecker>
@@ -76,17 +81,17 @@ class ChainValidationTest : public ::testing::Test {
  */
 TEST_F(ChainValidationTest, ValidCase) {
   // Valid previous hash, has supermajority, correct peers subset => valid
-  shared_model::interface::types::SignatureRangeType block_signatures;
+  size_t block_signatures_amount;
   EXPECT_CALL(*supermajority_checker, hasSupermajority(_, _))
-      .WillOnce(DoAll(SaveArg<0>(&block_signatures), Return(true)));
+      .WillOnce(DoAll(SaveArg<0>(&block_signatures_amount), Return(true)));
 
   EXPECT_CALL(*query, getLedgerPeers()).WillOnce(Return(peers));
 
   EXPECT_CALL(*storage, apply(blocks, _))
-      .WillOnce(InvokeArgument<1>(ByRef(*block), ByRef(*query), ByRef(hash)));
+      .WillOnce(InvokeArgument<1>(block, ByRef(*query), ByRef(hash)));
 
   ASSERT_TRUE(validator->validateAndApply(blocks, *storage));
-  ASSERT_EQ(block->signatures(), block_signatures);
+  ASSERT_EQ(boost::size(block->signatures()), block_signatures_amount);
 }
 
 /**
@@ -99,15 +104,13 @@ TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
   shared_model::crypto::Hash another_hash =
       shared_model::crypto::Hash(std::string(32, '1'));
 
-  shared_model::interface::types::SignatureRangeType block_signatures;
   ON_CALL(*supermajority_checker, hasSupermajority(_, _))
-      .WillByDefault(DoAll(SaveArg<0>(&block_signatures), Return(true)));
+      .WillByDefault(Return(true));
 
   EXPECT_CALL(*query, getLedgerPeers()).WillOnce(Return(peers));
 
   EXPECT_CALL(*storage, apply(blocks, _))
-      .WillOnce(
-          InvokeArgument<1>(ByRef(*block), ByRef(*query), ByRef(another_hash)));
+      .WillOnce(InvokeArgument<1>(block, ByRef(*query), ByRef(another_hash)));
 
   ASSERT_FALSE(validator->validateAndApply(blocks, *storage));
 }
@@ -119,15 +122,15 @@ TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
  */
 TEST_F(ChainValidationTest, FailWhenNoSupermajority) {
   // Valid previous hash, no supermajority, correct peers subset => invalid
-  shared_model::interface::types::SignatureRangeType block_signatures;
+  size_t block_signatures_amount;
   EXPECT_CALL(*supermajority_checker, hasSupermajority(_, _))
-      .WillOnce(DoAll(SaveArg<0>(&block_signatures), Return(false)));
+      .WillOnce(DoAll(SaveArg<0>(&block_signatures_amount), Return(false)));
 
   EXPECT_CALL(*query, getLedgerPeers()).WillOnce(Return(peers));
 
   EXPECT_CALL(*storage, apply(blocks, _))
-      .WillOnce(InvokeArgument<1>(ByRef(*block), ByRef(*query), ByRef(hash)));
+      .WillOnce(InvokeArgument<1>(block, ByRef(*query), ByRef(hash)));
 
   ASSERT_FALSE(validator->validateAndApply(blocks, *storage));
-  ASSERT_EQ(block->signatures(), block_signatures);
+  ASSERT_EQ(boost::size(block->signatures()), block_signatures_amount);
 }

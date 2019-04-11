@@ -8,13 +8,15 @@
 
 #include "ordering/on_demand_ordering_service.hpp"
 
-#include <queue>
+#include <map>
 #include <shared_mutex>
-#include <unordered_map>
 
-#include <tbb/concurrent_queue.h>
+#include <tbb/concurrent_unordered_set.h>
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
+#include "multi_sig_transactions/hash.hpp"
+// TODO 2019-03-15 andrei: IR-403 Separate BatchHashEquality and MstState
+#include "multi_sig_transactions/state/mst_state.hpp"
 #include "ordering/impl/on_demand_common.hpp"
 
 namespace iroha {
@@ -22,6 +24,17 @@ namespace iroha {
     class TxPresenceCache;
   }
   namespace ordering {
+    namespace detail {
+      using BatchSetType = tbb::concurrent_unordered_set<
+          transport::OdOsNotification::TransactionBatchType,
+          model::PointerBatchHasher,
+          BatchHashEquality>;
+
+      using ProposalMapType = std::map<
+          consensus::Round,
+          std::shared_ptr<const transport::OdOsNotification::ProposalType>>;
+    }  // namespace detail
+
     class OnDemandOrderingServiceImpl : public OnDemandOrderingService {
      public:
       /**
@@ -30,20 +43,20 @@ namespace iroha {
        * proposal
        * @param proposal_factory - used to generate proposals
        * @param tx_cache - cache of transactions
+       * @param log to print progress
        * @param number_of_proposals - number of stored proposals, older will be
        * removed. Default value is 3
        * @param initial_round - first round of agreement.
        * Default value is {2, kFirstRejectRound} since genesis block height is 1
-       * @param log to print progress
        */
       OnDemandOrderingServiceImpl(
           size_t transaction_limit,
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               proposal_factory,
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
+          logger::LoggerPtr log,
           size_t number_of_proposals = 3,
-          const consensus::Round &initial_round = {2, kFirstRejectRound},
-          logger::Logger log = logger::log("OnDemandOrderingServiceImpl"));
+          const consensus::Round &initial_round = {2, kFirstRejectRound});
 
       // --------------------- | OnDemandOrderingService |_---------------------
 
@@ -51,7 +64,7 @@ namespace iroha {
 
       // ----------------------- | OdOsNotification | --------------------------
 
-      void onBatches(consensus::Round, CollectionType batches) override;
+      void onBatches(CollectionType batches) override;
 
       boost::optional<std::shared_ptr<const ProposalType>> onRequestProposal(
           consensus::Round round) override;
@@ -68,7 +81,7 @@ namespace iroha {
        * Method removes the oldest commit or chain of the oldest rejects
        * Note: method is not thread-safe
        */
-      void tryErase();
+      void tryErase(const consensus::Round &current_round);
 
       /**
        * Check if batch was already processed by the peer
@@ -87,30 +100,19 @@ namespace iroha {
       size_t number_of_proposals_;
 
       /**
-       * Queue which holds all rounds in linear order
-       */
-      std::queue<consensus::Round> round_queue_;
-
-      /**
        * Map of available proposals
        */
-      std::unordered_map<consensus::Round,
-                         std::shared_ptr<const ProposalType>,
-                         consensus::RoundTypeHasher>
-          proposal_map_;
+      detail::ProposalMapType proposal_map_;
 
       /**
-       * Proposals for current rounds
+       * Collections of batches for current round
        */
-      std::unordered_map<consensus::Round,
-                         tbb::concurrent_queue<TransactionBatchType>,
-                         consensus::RoundTypeHasher>
-          current_proposals_;
+      detail::BatchSetType pending_batches_;
 
       /**
-       * Read write mutex for public methods
+       * Batches and proposal collection mutexes for public methods
        */
-      std::shared_timed_mutex lock_;
+      std::shared_timed_mutex batches_mutex_, proposals_mutex_;
 
       std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
           proposal_factory_;
@@ -123,7 +125,7 @@ namespace iroha {
       /**
        * Logger instance
        */
-      logger::Logger log_;
+      logger::LoggerPtr log_;
     };
   }  // namespace ordering
 }  // namespace iroha

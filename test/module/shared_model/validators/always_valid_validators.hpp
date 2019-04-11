@@ -17,6 +17,7 @@ namespace shared_model {
   namespace validation {
 
     struct AlwaysValidFieldValidator final {
+      AlwaysValidFieldValidator(std::shared_ptr<ValidatorsConfig>) {}
       template <typename... Args>
       void validateAccountId(Args...) const {}
       template <typename... Args>
@@ -72,7 +73,9 @@ namespace shared_model {
     template <typename Model>
     struct AlwaysValidModelValidator final : public AbstractValidator<Model> {
      public:
-      Answer validate(const Model &m) const override{return {};};
+      Answer validate(const Model &m) const override {
+        return {};
+      };
     };
 
   }  // namespace validation

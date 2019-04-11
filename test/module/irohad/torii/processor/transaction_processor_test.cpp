@@ -12,9 +12,11 @@
 #include "builders/default_builders.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/batch_helper.hpp"
+#include "framework/test_logger.hpp"
 #include "framework/test_subscriber.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
@@ -22,6 +24,7 @@
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 #include "torii/impl/status_bus_impl.hpp"
 
 using namespace iroha;
@@ -40,10 +43,8 @@ class TransactionProcessorTest : public ::testing::Test {
  public:
   void SetUp() override {
     pcs = std::make_shared<MockPeerCommunicationService>();
-    mst = std::make_shared<MockMstProcessor>();
+    mst = std::make_shared<MockMstProcessor>(getTestLogger("MstProcessor"));
 
-    EXPECT_CALL(*pcs, on_commit())
-        .WillRepeatedly(Return(commit_notifier.get_observable()));
     EXPECT_CALL(*pcs, onVerifiedProposal())
         .WillRepeatedly(Return(verified_prop_notifier.get_observable()));
 
@@ -59,7 +60,13 @@ class TransactionProcessorTest : public ::testing::Test {
         pcs,
         mst,
         status_bus,
-        std::make_shared<shared_model::proto::ProtoTxStatusFactory>());
+        std::make_shared<shared_model::proto::ProtoTxStatusFactory>(),
+        commit_notifier.get_observable(),
+        getTestLogger("TransactionProcessor"));
+
+    auto peer = makePeer("127.0.0.1", shared_model::crypto::PublicKey("111"));
+    auto ledger_peers = std::make_shared<PeerList>(PeerList{peer});
+    ledger_state = std::make_shared<LedgerState>(ledger_peers);
   }
 
   auto base_tx() {
@@ -123,6 +130,11 @@ class TransactionProcessorTest : public ::testing::Test {
       mst_update_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_prepared_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_expired_notifier;
+  rxcpp::subjects::subject<
+      std::shared_ptr<const shared_model::interface::Block>>
+      commit_notifier;
+  rxcpp::subjects::subject<simulator::VerifiedProposalCreatorEvent>
+      verified_prop_notifier;
 
   std::shared_ptr<MockPeerCommunicationService> pcs;
   std::shared_ptr<MockStatusBus> status_bus;
@@ -134,11 +146,9 @@ class TransactionProcessorTest : public ::testing::Test {
       shared_model::proto::TransactionStatusBuilder>
       status_builder;
 
-  rxcpp::subjects::subject<SynchronizationEvent> commit_notifier;
-  rxcpp::subjects::subject<simulator::VerifiedProposalCreatorEvent>
-      verified_prop_notifier;
-
   consensus::Round round;
+  std::shared_ptr<LedgerState> ledger_state;
+
   const size_t proposal_size = 5;
   const size_t block_size = 3;
 };
@@ -198,9 +208,11 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalBatchTest) {
         status_map[response->transactionHash()] = response;
       }));
 
-  auto transaction_sequence_result =
-      shared_model::interface::TransactionSequenceFactory::
-          createTransactionSequence(transactions, TxsValidator());
+  auto transaction_sequence_result = shared_model::interface::
+      TransactionSequenceFactory::createTransactionSequence(
+          transactions,
+          TxsValidator(iroha::test::kTestsValidatorsConfig),
+          FieldValidator(iroha::test::kTestsValidatorsConfig));
   auto transaction_sequence =
       framework::expected::val(transaction_sequence_result).value().value;
 
@@ -267,7 +279,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorVerifiedProposalTest) {
 
   // empty transactions errors - all txs are valid
   verified_prop_notifier.get_subscriber().on_next(
-      simulator::VerifiedProposalCreatorEvent{validation_result, round});
+      simulator::VerifiedProposalCreatorEvent{
+          validation_result, round, ledger_state});
 
   SCOPED_TRACE("Stateful Valid status verification");
   validateStatuses<shared_model::interface::StatefulValidTxResponse>(txs);
@@ -310,18 +323,14 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
 
   // empty transactions errors - all txs are valid
   verified_prop_notifier.get_subscriber().on_next(
-      simulator::VerifiedProposalCreatorEvent{validation_result, round});
+      simulator::VerifiedProposalCreatorEvent{
+          validation_result, round, ledger_state});
 
   auto block = TestBlockBuilder().transactions(txs).build();
 
   // 2. Create block and notify transaction processor about it
-  SynchronizationEvent commit_event{
-      rxcpp::observable<>::just(
-          std::shared_ptr<shared_model::interface::Block>(clone(block))),
-      SynchronizationOutcomeType::kCommit,
-      {},
-      {}};
-  commit_notifier.get_subscriber().on_next(commit_event);
+  commit_notifier.get_subscriber().on_next(
+      std::shared_ptr<shared_model::interface::Block>(clone(block)));
 
   SCOPED_TRACE("Committed status verification");
   validateStatuses<shared_model::interface::CommittedTxResponse>(txs);
@@ -386,7 +395,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
                                          "SomeCommandName", 1, "", true, i}});
   }
   verified_prop_notifier.get_subscriber().on_next(
-      simulator::VerifiedProposalCreatorEvent{validation_result, round});
+      simulator::VerifiedProposalCreatorEvent{
+          validation_result, round, ledger_state});
 
   {
     SCOPED_TRACE("Stateful invalid status verification");
@@ -403,13 +413,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
                        }))
                    .build();
 
-  SynchronizationEvent commit_event{
-      rxcpp::observable<>::just(
-          std::shared_ptr<shared_model::interface::Block>(clone(block))),
-      SynchronizationOutcomeType::kCommit,
-      {},
-      {}};
-  commit_notifier.get_subscriber().on_next(commit_event);
+  commit_notifier.get_subscriber().on_next(
+      std::shared_ptr<shared_model::interface::Block>(clone(block)));
 
   {
     SCOPED_TRACE("Rejected status verification");

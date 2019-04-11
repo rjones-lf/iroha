@@ -3,40 +3,105 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "consensus/yac/impl/supermajority_checker_impl.hpp"
+#include "consensus/yac/supermajority_checker.hpp"
+#include "consensus/yac/impl/supermajority_checker_bft.hpp"
+#include "consensus/yac/impl/supermajority_checker_cft.hpp"
 
 #include <gtest/gtest.h>
 
-#include <boost/range/adaptor/indirected.hpp>
+#include <boost/foreach.hpp>
+#include "boost/tuple/tuple.hpp"
+#include "consensus/yac/supermajority_checker.hpp"
 #include "logger/logger.hpp"
 
+#include "framework/test_logger.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 
 using namespace iroha::consensus::yac;
 
 using ::testing::ReturnRefOfCopy;
 
-static logger::Logger log_ = logger::testLog("YacCommon");
+static logger::LoggerPtr log_ = getTestLogger("YacCommon");
 
-class SupermajorityCheckerTest : public ::testing::Test,
-                                 public SupermajorityCheckerImpl {
+static const std::map<ConsistencyModel, unsigned int> kf1_param{
+    {ConsistencyModel::kCft, detail::kSupermajorityCheckerKfPlus1Cft},
+    {ConsistencyModel::kBft, detail::kSupermajorityCheckerKfPlus1Bft}};
+
+class SupermajorityCheckerTest
+    : public ::testing::TestWithParam<ConsistencyModel>,
+      public SupermajorityChecker {
  public:
   void SetUp() override {}
+
+  unsigned int getK() const {
+    return kf1_param.at(GetParam());
+  }
+
+  size_t getAllowedFaultyPeers(size_t total_peers) const {
+    return (total_peers - 1) / getK();
+  }
+
+  size_t getSupermajority(size_t total_peers) const {
+    return total_peers - getAllowedFaultyPeers(total_peers);
+  }
+
+  std::string modelToString() const {
+    return "`" + std::to_string(getK()) + " * f + 1' "
+        + (GetParam() == ConsistencyModel::kBft ? "BFT" : "CFT") + " model";
+  }
+
+  bool hasSupermajority(PeersNumberType current,
+                        PeersNumberType all) const override {
+    return checker->hasSupermajority(current, all);
+  }
+
+  bool canHaveSupermajority(const VoteGroups &votes,
+                            PeersNumberType all) const override {
+    return checker->canHaveSupermajority(votes, all);
+  }
+
+  std::unique_ptr<SupermajorityChecker> checker{
+      getSupermajorityChecker(GetParam())};
 };
+
+using CftAndBftSupermajorityCheckerTest = SupermajorityCheckerTest;
+using BftSupermajorityCheckerTest = SupermajorityCheckerTest;
+
+INSTANTIATE_TEST_CASE_P(Instance,
+                        CftAndBftSupermajorityCheckerTest,
+                        ::testing::Values(ConsistencyModel::kCft,
+                                          ConsistencyModel::kBft),
+                        // empty argument for the macro
+                        );
+
+INSTANTIATE_TEST_CASE_P(Instance,
+                        BftSupermajorityCheckerTest,
+                        ::testing::Values(ConsistencyModel::kBft),
+                        // empty argument for the macro
+                        );
 
 /**
  * @given 2 participants
  * @when check range of voted participants
  * @then correct result
  */
-TEST_F(SupermajorityCheckerTest, SuperMajorityCheckWithSize2) {
-  log_->info("-----------| F(x, 2), x in {0..3} -----------");
+TEST_P(CftAndBftSupermajorityCheckerTest, SuperMajorityCheckWithSize2) {
+  log_->info("-----------| F(x, 2), x in [0..3] |-----------");
 
-  int N = 2;
-  ASSERT_FALSE(checkSize(0, N));
-  ASSERT_FALSE(checkSize(1, N));
-  ASSERT_TRUE(checkSize(2, N));
-  ASSERT_FALSE(checkSize(3, N));
+  size_t A = 2; // number of all peers
+  for (size_t i = 0; i < 4; ++i) {
+    if (i >= getSupermajority(A)  // enough votes
+        and i <= A                // not more than total peers amount
+    ) {
+      ASSERT_TRUE(hasSupermajority(i, A))
+          << i << " votes out of " << A << " are supermajority in "
+          << modelToString();
+    } else {
+      ASSERT_FALSE(hasSupermajority(i, A))
+          << i << " votes out of " << A << " are not a supermajority in "
+          << modelToString();
+    }
+  }
 }
 
 /**
@@ -44,70 +109,79 @@ TEST_F(SupermajorityCheckerTest, SuperMajorityCheckWithSize2) {
  * @when check range of voted participants
  * @then correct result
  */
-TEST_F(SupermajorityCheckerTest, SuperMajorityCheckWithSize4) {
-  log_->info("-----------| F(x, 4), x in {0..5} |-----------");
+TEST_P(SupermajorityCheckerTest, SuperMajorityCheckWithSize4) {
+  log_->info("-----------| F(x, 4), x in [0..5] |-----------");
 
-  int N = 4;
-  ASSERT_FALSE(checkSize(0, N));
-  ASSERT_FALSE(checkSize(1, N));
-  ASSERT_FALSE(checkSize(2, N));
-  ASSERT_TRUE(checkSize(3, N));
-  ASSERT_TRUE(checkSize(4, N));
-  ASSERT_FALSE(checkSize(5, N));
+  size_t A = 6; // number of all peers
+  for (size_t i = 0; i < 5; ++i) {
+    if (i >= getSupermajority(A)  // enough votes
+        and i <= A                // not more than total peers amount
+    ) {
+      ASSERT_TRUE(hasSupermajority(i, A))
+          << i << " votes out of " << A << " are supermajority in "
+          << modelToString();
+    } else {
+      ASSERT_FALSE(hasSupermajority(i, A))
+          << i << " votes out of " << A << " are not a supermajority in "
+          << modelToString();
+    }
+  }
 }
 
 /**
- * @given 7 participants, 6 voted
- * @when check range of frequent elements
- * @then correct result
+ * \attention this test does not address possible supermajority on other peers
+ * due to malicious peers sending then votes for other hashes
+ *
+ * @given some peers vote all for one option, others vote each for own option,
+ * and the rest do not vote
+ * @when different amounts of described peer kinds
+ * @then correct decision on supermajority possibility
  */
-TEST_F(SupermajorityCheckerTest, RejectProofSuccessfulCase) {
-  log_->info("-----------| RejectProof(x, 6, 7) in {1..3} |-----------");
-
-  ASSERT_TRUE(hasReject(1, 6, 7));
-  ASSERT_TRUE(hasReject(2, 6, 7));
-  ASSERT_TRUE(hasReject(3, 6, 7));
-}
-
-/**
- * @given 7 participants, 6 voted
- * @when check range of frequent elements
- * @then correct result
- */
-TEST_F(SupermajorityCheckerTest, RejectProofNegativeCase) {
-  log_->info("-----------| RejectProof(x, 6, 7) in {4..6}|-----------");
-
-  ASSERT_FALSE(hasReject(4, 6, 7));
-  ASSERT_FALSE(hasReject(5, 6, 7));
-  ASSERT_FALSE(hasReject(6, 6, 7));
-}
-
-/**
- * @given a pair of peers and a pair different signatures by the first peer
- * @when hasSupermajority is called
- * @then it return false
- */
-TEST_F(SupermajorityCheckerTest, PublicKeyUniqueness) {
-  using namespace shared_model::crypto;
-  using namespace std::string_literals;
-  std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
-  auto make_peer_key = [&peers](const std::string &key) {
-    PublicKey pub_key(key);
-    auto peer = std::make_shared<MockPeer>();
-    EXPECT_CALL(*peer, pubkey()).WillRepeatedly(ReturnRefOfCopy(pub_key));
-
-    peers.push_back(peer);
-    return pub_key;
+TEST_P(CftAndBftSupermajorityCheckerTest, OneLargeAndManySingleVoteGroups) {
+  /**
+   * Make vote groups out of given votes amount such that the largest one has
+   * the given amount of votes.
+   */
+  auto makeVoteGroups = [](size_t largest_group, size_t voted_peers) {
+    BOOST_ASSERT_MSG(
+        largest_group <= voted_peers,
+        "A votes group cannot have more votes than the amount of voted peers!");
+    const size_t num_groups = voted_peers - largest_group + 1;
+    std::vector<size_t> vote_groups(num_groups, 1);
+    vote_groups[0] = largest_group;
+    return vote_groups;
   };
 
-  auto peer_key = make_peer_key(std::string(32, '0'));
-  make_peer_key(std::string(32, '1'));
+  struct Case {
+    size_t V; // Voted peers
+    size_t A; // All peers
+  };
 
-  auto sig = std::make_shared<MockSignature>();
-  EXPECT_CALL(*sig, publicKey()).WillRepeatedly(ReturnRefOfCopy(peer_key));
+  for (const auto &c : std::initializer_list<Case>({{6, 7}, {8, 12}})) {
+    log_->info("--------| ProofOfReject(x, {0}, {1}), x in [1..{0}] |---------",
+               c.V,
+               c.A);
 
-  // previous version of the test relied on Block interface, which stored a set
-  // of signatures by public key
-  std::vector<decltype(sig)> sigs{1, sig};
-  ASSERT_FALSE(hasSupermajority(sigs | boost::adaptors::indirected, peers));
+    size_t L;  // number of votes for the Leading option
+    for (L = 1; L <= c.V; ++L) {
+      const auto vote_groups = makeVoteGroups(L, c.V);
+      const size_t N = c.A - c.V;              // not yet voted
+      const size_t S = getSupermajority(c.A);  // supermajority
+      const size_t Lp =  // max possible votes amount for the largest group
+          L              // the votes we know
+          + N;           // the peers that we have no votes from
+      // Check if any peer on the network can get supermajority:
+      if (Lp >= S) {
+        EXPECT_TRUE(canHaveSupermajority(vote_groups, c.A))
+            << "if " << N << " not yet voted peers "
+            << "vote for option already having " << L << " votes, "
+            << "it will reach supermajority in " << modelToString();
+      } else {
+        EXPECT_FALSE(canHaveSupermajority(vote_groups, c.A))
+            << "even if all " << N << " not yet voted peers "
+            << "vote for option already having " << L << " votes, "
+            << "it will not reach supermajority in " << modelToString();
+      }
+    }
+  }
 }

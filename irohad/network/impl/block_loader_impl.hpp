@@ -13,16 +13,17 @@
 #include "ametsuchi/peer_query_factory.hpp"
 #include "backend/protobuf/proto_block_factory.hpp"
 #include "loader.grpc.pb.h"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 
 namespace iroha {
   namespace network {
     class BlockLoaderImpl : public BlockLoader {
      public:
+      // TODO 30.01.2019 lebdron: IR-264 Remove PeerQueryFactory
       BlockLoaderImpl(
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           shared_model::proto::ProtoBlockFactory factory,
-          logger::Logger log = logger::log("BlockLoaderImpl"));
+          logger::LoggerPtr log);
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       retrieveBlocks(
@@ -57,7 +58,7 @@ namespace iroha {
       std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory_;
       shared_model::proto::ProtoBlockFactory block_factory_;
 
-      logger::Logger log_;
+      logger::LoggerPtr log_;
     };
   }  // namespace network
 }  // namespace iroha

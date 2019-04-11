@@ -14,7 +14,9 @@
 #include "backend/protobuf/transaction.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
+#include "logger/dummy_logger.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/ametsuchi/mock_tx_presence_cache.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "synchronizer/synchronizer_common.hpp"
@@ -28,33 +30,39 @@
 using testing::Return;
 
 struct CommandFixture {
-  std::shared_ptr<torii::CommandService> service_;
-  std::shared_ptr<torii::CommandServiceTransportGrpc> service_transport_;
+  std::shared_ptr<iroha::torii::CommandService> service_;
+  std::shared_ptr<iroha::torii::CommandServiceTransportGrpc> service_transport_;
   std::shared_ptr<iroha::torii::TransactionProcessorImpl> tx_processor_;
   std::shared_ptr<iroha::network::MockPeerCommunicationService> pcs_;
   std::shared_ptr<iroha::MockMstProcessor> mst_processor_;
-  std::shared_ptr<iroha::network::MockConsensusGate> consensus_gate_;
+  std::vector<iroha::torii::CommandServiceTransportGrpc::ConsensusGateEvent>
+      consensus_gate_objects_{2};
+  std::shared_ptr<iroha::torii::CommandServiceImpl::CacheType> cache_;
+  std::shared_ptr<iroha::ametsuchi::MockTxPresenceCache> tx_presence_cache_;
 
   rxcpp::subjects::subject<iroha::network::OrderingEvent> prop_notifier_;
   rxcpp::subjects::subject<iroha::simulator::VerifiedProposalCreatorEvent>
       vprop_notifier_;
   rxcpp::subjects::subject<iroha::synchronizer::SynchronizationEvent>
-      commit_notifier_;
+      sync_event_notifier_;
   rxcpp::subjects::subject<iroha::DataType> mst_notifier_;
   rxcpp::subjects::subject<std::shared_ptr<iroha::MstState>>
       mst_state_notifier_;
   rxcpp::subjects::subject<iroha::consensus::GateObject> consensus_notifier_;
+  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
+      commit_notifier_;
 
   CommandFixture() {
     pcs_ = std::make_shared<iroha::network::MockPeerCommunicationService>();
     EXPECT_CALL(*pcs_, onProposal())
         .WillRepeatedly(Return(prop_notifier_.get_observable()));
-    EXPECT_CALL(*pcs_, on_commit())
-        .WillRepeatedly(Return(commit_notifier_.get_observable()));
+    EXPECT_CALL(*pcs_, onSynchronization())
+        .WillRepeatedly(Return(sync_event_notifier_.get_observable()));
     EXPECT_CALL(*pcs_, onVerifiedProposal())
         .WillRepeatedly(Return(vprop_notifier_.get_observable()));
 
-    mst_processor_ = std::make_shared<iroha::MockMstProcessor>();
+    mst_processor_ =
+        std::make_shared<iroha::MockMstProcessor>(logger::getDummyLoggerPtr());
     EXPECT_CALL(*mst_processor_, onStateUpdateImpl())
         .WillRepeatedly(Return(mst_state_notifier_.get_observable()));
     EXPECT_CALL(*mst_processor_, onPreparedBatchesImpl())
@@ -66,10 +74,21 @@ struct CommandFixture {
     auto status_factory =
         std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
     tx_processor_ = std::make_shared<iroha::torii::TransactionProcessorImpl>(
-        pcs_, mst_processor_, status_bus, status_factory);
+        pcs_,
+        mst_processor_,
+        status_bus,
+        status_factory,
+        commit_notifier_.get_observable(),
+        logger::getDummyLoggerPtr());
     auto storage = std::make_shared<iroha::ametsuchi::MockStorage>();
-    service_ = std::make_shared<torii::CommandServiceImpl>(
-        tx_processor_, storage, status_bus, status_factory);
+    service_ = std::make_shared<iroha::torii::CommandServiceImpl>(
+        tx_processor_,
+        storage,
+        status_bus,
+        status_factory,
+        cache_,
+        tx_presence_cache_,
+        logger::getDummyLoggerPtr());
 
     std::unique_ptr<shared_model::validation::AbstractValidator<
         shared_model::interface::Transaction>>
@@ -96,19 +115,17 @@ struct CommandFixture {
         transaction_batch_factory = std::make_shared<
             shared_model::interface::TransactionBatchFactoryImpl>();
 
-    consensus_gate_ = std::make_shared<iroha::network::MockConsensusGate>();
-    ON_CALL(*consensus_gate_, onOutcome())
-        .WillByDefault(Return(consensus_notifier_.get_observable()));
-
-    service_transport_ = std::make_shared<torii::CommandServiceTransportGrpc>(
-        service_,
-        status_bus,
-        status_factory,
-        transaction_factory,
-        batch_parser,
-        transaction_batch_factory,
-        consensus_gate_,
-        2);
+    service_transport_ =
+        std::make_shared<iroha::torii::CommandServiceTransportGrpc>(
+            service_,
+            status_bus,
+            status_factory,
+            transaction_factory,
+            batch_parser,
+            transaction_batch_factory,
+            rxcpp::observable<>::iterate(consensus_gate_objects_),
+            2,
+            logger::getDummyLoggerPtr());
   }
 };
 

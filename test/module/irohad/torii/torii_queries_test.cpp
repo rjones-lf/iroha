@@ -5,6 +5,7 @@
 
 #include <boost/variant.hpp>
 #include "crypto/keypair.hpp"
+#include "framework/test_logger.hpp"
 #include "module/irohad/ametsuchi/mock_block_query.hpp"
 #include "module/irohad/ametsuchi/mock_query_executor.hpp"
 #include "module/irohad/ametsuchi/mock_storage.hpp"
@@ -22,6 +23,7 @@
 #include "interfaces/query_responses/account_response.hpp"
 #include "interfaces/query_responses/signatories_response.hpp"
 #include "interfaces/query_responses/transactions_response.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "validators/protobuf/proto_query_validator.hpp"
@@ -54,7 +56,8 @@ using ErrorQueryType =
 class ToriiQueriesTest : public testing::Test {
  public:
   virtual void SetUp() {
-    runner = std::make_unique<ServerRunner>(ip + ":0");
+    runner = std::make_unique<ServerRunner>(ip + ":0",
+                                            getTestLogger("ServerRunner"));
     wsv_query = std::make_shared<MockWsvQuery>();
     block_query = std::make_shared<MockBlockQuery>();
     query_executor = std::make_shared<MockQueryExecutor>();
@@ -73,11 +76,19 @@ class ToriiQueriesTest : public testing::Test {
             std::shared_ptr<QueryExecutor>(query_executor))));
 
     auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(
-        storage, storage, pending_txs_storage, query_response_factory);
+        storage,
+        storage,
+        pending_txs_storage,
+        query_response_factory,
+        getTestLogger("QueryProcessor"));
 
     //----------- Server run ----------------
     initQueryFactory();
-    runner->append(std::make_unique<QueryService>(qpi, query_factory))
+    runner
+        ->append(std::make_unique<QueryService>(qpi,
+                                                query_factory,
+                                                blocks_query_factory,
+                                                getTestLogger("QueryService")))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {
@@ -94,7 +105,8 @@ class ToriiQueriesTest : public testing::Test {
     std::unique_ptr<shared_model::validation::AbstractValidator<
         shared_model::interface::Query>>
         query_validator = std::make_unique<
-            shared_model::validation::DefaultSignedQueryValidator>();
+            shared_model::validation::DefaultSignedQueryValidator>(
+            iroha::test::kTestsValidatorsConfig);
     std::unique_ptr<
         shared_model::validation::AbstractValidator<iroha::protocol::Query>>
         proto_query_validator =
@@ -103,6 +115,19 @@ class ToriiQueriesTest : public testing::Test {
         shared_model::interface::Query,
         shared_model::proto::Query>>(std::move(query_validator),
                                      std::move(proto_query_validator));
+
+    auto blocks_query_validator = std::make_unique<
+        shared_model::validation::DefaultSignedBlocksQueryValidator>(
+        iroha::test::kTestsValidatorsConfig);
+    auto proto_blocks_query_validator =
+        std::make_unique<shared_model::validation::ProtoBlocksQueryValidator>();
+
+    blocks_query_factory =
+        std::make_shared<shared_model::proto::ProtoTransportFactory<
+            shared_model::interface::BlocksQuery,
+            shared_model::proto::BlocksQuery>>(
+            std::move(blocks_query_validator),
+            std::move(proto_blocks_query_validator));
   }
 
   std::unique_ptr<ServerRunner> runner;
@@ -119,6 +144,7 @@ class ToriiQueriesTest : public testing::Test {
   std::shared_ptr<shared_model::interface::QueryResponseFactory>
       query_response_factory;
   std::shared_ptr<QueryService::QueryFactoryType> query_factory;
+  std::shared_ptr<QueryService::BlocksQueryFactoryType> blocks_query_factory;
 
   const std::string ip = "127.0.0.1";
   int port;

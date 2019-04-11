@@ -40,9 +40,13 @@ if (NOT pq_FOUND)
   externalproject_add(postgres_postgres
       GIT_REPOSITORY  ${URL}
       GIT_TAG         ${VERSION}
-      CONFIGURE_COMMAND ./configure --without-readline
+      CONFIGURE_COMMAND
+                      ./configure --without-readline
+                      CC=${CMAKE_C_COMPILER}
+
       BUILD_IN_SOURCE 1
-      BUILD_COMMAND ${MAKE} -C ./src/bin/pg_config && ${MAKE} -C ./src/interfaces/libpq
+      BUILD_COMMAND ${MAKE} COPT=${CMAKE_C_FLAGS} -C ./src/bin/pg_config &&
+                    ${MAKE} COPT=${CMAKE_C_FLAGS} -C ./src/interfaces/libpq
       BUILD_BYPRODUCTS ${EP_PREFIX}/src/postgres_postgres/src/interfaces/libpq/libpq.a
       INSTALL_COMMAND "" # remove install step
       TEST_COMMAND "" # remove test step

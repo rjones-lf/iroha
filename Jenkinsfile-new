@@ -37,7 +37,7 @@ def build(Build build) {
     node(build.worker.label) {
       try {
         echo "Worker: ${env.NODE_NAME}"
-        gitNotify ("New CI: " + build.name, "Started...", 'PENDING')
+        gitNotify ("Jenkins: " + build.name, "Started...", 'PENDING')
         build.builder.buildSteps.each {
           it()
         }
@@ -66,9 +66,9 @@ def build(Build build) {
       // ALWAYS
       finally {
         if (currentBuild.currentResult == 'SUCCESS')
-           gitNotify ("New CI: " + build.name, "Finish", 'SUCCESS')
+           gitNotify ("Jenkins: " + build.name, "Finish", 'SUCCESS')
         else
-           gitNotify ("New CI: " + build.name, currentBuild.currentResult, 'FAILURE')
+           gitNotify ("Jenkins: " + build.name, currentBuild.currentResult, 'FAILURE')
 
         build.builder.postSteps.always.each {
           it()
@@ -141,6 +141,7 @@ node ('master') {
   sanitize = false
   cppcheck = false
   fuzzing = false // x64linux_compiler_list= ['clang6']  testing = true testList = "(None)"
+  coredumps = true
   sonar = false
   coverage = false
   coverage_mac = false
@@ -153,8 +154,10 @@ node ('master') {
   specialBranch = false
   parallelism = 0
   useBTF = false
+  forceDockerDevelopBuild = false
+  checkTag = sh(script: 'git describe --tags --exact-match ${scmVars.GIT_COMMIT}', returnStatus: true)
 
-  if (scmVars.GIT_LOCAL_BRANCH in ["master","develop"] || scmVars.CHANGE_BRANCH_LOCAL in ["develop"])
+  if (scmVars.GIT_LOCAL_BRANCH in ["master","develop"] || scmVars.CHANGE_BRANCH_LOCAL in ["develop"] || checkTag == 0 )
     specialBranch =  true
   else
     specialBranch = false
@@ -169,6 +172,8 @@ node ('master') {
     pushDockerTag =  'develop'
   else if (scmVars.GIT_LOCAL_BRANCH == 'master')
     pushDockerTag = 'latest'
+  else if (checkTag == 0 )
+    pushDockerTag = sh(script: 'git describe --tags --exact-match ${GIT_COMMIT}', returnStdout: true).trim().replaceAll('-','_')
   else
     pushDockerTag = 'not-supposed-to-be-pushed'
 
@@ -191,18 +196,19 @@ node ('master') {
         break;
      case 'On open PR':
         // Just hint, not the main way to Notify about build status.
-        gitNotify ("New CI: Merge to trunk", "Please, run: 'Before merge to trunk'", 'PENDING', env.JOB_URL + "/build")
+        gitNotify ("Jenkins: Merge to trunk", "Please, run: 'Before merge to trunk'", 'PENDING', env.JOB_URL + "/build")
         mac_compiler_list = ['appleclang']
+        testList = '()'
         coverage = true
         cppcheck = true
         sonar = true
         break;
      case 'Commit in Open PR':
-        gitNotify ("New CI: Merge to trunk", "Please, run: 'Before merge to trunk'", 'PENDING', env.JOB_URL + "/build")
+        gitNotify ("Jenkins: Merge to trunk", "Please, run: 'Before merge to trunk'", 'PENDING', env.JOB_URL + "/build")
         echo "All Default"
         break;
      case 'Before merge to trunk':
-        gitNotify ("New CI: Merge to trunk", "Started...", 'PENDING')
+        gitNotify ("Jenkins: Merge to trunk", "Started...", 'PENDING')
         x64linux_compiler_list = ['gcc5','gcc7', 'clang6' , 'clang7']
         mac_compiler_list = ['appleclang']
         testing = true
@@ -234,7 +240,8 @@ node ('master') {
   echo "testing=${testing}, testList=${testList}, parallelism=${parallelism}, useBTF=${useBTF}"
   echo "x64linux_compiler_list=${x64linux_compiler_list}"
   echo "mac_compiler_list=${mac_compiler_list}"
-  echo "sanitize=${sanitize}, cppcheck=${cppcheck}, fuzzing=${fuzzing}, sonar=${sonar}, coverage=${coverage}, coverage_mac=${coverage_mac} doxygen=${doxygen}"
+  echo "sanitize=${sanitize}, cppcheck=${cppcheck}, fuzzing=${fuzzing}, coredumps=${coredumps}, sonar=${sonar}, coverage=${coverage}, coverage_mac=${coverage_mac} doxygen=${doxygen}"
+  echo "forceDockerDevelopBuild=${forceDockerDevelopBuild}"
   print scmVars
   print environmentList
 
@@ -255,15 +262,15 @@ node ('master') {
   if(!x64linux_compiler_list.isEmpty()){
     x64LinuxBuildSteps = [{x64LinuxBuildScript.buildSteps(
       parallelism==0 ?x64LinuxWorker.cpusAvailable : parallelism, x64linux_compiler_list, build_type, specialBranch, coverage,
-      testing, testList, cppcheck, sonar, doxygen, packageBuild, sanitize, fuzzing, useBTF, environmentList)}]
+      testing, testList, cppcheck, sonar, doxygen, packageBuild, sanitize, fuzzing, coredumps, useBTF, forceDockerDevelopBuild, environmentList)}]
     //If "master" or "dev" also run Release build
     if(specialBranch && build_type == 'Debug'){
       x64LinuxBuildSteps += [{x64LinuxBuildScript.buildSteps(
       parallelism==0 ?x64LinuxWorker.cpusAvailable : parallelism, x64linux_compiler_list, 'Release', specialBranch, false,
-      false , testList, false, false, false, true, false, false, false, environmentList)}]
+      false , testList, false, false, false, true, false, false, false, false, false, environmentList)}]
     }
     x64LinuxPostSteps = new Builder.PostSteps(
-      always: [{x64LinuxBuildScript.alwaysPostSteps(environmentList)}],
+      always: [{x64LinuxBuildScript.alwaysPostSteps(scmVars, environmentList, coredumps)}],
       success: [{x64LinuxBuildScript.successPostSteps(scmVars, packagePush, pushDockerTag, environmentList)}])
   }
   def x64MacBuildSteps
@@ -303,7 +310,10 @@ node ('master') {
   parallel tasks
 
   if (build_scenario == 'Before merge to trunk')
-    gitNotify ("New CI: Merge to trunk", "Finish", 'SUCCESS')
+    if (currentBuild.currentResult == 'SUCCESS')
+      gitNotify ("Jenkins: Merge to trunk", "Finish", 'SUCCESS')
+    else
+      gitNotify ("Jenkins: Merge to trunk", currentBuild.currentResult, 'FAILURE')
 }
 
 }

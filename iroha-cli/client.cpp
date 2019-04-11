@@ -15,11 +15,15 @@
 
 namespace iroha_cli {
 
-  CliClient::CliClient(std::string target_ip, int port)
+  CliClient::CliClient(std::string target_ip,
+                       int port,
+                       logger::LoggerPtr pb_qry_factory_log)
       : command_client_(
             iroha::network::createClient<iroha::protocol::CommandService_v1>(
-                target_ip + ":" + std::to_string(port))),
-        query_client_(target_ip, port) {}
+                target_ip + ":" + std::to_string(port)),
+            pb_qry_factory_log),
+        query_client_(target_ip, port),
+        pb_qry_factory_log_(std::move(pb_qry_factory_log)) {}
 
   CliClient::Response<CliClient::TxStatus> CliClient::sendTx(
       const shared_model::interface::Transaction &tx) {
@@ -52,7 +56,7 @@ namespace iroha_cli {
       const shared_model::interface::Query &query) {
     CliClient::Response<iroha::protocol::QueryResponse> response;
     // Convert to proto and send to Iroha
-    iroha::model::converters::PbQueryFactory pb_factory;
+    iroha::model::converters::PbQueryFactory pb_factory(pb_qry_factory_log_);
     auto proto_query = static_cast<const shared_model::proto::Query &>(query);
     iroha::protocol::QueryResponse query_response;
     response.status =

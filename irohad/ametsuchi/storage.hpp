@@ -48,7 +48,8 @@ namespace iroha {
        * @param block - block for insertion
        * @return true if inserted
        */
-      virtual bool insertBlock(const shared_model::interface::Block &block) = 0;
+      virtual bool insertBlock(
+          std::shared_ptr<const shared_model::interface::Block> block) = 0;
 
       /**
        * Raw insertion of blocks without validation
@@ -63,7 +64,8 @@ namespace iroha {
        * method called when block is written to the storage
        * @return observable with the Block committed
        */
-      virtual rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+      virtual rxcpp::observable<
+          std::shared_ptr<const shared_model::interface::Block>>
       on_commit() = 0;
 
       /**

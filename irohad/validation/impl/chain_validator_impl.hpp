@@ -11,7 +11,7 @@
 #include <memory>
 
 #include "interfaces/common_objects/types.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -34,10 +34,9 @@ namespace iroha {
   namespace validation {
     class ChainValidatorImpl : public ChainValidator {
      public:
-      explicit ChainValidatorImpl(
-          std::shared_ptr<consensus::yac::SupermajorityChecker>
-              supermajority_checker,
-          logger::Logger log = logger::log("ChainValidator"));
+      ChainValidatorImpl(std::shared_ptr<consensus::yac::SupermajorityChecker>
+                             supermajority_checker,
+                         logger::LoggerPtr log);
 
       bool validateAndApply(
           rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
@@ -61,7 +60,8 @@ namespace iroha {
        * of ledger peers
        */
       bool validateBlock(
-          const shared_model::interface::Block &block,
+          std::shared_ptr<const shared_model::interface::Block> block,
+          // TODO 30.01.2019 lebdron: IR-265 Remove PeerQueryFactory
           ametsuchi::PeerQuery &queries,
           const shared_model::interface::types::HashType &top_hash) const;
 
@@ -71,7 +71,7 @@ namespace iroha {
       std::shared_ptr<consensus::yac::SupermajorityChecker>
           supermajority_checker_;
 
-      logger::Logger log_;
+      logger::LoggerPtr log_;
     };
   }  // namespace validation
 }  // namespace iroha

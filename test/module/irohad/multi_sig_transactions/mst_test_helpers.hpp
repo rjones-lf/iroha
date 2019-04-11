@@ -11,14 +11,12 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "datetime/time.hpp"
 #include "framework/batch_helper.hpp"
+#include "framework/test_logger.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "logger/logger.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
-
-#include "logger/logger.hpp"
-
-static logger::Logger mst_helpers_log_ = logger::log("MST_HELPERS");
 
 inline auto makeKey() {
   return shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
@@ -43,6 +41,8 @@ auto makeTestBatch(TxBuilders... builders) {
 
 template <typename Batch, typename... Signatures>
 auto addSignatures(Batch &&batch, int tx_number, Signatures... signatures) {
+  static logger::LoggerPtr log_ = getTestLogger("addSignatures");
+
   auto insert_signatures = [&](auto &&sig_pair) {
     batch->addSignature(tx_number, sig_pair.first, sig_pair.second);
   };
@@ -55,9 +55,8 @@ auto addSignatures(Batch &&batch, int tx_number, Signatures... signatures) {
   // use unused variable
   (void)temp;
 
-  mst_helpers_log_->info(
-      "Number of signatures was inserted {}",
-      boost::size(batch->transactions().at(tx_number)->signatures()));
+  log_->info("Number of signatures was inserted {}",
+             boost::size(batch->transactions().at(tx_number)->signatures()));
   return std::forward<Batch>(batch);
 }
 
@@ -108,7 +107,7 @@ namespace iroha {
    public:
     explicit TestCompleter() : DefaultCompleter(std::chrono::minutes(0)) {}
 
-    bool operator()(const DataType &batch) const override {
+    bool isCompleted(const DataType &batch) const override {
       return std::all_of(batch->transactions().begin(),
                          batch->transactions().end(),
                          [](const auto &tx) {
@@ -116,12 +115,13 @@ namespace iroha {
                          });
     }
 
-    bool operator()(const DataType &batch,
-                    const TimeType &time) const override {
-      return std::any_of(
-          batch->transactions().begin(),
-          batch->transactions().end(),
-          [&time](const auto &tx) { return tx->createdTime() < time; });
+    bool isExpired(const DataType &batch,
+                   const TimeType &current_time) const override {
+      return std::any_of(batch->transactions().begin(),
+                         batch->transactions().end(),
+                         [&current_time](const auto &tx) {
+                           return tx->createdTime() < current_time;
+                         });
     }
   };
 }  // namespace iroha

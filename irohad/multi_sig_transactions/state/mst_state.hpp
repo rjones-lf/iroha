@@ -6,11 +6,20 @@
 #ifndef IROHA_MST_STATE_HPP
 #define IROHA_MST_STATE_HPP
 
+#include <algorithm>  // std::for_each
+#include <chrono>
 #include <queue>
 #include <unordered_set>
 #include <vector>
 
-#include "logger/logger.hpp"
+#include <boost/bimap.hpp>
+#include <boost/bimap/multiset_of.hpp>
+#include <boost/bimap/unordered_set_of.hpp>
+#include <boost/optional/optional.hpp>
+#include <boost/range/adaptor/map.hpp>
+#include <boost/range/any_range.hpp>
+#include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "logger/logger_fwd.hpp"
 #include "multi_sig_transactions/hash.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
 
@@ -27,16 +36,16 @@ namespace iroha {
      * @param batch - target object for verification
      * @return true, if complete
      */
-    virtual bool operator()(const DataType &batch) const = 0;
+    virtual bool isCompleted(const DataType &batch) const = 0;
 
     /**
-     * Operator checks whether the batch has expired
+     * Check whether the batch has expired
      * @param batch - object for validation
-     * @param time - current time
+     * @param current_time - current time
      * @return true, if the batch has expired
      */
-    virtual bool operator()(const DataType &batch,
-                            const TimeType &time) const = 0;
+    virtual bool isExpired(const DataType &batch,
+                           const TimeType &current_time) const = 0;
 
     virtual ~Completer() = default;
   };
@@ -59,16 +68,17 @@ namespace iroha {
    * Expired if at least one transaction is expired.
    */
   class DefaultCompleter : public Completer {
+   public:
     /**
      * Creates new Completer with a given expiration time for transactions
      * @param expiration_time - expiration time in minutes
      */
-   public:
     explicit DefaultCompleter(std::chrono::minutes expiration_time);
 
-    bool operator()(const DataType &batch) const override;
+    bool isCompleted(const DataType &batch) const override;
 
-    bool operator()(const DataType &tx, const TimeType &time) const override;
+    bool isExpired(const DataType &tx,
+                   const TimeType &current_time) const override;
 
    private:
     std::chrono::minutes expiration_time_;
@@ -82,10 +92,12 @@ namespace iroha {
 
     /**
      * Create empty state
+     * @param log - the logger to use in the new object
      * @param completer - strategy for determine completed and expired batches
      * @return empty mst state
      */
-    static MstState empty(const CompleterType &completer);
+    static MstState empty(logger::LoggerPtr log,
+                          const CompleterType &completer);
 
     /**
      * Add batch to current state
@@ -117,13 +129,6 @@ namespace iroha {
     bool isEmpty() const;
 
     /**
-     * Compares two different MstState's
-     * @param rhs - MstState to compare
-     * @return true is rhs equal to this or false otherwise
-     */
-    bool operator==(const MstState &rhs) const;
-
-    /**
      * @return the batches from the state
      */
     std::unordered_set<DataType,
@@ -132,11 +137,17 @@ namespace iroha {
     getBatches() const;
 
     /**
-     * Erase expired batches
-     * @param time - current time
+     * Erase and return expired batches
+     * @param current_time - current time
      * @return state with expired batches
      */
-    MstState eraseByTime(const TimeType &time);
+    MstState extractExpired(const TimeType &current_time);
+
+    /**
+     * Erase expired batches
+     * @param current_time - current time
+     */
+    void eraseExpired(const TimeType &current_time);
 
     /**
      * Check, if this MST state contains that element
@@ -145,31 +156,41 @@ namespace iroha {
      */
     bool contains(const DataType &element) const;
 
+    /// Apply visitor to all batches.
+    template <typename Visitor>
+    inline void iterateBatches(const Visitor &visitor) const {
+      const auto batches_range = batches_.right | boost::adaptors::map_keys;
+      std::for_each(batches_range.begin(), batches_range.end(), visitor);
+    }
+
+    /// Apply visitor to all transactions.
+    template <typename Visitor>
+    inline void iterateTransactions(const Visitor &visitor) const {
+      for (const auto &batch : batches_.right | boost::adaptors::map_keys) {
+        std::for_each(batch->transactions().begin(),
+                      batch->transactions().end(),
+                      visitor);
+      }
+    }
+
    private:
     // --------------------------| private api |------------------------------
 
-    /**
-     * Class provides operator < for batches
-     */
-    class Less {
-     public:
-      bool operator()(const DataType &left, const DataType &right) const;
-    };
+    using BatchesForwardCollectionType = boost::
+        any_range<BatchPtr, boost::forward_traversal_tag, const BatchPtr &>;
 
-    using InternalStateType =
-        std::unordered_set<DataType,
-                           iroha::model::PointerBatchHasher,
-                           BatchHashEquality>;
+    using BatchesBimap = boost::bimap<
+        boost::bimaps::multiset_of<
+            shared_model::interface::types::TimestampType>,
+        boost::bimaps::unordered_set_of<DataType,
+                                        iroha::model::PointerBatchHasher,
+                                        BatchHashEquality>>;
 
-    using IndexType =
-        std::priority_queue<DataType, std::vector<DataType>, Less>;
-
-    explicit MstState(const CompleterType &completer,
-                      logger::Logger log = logger::log("MstState"));
+    MstState(const CompleterType &completer, logger::LoggerPtr log);
 
     MstState(const CompleterType &completer,
-             const InternalStateType &transactions,
-             logger::Logger log = logger::log("MstState"));
+             const BatchesForwardCollectionType &batches,
+             logger::LoggerPtr log);
 
     /**
      * Insert batch in own state and push it in out_completed_state or
@@ -185,15 +206,21 @@ namespace iroha {
      */
     void rawInsert(const DataType &rhs_tx);
 
+    /**
+     * Erase expired batches, optionally returning them.
+     * @param current_time - current time
+     * @param extracted - optional storage for extracted batches.
+     */
+    void extractExpiredImpl(const TimeType &current_time,
+                            boost::optional<MstState &> extracted);
+
     // -----------------------------| fields |------------------------------
 
     CompleterType completer_;
 
-    InternalStateType internal_state_;
+    BatchesBimap batches_;
 
-    IndexType index_;
-
-    logger::Logger log_;
+    logger::LoggerPtr log_;
   };
 
 }  // namespace iroha

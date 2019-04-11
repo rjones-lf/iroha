@@ -15,6 +15,7 @@
 #include <boost/shared_ptr.hpp>
 #include "module/shared_model/interface_mocks.hpp"
 
+using namespace iroha;
 using namespace iroha::consensus::yac;
 
 using ::testing::Return;
@@ -39,6 +40,9 @@ auto signature() {
 TEST(YacHashProviderTest, MakeYacHashTest) {
   YacHashProviderImpl hash_provider;
   iroha::consensus::Round round{1, 0};
+  auto peer = makePeer("127.0.0.1", shared_model::crypto::PublicKey("111"));
+  auto ledger_peers = std::make_shared<PeerList>(PeerList{peer});
+  auto ledger_state = std::make_shared<LedgerState>(ledger_peers);
   auto proposal = std::make_shared<const MockProposal>();
   EXPECT_CALL(*proposal, hash())
       .WillRepeatedly(
@@ -47,6 +51,9 @@ TEST(YacHashProviderTest, MakeYacHashTest) {
   EXPECT_CALL(*block, payload())
       .WillRepeatedly(
           ReturnRefOfCopy(shared_model::crypto::Blob(std::string())));
+  EXPECT_CALL(*block, hash())
+      .WillRepeatedly(
+          testing::ReturnRefOfCopy(shared_model::crypto::Hash("hash")));
 
   EXPECT_CALL(*block, signatures())
       .WillRepeatedly(
@@ -60,7 +67,7 @@ TEST(YacHashProviderTest, MakeYacHashTest) {
   auto hex_block_hash = block->hash().hex();
 
   auto yac_hash = hash_provider.makeHash(iroha::simulator::BlockCreatorEvent{
-      iroha::simulator::RoundData{proposal, block}, round});
+      iroha::simulator::RoundData{proposal, block}, round, ledger_state});
 
   ASSERT_EQ(round, yac_hash.vote_round);
   ASSERT_EQ(hex_proposal_hash, yac_hash.vote_hashes.proposal_hash);
@@ -70,6 +77,9 @@ TEST(YacHashProviderTest, MakeYacHashTest) {
 TEST(YacHashProviderTest, ToModelHashTest) {
   YacHashProviderImpl hash_provider;
   iroha::consensus::Round round{1, 0};
+  auto peer = makePeer("127.0.0.1", shared_model::crypto::PublicKey("111"));
+  auto ledger_peers = std::make_shared<PeerList>(PeerList{peer});
+  auto ledger_state = std::make_shared<LedgerState>(ledger_peers);
   auto proposal = std::make_shared<MockProposal>();
   EXPECT_CALL(*proposal, hash())
       .WillRepeatedly(
@@ -86,9 +96,12 @@ TEST(YacHashProviderTest, ToModelHashTest) {
                          std::shared_ptr<shared_model::interface::Signature>>>(
                          1, signature()))
                  | boost::adaptors::indirected));
+  EXPECT_CALL(*block, hash())
+      .WillRepeatedly(
+          testing::ReturnRefOfCopy(shared_model::crypto::Hash("hash")));
 
   auto yac_hash = hash_provider.makeHash(iroha::simulator::BlockCreatorEvent{
-      iroha::simulator::RoundData{proposal, block}, round});
+      iroha::simulator::RoundData{proposal, block}, round, ledger_state});
 
   auto model_hash = hash_provider.toModelHash(yac_hash);
 

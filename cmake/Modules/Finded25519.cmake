@@ -12,14 +12,19 @@ find_package_handle_standard_args(ed25519 DEFAULT_MSG
     )
 
 set(URL https://github.com/hyperledger/iroha-ed25519)
-set(VERSION f42953c631fae93011612f6b1ee33f1f88c3f8af)
+set(VERSION b61a1e77af5dc458ed6a5aee395d5b22775a4917)   # v. 2.0.1
 set_target_description(ed25519 "Digital signature algorithm" ${URL} ${VERSION})
 
 if (NOT ed25519_FOUND)
   externalproject_add(hyperledger_ed25519
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
-      CMAKE_ARGS     -DTESTING=OFF -DBUILD=STATIC
+      CMAKE_ARGS
+        -DTESTING=OFF
+        -DBUILD=STATIC
+        -DHASH=sha3_brainhub
+        -DEDIMPL=ref10
+        ${DEPS_CMAKE_ARGS}
       PATCH_COMMAND  ${PATCH_RANDOM}
       BUILD_BYPRODUCTS ${EP_PREFIX}/src/hyperledger_ed25519-build/${CMAKE_STATIC_LIBRARY_PREFIX}ed25519${CMAKE_STATIC_LIBRARY_SUFFIX}
       INSTALL_COMMAND "" # remove install step

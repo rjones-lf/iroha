@@ -12,7 +12,7 @@
 #include <boost/optional.hpp>
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "interfaces/iroha_internal/block_json_deserializer.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -29,14 +29,14 @@ namespace iroha {
           KeyValueStorage &file_store,
           std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
               converter,
-          logger::Logger log = logger::log("PostgresBlockQuery"));
+          logger::LoggerPtr log);
 
       PostgresBlockQuery(
           std::unique_ptr<soci::session> sql,
           KeyValueStorage &file_store,
           std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
               converter,
-          logger::Logger log = logger::log("PostgresBlockQuery"));
+          logger::LoggerPtr log);
 
       std::vector<wBlock> getBlocks(
           shared_model::interface::types::HeightType height,
@@ -71,7 +71,7 @@ namespace iroha {
       std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
           converter_;
 
-      logger::Logger log_;
+      logger::LoggerPtr log_;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

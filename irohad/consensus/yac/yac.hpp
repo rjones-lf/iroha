@@ -16,7 +16,7 @@
 #include "consensus/yac/storage/yac_vote_storage.hpp"  // for VoteStorage
 #include "consensus/yac/transport/yac_network_interface.hpp"  // for YacNetworkNotifications
 #include "consensus/yac/yac_gate.hpp"                         // for HashGate
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -37,14 +37,14 @@ namespace iroha {
             std::shared_ptr<YacCryptoProvider> crypto,
             std::shared_ptr<Timer> timer,
             ClusterOrdering order,
-            logger::Logger log = logger::log("YAC"));
+            logger::LoggerPtr log);
 
         Yac(YacVoteStorage vote_storage,
             std::shared_ptr<YacNetwork> network,
             std::shared_ptr<YacCryptoProvider> crypto,
             std::shared_ptr<Timer> timer,
             ClusterOrdering order,
-            logger::Logger log = logger::log("YAC"));
+            logger::LoggerPtr log);
 
         // ------|Hash gate|------
 
@@ -78,6 +78,9 @@ namespace iroha {
         boost::optional<std::shared_ptr<shared_model::interface::Peer>>
         findPeer(const VoteMessage &vote);
 
+        /// Remove votes from unknown peers from given vector.
+        void removeUnknownPeersVotes(std::vector<VoteMessage> &votes);
+
         // ------|Apply data|------
         void applyState(const std::vector<VoteMessage> &state);
 
@@ -85,20 +88,22 @@ namespace iroha {
         void propagateState(const std::vector<VoteMessage> &msg);
         void propagateStateDirectly(const shared_model::interface::Peer &to,
                                     const std::vector<VoteMessage> &msg);
+        void tryPropagateBack(const std::vector<VoteMessage> &state);
 
-        // ------|Fields|------
-        YacVoteStorage vote_storage_;
-        std::shared_ptr<YacNetwork> network_;
-        std::shared_ptr<YacCryptoProvider> crypto_;
-        std::shared_ptr<Timer> timer_;
-        rxcpp::subjects::subject<Answer> notifier_;
+        // ------|Logger|------
+        logger::LoggerPtr log_;
+
         std::mutex mutex_;
 
         // ------|One round|------
         ClusterOrdering cluster_order_;
 
-        // ------|Logger|------
-        logger::Logger log_;
+        // ------|Fields|------
+        rxcpp::subjects::subject<Answer> notifier_;
+        YacVoteStorage vote_storage_;
+        std::shared_ptr<YacNetwork> network_;
+        std::shared_ptr<YacCryptoProvider> crypto_;
+        std::shared_ptr<Timer> timer_;
       };
     }  // namespace yac
   }    // namespace consensus

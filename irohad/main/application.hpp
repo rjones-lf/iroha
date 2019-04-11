@@ -8,8 +8,10 @@
 
 #include "consensus/consensus_block_cache.hpp"
 #include "cryptography/crypto_provider/abstract_crypto_model_signer.hpp"
+#include "interfaces/queries/blocks_query.hpp"
 #include "interfaces/queries/query.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
+#include "logger/logger_manager_fwd.hpp"
 #include "main/impl/block_loader_init.hpp"
 #include "main/impl/consensus_init.hpp"
 #include "main/impl/on_demand_ordering_init.hpp"
@@ -85,6 +87,7 @@ class Irohad {
    * transactions
    * @param stale_stream_max_rounds - maximum number of rounds between
    * consecutive status emissions
+   * @param logger_manager - the logger manager to use
    * @param opt_mst_gossip_params - parameters for Gossip MST propagation
    * (optional). If not provided, disables mst processing support
    * TODO mboldyrev 03.11.2018 IR-1844 Refactor the constructor.
@@ -101,6 +104,7 @@ class Irohad {
          const shared_model::crypto::Keypair &keypair,
          std::chrono::milliseconds max_rounds_delay,
          size_t stale_stream_max_rounds,
+         logger::LoggerManagerTreePtr logger_manager,
          const boost::optional<iroha::GossipPropagationStrategyParams>
              &opt_mst_gossip_params = boost::none);
 
@@ -196,8 +200,6 @@ class Irohad {
   std::shared_ptr<iroha::ametsuchi::Storage> storage;
 
  protected:
-  logger::Logger log_;
-
   // initialization objects
   iroha::network::OnDemandOrderingInit ordering_init;
   iroha::consensus::yac::YacInit yac_init;
@@ -219,6 +221,8 @@ class Irohad {
   std::shared_ptr<shared_model::interface::TransactionBatchParser> batch_parser;
 
   // validators
+  std::shared_ptr<shared_model::validation::ValidatorsConfig>
+      validators_config_;
   std::shared_ptr<iroha::validation::StatefulValidator> stateful_validator;
   std::shared_ptr<iroha::validation::ChainValidator> chain_validator;
 
@@ -245,6 +249,12 @@ class Irohad {
       shared_model::interface::Query,
       iroha::protocol::Query>>
       query_factory;
+
+  // blocks query factory
+  std::shared_ptr<shared_model::interface::AbstractTransportFactory<
+      shared_model::interface::BlocksQuery,
+      iroha::protocol::BlocksQuery>>
+      blocks_query_factory;
 
   // persistent cache
   std::shared_ptr<iroha::ametsuchi::TxPresenceCache> persistent_cache;
@@ -299,6 +309,10 @@ class Irohad {
 
   std::unique_ptr<ServerRunner> torii_server;
   std::unique_ptr<ServerRunner> internal_server;
+
+  logger::LoggerManagerTreePtr log_manager_;  ///< application root log manager
+
+  logger::LoggerPtr log_;  ///< log for local messages
 };
 
 #endif  // IROHA_APPLICATION_HPP

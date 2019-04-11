@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 #include "endpoint_mock.grpc.pb.h"
 #include "framework/mock_stream.h"
+#include "framework/test_logger.hpp"
 
 using testing::_;
 using testing::Invoke;
@@ -19,7 +20,8 @@ class CommandSyncClientTest : public testing::Test {
   void SetUp() override {
     auto ustub = std::make_unique<iroha::protocol::MockCommandService_v1Stub>();
     stub = ustub.get();
-    client = std::make_shared<torii::CommandSyncClient>(std::move(ustub));
+    client = std::make_shared<torii::CommandSyncClient>(
+        std::move(ustub), getTestLogger("CommandSyncClient"));
   }
 
   iroha::protocol::MockCommandService_v1Stub *stub;

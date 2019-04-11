@@ -3,16 +3,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "validation/impl/chain_validator_impl.hpp"
 
 #include "ametsuchi/mutable_storage.hpp"
 #include "builders/protobuf/transaction.hpp"
+#include "consensus/yac/supermajority_checker.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/default_hash_provider.hpp"
 #include "cryptography/keypair.hpp"
+#include "framework/test_logger.hpp"
 #include "module/shared_model/builders/protobuf/block.hpp"
+
+// TODO mboldyrev 14.02.2019 IR-324 Use supermajority checker mock
+static const iroha::consensus::yac::ConsistencyModel kConsistencyModel =
+    iroha::consensus::yac::ConsistencyModel::kBft;
 
 namespace iroha {
 
@@ -21,7 +26,7 @@ namespace iroha {
     void SetUp() override {
       ametsuchi::AmetsuchiTest::SetUp();
       validator = std::make_shared<validation::ChainValidatorImpl>(
-          std::make_shared<consensus::yac::SupermajorityCheckerImpl>());
+          supermajority_checker, getTestLogger("ChainValidator"));
 
       for (size_t i = 0; i < 5; ++i) {
         keys.push_back(shared_model::crypto::DefaultCryptoAlgorithmType::
@@ -60,10 +65,11 @@ namespace iroha {
           .build();
     }
 
-    /// Complete wrapper and return a signed object
+    /// Complete wrapper and return a signed object through pointer
     template <typename Wrapper>
-    auto completeBlock(Wrapper &&wrapper) {
-      return std::forward<Wrapper>(wrapper).finish();
+    std::shared_ptr<shared_model::interface::Block> completeBlock(
+        Wrapper &&wrapper) {
+      return clone(std::forward<Wrapper>(wrapper).finish());
     }
 
     /// Create mutable storage from initialized storage
@@ -108,14 +114,19 @@ namespace iroha {
 
     std::shared_ptr<validation::ChainValidatorImpl> validator;
     std::vector<shared_model::crypto::Keypair> keys;
+    std::shared_ptr<consensus::yac::SupermajorityChecker>
+        supermajority_checker = consensus::yac::getSupermajorityChecker(
+            kConsistencyModel  // TODO mboldyrev 13.12.2018 IR-
+                               // Parametrize the tests with
+                               // consistency models
+        );
   };
 
   /**
    * @given initialized storage
    * block 1 - initial block with 4 peers
-   * block 2 - new peer added. signed by supermajority of ledger peers
-   * block 3 - signed by supermajority of ledger peers, contains signature of
-   * new peer
+   * block 2 - new peer added. signed by all ledger peers
+   * block 3 - signed by all ledger peers, contains signature of new peer
    * @when blocks 2 and 3 are validated
    * @then result is successful
    */
@@ -124,50 +135,50 @@ namespace iroha {
 
     auto add_peer =
         completeTx(baseTx().addPeer("0.0.0.0:50545", keys.at(4).publicKey()));
-    auto block2 = completeBlock(baseBlock({add_peer}, 2, block1.hash())
+    auto block2 = completeBlock(baseBlock({add_peer}, 2, block1->hash())
                                     .signAndAddSignature(keys.at(0))
                                     .signAndAddSignature(keys.at(1))
                                     .signAndAddSignature(keys.at(2)));
 
-    auto block3 = completeBlock(baseBlock({dummyTx(3)}, 3, block2.hash())
+    auto block3 = completeBlock(baseBlock({dummyTx(3)}, 3, block2->hash())
                                     .signAndAddSignature(keys.at(0))
                                     .signAndAddSignature(keys.at(1))
                                     .signAndAddSignature(keys.at(2))
                                     .signAndAddSignature(keys.at(3))
                                     .signAndAddSignature(keys.at(4)));
 
-    ASSERT_TRUE(createAndValidateChain({clone(block2), clone(block3)}));
+    ASSERT_TRUE(createAndValidateChain({block2, block3}));
   }
 
   /**
    * @given initialized storage with 4 peers
    * block 1 - initial block with 4 peers
-   * block 2 - signed by supermajority of ledger peers
-   * block 3 - signed by supermajority of ledger peers
+   * block 2 - signed by all ledger peers
+   * block 3 - signed by all ledger peers
    * @when blocks 2 and 3 are validated
    * @then result is successful
    */
   TEST_F(ChainValidatorStorageTest, NoPeerAdded) {
     auto block1 = generateAndApplyFirstBlock();
 
-    auto block2 = completeBlock(baseBlock({dummyTx(2)}, 2, block1.hash())
+    auto block2 = completeBlock(baseBlock({dummyTx(2)}, 2, block1->hash())
                                     .signAndAddSignature(keys.at(0))
                                     .signAndAddSignature(keys.at(1))
                                     .signAndAddSignature(keys.at(2)));
 
-    auto block3 = completeBlock(baseBlock({dummyTx(3)}, 3, block2.hash())
+    auto block3 = completeBlock(baseBlock({dummyTx(3)}, 3, block2->hash())
                                     .signAndAddSignature(keys.at(0))
                                     .signAndAddSignature(keys.at(1))
                                     .signAndAddSignature(keys.at(2))
                                     .signAndAddSignature(keys.at(3)));
 
-    ASSERT_TRUE(createAndValidateChain({clone(block2), clone(block3)}));
+    ASSERT_TRUE(createAndValidateChain({block2, block3}));
   }
 
   /**
    * @given initialized storage
    * block 1 - initial block with 4 peers
-   * block 2 - invalid previous hash, signed by supermajority
+   * block 2 - invalid previous hash, signed by all peers
    * @when block 2 is validated
    * @then result is not successful
    */
@@ -181,9 +192,10 @@ namespace iroha {
                       shared_model::crypto::Blob("bad_hash")))
             .signAndAddSignature(keys.at(0))
             .signAndAddSignature(keys.at(1))
-            .signAndAddSignature(keys.at(2)));
+            .signAndAddSignature(keys.at(2))
+            .signAndAddSignature(keys.at(3)));
 
-    ASSERT_FALSE(createAndValidateChain({clone(block2)}));
+    ASSERT_FALSE(createAndValidateChain({block2}));
   }
 
   /**
@@ -196,11 +208,13 @@ namespace iroha {
   TEST_F(ChainValidatorStorageTest, NoSupermajority) {
     auto block1 = generateAndApplyFirstBlock();
 
-    auto block2 = completeBlock(baseBlock({dummyTx(2)}, 2, block1.hash())
+    ASSERT_FALSE(supermajority_checker->hasSupermajority(2, 4))
+        << "This test assumes that 2 out of 4 peers do not have supermajority!";
+    auto block2 = completeBlock(baseBlock({dummyTx(2)}, 2, block1->hash())
                                     .signAndAddSignature(keys.at(0))
                                     .signAndAddSignature(keys.at(1)));
 
-    ASSERT_FALSE(createAndValidateChain({clone(block2)}));
+    ASSERT_FALSE(createAndValidateChain({block2}));
   }
 
 }  // namespace iroha
