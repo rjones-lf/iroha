@@ -698,7 +698,7 @@ Irohad::RunResult Irohad::run() {
                 [](auto &&peer_query) { return peer_query->getLedgerPeers(); };
 
             auto initial_ledger_state = std::make_shared<LedgerState>(
-                std::make_unique<PeerList>(peers.value()));
+                std::make_unique<PeerList>(peers.value()), block->height());
 
             pcs->onSynchronization().subscribe(
                 ordering_init.sync_event_notifier.get_subscriber());

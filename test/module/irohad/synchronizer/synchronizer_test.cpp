@@ -98,7 +98,7 @@ class SynchronizerTest : public ::testing::Test {
                                            block_loader,
                                            getTestLogger("Synchronizer"));
 
-    ledger_state = std::make_shared<LedgerState>(ledger_peers);
+    ledger_state = std::make_shared<LedgerState>(ledger_peers, kHeight - 1);
   }
 
   std::shared_ptr<shared_model::interface::Block> makeCommit(
@@ -510,7 +510,9 @@ TEST_F(SynchronizerTest, VotedForOtherCommitPrepared) {
 
   EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
 
-  EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
+  EXPECT_CALL(*mutable_factory, commit_(_))
+      .WillOnce(
+          Return(ByMove(std::make_unique<LedgerState>(ledger_peers, kHeight))));
 
   EXPECT_CALL(*block_loader, retrieveBlocks(_, _))
       .WillRepeatedly(Return(rxcpp::observable<>::just(commit_message)));
@@ -586,7 +588,8 @@ TEST_F(SynchronizerTest, CommitFailureVoteOther) {
   mutableStorageExpectChain(*mutable_factory, {});
 
   EXPECT_CALL(*mutable_factory, commit_(_))
-      .WillOnce(Return(ByMove(boost::none)));
+      .WillOnce(
+          Return(ByMove(std::make_unique<LedgerState>(ledger_peers, kHeight))));
   EXPECT_CALL(*chain_validator, validateAndApply(ChainEq({commit_message}), _))
       .WillOnce(Return(true));
   EXPECT_CALL(*block_loader, retrieveBlocks(_, _))
