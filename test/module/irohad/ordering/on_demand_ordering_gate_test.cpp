@@ -56,12 +56,16 @@ class OnDemandOrderingGateTest : public ::testing::Test {
         tx_cache,
         1000,
         getTestLogger("OrderingGate"));
+
+    auto peer = makePeer("127.0.0.1", shared_model::crypto::PublicKey("111"));
+    auto ledger_peers = std::make_shared<PeerList>(PeerList{peer});
+    ledger_state = std::make_shared<LedgerState>(ledger_peers);
   }
 
   rxcpp::subjects::subject<
       std::shared_ptr<const cache::OrderingGateCache::HashesSetType>>
       processed_tx_hashes;
-  rxcpp::subjects::subject<iroha::consensus::Round> rounds;
+  rxcpp::subjects::subject<OnDemandOrderingGate::RoundSwitch> rounds;
   std::shared_ptr<MockOnDemandOrderingService> ordering_service;
   std::shared_ptr<MockOdOsNotification> notification;
   NiceMock<MockUnsafeProposalFactory> *factory;
@@ -71,6 +75,8 @@ class OnDemandOrderingGateTest : public ::testing::Test {
   std::shared_ptr<cache::MockOrderingGateCache> cache;
 
   const consensus::Round round = {2, kFirstRejectRound};
+
+  std::shared_ptr<LedgerState> ledger_state;
 };
 
 /**
@@ -111,12 +117,17 @@ TEST_F(OnDemandOrderingGateTest, BlockEvent) {
   EXPECT_CALL(*notification, onRequestProposal(round))
       .WillOnce(Return(ByMove(std::move(oproposal))));
 
+  auto event = OnDemandOrderingGate::RoundSwitch(round, ledger_state);
+
   auto gate_wrapper =
       make_test_subscriber<CallExact>(ordering_gate->onProposal(), 1);
-  gate_wrapper.subscribe(
-      [&](auto val) { ASSERT_EQ(proposal, getProposalUnsafe(val).get()); });
+  gate_wrapper.subscribe([&](auto val) {
+    ASSERT_EQ(proposal, getProposalUnsafe(val).get());
+    EXPECT_EQ(*val.ledger_state->ledger_peers,
+              *event.ledger_state->ledger_peers);
+  });
 
-  rounds.get_subscriber().on_next(round);
+  rounds.get_subscriber().on_next(event);
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -143,12 +154,17 @@ TEST_F(OnDemandOrderingGateTest, EmptyEvent) {
   EXPECT_CALL(*notification, onRequestProposal(round))
       .WillOnce(Return(ByMove(std::move(oproposal))));
 
+  auto event = OnDemandOrderingGate::RoundSwitch(round, ledger_state);
+
   auto gate_wrapper =
       make_test_subscriber<CallExact>(ordering_gate->onProposal(), 1);
-  gate_wrapper.subscribe(
-      [&](auto val) { ASSERT_EQ(proposal, getProposalUnsafe(val).get()); });
+  gate_wrapper.subscribe([&](auto val) {
+    ASSERT_EQ(proposal, getProposalUnsafe(val).get());
+    EXPECT_EQ(*val.ledger_state->ledger_peers,
+              *event.ledger_state->ledger_peers);
+  });
 
-  rounds.get_subscriber().on_next(round);
+  rounds.get_subscriber().on_next(event);
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -171,7 +187,8 @@ TEST_F(OnDemandOrderingGateTest, BlockEventNoProposal) {
       make_test_subscriber<CallExact>(ordering_gate->onProposal(), 1);
   gate_wrapper.subscribe([&](auto val) { ASSERT_FALSE(val.proposal); });
 
-  rounds.get_subscriber().on_next(round);
+  rounds.get_subscriber().on_next(
+      OnDemandOrderingGate::RoundSwitch(round, ledger_state));
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -194,7 +211,8 @@ TEST_F(OnDemandOrderingGateTest, EmptyEventNoProposal) {
       make_test_subscriber<CallExact>(ordering_gate->onProposal(), 1);
   gate_wrapper.subscribe([&](auto val) { ASSERT_FALSE(val.proposal); });
 
-  rounds.get_subscriber().on_next(round);
+  rounds.get_subscriber().on_next(
+      OnDemandOrderingGate::RoundSwitch(round, ledger_state));
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -247,7 +265,8 @@ TEST_F(OnDemandOrderingGateTest, ReplayedTransactionInProposal) {
   auto gate_wrapper =
       make_test_subscriber<CallExact>(ordering_gate->onProposal(), 1);
   gate_wrapper.subscribe([&](auto proposal) {});
-  rounds.get_subscriber().on_next(round);
+  rounds.get_subscriber().on_next(
+      OnDemandOrderingGate::RoundSwitch(round, ledger_state));
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -279,7 +298,8 @@ TEST_F(OnDemandOrderingGateTest, PopNonEmptyBatchesFromTheCache) {
   EXPECT_CALL(*notification, onBatches(UnorderedElementsAreArray(collection)))
       .Times(1);
 
-  rounds.get_subscriber().on_next(round);
+  rounds.get_subscriber().on_next(
+      OnDemandOrderingGate::RoundSwitch(round, ledger_state));
 }
 
 /**
@@ -296,7 +316,8 @@ TEST_F(OnDemandOrderingGateTest, PopEmptyBatchesFromTheCache) {
       .Times(1);
   EXPECT_CALL(*notification, onBatches(_)).Times(0);
 
-  rounds.get_subscriber().on_next(round);
+  rounds.get_subscriber().on_next(
+      OnDemandOrderingGate::RoundSwitch(round, ledger_state));
 }
 
 /**
@@ -321,5 +342,6 @@ TEST_F(OnDemandOrderingGateTest, BatchesRemoveFromCache) {
   hashes->emplace(hash1);
   hashes->emplace(hash2);
   processed_tx_hashes.get_subscriber().on_next(hashes);
-  rounds.get_subscriber().on_next(round);
+  rounds.get_subscriber().on_next(
+      OnDemandOrderingGate::RoundSwitch(round, ledger_state));
 }

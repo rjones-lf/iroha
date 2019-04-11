@@ -27,7 +27,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
     rxcpp::observable<
         std::shared_ptr<const cache::OrderingGateCache::HashesSetType>>
         processed_tx_hashes,
-    rxcpp::observable<iroha::consensus::Round> round_switch_events,
+    rxcpp::observable<RoundSwitch> round_switch_events,
     std::shared_ptr<cache::OrderingGateCache> cache,
     std::shared_ptr<shared_model::interface::UnsafeProposalFactory> factory,
     std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
@@ -45,20 +45,22 @@ OnDemandOrderingGate::OnDemandOrderingGate(
             cache_->remove(*hashes);
           })),
       round_switch_subscription_(
-          round_switch_events.subscribe([this](auto new_round) {
-            log_->debug("Current: {}", new_round);
+          round_switch_events.subscribe([this](auto event) {
+            log_->debug("Current: {}", event.next_round);
 
             // notify our ordering service about new round
-            ordering_service_->onCollaborationOutcome(new_round);
+            ordering_service_->onCollaborationOutcome(event.next_round);
 
             this->sendCachedTransactions();
 
             // request proposal for the current round
             auto proposal = this->processProposalRequest(
-                network_client_->onRequestProposal(new_round));
+                network_client_->onRequestProposal(event.next_round));
             // vote for the object received from the network
             proposal_notifier_.get_subscriber().on_next(
-                network::OrderingEvent{std::move(proposal), new_round});
+                network::OrderingEvent{std::move(proposal),
+                                       event.next_round,
+                                       std::move(event.ledger_state)});
           })),
       cache_(std::move(cache)),
       proposal_factory_(std::move(factory)),

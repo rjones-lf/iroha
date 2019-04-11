@@ -9,31 +9,36 @@
 namespace iroha {
   namespace consensus {
     namespace yac {
-      TimerImpl::TimerImpl(
-          std::function<rxcpp::observable<TimeoutType>()> invoke_delay)
-          : invoke_delay_(std::move(invoke_delay)) {}
+      TimerImpl::TimerImpl(std::chrono::milliseconds delay_milliseconds,
+                           rxcpp::observe_on_one_worker coordination)
+          : delay_milliseconds_(delay_milliseconds),
+            // use the same worker for all the invocations
+            coordination_(coordination.create_coordinator(coordinator_lifetime_)
+                              .get_scheduler()) {}
 
       void TimerImpl::invokeAfterDelay(std::function<void()> handler) {
         deny();
-        auto handle = invoke_delay_().subscribe(
-            [handler{std::move(handler)}](auto) { handler(); });
+        auto timer_lifetime =
+            rxcpp::observable<>::timer(delay_milliseconds_, coordination_)
+                .subscribe([handler{std::move(handler)}](auto) { handler(); });
         {
-          std::lock_guard<std::mutex> lock(handle_mutex);
-          handle_ = handle;
+          std::lock_guard<std::mutex> lock(timer_lifetime_mutex);
+          timer_lifetime_ = timer_lifetime;
         }
       }
 
       void TimerImpl::deny() {
-        rxcpp::composite_subscription handle;
+        rxcpp::composite_subscription timer_lifetime;
         {
-          std::lock_guard<std::mutex> lock(handle_mutex);
-          handle = handle_;
+          std::lock_guard<std::mutex> lock(timer_lifetime_mutex);
+          timer_lifetime = timer_lifetime_;
         }
-        handle.unsubscribe();
+        timer_lifetime.unsubscribe();
       }
 
       TimerImpl::~TimerImpl() {
         deny();
+        coordinator_lifetime_.unsubscribe();
       }
     }  // namespace yac
   }    // namespace consensus

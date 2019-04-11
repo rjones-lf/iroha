@@ -102,6 +102,15 @@ namespace iroha {
                                     const std::vector<VoteMessage> &msg);
         void tryPropagateBack(const std::vector<VoteMessage> &state);
 
+        // ------|Logger|------
+        logger::LoggerPtr log_;
+
+        std::mutex mutex_;
+
+        // ------|One round|------
+        ClusterOrdering cluster_order_;
+        Round round_;
+
         // ------|Fields|------
         rxcpp::observe_on_one_worker worker_;
         rxcpp::composite_subscription notifier_lifetime_;
@@ -110,14 +119,6 @@ namespace iroha {
         std::shared_ptr<YacNetwork> network_;
         std::shared_ptr<YacCryptoProvider> crypto_;
         std::shared_ptr<Timer> timer_;
-        std::mutex mutex_;
-
-        // ------|One round|------
-        ClusterOrdering cluster_order_;
-        Round round_;
-
-        // ------|Logger|------
-        logger::LoggerPtr log_;
       };
     }  // namespace yac
   }    // namespace consensus

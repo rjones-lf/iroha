@@ -71,15 +71,15 @@ namespace iroha {
                Round round,
                rxcpp::observe_on_one_worker worker,
                logger::LoggerPtr log)
-          : worker_(worker),
+          : log_(std::move(log)),
+            cluster_order_(order),
+            round_(round),
+            worker_(worker),
             notifier_(worker_, notifier_lifetime_),
             vote_storage_(std::move(vote_storage)),
             network_(std::move(network)),
             crypto_(std::move(crypto)),
-            timer_(std::move(timer)),
-            cluster_order_(order),
-            round_(round),
-            log_(std::move(log)) {}
+            timer_(std::move(timer)) {}
 
       Yac::~Yac() {
         notifier_lifetime_.unsubscribe();

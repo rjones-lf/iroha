@@ -16,15 +16,13 @@ namespace iroha {
     namespace yac {
       class TimerImpl : public Timer {
        public:
-        /// Delay observable type
-        using TimeoutType = long;
-
         /**
          * Constructor
-         * @param invoke_delay cold observable which specifies invoke strategy
+         * @param delay_milliseconds delay before the next method invoke
+         * @param coordination factory for coordinators to run the timer on
          */
-        explicit TimerImpl(
-            std::function<rxcpp::observable<TimeoutType>()> invoke_delay);
+        TimerImpl(std::chrono::milliseconds delay_milliseconds,
+                  rxcpp::observe_on_one_worker coordination);
         TimerImpl(const TimerImpl &) = delete;
         TimerImpl &operator=(const TimerImpl &) = delete;
 
@@ -34,9 +32,11 @@ namespace iroha {
         ~TimerImpl() override;
 
        private:
-        std::mutex handle_mutex;
-        std::function<rxcpp::observable<TimeoutType>()> invoke_delay_;
-        rxcpp::composite_subscription handle_;
+        std::mutex timer_lifetime_mutex;
+        std::chrono::milliseconds delay_milliseconds_;
+        rxcpp::composite_subscription coordinator_lifetime_;
+        rxcpp::observe_on_one_worker coordination_;
+        rxcpp::composite_subscription timer_lifetime_;
       };
     }  // namespace yac
   }    // namespace consensus

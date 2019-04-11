@@ -13,6 +13,7 @@
 #include "builders/protobuf/queries.hpp"
 #include "framework/test_logger.hpp"
 #include "main/server_runner.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "module/irohad/torii/processor/mock_query_processor.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "torii/query_client.hpp"
@@ -62,7 +63,8 @@ class ToriiQueryServiceTest : public ::testing::Test {
     std::unique_ptr<shared_model::validation::AbstractValidator<
         shared_model::interface::Query>>
         query_validator = std::make_unique<
-            shared_model::validation::DefaultSignedQueryValidator>();
+            shared_model::validation::DefaultSignedQueryValidator>(
+            iroha::test::kTestsValidatorsConfig);
     std::unique_ptr<
         shared_model::validation::AbstractValidator<iroha::protocol::Query>>
         proto_query_validator =
@@ -73,7 +75,8 @@ class ToriiQueryServiceTest : public ::testing::Test {
                                      std::move(proto_query_validator));
 
     auto blocks_query_validator = std::make_unique<
-        shared_model::validation::DefaultSignedBlocksQueryValidator>();
+        shared_model::validation::DefaultSignedBlocksQueryValidator>(
+        iroha::test::kTestsValidatorsConfig);
     auto proto_blocks_query_validator =
         std::make_unique<shared_model::validation::ProtoBlocksQueryValidator>();
     blocks_query_factory =

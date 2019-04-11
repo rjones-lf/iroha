@@ -102,11 +102,9 @@ namespace iroha {
 
       mst_processor_->onStateUpdate().subscribe([this](auto &&state) {
         log_->info("MST state updated");
-        for (auto &&batch : state->getBatches()) {
-          for (auto &&tx : batch->transactions()) {
-            this->publishStatus(TxStatusType::kMstPending, tx->hash());
-          }
-        }
+        state->iterateTransactions([this](const auto &tx) {
+          this->publishStatus(TxStatusType::kMstPending, tx->hash());
+        });
       });
       mst_processor_->onPreparedBatches().subscribe([this](auto &&batch) {
         log_->info("MST batch prepared");

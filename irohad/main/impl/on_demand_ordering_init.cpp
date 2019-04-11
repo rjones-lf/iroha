@@ -258,7 +258,8 @@ namespace iroha {
                     log->error("unknown SynchronizationOutcomeType");
                     assert(false);
                 }
-                return current_round;
+                return ordering::OnDemandOrderingGate::RoundSwitch(
+                    std::move(current_round), event.ledger_state);
               }),
           std::move(cache),
           std::move(proposal_factory),

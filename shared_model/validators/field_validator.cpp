@@ -62,7 +62,8 @@ namespace shared_model {
     const std::regex FieldValidator::detail_key_regex_(detail_key_pattern_);
     const std::regex FieldValidator::role_id_regex_(role_id_pattern_);
 
-    FieldValidator::FieldValidator(time_t future_gap,
+    FieldValidator::FieldValidator(std::shared_ptr<ValidatorsConfig> config,
+                                   time_t future_gap,
                                    TimeFunction time_provider)
         : future_gap_(future_gap), time_provider_(time_provider) {}
 

@@ -32,13 +32,23 @@ namespace iroha {
      */
     class OnDemandOrderingGate : public network::OrderingGate {
      public:
+      struct RoundSwitch {
+        consensus::Round next_round;
+        std::shared_ptr<LedgerState> ledger_state;
+
+        RoundSwitch(consensus::Round next_round,
+                    std::shared_ptr<LedgerState> ledger_state)
+            : next_round(std::move(next_round)),
+              ledger_state(std::move(ledger_state)) {}
+      };
+
       OnDemandOrderingGate(
           std::shared_ptr<OnDemandOrderingService> ordering_service,
           std::shared_ptr<transport::OdOsNotification> network_client,
           rxcpp::observable<
               std::shared_ptr<const cache::OrderingGateCache::HashesSetType>>
               processed_tx_hashes,
-          rxcpp::observable<iroha::consensus::Round> round_switch_events,
+          rxcpp::observable<RoundSwitch> round_switch_events,
           std::shared_ptr<cache::OrderingGateCache>
               cache,  // TODO: IR-1863 12.11.18 kamilsa change cache to
                       // unique_ptr

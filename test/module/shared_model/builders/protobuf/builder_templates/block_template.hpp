@@ -15,6 +15,7 @@
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/transaction.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "validators/default_validator.hpp"
 
 namespace shared_model {
@@ -68,9 +69,14 @@ namespace shared_model {
         return copy;
       }
 
-     public:
-      TemplateBlockBuilder(const SV &validator = SV())
+      TemplateBlockBuilder(const SV &validator)
           : stateless_validator_(validator){};
+
+     public:
+      // we do such default initialization only because it is deprecated and
+      // used only in tests
+      TemplateBlockBuilder()
+          : TemplateBlockBuilder(SV(iroha::test::kTestsValidatorsConfig)) {}
 
       template <class T>
       auto transactions(const T &transactions) const {

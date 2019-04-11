@@ -13,6 +13,7 @@
 #include "interfaces/permissions.hpp"
 #include "interfaces/queries/query_payload_meta.hpp"
 #include "validators/answer.hpp"
+#include "validators/validators_common.hpp"
 
 namespace shared_model {
 
@@ -34,7 +35,10 @@ namespace shared_model {
       using TimeFunction = std::function<iroha::ts64_t()>;
 
      public:
-      FieldValidator(time_t future_gap = kDefaultFutureGap,
+      // todo igor-egorov 05.04.2018 IR-439 Remove ValidatorsConfig from
+      // FieldValidator
+      FieldValidator(std::shared_ptr<ValidatorsConfig> config,
+                     time_t future_gap = kDefaultFutureGap,
                      TimeFunction time_provider = [] {
                        return iroha::time::now();
                      });

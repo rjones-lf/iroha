@@ -482,6 +482,9 @@ namespace integration_framework {
         transaction_factory_;
     std::shared_ptr<shared_model::interface::TransactionBatchParser>
         batch_parser_;
+    std::shared_ptr<shared_model::validation::AbstractValidator<
+        shared_model::interface::TransactionBatch>>
+        batch_validator_;
     std::shared_ptr<shared_model::interface::TransactionBatchFactory>
         transaction_batch_factory_;
     std::shared_ptr<
@@ -498,10 +501,8 @@ namespace integration_framework {
     std::mutex queue_mu;
     std::condition_variable queue_cond;
     bool cleanup_on_exit_;
-    std::vector<std::pair<std::promise<std::shared_ptr<fake_peer::FakePeer>>,
-                          boost::optional<shared_model::crypto::Keypair>>>
-        fake_peers_promises_;
     std::vector<std::shared_ptr<fake_peer::FakePeer>> fake_peers_;
+    std::vector<std::unique_ptr<ServerRunner>> fake_peers_servers_;
   };
 
   template <typename Queue, typename ObjectType, typename WaitTime>

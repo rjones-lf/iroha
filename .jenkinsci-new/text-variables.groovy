@@ -13,7 +13,7 @@ param_descriptions = """
 <p>
   <strong>Default</strong> - will automatically chose the correct one based on branch name and build number<br />
   <strong>Branch commit</strong> - Linux/gcc v5; Test: Smoke, Unit;<br />
-  <strong>On open PR -</strong> Linux/gcc v5, MacOS/appleclang; Test: Smoke, Unit; Coverage; Analysis: cppcheck, sonar;<br />
+  <strong>On open PR -</strong> Linux/gcc v5, MacOS/appleclang; Test: All; Coverage; Analysis: cppcheck, sonar;<br />
   <strong>Commit in Open PR</strong> - Same as Branch commit<br />
   <strong>Before merge to trunk</strong> - Linux/gcc v5 v7, Linux/clang v6 v7, MacOS/appleclang; Test: ALL; Coverage; Analysis: cppcheck, sonar; Build type: Debug when Release; useBTF=true<br />
   <strong>Custom command</strong> - enter command below, Ex: build_type='Release'; testing=false;<br />
@@ -85,7 +85,7 @@ cmd_description = """
             <p>Test Regex name</p>
          </li>
          <li>
-            <p>Ex:&nbsp;testList = '()'-All,&nbsp;testList = '(module|integration|system|cmake|regression|benchmark|framework)'</p>
+            <p>Ex:&nbsp;`testList = '()'`-All,&nbsp;`testList = '(module|integration|system|cmake|regression|benchmark|framework)'`</p>
          </li>
       </ul>
    </li>
@@ -218,6 +218,17 @@ cmd_description = """
          </li>
          <li>
             <p>Ex:useBTF=true</p>
+         </li>
+      </ul>
+   </li>
+   <li>
+      <p><strong>forceDockerDevelopBuild</strong> = false </p>
+      <ul>
+         <li>
+            <p>Builds and push hyperledger/iroha:develop-build  </p>
+         </li>
+         <li>
+            <p>Ex: forceDockerDevelopBuild=true</p>
          </li>
       </ul>
    </li>
