@@ -7,6 +7,9 @@ from iroha import IrohaCrypto as ic
 
 from locust import Locust, TaskSet, events, task
 
+import common.writer
+
+
 HOSTNAME = os.environ['HOSTNAME']
 ADMIN_PRIVATE_KEY = 'f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70'
 
