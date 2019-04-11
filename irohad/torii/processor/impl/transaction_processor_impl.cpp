@@ -129,18 +129,18 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::TransactionBatch>
             transaction_batch) const {
       log_->debug("handle batch");
-      bool result;
+      bool batch_accepted;
       if (transaction_batch->hasAllSignatures()
           and not mst_processor_->batchInStorage(transaction_batch)) {
         log_->debug("propagating batch to PCS");
         this->publishEnoughSignaturesStatus(transaction_batch->transactions());
-        result = pcs_->propagate_batch(transaction_batch);
+        batch_accepted = pcs_->propagate_batch(transaction_batch);
       } else {
         log_->debug("propagating batch to MST");
-        result = mst_processor_->propagateBatch(transaction_batch);
+        batch_accepted = mst_processor_->propagateBatch(transaction_batch);
       }
-      log_->debug("batch handle result: {}", result);
-      return result;
+      log_->debug("batch handle result: {}", batch_accepted);
+      return batch_accepted;
     }
 
     void TransactionProcessorImpl::publishStatus(
