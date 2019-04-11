@@ -7,6 +7,7 @@
 #define CONSENSUS_GATE_OBJECT_HPP
 
 #include <boost/variant.hpp>
+#include "ametsuchi/ledger_state.hpp"
 #include "consensus/round.hpp"
 #include "cryptography/hash.hpp"
 #include "cryptography/public_key.hpp"
@@ -21,30 +22,50 @@ namespace shared_model {
 namespace iroha {
   namespace consensus {
 
-    /// Current pair is valid
-    struct PairValid {
-      std::shared_ptr<shared_model::interface::Block> block;
+    struct BaseGateObject {
       consensus::Round round;
+      std::shared_ptr<LedgerState> ledger_state;
+
+      BaseGateObject(consensus::Round round,
+                     std::shared_ptr<LedgerState> ledger_state)
+          : round(std::move(round)), ledger_state(std::move(ledger_state)) {}
     };
 
-    struct Synchronizable {
+    /// Current pair is valid
+    struct PairValid : public BaseGateObject {
+      std::shared_ptr<shared_model::interface::Block> block;
+
+      PairValid(consensus::Round round,
+                std::shared_ptr<LedgerState> ledger_state,
+                std::shared_ptr<shared_model::interface::Block> block)
+          : BaseGateObject(std::move(round), std::move(ledger_state)),
+            block(std::move(block)) {}
+    };
+
+    struct Synchronizable : public BaseGateObject {
       shared_model::interface::types::PublicKeyCollectionType public_keys;
-      consensus::Round round;
+
       Synchronizable(
-          shared_model::interface::types::PublicKeyCollectionType _public_keys,
-          consensus::Round _round)
-          : public_keys(std::move(_public_keys)), round(std::move(_round)) {}
+          consensus::Round round,
+          std::shared_ptr<LedgerState> ledger_state,
+          shared_model::interface::types::PublicKeyCollectionType public_keys)
+          : BaseGateObject(std::move(round), std::move(ledger_state)),
+            public_keys(std::move(public_keys)) {}
     };
 
     /// Network votes for another pair and round
     struct VoteOther : public Synchronizable {
       shared_model::interface::types::HashType hash;
+
       VoteOther(
-          shared_model::interface::types::PublicKeyCollectionType _public_keys,
-          consensus::Round _round,
-          shared_model::interface::types::HashType _hash)
-          : Synchronizable(std::move(_public_keys), std::move(_round)),
-            hash(std::move(_hash)) {}
+          consensus::Round round,
+          std::shared_ptr<LedgerState> ledger_state,
+          shared_model::interface::types::PublicKeyCollectionType public_keys,
+          shared_model::interface::types::HashType hash)
+          : Synchronizable(std::move(round),
+                           std::move(ledger_state),
+                           std::move(public_keys)),
+            hash(std::move(hash)) {}
     };
 
     /// Reject on proposal

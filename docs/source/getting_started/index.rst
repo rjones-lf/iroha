@@ -199,10 +199,9 @@ transaction! You can either send it to Iroha or add some more commands
 so we can do everything in one shot. Type ``add``.
 
 Now try adding some ``coolcoins`` to our account. Select ``16. Add Asset
-Quantity (add_ast_qty)``, enter Account ID – ``admin@test``, asset ID –
-``coolcoin#test``, integer part and precision. For example, to add 200.50
-``coolcoins``, we need to enter integer part as ``20050`` and precision as
-``2``, so it becomes ``200.50``.
+Quantity (add_ast_qty)``, enter asset ID – ``coolcoin#test``, integer part and
+precision. For example, to add 200.50 ``coolcoins``, we need to enter integer
+part as ``20050`` and precision as ``2``, so it becomes ``200.50``.
 
 .. note:: Full asset name has a ``#`` symbol between name and domain.
 
@@ -227,7 +226,7 @@ Creating the First Query
 
 Now let's check if ``coolcoins`` were successfully transferred from
 ``admin@test`` to ``test@test``. Choose ``2. New query
-(qry)``. ``7. Get Account's Assets (get_acc_ast)`` can help you to check if
+(qry)``. ``8. Get Account's Assets (get_acc_ast)`` can help you to check if
 ``test@test`` now has ``coolcoin``. Form a query in a similar way you did with
 commands you did with commands and ``1. Send to Iroha peer (send)``. Now you
 can see information about how many ``coolcoin`` does ``test@test`` have.

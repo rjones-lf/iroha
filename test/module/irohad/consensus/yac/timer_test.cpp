@@ -6,16 +6,14 @@
 #include "consensus/yac/impl/timer_impl.hpp"
 
 #include <gtest/gtest.h>
-
-#include <thread>
+#include <rxcpp/rx-test.hpp>
 
 using namespace iroha::consensus::yac;
 
 class TimerTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    timer = std::make_shared<TimerImpl>(
-        [this] { return invoke_delay.get_observable(); });
+    timer = std::make_shared<TimerImpl>(delay, coordination);
   }
 
   void TearDown() override {
@@ -23,11 +21,15 @@ class TimerTest : public ::testing::Test {
   }
 
   void invokeTimer() {
-    invoke_delay.get_subscriber().on_next(0);
+    worker.start();
   }
 
  public:
-  rxcpp::subjects::subject<TimerImpl::TimeoutType> invoke_delay;
+  std::chrono::milliseconds delay{0};
+  rxcpp::schedulers::test::test_worker worker =
+      rxcpp::schedulers::make_test().create_worker();
+  rxcpp::observe_on_one_worker coordination{
+      rxcpp::schedulers::make_same_worker(worker)};
   std::shared_ptr<Timer> timer;
 };
 

@@ -19,6 +19,7 @@ namespace iroha {
   namespace network {
     class BlockLoaderImpl : public BlockLoader {
      public:
+      // TODO 30.01.2019 lebdron: IR-264 Remove PeerQueryFactory
       BlockLoaderImpl(
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           shared_model::proto::ProtoBlockFactory factory,

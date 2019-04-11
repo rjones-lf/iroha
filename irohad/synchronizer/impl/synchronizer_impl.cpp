@@ -167,13 +167,8 @@ namespace iroha {
       }
 
       if (height_diff == 0) {
-        notifier_.get_subscriber().on_next(
-            // TODO: nickaleks IR-147 18.01.19 add peers
-            // list from GateObject when it has one
-            SynchronizationEvent{
-                alternative_outcome,
-                msg.round,
-                nullptr /* this is going to be fixed in PR-2066 (IR-147) */});
+        notifier_.get_subscriber().on_next(SynchronizationEvent{
+            alternative_outcome, msg.round, msg.ledger_state});
         return;
       }
 

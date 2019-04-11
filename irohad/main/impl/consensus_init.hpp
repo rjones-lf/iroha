@@ -31,6 +31,7 @@ namespace iroha {
       class YacInit {
        public:
         std::shared_ptr<YacGate> initConsensusGate(
+            // TODO 30.01.2019 lebdron: IR-262 Remove PeerQueryFactory
             std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
             std::shared_ptr<simulator::BlockCreator> block_creator,
             std::shared_ptr<network::BlockLoader> block_loader,
@@ -49,14 +50,6 @@ namespace iroha {
 
        private:
         auto createTimer(std::chrono::milliseconds delay_milliseconds);
-
-        // coordinator has a worker, and a factory for coordinated
-        // observables, subscribers and schedulable functions.
-        //
-        // A new thread scheduler is created
-        // by calling .create_coordinator().get_scheduler()
-        rxcpp::observe_on_one_worker coordination_{
-            rxcpp::observe_on_new_thread()};
 
         bool initialized_{false};
         std::shared_ptr<NetworkImpl> consensus_network_;

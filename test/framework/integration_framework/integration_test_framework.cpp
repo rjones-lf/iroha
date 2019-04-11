@@ -39,6 +39,7 @@
 #include "logger/logger.hpp"
 #include "logger/logger_manager.hpp"
 #include "module/irohad/ametsuchi/tx_presence_cache_stub.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "module/shared_model/builders/protobuf/block.hpp"
 #include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/validators/always_valid_validators.hpp"
@@ -129,15 +130,20 @@ namespace integration_framework {
         tx_response_waiting(tx_response_waiting),
         maximum_proposal_size_(maximum_proposal_size),
         common_objects_factory_(
-            std::make_shared<AlwaysValidProtoCommonObjectsFactory>()),
+            std::make_shared<AlwaysValidProtoCommonObjectsFactory>(
+                iroha::test::kTestsValidatorsConfig)),
         transaction_factory_(std::make_shared<ProtoTransactionFactory>(
             std::make_unique<AlwaysValidInterfaceTransactionValidator>(),
             std::make_unique<AlwaysValidProtoTransactionValidator>())),
         batch_parser_(std::make_shared<
                       shared_model::interface::TransactionBatchParserImpl>()),
+        batch_validator_(
+            std::make_shared<shared_model::validation::BatchValidator>(
+                iroha::test::kTestsValidatorsConfig)),
         transaction_batch_factory_(
             std::make_shared<
-                shared_model::interface::TransactionBatchFactoryImpl>()),
+                shared_model::interface::TransactionBatchFactoryImpl>(
+                batch_validator_)),
         proposal_factory_([] {
           std::shared_ptr<shared_model::validation::AbstractValidator<
               iroha::protocol::Transaction>>
@@ -171,6 +177,9 @@ namespace integration_framework {
   IntegrationTestFramework::~IntegrationTestFramework() {
     if (cleanup_on_exit_) {
       cleanup();
+    }
+    for (auto &server : fake_peers_servers_) {
+      server->shutdown(std::chrono::system_clock::now());
     }
     // the code below should be executed anyway in order to prevent app hang
     if (iroha_instance_ and iroha_instance_->getIrohaInstance()) {
@@ -348,10 +357,8 @@ namespace integration_framework {
           queue_cond.notify_all();
         });
 
-    iroha_instance_->getIrohaInstance()
-        ->getStorage()
-        ->on_commit()
-        .subscribe([this](auto committed_block) {
+    iroha_instance_->getIrohaInstance()->getStorage()->on_commit().subscribe(
+        [this](auto committed_block) {
           block_queue_.push(committed_block);
           log_->info("block commit");
           queue_cond.notify_all();
@@ -367,7 +374,7 @@ namespace integration_framework {
     if (fake_peers_.size() > 0) {
       log_->info("starting fake iroha peers");
       for (auto &fake_peer : fake_peers_) {
-        fake_peer->run();
+        fake_peers_servers_.push_back(fake_peer->run());
       }
     }
     // start instance

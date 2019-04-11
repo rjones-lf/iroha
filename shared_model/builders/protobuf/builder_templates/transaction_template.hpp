@@ -18,6 +18,7 @@
 #include "builders/protobuf/unsigned_proto.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/permissions.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "validators/default_validator.hpp"
 
 namespace shared_model {
@@ -86,12 +87,18 @@ namespace shared_model {
         return copy;
       }
 
-     public:
-      TemplateTransactionBuilder(const SV &validator = SV())
+      TemplateTransactionBuilder(const SV &validator)
           : stateless_validator_(validator) {}
 
-      auto creatorAccountId(
-          const interface::types::AccountIdType &account_id) const {
+     public:
+      // we do such default initialization only because it is deprecated and
+      // used only in tests
+      TemplateTransactionBuilder()
+          : TemplateTransactionBuilder(
+                SV(iroha::test::kTestsValidatorsConfig)) {}
+
+      auto creatorAccountId(const interface::types::AccountIdType &account_id)
+          const {
         return transform<CreatorAccountId>([&](auto &tx) {
           tx.mutable_payload()
               ->mutable_reduced_payload()
@@ -154,9 +161,9 @@ namespace shared_model {
         });
       }
 
-      auto removeSignatory(
-          const interface::types::AccountIdType &account_id,
-          const interface::types::PubkeyType &public_key) const {
+      auto removeSignatory(const interface::types::AccountIdType &account_id,
+                           const interface::types::PubkeyType &public_key)
+          const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_remove_signatory();
           command->set_account_id(account_id);
@@ -184,10 +191,10 @@ namespace shared_model {
         });
       }
 
-      auto createAccount(
-          const interface::types::AccountNameType &account_name,
-          const interface::types::DomainIdType &domain_id,
-          const interface::types::PubkeyType &main_pubkey) const {
+      auto createAccount(const interface::types::AccountNameType &account_name,
+                         const interface::types::DomainIdType &domain_id,
+                         const interface::types::PubkeyType &main_pubkey)
+          const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_create_account();
           command->set_account_name(account_name);
@@ -196,9 +203,9 @@ namespace shared_model {
         });
       }
 
-      auto createDomain(
-          const interface::types::DomainIdType &domain_id,
-          const interface::types::RoleIdType &default_role) const {
+      auto createDomain(const interface::types::DomainIdType &domain_id,
+                        const interface::types::RoleIdType &default_role)
+          const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_create_domain();
           command->set_domain_id(domain_id);
@@ -238,9 +245,9 @@ namespace shared_model {
         });
       }
 
-      auto revokePermission(
-          const interface::types::AccountIdType &account_id,
-          interface::permissions::Grantable permission) const {
+      auto revokePermission(const interface::types::AccountIdType &account_id,
+                            interface::permissions::Grantable permission)
+          const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_revoke_permission();
           command->set_account_id(account_id);

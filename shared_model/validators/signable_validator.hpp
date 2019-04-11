@@ -32,10 +32,13 @@ namespace shared_model {
         return answer;
       }
 
+      explicit SignableModelValidator(std::shared_ptr<ValidatorsConfig> config,
+                                      FieldValidator &&validator)
+          : ModelValidator(config), field_validator_(std::move(validator)) {}
+
      public:
-      explicit SignableModelValidator(
-          FieldValidator &&validator = FieldValidator())
-          : ModelValidator(validator), field_validator_(std::move(validator)) {}
+      explicit SignableModelValidator(std::shared_ptr<ValidatorsConfig> config)
+          : SignableModelValidator(config, FieldValidator{config}) {}
 
       Answer validate(const Model &model,
                       interface::types::TimestampType current_timestamp) const {

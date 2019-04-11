@@ -16,6 +16,7 @@
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "interfaces/transaction.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "module/shared_model/interface_mocks.hpp"
@@ -100,7 +101,8 @@ class Validator : public testing::Test {
  public:
   void SetUp() override {
     factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
-        shared_model::validation::DefaultProposalValidator>>();
+        shared_model::validation::DefaultProposalValidator>>(
+        iroha::test::kTestsValidatorsConfig);
     parser =
         std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
     sfv = std::make_shared<StatefulValidatorImpl>(

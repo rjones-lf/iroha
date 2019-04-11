@@ -23,6 +23,7 @@
 #include "framework/test_logger.hpp"
 #include "logger/logger.hpp"
 #include "logger/logger_manager.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "validators/field_validator.hpp"
 
 namespace iroha {
@@ -38,7 +39,8 @@ namespace iroha {
             << " directory already exists";
         factory =
             std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
-                shared_model::validation::FieldValidator>>();
+                shared_model::validation::FieldValidator>>(
+                iroha::test::kTestsValidatorsConfig);
         perm_converter_ =
             std::make_shared<shared_model::proto::ProtoPermissionToString>();
         auto converter =

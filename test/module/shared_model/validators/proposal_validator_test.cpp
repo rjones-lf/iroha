@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 
 #include "framework/batch_helper.hpp"
+#include "module/irohad/common/validators_config.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "validators/default_validator.hpp"
@@ -16,6 +17,8 @@ using namespace shared_model::validation;
 
 class ProposalValidatorTest : public ValidatorsTest {
  public:
+  ProposalValidatorTest() : validator_(iroha::test::kTestsValidatorsConfig) {}
+
   using BatchTypeAndCreatorPair =
       std::pair<shared_model::interface::types::BatchType, std::string>;
 

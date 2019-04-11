@@ -11,6 +11,7 @@
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "validators/answer.hpp"
+#include "validators/validators_common.hpp"
 
 namespace shared_model {
   namespace validation {
@@ -34,15 +35,22 @@ namespace shared_model {
         }
       }
 
-     public:
       explicit ContainerValidator(
-          const FieldValidator &field_validator = FieldValidator(),
-          const TransactionsCollectionValidator
-              &transactions_collection_validator =
-                  TransactionsCollectionValidator())
+          FieldValidator field_validator,
+          TransactionsCollectionValidator transactions_collection_validator)
           : transactions_collection_validator_(
-                transactions_collection_validator),
-            field_validator_(field_validator) {}
+                std::move(transactions_collection_validator)),
+            field_validator_(std::move(field_validator)) {}
+
+     public:
+      explicit ContainerValidator(std::shared_ptr<ValidatorsConfig> config,
+                                  FieldValidator field_validator)
+          : field_validator_{std::move(field_validator)},
+            transactions_collection_validator_{std::move(config)} {}
+
+      explicit ContainerValidator(std::shared_ptr<ValidatorsConfig> config)
+          : ContainerValidator(FieldValidator(config),
+                               TransactionsCollectionValidator(config)) {}
 
       template <typename Validator>
       Answer validate(const Iface &cont,

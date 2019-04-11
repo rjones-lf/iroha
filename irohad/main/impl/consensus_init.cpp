@@ -5,6 +5,7 @@
 
 #include "main/impl/consensus_init.hpp"
 
+#include "common/bind.hpp"
 #include "consensus/yac/consistency_model.hpp"
 #include "consensus/yac/impl/peer_orderer_impl.hpp"
 #include "consensus/yac/impl/timer_impl.hpp"
@@ -74,20 +75,10 @@ namespace iroha {
       }
 
       auto YacInit::createTimer(std::chrono::milliseconds delay_milliseconds) {
-        return std::make_shared<TimerImpl>([delay_milliseconds, this] {
-          // static factory with a single thread
-          //
-          // observe_on_new_thread -- coordination which creates new thread with
-          // observe_on strategy -- all subsequent operations will be performed
-          // on this thread.
-          //
-          // scheduler owns a timeline that is exposed by the now() method.
-          // scheduler is also a factory for workers in that timeline.
-          //
-          // coordination is a factory for coordinators and has a scheduler.
-          return rxcpp::observable<>::timer(
-              std::chrono::milliseconds(delay_milliseconds), coordination_);
-        });
+        return std::make_shared<TimerImpl>(
+            delay_milliseconds,
+            // TODO 2019-04-10 andrei: IR-441 Share a thread between MST and YAC
+            rxcpp::observe_on_new_thread());
       }
 
       std::shared_ptr<YacGate> YacInit::initConsensusGate(
@@ -107,6 +98,8 @@ namespace iroha {
           ConsistencyModel consistency_model,
           const logger::LoggerManagerTreePtr &consensus_log_manager) {
         auto peer_orderer = createPeerOrderer(peer_query_factory);
+        auto peers = peer_query_factory->createPeerQuery() |
+            [](auto &&peer_query) { return peer_query->getLedgerPeers(); };
 
         consensus_network_ = std::make_shared<NetworkImpl>(
             async_call,
@@ -115,7 +108,7 @@ namespace iroha {
             },
             consensus_log_manager->getChild("Network")->getLogger());
 
-        auto yac = createYac(peer_orderer->getInitialOrdering().value(),
+        auto yac = createYac(*ClusterOrdering::create(peers.value()),
                              keypair,
                              createTimer(vote_delay_milliseconds),
                              consensus_network_,

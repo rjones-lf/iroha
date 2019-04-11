@@ -8,6 +8,7 @@
 
 #include "interfaces/iroha_internal/proposal_factory.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
+#include "validators/validators_common.hpp"
 
 #include "backend/protobuf/proposal.hpp"
 #include "backend/protobuf/transaction.hpp"
@@ -23,6 +24,9 @@ namespace shared_model {
           interface::ProposalFactory::TransactionsCollectionType;
       using UnsafeTransactionsCollectionType =
           interface::UnsafeProposalFactory::TransactionsCollectionType;
+
+      ProtoProposalFactory(std::shared_ptr<validation::ValidatorsConfig> config)
+          : validator_{config} {}
 
       FactoryResult<std::unique_ptr<interface::Proposal>> createProposal(
           interface::types::HeightType height,

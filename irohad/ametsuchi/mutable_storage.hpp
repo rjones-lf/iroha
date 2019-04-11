@@ -38,6 +38,7 @@ namespace iroha {
        */
       using MutableStoragePredicate = std::function<bool(
           std::shared_ptr<const shared_model::interface::Block>,
+          // TODO 30.01.2019 lebdron: IR-265 Remove PeerQueryFactory
           PeerQuery &,
           const shared_model::interface::types::HashType &)>;
 

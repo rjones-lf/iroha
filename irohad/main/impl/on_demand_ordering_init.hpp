@@ -121,6 +121,7 @@ namespace iroha {
           size_t max_number_of_transactions,
           std::chrono::milliseconds delay,
           std::vector<shared_model::interface::types::HashType> initial_hashes,
+          // TODO 30.01.2019 lebdron: IR-263 Remove PeerQueryFactory
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           std::shared_ptr<
               ordering::transport::OnDemandOsServerGrpc::TransportFactoryType>
