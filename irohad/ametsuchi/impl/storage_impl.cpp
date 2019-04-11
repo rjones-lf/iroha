@@ -507,13 +507,18 @@ namespace iroha {
                                 factory_,
                                 log_manager_->getChild("WsvQuery")->getLogger())
                        .getPeers()
-                   | [this, &block](auto &&peers)
+                   | [this, &block, &sql](auto &&peers)
                    -> boost::optional<std::unique_ptr<LedgerState>> {
           if (this->storeBlock(block)) {
+            PostgresBlockQuery block_query(
+                sql,
+                *block_store_,
+                converter_,
+                log_manager_->getChild("PostgresBlockQuery")->getLogger());
             return boost::optional<std::unique_ptr<LedgerState>>(
                 std::make_unique<LedgerState>(
                     std::make_shared<PeerList>(std::move(peers)),
-                    this->getBlockQuery()->getTopBlockHeight()));
+                    block_query.getTopBlockHeight()));
           }
           return boost::none;
         };
