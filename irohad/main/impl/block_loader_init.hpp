@@ -58,6 +58,7 @@ namespace iroha {
        * @return initialized service
        */
       std::shared_ptr<BlockLoader> initBlockLoader(
+          // TODO 30.01.2019 lebdron: IR-264 Remove PeerQueryFactory
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
           std::shared_ptr<consensus::ConsensusResultCache> block_cache,

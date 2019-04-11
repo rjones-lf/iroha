@@ -178,6 +178,9 @@ namespace integration_framework {
     if (cleanup_on_exit_) {
       cleanup();
     }
+    for (auto &server : fake_peers_servers_) {
+      server->shutdown(std::chrono::system_clock::now());
+    }
     // the code below should be executed anyway in order to prevent app hang
     if (iroha_instance_ and iroha_instance_->getIrohaInstance()) {
       iroha_instance_->getIrohaInstance()->terminate(
@@ -354,10 +357,8 @@ namespace integration_framework {
           queue_cond.notify_all();
         });
 
-    iroha_instance_->getIrohaInstance()
-        ->getStorage()
-        ->on_commit()
-        .subscribe([this](auto committed_block) {
+    iroha_instance_->getIrohaInstance()->getStorage()->on_commit().subscribe(
+        [this](auto committed_block) {
           block_queue_.push(committed_block);
           log_->info("block commit");
           queue_cond.notify_all();
@@ -373,7 +374,7 @@ namespace integration_framework {
     if (fake_peers_.size() > 0) {
       log_->info("starting fake iroha peers");
       for (auto &fake_peer : fake_peers_) {
-        fake_peer->run();
+        fake_peers_servers_.push_back(fake_peer->run());
       }
     }
     // start instance

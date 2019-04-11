@@ -188,15 +188,12 @@ namespace iroha {
 
       if (SynchronizationOutcomeType::kCommit != alternative_outcome
           and (0 == height_diff or 1 == height_diff)) {
-        notifier_.get_subscriber().on_next(
-            // TODO: nickaleks IR-147 18.01.19 add peers
-            // list from GateObject when it has one
-            SynchronizationEvent{
-                rxcpp::observable<>::empty<
-                    std::shared_ptr<shared_model::interface::Block>>(),
-                alternative_outcome,
-                msg.round,
-                nullptr /* this is going to be fixed in PR-2066 (IR-147) */});
+        notifier_.get_subscriber().on_next(SynchronizationEvent{
+            rxcpp::observable<>::empty<
+                std::shared_ptr<shared_model::interface::Block>>(),
+            alternative_outcome,
+            msg.round,
+            msg.ledger_state});
         return;
       }
 

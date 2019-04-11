@@ -32,9 +32,11 @@ namespace iroha {
      * @param emit_worker is the coordinator for the data emitting
      * @param params configuration parameters
      */
-    GossipPropagationStrategy(PeerProviderFactory peer_factory,
-                              rxcpp::observe_on_one_worker emit_worker,
-                              const GossipPropagationStrategyParams &params);
+    GossipPropagationStrategy(
+        // TODO 30.01.2019 lebdron: IR-266 Remove PeerQueryFactory
+        PeerProviderFactory peer_factory,
+        rxcpp::observe_on_one_worker emit_worker,
+        const GossipPropagationStrategyParams &params);
 
     ~GossipPropagationStrategy();
 

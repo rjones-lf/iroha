@@ -24,6 +24,7 @@
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 #include "torii/impl/status_bus_impl.hpp"
 
 using namespace iroha;
@@ -62,6 +63,10 @@ class TransactionProcessorTest : public ::testing::Test {
         std::make_shared<shared_model::proto::ProtoTxStatusFactory>(),
         commit_notifier.get_observable(),
         getTestLogger("TransactionProcessor"));
+
+    auto peer = makePeer("127.0.0.1", shared_model::crypto::PublicKey("111"));
+    auto ledger_peers = std::make_shared<PeerList>(PeerList{peer});
+    ledger_state = std::make_shared<LedgerState>(ledger_peers);
   }
 
   auto base_tx() {
@@ -142,6 +147,8 @@ class TransactionProcessorTest : public ::testing::Test {
       status_builder;
 
   consensus::Round round;
+  std::shared_ptr<LedgerState> ledger_state;
+
   const size_t proposal_size = 5;
   const size_t block_size = 3;
 };
@@ -272,7 +279,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorVerifiedProposalTest) {
 
   // empty transactions errors - all txs are valid
   verified_prop_notifier.get_subscriber().on_next(
-      simulator::VerifiedProposalCreatorEvent{validation_result, round});
+      simulator::VerifiedProposalCreatorEvent{
+          validation_result, round, ledger_state});
 
   SCOPED_TRACE("Stateful Valid status verification");
   validateStatuses<shared_model::interface::StatefulValidTxResponse>(txs);
@@ -315,7 +323,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
 
   // empty transactions errors - all txs are valid
   verified_prop_notifier.get_subscriber().on_next(
-      simulator::VerifiedProposalCreatorEvent{validation_result, round});
+      simulator::VerifiedProposalCreatorEvent{
+          validation_result, round, ledger_state});
 
   auto block = TestBlockBuilder().transactions(txs).build();
 
@@ -386,7 +395,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
                                          "SomeCommandName", 1, "", true, i}});
   }
   verified_prop_notifier.get_subscriber().on_next(
-      simulator::VerifiedProposalCreatorEvent{validation_result, round});
+      simulator::VerifiedProposalCreatorEvent{
+          validation_result, round, ledger_state});
 
   {
     SCOPED_TRACE("Stateful invalid status verification");
