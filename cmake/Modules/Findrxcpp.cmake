@@ -20,7 +20,6 @@ if (NOT rxcpp_FOUND)
       CONFIGURE_COMMAND ""
       BUILD_COMMAND ""
       INSTALL_COMMAND "" # remove install step
-      UPDATE_COMMAND "" # remove update step
       TEST_COMMAND "" # remove test step
       )
   externalproject_get_property(reactive_extensions_rxcpp source_dir)
