@@ -2,7 +2,7 @@ BasedOnStyle: Google
 NamespaceIndentation: All
 BreakBeforeBinaryOperators: NonAssignment
 AlignOperands: false
-DerivePointerAlignment: false
+DerivePointerAlignment,x ,m: false
 PointerAlignment: Right
 BinPackArguments: false
 BinPackParameters: false
