@@ -483,8 +483,8 @@ namespace iroha {
           )
           SELECT CASE
               WHEN EXISTS (SELECT * FROM insert_account_role) THEN 0
-              %s
               WHEN NOT EXISTS (SELECT * FROM get_domain_default_role) THEN 3
+              %s
               ELSE 1
               END AS result)";
 
@@ -636,9 +636,9 @@ namespace iroha {
                   RETURNING (1)
               )
               SELECT CASE WHEN EXISTS (SELECT * FROM inserted) THEN 0
-                  %s
                   WHEN NOT EXISTS
                       (SELECT * FROM account WHERE account_id=$2) THEN 3
+                  %s
                   ELSE 1 END AS result)";
 
     const std::string PostgresCommandExecutor::setQuorumBase = R"(
@@ -771,10 +771,10 @@ namespace iroha {
                )
           SELECT CASE
               WHEN EXISTS (SELECT * FROM insert_dest LIMIT 1) THEN 0
-              %s
               WHEN NOT EXISTS (SELECT * FROM has_dest_account LIMIT 1) THEN 4
               WHEN NOT EXISTS (SELECT * FROM has_src_account LIMIT 1) THEN 3
               WHEN NOT EXISTS (SELECT * FROM has_asset LIMIT 1) THEN 5
+              %s
               WHEN NOT EXISTS (SELECT value FROM new_src_value
                                WHERE value >= 0 LIMIT 1) THEN 6
               WHEN NOT EXISTS (SELECT value FROM new_dest_value

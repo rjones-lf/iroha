@@ -74,6 +74,7 @@ namespace iroha {
                             bool do_validation = false,
                             const shared_model::interface::types::AccountIdType
                                 &creator = "id@domain") {
+        // TODO igor-egorov 15.04.2019 IR-446 Refactor postgres_executor_test
         executor->doValidation(not do_validation);
         executor->setCreatorAccountId(creator);
         return executor->operator()(std::forward<CommandType>(command));
@@ -1849,6 +1850,15 @@ namespace iroha {
      * @then account asset fails to be transferred
      */
     TEST_F(TransferAccountAssetTest, NoPerms) {
+      addAsset();
+      CHECK_SUCCESSFUL_RESULT(
+          execute(*mock_command_factory->constructAddAssetQuantity(
+                      asset_id, asset_amount_one_zero),
+                  true));
+      auto account_asset = sql_query->getAccountAsset(account_id, asset_id);
+      ASSERT_TRUE(account_asset);
+      ASSERT_EQ(asset_amount_one_zero, account_asset.get()->balance());
+
       auto cmd_result = execute(*mock_command_factory->constructTransferAsset(
           account_id, account2_id, asset_id, "desc", asset_amount_one_zero));
 
