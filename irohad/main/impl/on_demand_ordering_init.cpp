@@ -44,7 +44,9 @@ namespace iroha {
   namespace network {
 
     OnDemandOrderingInit::OnDemandOrderingInit(logger::LoggerPtr log)
-        : log_(std::move(log)) {}
+        : sync_event_notifier(sync_event_notifier_lifetime_),
+          commit_notifier(commit_notifier_lifetime_),
+          log_(std::move(log)) {}
 
     auto OnDemandOrderingInit::createNotificationFactory(
         std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
@@ -280,8 +282,8 @@ namespace iroha {
     }
 
     OnDemandOrderingInit::~OnDemandOrderingInit() {
-      sync_event_notifier.get_subscriber().unsubscribe();
-      commit_notifier.get_subscriber().unsubscribe();
+      sync_event_notifier_lifetime_.unsubscribe();
+      commit_notifier_lifetime_.unsubscribe();
     }
 
     std::shared_ptr<iroha::network::OrderingGate>

@@ -45,6 +45,7 @@ namespace iroha {
               }
               return result;
             }();
+        Round initial_round{1, 1};
 
         void SetUp() override {
           network = std::make_shared<MockYacNetwork>();
@@ -70,6 +71,9 @@ namespace iroha {
               crypto,
               timer,
               ordering,
+              initial_round,
+              rxcpp::observe_on_one_worker(
+                  rxcpp::schedulers::make_current_thread()),
               getTestLogger("Yac"));
           network->subscribe(yac);
         }

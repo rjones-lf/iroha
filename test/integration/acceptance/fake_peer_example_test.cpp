@@ -5,6 +5,7 @@
 
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "backend/protobuf/proto_proposal_factory.hpp"
+#include "consensus/yac/vote_message.hpp"
 #include "datetime/time.hpp"
 #include "framework/integration_framework/fake_peer/behaviour/honest.hpp"
 #include "framework/integration_framework/fake_peer/block_storage.hpp"
@@ -41,7 +42,6 @@ class FakePeerExampleFixture : public AcceptanceFixture {
   void createFakePeers(size_t num_fake_peers) {
     fake_peers_ = itf_->addInitialPeers(num_fake_peers);
   }
-
 
   /**
    * Prepare state of ledger:
@@ -300,7 +300,6 @@ TEST_F(FakePeerExampleFixture, SynchronizeTheRightVersionOfForkedLedger) {
  */
 TEST_F(FakePeerExampleFixture,
        OnDemandOrderingProposalAfterValidCommandReceived) {
-
   // Create the tx:
   const auto tx = complete(
       baseTx(kAdminId).transferAsset(kAdminId, kUserId, kAssetId, "tx1", "1.0"),
@@ -315,12 +314,10 @@ TEST_F(FakePeerExampleFixture,
 
   // watch the proposal requests to fake peer
   constexpr std::chrono::seconds kCommitWaitingTime(20);
-  itf.getPcsOnCommitObservable()
-      .filter([](const auto &sync_event) {
-        return sync_event.sync_outcome
-            == iroha::synchronizer::SynchronizationOutcomeType::kCommit;
-      })
-      .flat_map([](const auto &sync_event) { return sync_event.synced_blocks; })
+  itf.getIrohaInstance()
+      .getIrohaInstance()
+      ->getStorage()
+      ->on_commit()
       .flat_map([](const auto &block) {
         std::vector<shared_model::interface::types::HashType> hashes;
         hashes.reserve(boost::size(block->transactions()));

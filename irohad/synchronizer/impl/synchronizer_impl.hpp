@@ -39,20 +39,21 @@ namespace iroha {
       rxcpp::observable<SynchronizationEvent> on_commit_chain() override;
 
      private:
+      using PublicKeysRange =
+          boost::any_range<shared_model::interface::types::PubkeyType,
+                           boost::forward_traversal_tag,
+                           const shared_model::interface::types::PubkeyType &>;
       /**
        * Iterate through the peers which signed the commit message, load and
        * apply the missing blocks
-       * @param msg - the commit message that triggered synchronization
-       * @param top_block_height - the top block height of a peer that needs to
-       * be synchronized
-       * @param alternative_outcome - that kind of outcome will be propagated to
-       * subscribers when block store height after synchronization is less than
-       * expected
+       * @param start_height - the block from which to start synchronization
+       * @param target_height - the block height that must be reached
+       * @param public_keys - public keys of peers from which to ask the blocks
        */
-      boost::optional<SynchronizationEvent> downloadMissingBlocks(
-          const consensus::Synchronizable &msg,
-          const shared_model::interface::types::HeightType top_block_height,
-          const SynchronizationOutcomeType alternative_outcome);
+      boost::optional<std::unique_ptr<LedgerState>> downloadMissingBlocks(
+          const shared_model::interface::types::HeightType start_height,
+          const shared_model::interface::types::HeightType target_height,
+          const PublicKeysRange &public_keys);
 
       void processNext(const consensus::PairValid &msg);
 
@@ -76,6 +77,7 @@ namespace iroha {
       std::shared_ptr<network::BlockLoader> block_loader_;
 
       // internal
+      rxcpp::composite_subscription notifier_lifetime_;
       rxcpp::subjects::subject<SynchronizationEvent> notifier_;
       rxcpp::composite_subscription subscription_;
 

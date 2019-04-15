@@ -36,6 +36,10 @@ target_link_libraries(yac
     consensus_round
     gate_object
     )
+# avoid compilation error due to missing operator<< in Answer variant types
+target_compile_definitions(yac
+    PUBLIC BOOST_NO_IOSTREAM
+    )
 
 add_library(yac_transport
     transport/impl/network_impl.cpp

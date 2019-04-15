@@ -87,6 +87,7 @@ namespace iroha {
           block_store_(std::move(block_store)),
           connection_(std::move(connection)),
           factory_(std::move(factory)),
+          notifier_(notifier_lifetime_),
           converter_(std::move(converter)),
           perm_converter_(std::move(perm_converter)),
           block_storage_factory_(std::move(block_storage_factory)),
@@ -157,17 +158,22 @@ namespace iroha {
       if (block_is_prepared) {
         rollbackPrepared(*sql);
       }
-      auto block_result = getBlockQuery()->getTopBlock();
+      shared_model::interface::types::HashType hash{""};
+      shared_model::interface::types::HeightType height{0};
+      getBlockQuery()->getTopBlock().match(
+          [&hash, &height](
+              expected::Value<std::shared_ptr<shared_model::interface::Block>>
+                  &block) {
+            hash = block.value->hash();
+            height = block.value->height();
+          },
+          [this](expected::Error<std::string> &) {
+            log_->error("Could not get top block!");
+          });
       return expected::makeValue<std::unique_ptr<MutableStorage>>(
           std::make_unique<MutableStorageImpl>(
-              block_result.match(
-                  [](expected::Value<
-                      std::shared_ptr<shared_model::interface::Block>> &block) {
-                    return block.value->hash();
-                  },
-                  [](expected::Error<std::string> &) {
-                    return shared_model::interface::types::HashType("");
-                  }),
+              hash,
+              height,
               std::make_shared<PostgresCommandExecutor>(*sql, perm_converter_),
               std::move(sql),
               factory_,
@@ -201,7 +207,8 @@ namespace iroha {
             response_factory) const {
       std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
       if (not connection_) {
-        log_->info("connection to database is not initialised");
+        log_->info(
+            "createQueryExecutor: connection to database is not initialised");
         return boost::none;
       }
       return boost::make_optional<std::shared_ptr<QueryExecutor>>(
@@ -460,10 +467,11 @@ namespace iroha {
                                 factory_,
                                 log_manager_->getChild("WsvQuery")->getLogger())
                    .getPeers()
-            | [](auto &&peers) {
+            | [&storage](auto &&peers) {
                 return boost::optional<std::unique_ptr<LedgerState>>(
                     std::make_unique<LedgerState>(
-                        std::make_shared<PeerList>(std::move(peers))));
+                        std::make_shared<PeerList>(std::move(peers)),
+                        storage->getTopBlockHeight()));
               };
       } catch (std::exception &e) {
         storage->committed = false;
@@ -488,7 +496,8 @@ namespace iroha {
       try {
         std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
         if (not connection_) {
-          log_->info("connection to database is not initialised");
+          log_->info(
+              "commitPrepared: connection to database is not initialised");
           return boost::none;
         }
         soci::session sql(*connection_);
@@ -501,12 +510,18 @@ namespace iroha {
                                 factory_,
                                 log_manager_->getChild("WsvQuery")->getLogger())
                        .getPeers()
-                   | [this, &block](auto &&peers)
+                   | [this, &block, &sql](auto &&peers)
                    -> boost::optional<std::unique_ptr<LedgerState>> {
           if (this->storeBlock(block)) {
+            PostgresBlockQuery block_query(
+                sql,
+                *block_store_,
+                converter_,
+                log_manager_->getChild("PostgresBlockQuery")->getLogger());
             return boost::optional<std::unique_ptr<LedgerState>>(
                 std::make_unique<LedgerState>(
-                    std::make_shared<PeerList>(std::move(peers))));
+                    std::make_shared<PeerList>(std::move(peers)),
+                    block_query.getTopBlockHeight()));
           }
           return boost::none;
         };
@@ -521,7 +536,7 @@ namespace iroha {
     std::shared_ptr<WsvQuery> StorageImpl::getWsvQuery() const {
       std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
       if (not connection_) {
-        log_->info("connection to database is not initialised");
+        log_->info("getWsvQuery: connection to database is not initialised");
         return nullptr;
       }
       return std::make_shared<PostgresWsvQuery>(
@@ -533,7 +548,7 @@ namespace iroha {
     std::shared_ptr<BlockQuery> StorageImpl::getBlockQuery() const {
       std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
       if (not connection_) {
-        log_->info("connection to database is not initialised");
+        log_->info("getBlockQuery: connection to database is not initialised");
         return nullptr;
       }
       return std::make_shared<PostgresBlockQuery>(
@@ -572,6 +587,7 @@ namespace iroha {
     }
 
     StorageImpl::~StorageImpl() {
+      notifier_lifetime_.unsubscribe();
       freeConnections();
     }
 

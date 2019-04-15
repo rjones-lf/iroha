@@ -30,10 +30,12 @@ add_library(application
     impl/block_loader_init.cpp
     )
 target_link_libraries(application
-    logger
-    logger_manager
+    PRIVATE
     yac
     yac_transport
+    PUBLIC
+    logger
+    logger_manager
     server_runner
     ametsuchi
     networking

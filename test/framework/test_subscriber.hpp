@@ -27,7 +27,7 @@ namespace framework {
      */
     template <typename T>
     class VerificationStrategy {
-      template <typename K>
+      template <typename K, typename Observable>
       friend class TestSubscriber;
 
      public:
@@ -75,8 +75,9 @@ namespace framework {
     /**
      * TestSubscriber class provide wrapper for observable
      * @tparam T type of data in wrapped observable
+     * @tparam Observable type of observable
      */
-    template <typename T>
+    template <typename T, typename Observable>
     class TestSubscriber {
      public:
       /**
@@ -84,7 +85,7 @@ namespace framework {
        * @param unwrapped_observable - object for wrapping
        * @param strategy - invariant for validation
        */
-      TestSubscriber(rxcpp::observable<T> unwrapped_observable,
+      TestSubscriber(Observable unwrapped_observable,
                      std::unique_ptr<VerificationStrategy<T>> strategy)
           : unwrapped_(unwrapped_observable), strategy_(std::move(strategy)) {}
 
@@ -93,34 +94,34 @@ namespace framework {
        * for wrapped observable with checking invariant.
        * @param subscriber - business logic subscriber
        */
-      TestSubscriber<T> &subscribe(
+      TestSubscriber<T, Observable> &subscribe(
           std::function<void(T)> subscriber = [](T) {},
           std::function<void(std::exception_ptr)> error =
               [](std::exception_ptr) {},
           std::function<void()> completed = []() {}) {
-        subscription_ = unwrapped_.subscribe(
-            [this, subscriber](T val) {
-              // verify before invariant
-              this->strategy_->on_next_before(val);
+        unwrapped_.subscribe(subscription_,
+                             [this, subscriber](T val) {
+                               // verify before invariant
+                               this->strategy_->on_next_before(val);
 
-              // invoke subscriber
-              subscriber(val);
+                               // invoke subscriber
+                               subscriber(val);
 
-              // verify after invariant
-              this->strategy_->on_next_after(val);
-            },
-            [this, error](std::exception_ptr ep) {
-              // invoke subscriber
-              error(ep);
+                               // verify after invariant
+                               this->strategy_->on_next_after(val);
+                             },
+                             [this, error](std::exception_ptr ep) {
+                               // invoke subscriber
+                               error(ep);
 
-              this->strategy_->on_error(ep);
-            },
-            [this, completed]() {
-              // invoke subscriber
-              completed();
+                               this->strategy_->on_error(ep);
+                             },
+                             [this, completed]() {
+                               // invoke subscriber
+                               completed();
 
-              this->strategy_->on_completed();
-            });
+                               this->strategy_->on_completed();
+                             });
 
         return *this;
       }
@@ -138,7 +139,7 @@ namespace framework {
       }
 
      private:
-      rxcpp::observable<T> unwrapped_;
+      Observable unwrapped_;
       std::unique_ptr<VerificationStrategy<T>> strategy_;
       rxcpp::composite_subscription subscription_;
     };
@@ -165,9 +166,9 @@ namespace framework {
               typename T,
               typename SourceOperator,
               typename... Args>
-    TestSubscriber<T> make_test_subscriber(
+    TestSubscriber<T, O<T, SourceOperator>> make_test_subscriber(
         O<T, SourceOperator> unwrapped_observable, Args &&... args) {
-      return TestSubscriber<T>(
+      return TestSubscriber<T, O<T, SourceOperator>>(
           unwrapped_observable,
           std::make_unique<S<T>>(std::forward<Args>(args)...));
     }

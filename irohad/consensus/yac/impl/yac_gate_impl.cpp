@@ -32,6 +32,19 @@ namespace iroha {
           logger::LoggerPtr log)
           : log_(std::move(log)),
             current_hash_(),
+            published_events_(hash_gate->onOutcome()
+                                  .flat_map([this](auto message) {
+                                    return visit_in_place(
+                                        message,
+                                        [this](const CommitMessage &msg) {
+                                          return this->handleCommit(msg);
+                                        },
+                                        [this](const RejectMessage &msg) {
+                                          return this->handleReject(msg);
+                                        });
+                                  })
+                                  .publish()
+                                  .ref_count()),
             orderer_(std::move(orderer)),
             hash_provider_(std::move(hash_provider)),
             block_creator_(std::move(block_creator)),
@@ -83,15 +96,7 @@ namespace iroha {
       }
 
       rxcpp::observable<YacGateImpl::GateObject> YacGateImpl::onOutcome() {
-        return hash_gate_->onOutcome().flat_map([this](auto message) {
-          return visit_in_place(message,
-                                [this](const CommitMessage &msg) {
-                                  return this->handleCommit(msg);
-                                },
-                                [this](const RejectMessage &msg) {
-                                  return this->handleReject(msg);
-                                });
-        });
+        return published_events_;
       }
 
       void YacGateImpl::copySignatures(const CommitMessage &commit) {

@@ -74,13 +74,7 @@ class SimulatorTest : public ::testing::Test {
                                             crypto_signer,
                                             std::move(block_factory),
                                             getTestLogger("Simulator"));
-
-    auto peer = makePeer("127.0.0.1", shared_model::crypto::PublicKey("111"));
-    auto ledger_peers = std::make_shared<PeerList>(PeerList{peer});
-    ledger_state = std::make_shared<LedgerState>(ledger_peers);
   }
-
-  consensus::Round round;
 
   std::shared_ptr<MockStatefulValidator> validator;
   std::shared_ptr<MockTemporaryFactory> factory;
@@ -92,7 +86,8 @@ class SimulatorTest : public ::testing::Test {
   rxcpp::subjects::subject<OrderingEvent> ordering_events;
 
   std::shared_ptr<Simulator> simulator;
-  std::shared_ptr<LedgerState> ledger_state;
+  std::shared_ptr<PeerList> ledger_peers = std::make_shared<PeerList>(
+      PeerList{makePeer("127.0.0.1", shared_model::crypto::PublicKey("111"))});
 };
 
 shared_model::proto::Block makeBlock(int height) {
@@ -166,6 +161,8 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   EXPECT_CALL(*crypto_signer, sign(A<shared_model::interface::Block &>()))
       .Times(1);
 
+  auto ledger_state =
+      std::make_shared<LedgerState>(ledger_peers, block.height());
   auto ordering_event =
       OrderingEvent{proposal, consensus::Round{}, ledger_state};
 
@@ -216,6 +213,7 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
   auto block_wrapper = make_test_subscriber<CallExact>(simulator->onBlock(), 0);
   block_wrapper.subscribe();
 
+  auto ledger_state = std::make_shared<LedgerState>(ledger_peers, 0);
   ordering_events.get_subscriber().on_next(
       OrderingEvent{proposal, consensus::Round{}, ledger_state});
 
@@ -246,6 +244,8 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
   auto block_wrapper = make_test_subscriber<CallExact>(simulator->onBlock(), 0);
   block_wrapper.subscribe();
 
+  auto ledger_state =
+      std::make_shared<LedgerState>(ledger_peers, block.height());
   ordering_events.get_subscriber().on_next(
       OrderingEvent{proposal, consensus::Round{}, ledger_state});
 

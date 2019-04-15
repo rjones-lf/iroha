@@ -33,8 +33,7 @@ TEST_F(YacTest, YacWhenVoting) {
 
   EXPECT_CALL(*network, sendState(_, _)).Times(default_peers.size());
 
-  YacHash my_hash(
-      iroha::consensus::Round{1, 1}, "my_proposal_hash", "my_block_hash");
+  YacHash my_hash(initial_round, "my_proposal_hash", "my_block_hash");
 
   auto order = ClusterOrdering::create(default_peers);
   ASSERT_TRUE(order);
@@ -56,8 +55,7 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveOneVote) {
 
   EXPECT_CALL(*crypto, verify(_)).Times(1).WillRepeatedly(Return(true));
 
-  YacHash received_hash(
-      iroha::consensus::Round{1, 1}, "my_proposal", "my_block");
+  YacHash received_hash(initial_round, "my_proposal", "my_block");
   // assume that our peer receive message
   network->notification->onState({crypto->getVote(received_hash, "0")});
 
@@ -89,8 +87,7 @@ TEST_F(YacTest, DISABLED_YacWhenColdStartAndAchieveSupermajorityOfVotes) {
       .Times(default_peers.size())
       .WillRepeatedly(Return(true));
 
-  YacHash received_hash(
-      iroha::consensus::Round{1, 1}, "my_proposal", "my_block");
+  YacHash received_hash(initial_round, "my_proposal", "my_block");
   for (size_t i = 0; i < default_peers.size(); ++i) {
     network->notification->onState(
         {crypto->getVote(received_hash, std::to_string(i))});
@@ -106,8 +103,7 @@ TEST_F(YacTest, DISABLED_YacWhenColdStartAndAchieveSupermajorityOfVotes) {
  * AND commit is emitted to observable
  */
 TEST_F(YacTest, YacWhenColdStartAndAchieveCommitMessage) {
-  YacHash propagated_hash(
-      iroha::consensus::Round{1, 1}, "my_proposal", "my_block");
+  YacHash propagated_hash(initial_round, "my_proposal", "my_block");
 
   // verify that commit emitted
   auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 1);
@@ -160,9 +156,9 @@ TEST_F(YacTest, DISABLED_PropagateCommitBeforeNotifyingSubscribersApplyVote) {
   });
 
   for (size_t i = 0; i < default_peers.size(); ++i) {
-    yac->onState({createVote(
-        YacHash(iroha::consensus::Round(1, 0), "proposal_hash", "block_hash"),
-        std::to_string(i))});
+    yac->onState(
+        {createVote(YacHash(initial_round, "proposal_hash", "block_hash"),
+                    std::to_string(i))});
   }
 
   // verify that on_commit subscribers are notified
@@ -188,8 +184,7 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyReject) {
 
   std::vector<VoteMessage> commit;
 
-  auto yac_hash =
-      YacHash(iroha::consensus::Round(1, 0), "proposal_hash", "block_hash");
+  auto yac_hash = YacHash(initial_round, "proposal_hash", "block_hash");
 
   auto f = (default_peers.size() - 1)
       / iroha::consensus::yac::detail::kSupermajorityCheckerKfPlus1Bft;
@@ -202,8 +197,8 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyReject) {
   auto vote = createVote(yac_hash, std::to_string(default_peers.size() - f));
   RejectMessage reject(
       {vote,
-       createVote(YacHash(iroha::consensus::Round{1, 1}, "", "my_block"),
-                   std::to_string(default_peers.size() - f + 1))});
+       createVote(YacHash(initial_round, "", "my_block"),
+                  std::to_string(default_peers.size() - f + 1))});
   commit.push_back(vote);
 
   yac->onState(reject.votes);

@@ -9,8 +9,7 @@ find_package_handle_standard_args(rxcpp DEFAULT_MSG
 
 
 set(URL https://github.com/Reactive-Extensions/rxcpp.git)
-# this version is chosen, because it fixes 100% node overload [IR-1736] bug
-set(VERSION a7d5856385f126e874db6010d9dbfd37290c61de)
+set(VERSION 795587fa311fa41050111a830d91b183d8e53ff9)
 set_target_description(rxcpp "Library for reactive programming" ${URL} ${VERSION})
 
 
@@ -21,7 +20,6 @@ if (NOT rxcpp_FOUND)
       CONFIGURE_COMMAND ""
       BUILD_COMMAND ""
       INSTALL_COMMAND "" # remove install step
-      UPDATE_COMMAND "" # remove update step
       TEST_COMMAND "" # remove test step
       )
   externalproject_get_property(reactive_extensions_rxcpp source_dir)

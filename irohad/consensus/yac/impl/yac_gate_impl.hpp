@@ -60,6 +60,7 @@ namespace iroha {
         YacHash current_hash_;
         std::shared_ptr<LedgerState> current_ledger_state_;
 
+        rxcpp::observable<GateObject> published_events_;
         std::shared_ptr<YacPeerOrderer> orderer_;
         std::shared_ptr<YacHashProvider> hash_provider_;
         std::shared_ptr<simulator::BlockCreator> block_creator_;

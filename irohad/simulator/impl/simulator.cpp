@@ -23,7 +23,9 @@ namespace iroha {
         std::unique_ptr<shared_model::interface::UnsafeBlockFactory>
             block_factory,
         logger::LoggerPtr log)
-        : validator_(std::move(statefulValidator)),
+        : notifier_(notifier_lifetime_),
+          block_notifier_(block_notifier_lifetime_),
+          validator_(std::move(statefulValidator)),
           ametsuchi_factory_(std::move(factory)),
           block_query_factory_(block_query_factory),
           crypto_signer_(std::move(crypto_signer)),
@@ -67,6 +69,8 @@ namespace iroha {
     }
 
     Simulator::~Simulator() {
+      notifier_lifetime_.unsubscribe();
+      block_notifier_lifetime_.unsubscribe();
       proposal_subscription_.unsubscribe();
       verified_proposal_subscription_.unsubscribe();
     }

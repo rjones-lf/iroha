@@ -98,6 +98,7 @@ namespace iroha {
           proposal_factory_;
       std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache_;
 
+      rxcpp::composite_subscription proposal_notifier_lifetime_;
       rxcpp::subjects::subject<network::OrderingEvent> proposal_notifier_;
     };
 

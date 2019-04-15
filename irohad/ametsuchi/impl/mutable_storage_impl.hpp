@@ -12,6 +12,7 @@
 #include "ametsuchi/block_storage.hpp"
 #include "ametsuchi/command_executor.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
+#include "interfaces/common_objects/types.hpp"
 #include "logger/logger_fwd.hpp"
 #include "logger/logger_manager_fwd.hpp"
 
@@ -26,6 +27,7 @@ namespace iroha {
      public:
       MutableStorageImpl(
           shared_model::interface::types::HashType top_hash,
+          shared_model::interface::types::HeightType top_height,
           std::shared_ptr<PostgresCommandExecutor> cmd_executor,
           std::unique_ptr<soci::session> sql,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
@@ -39,6 +41,8 @@ namespace iroha {
       bool apply(rxcpp::observable<
                      std::shared_ptr<shared_model::interface::Block>> blocks,
                  MutableStoragePredicate predicate) override;
+
+      shared_model::interface::types::HeightType getTopBlockHeight() const;
 
       ~MutableStorageImpl() override;
 
@@ -59,6 +63,7 @@ namespace iroha {
                  MutableStoragePredicate predicate);
 
       shared_model::interface::types::HashType top_hash_;
+      shared_model::interface::types::HeightType top_height_;
 
       std::unique_ptr<soci::session> sql_;
       std::unique_ptr<PeerQuery> peer_query_;

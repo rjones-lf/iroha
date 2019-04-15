@@ -45,6 +45,7 @@
 #include "module/shared_model/validators/always_valid_validators.hpp"
 #include "multi_sig_transactions/mst_processor.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
+#include "network/consensus_gate.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
 #include "ordering/impl/on_demand_os_client_grpc.hpp"
@@ -403,7 +404,7 @@ namespace integration_framework {
         ->onExpiredBatches();
   }
 
-  rxcpp::observable<iroha::network::ConsensusGate::GateObject>
+  rxcpp::observable<iroha::consensus::GateObject>
   IntegrationTestFramework::getYacOnCommitObservable() {
     return iroha_instance_->getIrohaInstance()->getConsensusGate()->onOutcome();
   }

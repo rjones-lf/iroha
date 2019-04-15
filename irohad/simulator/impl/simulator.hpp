@@ -54,7 +54,9 @@ namespace iroha {
 
      private:
       // internal
+      rxcpp::composite_subscription notifier_lifetime_;
       rxcpp::subjects::subject<VerifiedProposalCreatorEvent> notifier_;
+      rxcpp::composite_subscription block_notifier_lifetime_;
       rxcpp::subjects::subject<BlockCreatorEvent> block_notifier_;
 
       rxcpp::composite_subscription proposal_subscription_;

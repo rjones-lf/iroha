@@ -25,6 +25,7 @@
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "logger/logger.hpp"
 #include "logger/logger_manager.hpp"
+#include "main/impl/consensus_init.hpp"
 #include "main/server_runner.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
@@ -103,6 +104,8 @@ Irohad::Irohad(const std::string &block_store_dir,
       opt_mst_gossip_params_(opt_mst_gossip_params),
       keypair(keypair),
       ordering_init(logger_manager->getLogger()),
+      yac_init(std::make_unique<iroha::consensus::yac::YacInit>()),
+      consensus_gate_objects(consensus_gate_objects_lifetime),
       log_manager_(std::move(logger_manager)),
       log_(log_manager_->getLogger()) {
   log_->info("created");
@@ -115,6 +118,7 @@ Irohad::Irohad(const std::string &block_store_dir,
 }
 
 Irohad::~Irohad() {
+  consensus_gate_objects_lifetime.unsubscribe();
   consensus_gate_events_subscription.unsubscribe();
 }
 
@@ -455,17 +459,34 @@ void Irohad::initBlockLoader() {
  * Initializing consensus gate
  */
 void Irohad::initConsensusGate() {
-  consensus_gate =
-      yac_init.initConsensusGate(storage,
-                                 simulator,
-                                 block_loader,
-                                 keypair,
-                                 consensus_result_cache_,
-                                 vote_delay_,
-                                 async_call_,
-                                 common_objects_factory_,
-                                 kConsensusConsistencyModel,
-                                 log_manager_->getChild("Consensus"));
+  auto block_query = storage->createBlockQuery();
+  if (not block_query) {
+    log_->error("Failed to create block query");
+    return;
+  }
+  auto block_var = (*block_query)->getTopBlock();
+  if (auto e = boost::get<expected::Error<std::string>>(&block_var)) {
+    log_->error("Failed to get the top block: {}", e->error);
+    return;
+  }
+
+  auto block =
+      boost::get<
+          expected::Value<std::shared_ptr<shared_model::interface::Block>>>(
+          &block_var)
+          ->value;
+  consensus_gate = yac_init->initConsensusGate(
+      {block->height(), ordering::kFirstRejectRound},
+      storage,
+      simulator,
+      block_loader,
+      keypair,
+      consensus_result_cache_,
+      vote_delay_,
+      async_call_,
+      common_objects_factory_,
+      kConsensusConsistencyModel,
+      log_manager_->getChild("Consensus"));
   consensus_gate->onOutcome().subscribe(
       consensus_gate_events_subscription,
       consensus_gate_objects.get_subscriber());
@@ -671,7 +692,7 @@ Irohad::RunResult Irohad::run() {
             }
             // Run internal server
             return internal_server->append(ordering_init.service)
-                .append(yac_init.getConsensusNetwork())
+                .append(yac_init->getConsensusNetwork())
                 .append(loader_init.service)
                 .run();
           })
@@ -698,7 +719,7 @@ Irohad::RunResult Irohad::run() {
                 [](auto &&peer_query) { return peer_query->getLedgerPeers(); };
 
             auto initial_ledger_state = std::make_shared<LedgerState>(
-                std::make_unique<PeerList>(peers.value()));
+                std::make_unique<PeerList>(peers.value()), block->height());
 
             pcs->onSynchronization().subscribe(
                 ordering_init.sync_event_notifier.get_subscriber());
@@ -709,7 +730,6 @@ Irohad::RunResult Irohad::run() {
 
             ordering_init.sync_event_notifier.get_subscriber().on_next(
                 synchronizer::SynchronizationEvent{
-                    rxcpp::observable<>::just(block),
                     SynchronizationOutcomeType::kCommit,
                     {block->height(), ordering::kFirstRejectRound},
                     initial_ledger_state});
