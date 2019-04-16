@@ -51,6 +51,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
             // notify our ordering service about new round
             ordering_service_->onCollaborationOutcome(new_round);
 
+            // this rotates the cache_
             this->sendCachedTransactions();
 
             // request proposal for the current round
@@ -59,6 +60,12 @@ OnDemandOrderingGate::OnDemandOrderingGate(
             // vote for the object received from the network
             proposal_notifier_.get_subscriber().on_next(
                 network::OrderingEvent{std::move(proposal), new_round});
+
+            const auto can_accept_txs_number = cache_->availableTxsCapacity();
+            if (can_accept_txs_number > 0) {
+              can_accept_txs_notifier_.get_subscriber().on_next(
+                  can_accept_txs_number);
+            }
           })),
       cache_(std::move(cache)),
       proposal_factory_(std::move(factory)),
@@ -83,6 +90,10 @@ bool OnDemandOrderingGate::propagateBatch(
 
 rxcpp::observable<network::OrderingEvent> OnDemandOrderingGate::onProposal() {
   return proposal_notifier_.get_observable();
+}
+
+rxcpp::observable<size_t> OnDemandOrderingGate::onReadyToAcceptTxs() {
+  return can_accept_txs_notifier_.get_observable();
 }
 
 boost::optional<std::shared_ptr<const shared_model::interface::Proposal>>

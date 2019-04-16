@@ -108,14 +108,7 @@ namespace iroha {
       });
       mst_processor_->onPreparedBatches().subscribe([this](auto &&batch) {
         log_->info("MST batch prepared");
-        this->publishEnoughSignaturesStatus(batch->transactions());
-        if (not this->pcs_->propagate_batch(batch)) {
-          log_->error("PCS was unable to serve the batch received from MST {}",
-                      batch->toString());
-          // TODO IR-430 igor-egorov, a batch might not be accepted by pcs, need
-          // to investigate the lifetime of a batch and IR-432 handle it somehow
-          // in case when pcs is not ready
-        }
+        this->publishEnoughSignaturesStatus(batch->get()->transactions());
       });
       mst_processor_->onExpiredBatches().subscribe([this](auto &&batch) {
         log_->info("MST batch {} is expired", batch->reducedHash());

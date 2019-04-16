@@ -56,6 +56,10 @@ namespace iroha {
 
       rxcpp::observable<network::OrderingEvent> onProposal() override;
 
+      /// Emits a rough amount of transactions that the gate is ready to
+      /// accept for propagation.
+      rxcpp::observable<size_t> onReadyToAcceptTxs() override;
+
      private:
       /**
        * Handle an incoming proposal from ordering service
@@ -89,6 +93,7 @@ namespace iroha {
       std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache_;
 
       rxcpp::subjects::subject<network::OrderingEvent> proposal_notifier_;
+      rxcpp::subjects::subject<size_t> can_accept_txs_notifier_;
     };
 
   }  // namespace ordering

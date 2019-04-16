@@ -8,6 +8,7 @@
 
 #include <memory>
 #include <mutex>
+
 #include <rxcpp/rx.hpp>
 #include "logger/logger_fwd.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
@@ -41,18 +42,21 @@ namespace iroha {
     /**
      * Prove updating of state for handling status of signing
      */
-    rxcpp::observable<std::shared_ptr<MstState>> onStateUpdate() const;
+    rxcpp::observable<std::shared_ptr<const MstState>> onStateUpdate() const;
 
     /**
      * Observable emit batches which are prepared for further processing in
      * system
      */
-    rxcpp::observable<DataType> onPreparedBatches() const;
+    rxcpp::observable<std::shared_ptr<MovedBatch>> onPreparedBatches() const;
 
     /**
      * Observable emit expired by time transactions
      */
     rxcpp::observable<DataType> onExpiredBatches() const;
+
+    /// Get the next completed batch with at most max_txs transactions.
+    boost::optional<BatchPtr> getCompletedBatch(const size_t max_txs);
 
     virtual ~MstProcessor() = default;
 
