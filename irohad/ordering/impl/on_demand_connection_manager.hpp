@@ -16,6 +16,8 @@
 namespace iroha {
   namespace ordering {
 
+    class OrderingGateResendStrategy;
+
     /**
      * Proxy class which redirects requests to appropriate peers
      */
@@ -53,12 +55,14 @@ namespace iroha {
       OnDemandConnectionManager(
           std::shared_ptr<transport::OdOsNotificationFactory> factory,
           rxcpp::observable<CurrentPeers> peers,
+          std::shared_ptr<OrderingGateResendStrategy> batch_resend_strategy,
           logger::LoggerPtr log);
 
       OnDemandConnectionManager(
           std::shared_ptr<transport::OdOsNotificationFactory> factory,
           rxcpp::observable<CurrentPeers> peers,
           CurrentPeers initial_peers,
+          std::shared_ptr<OrderingGateResendStrategy> batch_resend_strategy,
           logger::LoggerPtr log);
 
       ~OnDemandConnectionManager() override;
@@ -68,7 +72,6 @@ namespace iroha {
       boost::optional<std::shared_ptr<const ProposalType>> onRequestProposal(
           consensus::Round round) override;
 
-     private:
       /**
        * Corresponding connections created by OdOsNotificationFactory
        * @see PeerType for individual descriptions
@@ -77,6 +80,7 @@ namespace iroha {
         PeerCollectionType<std::unique_ptr<transport::OdOsNotification>> peers;
       };
 
+     private:
       /**
        * Initialize corresponding peers in connections_ using factory_
        * @param peers to initialize connections with
@@ -85,6 +89,7 @@ namespace iroha {
 
       logger::LoggerPtr log_;
       std::shared_ptr<transport::OdOsNotificationFactory> factory_;
+      std::shared_ptr<OrderingGateResendStrategy> batch_resend_strategy_;
       rxcpp::composite_subscription subscription_;
 
       CurrentConnections connections_;

@@ -41,6 +41,7 @@ class OnDemandOrderingGateTest : public ::testing::Test {
     auto ufactory = std::make_unique<NiceMock<MockUnsafeProposalFactory>>();
     factory = ufactory.get();
     tx_cache = std::make_shared<ametsuchi::MockTxPresenceCache>();
+    strategy = std::make_shared<MockOrderingGateResendStrategy>();
     ON_CALL(*tx_cache,
             check(testing::Matcher<const shared_model::crypto::Hash &>(_)))
         .WillByDefault(
@@ -54,9 +55,9 @@ class OnDemandOrderingGateTest : public ::testing::Test {
         cache,
         std::move(ufactory),
         tx_cache,
+        strategy,
         1000,
         getTestLogger("OrderingGate"));
-
     auto peer = makePeer("127.0.0.1", shared_model::crypto::PublicKey("111"));
     auto ledger_peers = std::make_shared<PeerList>(PeerList{peer});
     ledger_state =
@@ -71,6 +72,7 @@ class OnDemandOrderingGateTest : public ::testing::Test {
   std::shared_ptr<MockOdOsNotification> notification;
   NiceMock<MockUnsafeProposalFactory> *factory;
   std::shared_ptr<ametsuchi::MockTxPresenceCache> tx_cache;
+  std::shared_ptr<MockOrderingGateResendStrategy> strategy;
   std::shared_ptr<OnDemandOrderingGate> ordering_gate;
 
   std::shared_ptr<cache::MockOrderingGateCache> cache;

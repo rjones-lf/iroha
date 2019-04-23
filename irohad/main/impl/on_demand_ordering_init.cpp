@@ -67,6 +67,8 @@ namespace iroha {
         std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
             async_call,
         std::shared_ptr<TransportFactoryType> proposal_transport_factory,
+        std::shared_ptr<ordering::OrderingGateResendStrategy>
+            batch_resend_strategy,
         std::chrono::milliseconds delay,
         std::vector<shared_model::interface::types::HashType> initial_hashes,
         const logger::LoggerManagerTreePtr &ordering_log_manager) {
@@ -195,6 +197,7 @@ namespace iroha {
                                     delay,
                                     ordering_log_manager),
           peers,
+          std::move(batch_resend_strategy),
           ordering_log_manager->getChild("ConnectionManager")->getLogger());
     }
 
@@ -205,6 +208,8 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
             proposal_factory,
         std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
+        std::shared_ptr<ordering::OrderingGateResendStrategy>
+            batch_resend_strategy,
         std::function<std::chrono::milliseconds(
             const synchronizer::SynchronizationEvent &)> delay_func,
         size_t max_number_of_transactions,
@@ -264,6 +269,7 @@ namespace iroha {
           std::move(cache),
           std::move(proposal_factory),
           std::move(tx_cache),
+          std::move(batch_resend_strategy),
           max_number_of_transactions,
           ordering_log_manager->getChild("Gate")->getLogger());
     }
@@ -305,6 +311,8 @@ namespace iroha {
             proposal_factory,
         std::shared_ptr<TransportFactoryType> proposal_transport_factory,
         std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
+        std::shared_ptr<ordering::OrderingGateResendStrategy>
+            batch_resend_strategy,
         std::function<std::chrono::milliseconds(
             const synchronizer::SynchronizationEvent &)> delay_func,
         logger::LoggerManagerTreePtr ordering_log_manager) {
@@ -323,12 +331,14 @@ namespace iroha {
           createConnectionManager(std::move(peer_query_factory),
                                   std::move(async_call),
                                   std::move(proposal_transport_factory),
+                                  batch_resend_strategy,
                                   delay,
                                   std::move(initial_hashes),
                                   ordering_log_manager),
           std::make_shared<ordering::cache::OnDemandCache>(),
           std::move(proposal_factory),
           std::move(tx_cache),
+          batch_resend_strategy,
           std::move(delay_func),
           max_number_of_transactions,
           ordering_log_manager);

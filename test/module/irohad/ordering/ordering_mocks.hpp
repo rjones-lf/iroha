@@ -10,6 +10,7 @@
 
 #include "module/irohad/ordering/mock_on_demand_os_notification.hpp"
 #include "ordering/impl/ordering_gate_cache/ordering_gate_cache.hpp"
+#include "ordering/impl/ordering_gate_cache/ordering_gate_resend_strategy.hpp"
 #include "ordering/on_demand_ordering_service.hpp"
 #include "ordering/on_demand_os_transport.hpp"
 
@@ -43,6 +44,21 @@ namespace iroha {
                        consensus::Round));
 
       MOCK_METHOD1(onCollaborationOutcome, void(consensus::Round));
+    };
+
+    struct MockOrderingGateResendStrategy : public OrderingGateResendStrategy {
+      MOCK_METHOD1(
+          feed,
+          bool(std::shared_ptr<shared_model::interface::TransactionBatch>));
+      MOCK_METHOD1(
+          readyToUse,
+          bool(std::shared_ptr<shared_model::interface::TransactionBatch>));
+      MOCK_METHOD1(remove,
+                   void(const cache::OrderingGateCache::HashesSetType &hashes));
+      MOCK_METHOD1(setCurrentRound, void(const consensus::Round &));
+      MOCK_METHOD2(sendBatches,
+                   void(OnDemandConnectionManager::CollectionType,
+                        const OnDemandConnectionManager::CurrentConnections &));
     };
 
   }  // namespace ordering

@@ -17,6 +17,7 @@
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "logger/logger_fwd.hpp"
 #include "ordering/impl/ordering_gate_cache/ordering_gate_cache.hpp"
+#include "ordering/impl/ordering_gate_cache/ordering_gate_resend_strategy.hpp"
 #include "ordering/on_demand_ordering_service.hpp"
 
 namespace iroha {
@@ -55,6 +56,7 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               factory,
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
+          std::shared_ptr<OrderingGateResendStrategy> batch_resend_strategy,
           size_t transaction_limit,
           logger::LoggerPtr log);
 
@@ -100,6 +102,7 @@ namespace iroha {
 
       rxcpp::composite_subscription proposal_notifier_lifetime_;
       rxcpp::subjects::subject<network::OrderingEvent> proposal_notifier_;
+      std::shared_ptr<OrderingGateResendStrategy> batch_resend_strategy_;
     };
 
   }  // namespace ordering

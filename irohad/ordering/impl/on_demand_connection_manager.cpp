@@ -7,8 +7,10 @@
 
 #include <boost/range/combine.hpp>
 #include "interfaces/iroha_internal/proposal.hpp"
+#include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "logger/logger.hpp"
 #include "ordering/impl/on_demand_common.hpp"
+#include "ordering/impl/ordering_gate_cache/ordering_gate_resend_strategy.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
@@ -16,9 +18,11 @@ using namespace iroha::ordering;
 OnDemandConnectionManager::OnDemandConnectionManager(
     std::shared_ptr<transport::OdOsNotificationFactory> factory,
     rxcpp::observable<CurrentPeers> peers,
+    std::shared_ptr<OrderingGateResendStrategy> batch_resend_strategy,
     logger::LoggerPtr log)
     : log_(std::move(log)),
       factory_(std::move(factory)),
+      batch_resend_strategy_(std::move(batch_resend_strategy)),
       subscription_(peers.subscribe(
           [this](const auto &peers) { this->initializeConnections(peers); })) {}
 
@@ -26,8 +30,12 @@ OnDemandConnectionManager::OnDemandConnectionManager(
     std::shared_ptr<transport::OdOsNotificationFactory> factory,
     rxcpp::observable<CurrentPeers> peers,
     CurrentPeers initial_peers,
+    std::shared_ptr<OrderingGateResendStrategy> batch_resend_strategy,
     logger::LoggerPtr log)
-    : OnDemandConnectionManager(std::move(factory), peers, std::move(log)) {
+    : OnDemandConnectionManager(std::move(factory),
+                                peers,
+                                std::move(batch_resend_strategy),
+                                std::move(log)) {
   // using start_with(initial_peers) results in deadlock
   initializeConnections(initial_peers);
 }
@@ -50,15 +58,7 @@ void OnDemandConnectionManager::onBatches(CollectionType batches) {
    * RejectReject  CommitReject  RejectCommit  CommitCommit
    */
 
-  auto propagate = [&](auto consumer) {
-    std::shared_lock<std::shared_timed_mutex> lock(mutex_);
-    connections_.peers[consumer]->onBatches(batches);
-  };
-
-  propagate(kRejectRejectConsumer);
-  propagate(kRejectCommitConsumer);
-  propagate(kCommitRejectConsumer);
-  propagate(kCommitCommitConsumer);
+  batch_resend_strategy_->sendBatches(batches, connections_);
 }
 
 boost::optional<std::shared_ptr<const OnDemandConnectionManager::ProposalType>>

@@ -31,6 +31,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
     std::shared_ptr<cache::OrderingGateCache> cache,
     std::shared_ptr<shared_model::interface::UnsafeProposalFactory> factory,
     std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
+    std::shared_ptr<OrderingGateResendStrategy> batch_resend_strategy,
     size_t transaction_limit,
     logger::LoggerPtr log)
     : log_(std::move(log)),
@@ -43,6 +44,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
             log_->debug("Asking to remove {} transactions from cache.",
                         hashes->size());
             cache_->remove(*hashes);
+            batch_resend_strategy_->remove(*hashes);
           })),
       round_switch_subscription_(
           round_switch_events.subscribe([this](auto event) {
@@ -52,6 +54,8 @@ OnDemandOrderingGate::OnDemandOrderingGate(
             ordering_service_->onCollaborationOutcome(event.next_round);
 
             this->sendCachedTransactions();
+
+            batch_resend_strategy_->setCurrentRound(event.next_round);
 
             // request proposal for the current round
             auto proposal = this->processProposalRequest(
@@ -65,7 +69,8 @@ OnDemandOrderingGate::OnDemandOrderingGate(
       cache_(std::move(cache)),
       proposal_factory_(std::move(factory)),
       tx_cache_(std::move(tx_cache)),
-      proposal_notifier_(proposal_notifier_lifetime_) {}
+      proposal_notifier_(proposal_notifier_lifetime_),
+      batch_resend_strategy_(std::move(batch_resend_strategy)) {}
 
 OnDemandOrderingGate::~OnDemandOrderingGate() {
   proposal_notifier_lifetime_.unsubscribe();
@@ -76,6 +81,8 @@ OnDemandOrderingGate::~OnDemandOrderingGate() {
 void OnDemandOrderingGate::propagateBatch(
     std::shared_ptr<shared_model::interface::TransactionBatch> batch) {
   cache_->addToBack({batch});
+
+  batch_resend_strategy_->feed(batch);
 
   network_client_->onBatches(
       transport::OdOsNotification::CollectionType{batch});
@@ -104,8 +111,13 @@ OnDemandOrderingGate::processProposalRequest(
 void OnDemandOrderingGate::sendCachedTransactions() {
   // TODO mboldyrev 22.03.2019 IR-425
   // make cache_->getBatchesForRound(current_round) that respects sync
+
   auto batches = cache_->pop();
   cache_->addToBack(batches);
+
+  for (const auto &batch : batches) {
+    batch_resend_strategy_->readyToUse(batch);
+  }
 
   // get only transactions which fit to next proposal
   auto end_iterator = batches.begin();

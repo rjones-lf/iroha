@@ -40,3 +40,9 @@ target_link_libraries(on_demand_cache_test
     on_demand_ordering_gate
     shared_model_interfaces_factories
     )
+
+addtest(on_demand_resend_strategy_test on_demand_resend_strategy_test.cpp)
+target_link_libraries(on_demand_resend_strategy_test
+    on_demand_ordering_gate
+    shared_model_interfaces_factories
+    )

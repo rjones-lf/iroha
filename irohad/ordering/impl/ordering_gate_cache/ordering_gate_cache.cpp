@@ -17,6 +17,13 @@ namespace iroha {
         return hasher_(a->reducedHash());
       }
 
+      bool OrderingGateCache::BatchPointerComparator::operator()(
+          const std::shared_ptr<shared_model::interface::TransactionBatch> &l,
+          const std::shared_ptr<shared_model::interface::TransactionBatch> &r)
+          const {
+        return *l == *r;
+      }
+
     }  // namespace cache
   }    // namespace ordering
 }  // namespace iroha

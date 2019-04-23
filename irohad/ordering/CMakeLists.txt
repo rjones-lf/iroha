@@ -54,6 +54,7 @@ add_library(on_demand_ordering_gate
     impl/on_demand_ordering_gate.cpp
     impl/ordering_gate_cache/ordering_gate_cache.cpp
     impl/ordering_gate_cache/on_demand_cache.cpp
+    impl/ordering_gate_cache/on_demand_resend_strategy.cpp
     )
 target_link_libraries(on_demand_ordering_gate
     on_demand_common

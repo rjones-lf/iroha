@@ -24,7 +24,7 @@ namespace iroha {
        * Cache for transactions sent to ordering gate
        */
       class OrderingGateCache {
-       private:
+       public:
         /**
          * Hasher for the shared pointer on the batch. Uses batch's reduced hash
          */
@@ -36,7 +36,17 @@ namespace iroha {
                   &a) const;
         };
 
-       public:
+        /**
+         * Comparator for shared_ptr<batch>
+         */
+        struct BatchPointerComparator {
+          bool operator()(
+              const std::shared_ptr<shared_model::interface::TransactionBatch>
+                  &l,
+              const std::shared_ptr<shared_model::interface::TransactionBatch>
+                  &r) const;
+        };
+
         /// type of the element in cache container. Set is used as it allows to
         /// remove batch from BatchSet with O(1) complexity, which is the case
         /// in remove method
