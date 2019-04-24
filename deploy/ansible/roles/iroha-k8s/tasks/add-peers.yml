@@ -1,0 +1,24 @@
+---
+- name: Get peer entry from peer list file
+  command: >
+    sed '1d;$d' peers.csv
+  register: peer_list
+  args:
+    chdir: "{{ role_path }}/files/"
+  tags:
+    - add-peers
+
+- name: Generate genesis block file
+  template:
+    src: genesis.block.j2
+    dest: "{{ role_path }}/files/conf/genesis.block"
+  tags:
+    - add-peers
+
+- name: Minify genesis.block
+  replace:
+    path: "{{ role_path }}/files/conf/genesis.block"
+    regexp: "[\t\n\r\\s]"
+    replace: ""
+  tags:
+    - add-peers

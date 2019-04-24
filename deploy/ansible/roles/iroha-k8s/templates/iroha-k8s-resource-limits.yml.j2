@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: resource-limits
+  namespace: {{ iroha_namespace }}
+spec:
+  limits:
+  - default:
+      cpu: 500m
+      memory: 500Mi
+    defaultRequest:
+      cpu: 100m
+      memory: 200Mi
+    type: Container

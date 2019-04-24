@@ -1,0 +1,32 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: iroha
+  name: iroha
+  namespace: iroha-peer-network
+spec:
+  clusterIP: None
+  ports:
+  - name: internal-port
+    port: 10001
+    targetPort: 10001
+  - name: torii-port
+    port: 50051
+    targetPort: 50051
+  selector:
+    app: iroha
+---
+# docs at https://kubernetes.io/docs/concepts/services-networking/service/#externalname
+# reference at https://stackoverflow.com/a/44329470
+kind: Service
+apiVersion: v1
+metadata:
+  name: iroha-peer
+  namespace: default # target namespace to expose the port in
+spec:
+  type: ExternalName
+  externalName: iroha.iroha-peer-network.svc.cluster.local
+  ports:
+  - port: 50051

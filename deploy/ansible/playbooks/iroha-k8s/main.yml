@@ -1,0 +1,7 @@
+---
+  - hosts: localhost
+    connection: local
+    roles:
+      - { role: iroha-k8s, tags: [] }
+
+      # TODO: tag each/most tasks and assign here so tasks can be selectively performed

@@ -1,0 +1,70 @@
+---
+- name: Write header to peer list file
+  shell: >
+    echo 'host;port;priv_key_hex;pub_key_hex' > peers.csv
+  args:
+    chdir: "{{ role_path }}/files/"
+
+- name: "Generate keypairs (iroha_replicas: {{ iroha_replicas }})"
+  command: >
+    python {{ role_path }}/files/scripts/ed25519.py
+  loop: "{{ range(iroha_replicas|int)|list }}"
+  register: result
+
+- name: Save gathered peer info in peer list file
+  shell: |
+    echo '{{ iroha_pod_basename }}-{{ item }}.{{ iroha_governing_service_domain_name }};{{ iroha_internal_port }};{{ result.results[item].stdout_lines[0] }};{{ result.results[item].stdout_lines[1] }}' >> {{ role_path }}/files/peers.csv
+  loop: "{{ range(iroha_replicas|int)|list }}"
+  args:
+    chdir: "{{ role_path }}/files/"
+
+- name: Generate config.docker
+  template:
+    src: config.docker.j2
+    dest: "{{ role_path }}/files/conf/config.docker"
+
+- name: Build genesis.block
+  include: add-peers.yml
+
+- name: Move genesis block to {{ role_path }}/file/conf/
+  command: "cp genesis.block conf/genesis.block"
+  args:
+    creates: "{{ role_path }}/files/conf"
+    chdir: "{{ role_path }}/files/"
+
+- name: Extract peer keys to use in defining secrets
+  shell: >
+    cat peers.csv | grep -E "[A-Fa-f0-9]{64}[;][A-Fa-f0-9]{64}" -o
+  register: peer_keys
+  args:
+    chdir: "{{ role_path }}/files/"
+
+- name: Generate/define k8s secrets 
+  template:
+    src: iroha-k8s-peer-keys.yml.j2
+    dest: "{{ role_path }}/files/iroha-k8s-peer-keys.yml"
+
+- name: Generate k8s config for iroha services
+  template:
+    src: iroha-k8s-services.yml.j2
+    dest: "{{ role_path }}/files/iroha-k8s-services.yml"
+
+- name: Generate k8s config for iroha peers
+  template:
+    src: iroha-k8s.yml.j2
+    dest: "{{ role_path }}/files/iroha-k8s.yml"
+
+- name: Generate configmap config file
+  shell: >
+    kubectl create configmap  --dry-run {{ iroha_configmap_name }} \
+                              --from-file=conf/ \
+                              --output yaml \
+                              -n {{ iroha_namespace }} | tee iroha-k8s-configmap.yml
+  register: output
+  args:
+    chdir: "{{ role_path }}/files/"
+  tags:
+    - deploy
+    - configmap
+
+- debug: var=output.stdout_lines

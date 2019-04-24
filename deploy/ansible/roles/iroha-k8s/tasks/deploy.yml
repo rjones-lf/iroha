@@ -1,0 +1,20 @@
+---
+- name: Provision Iroha services
+  command: >
+    kubectl apply -f iroha-k8s-configmap.yml \
+                  -f iroha-k8s-peer-keys.yml \
+                  -f iroha-k8s-services.yml
+  register: output
+  args:
+    chdir: "{{ role_path }}/files/"
+
+- debug: var=output.stdout_lines
+
+- name: Provision Iroha peers
+  command: >
+    kubectl apply -f iroha-k8s.yml
+  register: output
+  args:
+    chdir: "{{ role_path }}/files/"
+
+- debug: var=output.stdout_lines

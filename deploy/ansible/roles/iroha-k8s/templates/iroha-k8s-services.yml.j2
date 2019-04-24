@@ -1,0 +1,32 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: iroha
+  name: {{ iroha_governing_service_domain_name }}
+  namespace: {{ iroha_namespace }}
+spec:
+  clusterIP: None
+  ports:
+  - name: {{ iroha_internal_port_name }}
+    port: {{ iroha_internal_port }}
+    targetPort: {{ iroha_internal_port }}
+  - name: {{ iroha_torii_port_name }}
+    port: {{ iroha_torii_port }}
+    targetPort: {{ iroha_torii_port }}
+  selector:
+    app: iroha
+---
+# docs at https://kubernetes.io/docs/concepts/services-networking/service/#externalname
+# reference at https://stackoverflow.com/a/44329470
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ iroha_pod_basename }}
+  namespace: default # target namespace to expose the port in
+spec:
+  type: ExternalName
+  externalName: {{ iroha_governing_service_domain_name }}.{{ iroha_namespace }}.svc.cluster.local
+  ports:
+  - port: {{ iroha_torii_port }}

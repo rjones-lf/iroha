@@ -1,0 +1,16 @@
+---
+- name: DESTROYING IROHA PEER NETWORK AND DATA
+  command: kubectl delete -f iroha-k8s-peer-keys.yml -f iroha-k8s-services.yml -f iroha-k8s-configmap.yml -f iroha-k8s.yml
+  args:
+    chdir: "{{ role_path }}/files/"
+  tags:
+    - not-deploy
+  ignore_errors: yes
+
+- name: Delete namespace too
+  command: kubectl delete namespace {{ iroha_namespace }}
+  args:
+    chdir: "{{ role_path }}/files/"
+  when: iroha_namespace != "default"
+  tags:
+    - not-deploy

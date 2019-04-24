@@ -1,0 +1,80 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: iroha-peer-key-0
+  namespace: iroha-peer-network
+type: Opaque
+data:
+  node.priv: MDNhNzU2MDlmYzhjMWJkZjVmOWE3NDgxNmE0MDliMDMwZWNlZjlhMjI5ZjM3M2Q4NDAyMWNhZDcyNDQ3MTk3NQ==
+  node.pub: ZGVmMTc0MmI4MjkzNTM2YWMwZWNmM2MwNGU0YTczMDU5NjNkYzg1ZTkyN2E5NzQyYjVkOTE1ZmRlMjdlMTM5OQ==
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: iroha-peer-key-1
+  namespace: iroha-peer-network
+type: Opaque
+data:
+  node.priv: MmYxOWNjYTIyZDA0ODM4ZTYwNzJhYzdhNDhhYTIwN2Y4MDU0NWFkNjFlMmJlZjM0YzljMzk0MTBiNzg4YTE2Mw==
+  node.pub: NGM4NDY3MGE0YzhiMWE5NTEzNjA0OTg2ZjgwZGFiMDg1ZDUzNzNiYjdiZmJhOWQxNGVjYzNhNDZmYmM4Nzk3ZQ==
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: iroha-peer-key-2
+  namespace: iroha-peer-network
+type: Opaque
+data:
+  node.priv: NDBmYzI4NWY5MTdjNWZmYzY4MDY3NDI1OWRhNWI0MjZlNzRjZDY4NjA2ZDkzZWQwY2Y4YWQzMDg4ZWI4ZGM2Mw==
+  node.pub: NzZhZjlmYTY4YmIzYjgzOWYyYmFiNjNlNjdhYzc3YTRmNWRjYzBkMDg0MmJlYTM3ODdiNWY5MTg5YWQxMTM2ZQ==
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: iroha-peer-key-3
+  namespace: iroha-peer-network
+type: Opaque
+data:
+  node.priv: NjcyZjEwOGNjMDI4MWJlY2JlOTFkOWRlOTMzZjM5NmZlZjdmM2E4ZjgzZDA1MzgxMmZhMGFlYTVhYmJhOTM0NQ==
+  node.pub: OTRjZjFjMjIzMjVlMmQ2ZDQyMDBjZTk3Nzk4MzNmMTAzYzNkMjQ2MWI2ZDQ2ODRiMTI0YWQ5MWI2NGI3OWZkYg==
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: iroha-peer-key-4
+  namespace: iroha-peer-network
+type: Opaque
+data:
+  node.priv: MjFiNzUwZDhmMTc2YjdiZTY1Zjg5NGNkNjcxY2FkNWUwMzFmMmU2NDE4YmNjMzg1NGRiOGRiNWU2NWNhMWIxYw==
+  node.pub: NDNkNmFlMTQxZjI3N2UxMzA5YmUwZjU5MTJhNWE4NzljMzE3ZjBkOTEyMDJiZWZkNmZlODcyZjQ5ZDUxYzdhMg==
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: iroha-peer-key-5
+  namespace: iroha-peer-network
+type: Opaque
+data:
+  node.priv: MzA5NTY2YTlmYTU2ZTAxZDcyMTE1NjgxYzNkNzhkNDk1NDgwYWJlNWM4NmMyMjA0M2QxOTQ3MzQxZjgxMzYzNQ==
+  node.pub: MGY3ZGUzZDBjZDU3YTI4NjE2MDU3MWM1MGZmYjljNmU3M2YyMDcwYTU4NDc5YTIxNzUxYTEyZjA4NjNhMTAzZQ==
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: iroha-peer-key-6
+  namespace: iroha-peer-network
+type: Opaque
+data:
+  node.priv: NGM5OTlmMzk5NzA1YzNkYTY2YjBhZjEzYjQ5YTdkOGY2M2ZiNmFlNGQ3MWJlOWNiY2EzYmNlYTVhMDRhOThmYg==
+  node.pub: YmMzY2VjNDRhMDljMTI5NTMyZGNmNTE1NjhmZTQ1YmI1NjhmNzZhZjQ4YjRjZGVjODVlMzcyOGRkNDM4YWU5Mw==
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: iroha-peer-key-7
+  namespace: iroha-peer-network
+type: Opaque
+data:
+  node.priv: YWQwNjM1MWE1YzBmZGIxYTVkMTg1NmNlMDk2MzUxMzJmYjhkNWE4YTUxODFhNWI4N2VjZjRkNTdkNjU4NWZmZA==
+  node.pub: ZjNhNTc1NjA5M2ZjNTVkZDU4NjJjODE2ZjQxZTg3MTliZTEwZDE4MWI2MGMwODM5NjI0YWYxM2UyN2UzYmUyOQ==

@@ -1,9 +1,23 @@
-# config.sample
-max_proposal_size: 3000
-proposal_delay: 300
-vote_delay: 5000
-load_delay: 5000
-# k8s-iroha.yaml
-iroha_image: hyperledger/iroha:develop
+iroha_block_store_path: "/tmp/block-store/"
+iroha_internal_port: 10001
+iroha_torii_port: 50051
+iroha_pg_opt: "host=localhost port=5432 user=postgres password=mysecretpassword"
+iroha_max_proposal_size: 10
+iroha_proposal_delay: 5000
+iroha_vote_delay: 5000
+iroha_mst_enable: 'true'
+iroha_mst_expiration_time: 1440 # 24 hours; default;
+
+iroha_pod_basename: iroha-peer
+iroha_governing_service_domain_name: iroha # https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#stable-network-id
+iroha_replicas: 8 # Minimum number of peers is 6 (5f+1) for consensus to work properly.
+iroha_image_tag: hyperledger/iroha:1.0.0_rc4
+postgres_image_tag: postgres:11.2-alpine
 postgres_volume_size: 1Gi
 blockstore_volume_size: 1Gi
+iroha_internal_port_name: internal-port
+iroha_torii_port_name: torii-port
+iroha_configmap_name: iroha-config
+
+create_custom_namespace: true # TODO: not yet working; set `iroha_namespace` below, e.g `iroha_namespace: default`
+iroha_namespace: iroha-peer-network # ignored when `create_custom_namespace`='false'

@@ -1,30 +1,24 @@
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: iroha
-  name: iroha
-spec:
-  clusterIP: None
-  ports:
-  - port: 50051
-  selector:
-    app: iroha
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: iroha
+  name: {{ iroha_pod_basename }}
   labels:
     app: iroha
+    max-supported-replicas: "{{ iroha_replicas }}"
+  namespace: {{ iroha_namespace }}
 spec:
-  serviceName: iroha
-  replicas: 4
+  serviceName: {{ iroha_governing_service_domain_name }}
+  replicas: {{ iroha_replicas }}
+  podManagementPolicy: "Parallel"
+  updateStrategy:
+    type: RollingUpdate
   selector:
     matchLabels:
       app: iroha
   template:
     metadata:
+      namespace: {{ iroha_namespace }}
       labels:
         app: iroha
     spec:
@@ -39,22 +33,20 @@ spec:
               fieldRef:
                 fieldPath: metadata.name
         volumeMounts:
-        - name: iroha-secret-0
-          mountPath: /opt/secrets/iroha-0
-        - name: iroha-secret-1
-          mountPath: /opt/secrets/iroha-1
-        - name: iroha-secret-2
-          mountPath: /opt/secrets/iroha-2
-        - name: iroha-secret-3
-          mountPath: /opt/secrets/iroha-3
-        - name: iroha-config
+{% for key_pair in peer_keys.stdout_lines %}
+        - name: {{ iroha_pod_basename }}-secret-{{ loop.index - 1 }}
+          mountPath: /opt/secrets/{{ iroha_pod_basename }}-{{ loop.index - 1 }}
+{% endfor %}
+        - name: {{ iroha_pod_basename }}-config
           mountPath: /opt/iroha_config
-        - name: iroha-data
+        - name: {{ iroha_pod_basename }}-data
           mountPath: /opt/iroha_data
       containers:
       - name: postgres
-        image: postgres:9.5
+        image: {{ postgres_image_tag }}
         imagePullPolicy: Always
+        command: ["docker-entrypoint.sh"]
+        args: ["postgres", "-c", "max_prepared_transactions=100"]
         ports:
         - containerPort: 5432
           name: pg-port
@@ -77,46 +69,40 @@ spec:
         - name: pg-data
           mountPath: /var/lib/postgresql/data
       - name: iroha
-        image: hyperledger/iroha:develop
+        image: {{ iroha_image_tag }}
         imagePullPolicy: Always
         ports:
-        - containerPort: 10001
-          name: inter-peer
-        - containerPort: 50051
-          name: external
+        - containerPort: {{ iroha_internal_port }}
+          name: {{ iroha_internal_port_name }}
+        - containerPort: {{ iroha_torii_port }}
+          name: {{ iroha_torii_port_name }}
         env:
           - name: IROHA_POSTGRES_HOST
             value: localhost
           - name: KEY
             value: node
         volumeMounts:
-        - name: iroha-data
+        - name: {{ iroha_pod_basename }}-data
           mountPath: /opt/iroha_data
         - name: block-store
           mountPath: /tmp/block_store
       volumes:
-        - name: iroha-secret-0
+{% for key_pair in peer_keys.stdout_lines %}
+        - name: {{ iroha_pod_basename }}-secret-{{ loop.index - 1 }}
           secret:
-            secretName: iroha-peer-key-0
-        - name: iroha-secret-1
-          secret:
-            secretName: iroha-peer-key-1
-        - name: iroha-secret-2
-          secret:
-            secretName: iroha-peer-key-2
-        - name: iroha-secret-3
-          secret:
-            secretName: iroha-peer-key-3
-        - name: iroha-config
+            secretName: {{ iroha_pod_basename }}-key-{{ loop.index - 1 }}
+{% endfor %}
+        - name: {{ iroha_pod_basename }}-config
           configMap:
-            name: iroha-config
-        - name: iroha-data
+            name: {{ iroha_configmap_name }}
+        - name: {{ iroha_pod_basename }}-data
           emptyDir: {}
         - name: block-store
           emptyDir: {}
   volumeClaimTemplates:
     - metadata:
         name: pg-data
+        namespace: {{ iroha_namespace }}
         labels:
           app: iroha
       spec:
@@ -124,9 +110,10 @@ spec:
           - ReadWriteOnce
         resources:
           requests:
-            storage: 1Gi
+            storage: {{ postgres_volume_size }}
     - metadata:
         name: block-store
+        namespace: {{ iroha_namespace }}
         labels:
           app: iroha
       spec:
@@ -134,4 +121,4 @@ spec:
           - ReadWriteOnce
         resources:
           requests:
-            storage: 1Gi
+            storage: {{ blockstore_volume_size }}
