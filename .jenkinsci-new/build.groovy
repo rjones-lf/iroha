@@ -58,7 +58,8 @@ def initialCoverage(String buildDir) {
 
 def postCoverage(buildDir, String cobertura_bin) {
   sh "cmake --build ${buildDir} --target coverage.info"
-  sh "python ${cobertura_bin} ${buildDir}/reports/coverage.info -o ${buildDir}/reports/coverage.xml"
+  sh "python .jenkinsci-new/helpers/remove-function-lines.py ${buildDir}/reports/coverage.info ${buildDir}/reports/cleaned-coverage.info"
+  sh "python ${cobertura_bin} ${buildDir}/reports/cleaned-coverage.info -o ${buildDir}/reports/coverage.xml"
   cobertura autoUpdateHealth: false, autoUpdateStability: false,
     coberturaReportFile: "**/${buildDir}/reports/coverage.xml", conditionalCoverageTargets: '75, 50, 0',
     failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50,
